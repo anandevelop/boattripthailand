@@ -1,0 +1,83 @@
+/* =====================================================================
+   LIQUID GLASS — หน้าเว็บ (ระดับพอดี ๆ)
+   กระจกเฉพาะของที่ลอยเหนือเนื้อหา: แถบเมนู เมนูมือถือ/เมนูเช่าเรือ ปุ่มบนรูป Hero
+   แถบค้นหา ป้ายบนรูปเรือ ป๊อปอัป แถบคุกกี้ Toast ปุ่มจองลอย แถบเปรียบเทียบ
+   การ์ดเรือ ราคา บทความ ตาราง = พื้นทึบเหมือนเดิม
+   ถอดออก: ลบ <link href="/site/glass.css"> ใน site/shell.html บรรทัดเดียว
+   ===================================================================== */
+:root {
+  --g-bg: rgb(255 255 255 / .58);
+  --g-bg-strong: rgb(255 255 255 / .74);
+  --g-blur: blur(22px) saturate(185%);
+  --g-shadow: 0 10px 34px -14px rgb(58 0 7 / .32), 0 2px 6px -2px rgb(35 20 22 / .08);
+  --g-spec: inset 0 1px 0 rgb(255 255 255 / .95), inset 0 -1px 0 rgb(255 255 255 / .28), inset 0 0 0 1px rgb(255 255 255 / .35);
+  --g-spec-dark: inset 0 1px 0 rgb(255 255 255 / .5), inset 0 0 0 1px rgb(255 255 255 / .32);
+}
+@media (max-width: 640px) { :root { --g-blur: blur(16px) saturate(175%); } }
+
+/* ---------- พื้นกระจกขาว ---------- */
+#navPill, #mobileMenu, #megaInner, .qs-card, #cookieBar > div {
+  background: var(--g-bg) !important;
+  -webkit-backdrop-filter: var(--g-blur); backdrop-filter: var(--g-blur);
+  box-shadow: var(--g-shadow), var(--g-spec) !important;
+  --tw-ring-shadow: 0 0 #0000;
+}
+
+/* ---------- แถบเมนู: แคปซูลลอย / หน้าแรกลอยทับรูป Hero ---------- */
+#navbar { padding: 10px 12px 0; pointer-events: none; }
+#navbar > * { pointer-events: auto; }
+#navPill { max-width: 1304px; margin: 0 auto; border-radius: 24px !important; isolation: isolate; }
+#navPill::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(135deg, rgb(255 255 255 / .55) 0%, rgb(255 255 255 / 0) 38%, rgb(255 255 255 / 0) 70%, rgb(255 255 255 / .22) 100%); }
+#navbar.is-compact #navPill { background: var(--g-bg-strong) !important; }
+body:has(#view-home:not(.hidden)) #navbar { margin-bottom: -74px; }
+body:has(#view-home:not(.hidden)) #navbar:not(.is-compact) #navPill { background: rgb(255 255 255 / .5) !important; }
+#navInk { background: rgb(255 255 255 / .7) !important; box-shadow: var(--g-spec); }
+#megaInner, #mobileMenu { border-radius: 24px !important; }
+
+/* ---------- Hero ---------- */
+#hero .hero-fade > a { border-radius: 9999px; box-shadow: 0 8px 24px -10px rgb(0 0 0 / .45), inset 0 1px 0 #fff; }
+#hero .hero-fade > button, #hero button.w-10 {
+  border-radius: 9999px; background: rgb(255 255 255 / .16) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(180%); backdrop-filter: blur(14px) saturate(180%);
+  --tw-ring-shadow: 0 0 #0000; box-shadow: var(--g-spec-dark) !important;
+}
+#hero .hero-fade > button:hover, #hero button.w-10:hover { background: rgb(255 255 255 / .28) !important; }
+.qs-card { background: var(--g-bg-strong) !important; }
+
+/* ---------- ป้าย / ปุ่มไอคอนบนรูปเรือ ---------- */
+.bcard-ico, span.absolute.top-3.left-3 {
+  background: rgb(255 255 255 / .5) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%); backdrop-filter: blur(12px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .9), inset 0 0 0 1px rgb(255 255 255 / .45), 0 4px 12px -6px rgb(0 0 0 / .35) !important;
+}
+
+/* ---------- สีแบรนด์แบบกระจก: Toast, ปุ่มจองลอย, แถบเปรียบเทียบ ---------- */
+#toast > div, #floatCta, #cmpTray {
+  background: rgb(112 0 14 / .8) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
+  box-shadow: 0 12px 30px -10px rgb(58 0 7 / .6), inset 0 1px 0 rgb(255 255 255 / .28) !important;
+}
+#cmpTray { background: rgb(79 0 10 / .76) !important; border-radius: 9999px; }
+#cookieBar > div { border-radius: 24px !important; }
+
+/* ---------- ป๊อปอัป (จองเรือ / Smart Match / เปรียบเทียบ / ค้นหา) ---------- */
+#bookingModal > div:first-child, #smartModal > div:first-child, #cmpModal > div:first-child {
+  background: rgb(58 0 7 / .22) !important; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+#cmdModal > div:first-child { background: rgb(58 0 7 / .16) !important; }
+.modal-enter {
+  background: rgb(255 255 255 / .72) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(190%); backdrop-filter: blur(34px) saturate(190%);
+  box-shadow: 0 30px 80px -24px rgb(58 0 7 / .5), var(--g-spec) !important; border-radius: 28px !important;
+}
+.modal-enter > .bg-maroon:first-child { background: linear-gradient(135deg, rgb(112 0 14 / .9), rgb(79 0 10 / .86)) !important; }
+.modal-enter input:not([type=checkbox]):not([type=radio]), .modal-enter select, .modal-enter textarea { background-color: rgb(255 255 255 / .62) !important; }
+
+/* ---------- ผู้ใช้ปิดความโปร่งใส / เบราว์เซอร์ไม่รองรับ ---------- */
+@media (prefers-reduced-transparency: reduce) {
+  #navPill, #mobileMenu, #megaInner, .qs-card, #cookieBar > div, .modal-enter { background: #fff !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  #navPill, #mobileMenu, #megaInner, .qs-card, #cookieBar > div, .modal-enter { background: rgb(255 255 255 / .96) !important; }
+}

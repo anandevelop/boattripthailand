@@ -85,7 +85,7 @@ head = must(head, '<script>/*LUCIDE_INLINE*/</script>', '<script src="/site/luci
 head = must(head, 'href="data:image/png;base64,FAV_B64"', 'href="/icon.png"')
 css = head[head.index('<style>') + 7: head.index('</style>')]
 head = head[:head.index('<style>')] + head[head.index('</style>') + 8:]
-head = must(head, '<link rel="stylesheet" href="/admin-app/tw.css?v=__V__" />', '<link rel="stylesheet" href="/admin-app/admin.css?v=__V__" />\n<link rel="stylesheet" href="/admin-app/tw.css?v=__V__" />')
+head = must(head, '<link rel="stylesheet" href="/admin-app/tw.css?v=__V__" />', '<link rel="stylesheet" href="/admin-app/admin.css?v=__V__" />\n<link rel="stylesheet" href="/admin-app/tw.css?v=__V__" />\n<link rel="stylesheet" href="/admin-app/glass.css?v=__V__" />')
 head = must(head, '<title>BTT Admin – ระบบหลังบ้าน Boat Trip Thailand</title>', '<title>ระบบหลังบ้าน · Boat Trip Thailand</title>')
 body = rd('admin_body.html')
 body = must(body, 'src="data:image/png;base64,LOGON_B64"', 'src="/brand/logo.png"')

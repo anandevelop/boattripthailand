@@ -12,6 +12,7 @@ export default function LoginRoot({ children }: { children: React.ReactNode }) {
         <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="/admin-app/admin.css" />
         <link rel="stylesheet" href="/admin-app/tw.css" />
+        <link rel="stylesheet" href="/admin-app/glass.css" />
       </head>
       <body className="bg-[#faf7f5]">{children}</body>
     </html>
