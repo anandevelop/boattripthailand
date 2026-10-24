@@ -1865,13 +1865,13 @@ const kpi = (l, v, d, sub) => `<div class="card p-4"><p class="text-[12px] text-
 
 /* single-axis line chart with optional previous-period line and hover tooltip */
 let CH = 0;
-function lineChart(cur, prev, { h = 180, fmt = nf, label = '', invert = false } = {}) {
+function lineChart(cur, prev, { h = 180, fmt = nf, label = '', invert = false, end } = {}) {
   const id = 'ch' + (++CH), W = 800, n = cur.length, all = cur.concat(GA.cmp && prev ? prev : []);
-  let lo = Math.min(...all), hi = Math.max(...all); if (invert) [lo, hi] = [lo - 1, hi + 1]; else { lo = 0; hi = hi * 1.1; }
+  let lo = Math.min(...all), hi = Math.max(...all); if (invert) [lo, hi] = [lo - 1, hi + 1]; else { lo = 0; hi = hi * 1.1 || 1; }   // all-zero data (no visitors yet) → flat line instead of NaN
   const x = i => i / (n - 1) * W, y = v => invert ? (v - lo) / (hi - lo) * (h - 24) + 8 : h - 20 - (v - lo) / (hi - lo) * (h - 32);
   const path = a => a.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
   const ticks = [0, .5, 1].map(f => invert ? lo + (hi - lo) * f : lo + (hi - lo) * f);
-  const dates = cur.map((_, i) => addDays(TODAY, i - n + 1));
+  const dates = cur.map((_, i) => addDays(end || TODAY, i - n + 1));   // `end`: last day of the series (Search Console lags ~3 days)
   CHD[id] = { cur, prev, fmt, label, dates, n };
   return `<div class="relative" id="${id}"><svg viewBox="0 0 ${W} ${h}" preserveAspectRatio="none" class="w-full block" style="height:${h}px" onmousemove="chHover(event,'${id}')" onmouseleave="chLeave('${id}')">
       ${ticks.map(t => `<line x1="0" x2="${W}" y1="${y(t)}" y2="${y(t)}" stroke="#f1eaea" stroke-width="1" vector-effect="non-scaling-stroke"/>`).join('')}
@@ -3758,7 +3758,35 @@ function artPreview(id, k) {
 setInterval(() => artTick(false), 2000);
 setInterval(() => artTick(true), 15000);
 { const _ap = artPublish; artPublish = function (id) { _ap(id); const a = artById(id); if (a) { if (a.status === 'scheduled') toast('ตั้งเวลาเผยแพร่ยังไม่รองรับ · บทความจะแสดงเมื่อกดเผยแพร่ในวันนั้น'); pushArt(a, JSON.stringify(postPayload(a)), true); } }; }
-{ const _ve = vArticleEdit; vArticleEdit = function (id) { _ve(id); const h = $('#view h2'); if (h && can('content')) h.insertAdjacentHTML('afterend', '<p id="artSaveInd" class="text-[11px] text-muted mt-1">บันทึกอัตโนมัติ</p>'); }; }
+{ const _ve = vArticleEdit; vArticleEdit = function (id) { _ve(id); const h = $('#view h2'); if (h && can('content')) h.insertAdjacentHTML('afterend', '<p id="artSaveInd" class="text-[11px] text-muted mt-1">บันทึกอัตโนมัติ</p>');
+  if (can('content')) $(`#view button[onclick^="artPreview(${+id},"]`)?.insertAdjacentHTML('beforebegin', `<button class="btn btn-g !px-2 text-[#b42318]" title="ลบบทความ" onclick="artDel(${+id})"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`); icons(); }; }
+/* delete an article: a live one sends its URLs (and old WordPress links to it) to the blog list, or answers 410 */
+function artDel(id) {
+  const a = artById(id); if (!a || !can('content')) return;
+  const live = a.status === 'published', t = a.title.th || a.title.en || 'บทความไม่มีชื่อ';
+  const urls = [a.slug.th && `/blog/${a.slug.th}`, a.slug.en && `/en/blog/${a.slug.en}`].filter(Boolean);
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ลบบทความนี้?</p><p class="text-[12.5px] mt-1">${esc(t)}</p><p class="text-[12px] text-muted mt-1">ลบทั้งภาษาไทยและอังกฤษ · กู้คืนไม่ได้</p></div>
+    <div class="p-5 grid gap-2 text-[12.5px]">${live ? `<p class="lbl">บทความนี้เผยแพร่อยู่ · คนที่เข้าลิงก์เดิมจะ…</p>
+      <label class="flex gap-2.5 items-start p-3 rounded-xl ring-1 ring-line cursor-pointer"><input type="radio" name="artDelMode" value="blog" checked class="mt-0.5"/><span><b class="font-medium">ไปหน้ารวมบทความ (301)</b> · แนะนำ<br/><span class="text-muted text-[11.5px]">เก็บคะแนน SEO และลิงก์จากเว็บอื่นไว้</span></span></label>
+      <label class="flex gap-2.5 items-start p-3 rounded-xl ring-1 ring-line cursor-pointer"><input type="radio" name="artDelMode" value="gone" class="mt-0.5"/><span><b class="font-medium">แจ้งว่าลบแล้ว (410)</b><br/><span class="text-muted text-[11.5px]">ให้ Google เอาออกจากผลค้นหาเร็วที่สุด</span></span></label>
+      <p class="text-[11px] text-muted font-mono break-all">${urls.map(esc).join('<br/>')}</p>` : '<p class="text-muted">บทความนี้ยังไม่เผยแพร่ ไม่มีผลกับหน้าเว็บ</p>'}</div>
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button id="artDelGo" class="btn btn-p !bg-[#b42318]" onclick="artDelGo(${+id})"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบบทความ</button></div>`);
+  icons();
+}
+function artDelGo(id) {
+  if (AFLY.has(id)) return toast('กำลังบันทึกบทความอยู่ ลองใหม่อีกครั้ง');
+  const mode = $('input[name="artDelMode"]:checked')?.value || 'blog', b = $('#artDelGo'); if (b) b.disabled = true;
+  const drop = () => { for (const L of [ART, typeof ART_ALL !== 'undefined' ? ART_ALL : []]) { const i = L.findIndex(x => x.id === id); if (i >= 0) L.splice(i, 1); } ASYNC.delete(id); ASEEN.delete(id); };
+  api('DELETE', 'posts/' + id, { mode }).then(r => {
+    drop(); AUDIT_DIRTY = true;
+    for (const x of r.redirects || []) { const i = REDIR.findIndex(y => y.from === x.from); if (i >= 0) Object.assign(REDIR[i], x); else REDIR.unshift({ ...x, hits: 0 }); }
+    closeModal(); go('articles'); toast(r.redirects?.length ? `ลบบทความแล้ว · ลิงก์เดิม ${r.redirects.length} URL ${mode === 'gone' ? 'ตอบ 410' : 'ไปหน้ารวมบทความ'} (มีผลภายใน 5 นาที)` : 'ลบบทความแล้ว');
+  }).catch(e => { if (e.status === 404) { drop(); closeModal(); go('articles'); toast('ลบบทความแล้ว'); } else { fail(e); if (b) b.disabled = false; } });
+}
+{ const _vl = vArticles; vArticles = function () { _vl(); if (location.hash.split('/')[2] || !can('content')) return;
+  $('#view table.tbl thead tr')?.insertAdjacentHTML('beforeend', '<th></th>');
+  $$('#view table.tbl tbody tr.click').forEach(tr => { const id = +(tr.getAttribute('onclick').match(/articles\/(\d+)/) || [])[1]; if (id) tr.insertAdjacentHTML('beforeend', `<td class="text-right"><button class="btn btn-g !px-2 !h-8 text-muted hover:text-[#b42318]" title="ลบบทความ" onclick="event.stopPropagation();artDel(${id})"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>`); });
+  icons(); }; PAGES.find(p => p[0] === 'articles')[3] = vArticles; }
 
 /* ---------- site settings ---------- */
 if (BOOT.sitecfg) Object.assign(SITECFG, BOOT.sitecfg, { tab: SITECFG.tab });
@@ -4044,6 +4072,7 @@ const ggTh = s => /[\u0E00-\u0E7F]/.test(s);
 const ggDur = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
 const ggPct = (n, d = 1) => (n * 100).toFixed(d) + '%';
 const ggBars = (rows, o) => { const r = rows.filter(x => x[1] > 0); return r.length ? bars(r, o) : '<p class="text-[12px] text-muted">ยังไม่มีข้อมูลในช่วงนี้</p>'; };
+const ggEnd = S => new Date(S.range.endDate + 'T00:00:00');
 const ggPath = u => { try { return decodeURIComponent(new URL(u).pathname); } catch { return u; } };
 /** fill days without a position (no impressions) with the previous day's value so the chart does not drop to 0 */
 const ggPos = a => { let last = a.find(x => x.position)?.position || 0; return a.map(x => (last = x.position || last)); };
@@ -4094,8 +4123,8 @@ function ggGsc(S) {
   const opp = S.queries.filter(q => q.position > 4 && q.position <= 20 && q.impressions >= 30).sort((a, b) => b.impressions - a.impressions).slice(0, 4);
   return `<div class="grid grid-cols-2 xl:grid-cols-4 gap-3">${kpi('คลิก', nf(T.cur.clicks), delta(T.cur.clicks, T.prev.clicks))}${kpi('การแสดงผล', nf(T.cur.impressions), delta(T.cur.impressions, T.prev.impressions))}${kpi('CTR เฉลี่ย', ggPct(T.cur.ctr, 2), delta(T.cur.ctr, T.prev.ctr))}${kpi('อันดับเฉลี่ย', T.cur.position ? T.cur.position.toFixed(1) : '—', delta(T.cur.position, T.prev.position, true), 'ยิ่งน้อยยิ่งดี')}</div>
     <div class="grid xl:grid-cols-2 gap-4 mt-4 items-start">
-      <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">คลิกต่อวัน</p>${legend()}</div>${lineChart(ck, pk, { label: 'คลิก' })}</div>
-      <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">อันดับเฉลี่ยต่อวัน <span class="text-[11px] text-muted font-normal">(บนสุด = อันดับดีกว่า)</span></p>${legend()}</div>${lineChart(ggPos(S.cur), ggPos(S.prev), { label: '', fmt: v => (+v).toFixed(1), invert: true })}</div></div>
+      <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">คลิกต่อวัน</p>${legend()}</div>${lineChart(ck, pk, { label: 'คลิก', end: ggEnd(S) })}</div>
+      <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">อันดับเฉลี่ยต่อวัน <span class="text-[11px] text-muted font-normal">(บนสุด = อันดับดีกว่า)</span></p>${legend()}</div>${lineChart(ggPos(S.cur), ggPos(S.prev), { label: '', fmt: v => (+v).toFixed(1), invert: true, end: ggEnd(S) })}</div></div>
     <div class="grid xl:grid-cols-3 gap-4 mt-4 items-start">
       <div class="card xl:col-span-2 overflow-hidden"><div class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 pb-2"><p class="font-medium">คำค้นหาที่พาคนมาเว็บ</p><div class="flex p-0.5 rounded-full bg-sand">${[['', 'ทั้งหมด'], ['th', 'TH'], ['en', 'EN']].map(([k, l]) => `<button class="h-7 px-3 rounded-full text-[12px] ${GA.qLang === k ? 'bg-white shadow-sm' : 'text-muted'}" onclick="GA.qLang='${k}';vAnalytics()">${l}</button>`).join('')}</div></div>
         <div class="overflow-x-auto"><table class="tbl min-w-[620px]"><thead><tr><th>คำค้นหา</th><th class="text-right">คลิก</th><th class="text-right">การแสดงผล</th><th class="text-right">CTR</th><th class="text-right">อันดับ</th></tr></thead><tbody>
