@@ -4402,9 +4402,9 @@ function trUsage(force) {
 function trMeter(u, add = 0) {
   const used = u.chars, lim = u.limit || 1, after = used + add, pct = v => Math.min(100, v / lim * 100);
   const tone = after > lim ? '#a3222c' : after > lim * .8 ? '#b26a00' : '#1e7a46';
-  return `<div><div class="flex flex-wrap justify-between gap-2 text-[12px]"><span>ใช้ไปเดือนนี้ <b class="tnum">${nf(used)}</b>${add ? ` + ครั้งนี้ <b class="tnum">${nf(add)}</b>` : ''} ตัวอักษร</span><span class="tnum text-muted">เพดาน ${nf(u.limit)} · ฟรี ${nf(u.free)}</span></div>
+  return `<div><div class="flex flex-wrap justify-between gap-2 text-[12px]"><span>ใช้ไปเดือนนี้ <b class="tnum">${nf(used)}</b>${add ? ` + ครั้งนี้ <b class="tnum">${nf(add)}</b>` : ''} ตัวอักษร</span><span class="tnum text-muted">เพดานที่เราตั้ง ${nf(u.limit)}</span></div>
     <div class="mt-1.5 h-2 rounded-full bg-sand overflow-hidden flex"><div style="width:${pct(used)}%;background:${tone}"></div>${add ? `<div style="width:${Math.max(0, pct(after) - pct(used))}%;background:${tone};opacity:.45"></div>` : ''}</div>
-    <p class="text-[11px] text-muted mt-1">เหลือ ${nf(Math.max(0, u.limit - used))} ตัวอักษร · วันนี้แปลไป ${nf(u.reqsToday || 0)}/${nf(u.dailyReq || 0)} ครั้ง · ถึงเพดานแล้วระบบหยุดแปลเอง${u.provider ? ' · Gemini แบบฟรี ไม่ผูกบัตร จึงไม่มีค่าใช้จ่าย' : ''}</p></div>`;
+    <p class="text-[11px] text-muted mt-1">เหลือ ${nf(Math.max(0, u.limit - used))} ตัวอักษร · วันนี้แปลไป ${nf(u.reqsToday || 0)}/${nf(u.dailyReq || 0)} ครั้ง${u.freeRpd ? ` (Gemini ให้ฟรี ${nf(u.freeRpd)} ครั้ง/วัน)` : ''} · ถึงเพดานแล้วระบบหยุดแปลเอง${u.provider ? ' · Gemini แบบฟรี ไม่ผูกบัตร จึงไม่มีค่าใช้จ่าย' : ''}</p></div>`;
 }
 /** confirm with an estimate and the monthly meter → resolves true/false */
 function trConfirm(title, chars, detail, note) {

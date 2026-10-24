@@ -18,7 +18,8 @@ import { GoogleError } from './google';
 export const USAGE_KEY = 'translate.usage';
 export const LIMIT = Math.max(0, Number(process.env.TRANSLATE_MONTHLY_LIMIT) || 450_000);
 export const DAILY_REQ = Math.max(1, Number(process.env.TRANSLATE_DAILY_REQUESTS) || 200);
-export const FREE_TIER = 500_000;
+/** Gemini free tier: requests per day for this model (AI Studio → Rate limits). Not a character allowance. */
+export const FREE_RPD = Math.max(1, Number(process.env.GEMINI_FREE_RPD) || 500);
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 const CHUNK = 6_000;   // characters per Gemini request (keeps the answer well inside the output limit)
 
@@ -39,7 +40,7 @@ export async function usage() {
   const u = row?.value as Usage | undefined, m = month(), d = day();
   const cur = u && u.month === m ? u : { month: m, chars: 0, log: [] };
   const p = provider();
-  return { month: cur.month, chars: cur.chars, log: cur.log, limit: LIMIT, free: FREE_TIER, reqsToday: cur.day === d ? cur.reqs ?? 0 : 0, dailyReq: DAILY_REQ,
+  return { month: cur.month, chars: cur.chars, log: cur.log, limit: LIMIT, freeRpd: FREE_RPD, reqsToday: cur.day === d ? cur.reqs ?? 0 : 0, dailyReq: DAILY_REQ,
     provider: p, model: p ? GEMINI_MODEL : null, enabled: !!p && process.env.TRANSLATE_ENABLED !== 'false' };
 }
 
