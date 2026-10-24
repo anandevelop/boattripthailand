@@ -792,7 +792,7 @@ function vArticleEdit(id) {
       <div class="grid gap-4 min-w-0">
         <div class="card p-2 flex flex-wrap items-center gap-2">
           <div class="flex gap-1">${LANGS.map(([c, C, l]) => `<button class="tab ${k === c ? 'on' : ''}" onclick="AE.lang='${c}';vArticleEdit(${a.id})">${C} · ${l}</button>`).join('')}</div>
-          <div id="artTr" class="flex gap-1 ml-1">${trBadge(a)}</div>
+          <div id="artTr" class="flex gap-1 ml-1">${trBadge(a)}</div>${typeof trBtn === 'function' ? trBtn(a) : ''}
         </div>
         ${mt ? `<div class="rounded-xl bg-[#fff6e5] text-[#7a4a00] p-3.5 flex flex-col sm:flex-row sm:items-center gap-3"><i data-lucide="bot" class="w-5 h-5 shrink-0"></i><p class="flex-1 text-[12.5px]">ภาษา${Lname[k]}เป็นคำแปลจากเครื่อง ต้องให้ทีมตรวจก่อน · ระหว่างนี้หน้า ${k.toUpperCase()} จะยังไม่แสดงบนเว็บ</p><button class="btn btn-p" onclick="artApprove(${a.id})"><i data-lucide="check" class="w-3.5 h-3.5"></i>ตรวจแล้ว อนุมัติ</button></div>` : ''}
         ${empty && a.title[other] ? `<div class="rounded-xl bg-sand p-3.5 flex flex-col sm:flex-row sm:items-center gap-3"><i data-lucide="languages" class="w-5 h-5 text-maroon shrink-0"></i><p class="flex-1 text-[12.5px]">ยังไม่มีเวอร์ชันภาษา${Lname[k]} · เขียนเองได้เลย หรือกดแปลอัตโนมัติจากภาษา${Lname[other]}แล้วค่อยตรวจ</p></div>` : ''}
@@ -3726,7 +3726,7 @@ setInterval(() => boatTick(false), 1500);
 /* ---------- articles: autosave a few seconds after typing stops ---------- */
 const coverUrl = a => THUMBS[a.cover] || (/^(\/|https:)/.test(a.cover || '') ? a.cover : '');
 const blocksFor = (a, k) => { const B = a.blocks?.[k]; return B && B.length ? B : (a.body?.[k] && typeof parseBlocks === 'function' ? parseBlocks(a.body[k]) : []); };
-const postPayload = a => ({ id: a.id, cat: a.cat, status: a.status, date: a.date, cover: coverUrl(a), title: a.title, slug: a.slug, excerpt: a.excerpt, seoT: a.seoT, seoD: a.seoD, kw: a.kw, blocks: { th: blocksFor(a, 'th'), en: blocksFor(a, 'en') } });
+const postPayload = a => trHold(a, { id: a.id, cat: a.cat, status: a.status, date: a.date, cover: coverUrl(a), title: a.title, slug: a.slug, excerpt: a.excerpt, seoT: a.seoT, seoD: a.seoD, kw: a.kw, blocks: { th: blocksFor(a, 'th'), en: blocksFor(a, 'en') } });   // trHold: machine-translation drafts are not published
 const ASYNC = new Map(), ASEEN = new Map(), AFLY = new Set();
 const allArts = () => (typeof ART_ALL !== 'undefined' && ART_ALL.length ? ART_ALL : ART);
 allArts().forEach(a => ASYNC.set(a.id, JSON.stringify(postPayload(a))));
@@ -4384,6 +4384,143 @@ route = function () {
 }; }
 rerender = function () { route(); };
 PAGES.forEach(p => { if (p[0] === 'bookings') p[1] = 'ลีด'; });
+
+/* =====================================================================
+   แปลอัตโนมัติ (Google Cloud Translation) + ตัวนับโควตารายเดือน — เซิร์ฟเวอร์: src/lib/translate.ts
+   · ระบบหยุดแปลเองก่อนถึงโควตาฟรีของ Google (เพดาน TRANSLATE_MONTHLY_LIMIT, ค่าเริ่มต้น 450,000 ตัวอักษร)
+   · บทความ: คำแปลขึ้นสถานะ “รอตรวจ” เก็บเป็นร่างบนเซิร์ฟเวอร์ ไม่แสดงบนเว็บจนกว่าจะกดอนุมัติ
+   · เรือ: ตรวจ/แก้คำแปลในหน้าต่างก่อนใส่เข้าหน้าเรือ
+   ===================================================================== */
+const TRU = { d: null, at: 0 }, TRDS = new Map();
+const TR_L = { th: 'ไทย', en: 'อังกฤษ', ru: 'รัสเซีย', zh: 'จีน' };
+const trChars = a => a.reduce((n, t) => n + [...String(t || '')].length, 0);   // same count as the server / Google
+const trDec = s => { const t = document.createElement('textarea'); t.innerHTML = s || ''; return t.value; };
+function trUsage(force) {
+  if (!force && TRU.d && Date.now() - TRU.at < 30_000) return Promise.resolve(TRU.d);
+  return api('GET', 'translate').then(d => { TRU.d = d; TRU.at = Date.now(); return d; });
+}
+function trMeter(u, add = 0) {
+  const used = u.chars, lim = u.limit || 1, after = used + add, pct = v => Math.min(100, v / lim * 100);
+  const tone = after > lim ? '#a3222c' : after > lim * .8 ? '#b26a00' : '#1e7a46';
+  return `<div><div class="flex flex-wrap justify-between gap-2 text-[12px]"><span>ใช้ไปเดือนนี้ <b class="tnum">${nf(used)}</b>${add ? ` + ครั้งนี้ <b class="tnum">${nf(add)}</b>` : ''} ตัวอักษร</span><span class="tnum text-muted">เพดาน ${nf(u.limit)} · ฟรี ${nf(u.free)}</span></div>
+    <div class="mt-1.5 h-2 rounded-full bg-sand overflow-hidden flex"><div style="width:${pct(used)}%;background:${tone}"></div>${add ? `<div style="width:${Math.max(0, pct(after) - pct(used))}%;background:${tone};opacity:.45"></div>` : ''}</div>
+    <p class="text-[11px] text-muted mt-1">เหลือ ${nf(Math.max(0, u.limit - used))} ตัวอักษร · รีเซ็ตวันที่ 1 ของทุกเดือน · ถึงเพดานแล้วระบบหยุดแปลเอง จึงไม่เกินโควตาฟรีของ Google</p></div>`;
+}
+/** confirm with an estimate and the monthly meter → resolves true/false */
+function trConfirm(title, chars, detail, note) {
+  return trUsage(true).then(u => new Promise(res => {
+    const over = u.chars + chars > u.limit;
+    window.__trOk = v => { closeModal(); res(v); };
+    openModal(`<div class="p-5 grid gap-4"><p class="font-medium">${title}</p><p class="text-[12.5px] text-muted">${detail}</p>${trMeter(u, chars)}
+      ${!u.enabled ? '<p class="text-[12.5px] text-[#a3222c]">ยังไม่พร้อมใช้: ยังไม่ได้ใส่กุญแจ Google หรือปิดระบบแปลไว้</p>' : over ? '<p class="text-[12.5px] text-[#a3222c]">เกินเพดานเดือนนี้ · แปลได้อีกครั้งวันที่ 1 เดือนหน้า</p>' : ''}
+      <p class="text-[11.5px] text-muted">${note}</p>
+      <div class="flex justify-end gap-2"><button class="btn btn-o" onclick="__trOk(false)">ยกเลิก</button><button class="btn btn-p" ${over || !u.enabled ? 'disabled' : ''} onclick="__trOk(true)"><i data-lucide="languages" class="w-3.5 h-3.5"></i>แปล (~${nf(chars)} ตัวอักษร)</button></div></div>`);
+    icons();
+  })).catch(e => { fail(e); return false; });
+}
+
+/* ---------- บทความ ---------- */
+const TR_KEYS = ['html', 'title', 'q', 'a', 'alt', 'cap', 'label'];
+function trWalk(o, cb) {
+  if (Array.isArray(o)) return o.forEach(x => trWalk(x, cb));
+  if (o && typeof o === 'object') for (const k of Object.keys(o)) { if (typeof o[k] === 'string') { if (TR_KEYS.includes(k) && o[k].trim()) cb(o, k); } else if (o[k] && typeof o[k] === 'object') trWalk(o[k], cb); }
+}
+const trDir = a => { const from = ['orig', 'ok'].includes(a.tr.th) ? 'th' : 'en'; return [from, from === 'th' ? 'en' : 'th']; };
+function trBtn(a) {
+  if (!can('content')) return '';
+  const [from, to] = trDir(a);
+  if (!a.title[from] || a.tr[to] === 'mt' || (['orig', 'ok'].includes(a.tr[to]) && a.title[to])) return '';
+  return `<button class="btn btn-o ml-auto" onclick="trArticle(${a.id})"><i data-lucide="languages" class="w-3.5 h-3.5"></i>แปล ${from.toUpperCase()} → ${to.toUpperCase()} อัตโนมัติ</button>`;
+}
+const TR_F = ['title', 'excerpt', 'seoT', 'seoD', 'kw'];
+function trDraftOf(a, k) { return { title: a.title[k], excerpt: a.excerpt[k], seoT: a.seoT[k], seoD: a.seoD[k], kw: a.kw[k], slug: a.slug[k], blocks: a.blocks?.[k] || [] }; }
+function trSaveDraft(a, k) { const v = trDraftOf(a, k), s = JSON.stringify(v); if (TRDS.get(a.id + ':' + k) === s) return; TRDS.set(a.id + ':' + k, s); api('POST', 'translate/drafts', { id: String(a.id), lang: k, value: v }).catch(fail); }
+function trArticle(id) {
+  const a = artById(id), [from, to] = trDir(a);
+  if (!a.title[from]) return toast('ยังไม่มีต้นฉบับให้แปล');
+  const fv = TR_F.map(f => a[f][from] || ''), B = JSON.parse(JSON.stringify(blocksFor(a, from))), refs = [];
+  trWalk(B, (o, k) => refs.push([o, k]));
+  const bv = refs.map(([o, k]) => o[k]), chars = trChars(fv) + trChars(bv);
+  trConfirm(`แปลบทความ ${TR_L[from]} → ${TR_L[to]}`, chars, `${esc(a.title[from])} · หัวข้อ/SEO + ${refs.length} ส่วนในเนื้อหา`,
+    'คำแปลจากเครื่องจะขึ้นสถานะ “รอตรวจ” และยังไม่แสดงบนเว็บ จนกว่าจะมีคนอ่าน แก้ แล้วกด “ตรวจแล้ว อนุมัติ”').then(ok => {
+    if (!ok) return; toast('กำลังแปล… (บทความยาวอาจใช้ 10–30 วินาที)');
+    const what = `บทความ #${a.id}`;
+    api('POST', 'translate', { texts: fv, from, to, what: what + ' · หัวข้อ/SEO' })
+      .then(r1 => api('POST', 'translate', { texts: bv, from, to, html: true, what: what + ' · เนื้อหา' }).then(r2 => [r1, r2]))
+      .then(([r1, r2]) => {
+        TR_F.forEach((f, i) => { a[f][to] = trDec(r1.out[i]) || a[f][to] || ''; });
+        r2.out.forEach((t, i) => { const [o, k] = refs[i]; o[k] = t; });
+        a.blocks ??= {}; a.blocks[to] = B; a.body[to] = blocksHtml(B);
+        if (!a.slug[to]) a.slug[to] = slugify(a.title[to]) || `${to}-${a.id}`;
+        a.tr[to] = 'mt'; TRU.d = r2.usage; TRU.at = Date.now();
+        trSaveDraft(a, to);
+        AE.lang = to; vArticleEdit(a.id); toast(`แปลแล้ว ${nf(r1.chars + r2.chars)} ตัวอักษร · สถานะ “รอตรวจ”`);
+      }).catch(fail);
+  });
+}
+/** autosave payload: a language that is still a machine draft is NOT sent (so it never goes live); its draft is kept on the server instead */
+function trHold(a, p) {
+  for (const k of Object.keys(a.tr || {})) if (a.tr[k] === 'mt') {
+    trSaveDraft(a, k);
+    for (const f of [...TR_F, 'slug']) p[f] = { ...p[f], [k]: '' };
+    p.blocks = { ...p.blocks, [k]: [] };
+  }
+  return p;
+}
+{ const _ap = artApprove; artApprove = function (id) {
+  const a = artById(id), k = AE.lang, wasMt = a?.tr[k] === 'mt';
+  _ap(id);
+  if (wasMt) { TRDS.delete(a.id + ':' + k); api('POST', 'translate/drafts/delete', { id: String(a.id), lang: k }).catch(() => {}); }
+}; }
+// machine drafts saved earlier → back into the editor as “รอตรวจ” (after login has set the user, hence the timeout)
+setTimeout(() => can('content') && api('GET', 'translate/drafts').then(d => { (d.drafts || []).forEach(x => {
+  const a = x.kind === 'article' && artById(x.id), v = x.value || {};
+  if (!a || (['orig', 'ok'].includes(a.tr[x.lang]) && a.title[x.lang])) return;
+  for (const f of [...TR_F, 'slug']) a[f][x.lang] = v[f] ?? '';
+  a.blocks ??= {}; a.blocks[x.lang] = v.blocks || []; a.body[x.lang] = blocksHtml(a.blocks[x.lang]); a.tr[x.lang] = 'mt';
+  TRDS.set(a.id + ':' + x.lang, JSON.stringify(trDraftOf(a, x.lang)));
+}); if (CUR === 'articles' && d.drafts?.length) rerender(); }).catch(() => {}), 0);
+
+/* ---------- เรือ ---------- */
+function trBoat(slug) {
+  const b = bySlug(slug), jobs = [];
+  boatI18nFields(b).filter(Boolean).forEach(o => { const th = String(o.th || '').trim(), en = String(o.en || '').trim(); if (th && !en) jobs.push({ o, from: 'th', to: 'en' }); else if (en && !th) jobs.push({ o, from: 'en', to: 'th' }); });
+  if (!jobs.length) return toast('ไม่มีช่องที่ว่างให้แปล');
+  trConfirm(`แปลช่องที่ว่างของเรือ ${esc(b.name)}`, trChars(jobs.map(j => j.o[j.from])), `${jobs.length} ช่อง`, 'ตรวจและแก้คำแปลได้ในหน้าต่างถัดไป ก่อนใส่เข้าหน้าเรือ').then(ok => {
+    if (!ok) return; toast('กำลังแปล…');
+    const groups = ['th', 'en'].map(f => jobs.filter(j => j.from === f)).filter(g => g.length);
+    Promise.all(groups.map(g => api('POST', 'translate', { texts: g.map(j => j.o[j.from]), from: g[0].from, to: g[0].to, what: `เรือ ${b.name}` })
+      .then(r => { g.forEach((j, i) => { j.out = trDec(r.out[i]); }); return r; })))
+      .then(rs => { TRU.d = rs[rs.length - 1].usage; TRU.at = Date.now(); trBoatReview(slug, jobs); }).catch(fail);
+  });
+}
+function trBoatReview(slug, jobs) {
+  window.__trJobs = jobs;
+  openModal(`<div class="p-5 grid gap-3 max-h-[80vh] overflow-auto"><p class="font-medium">ตรวจคำแปลก่อนใช้ · ${jobs.length} ช่อง</p><p class="text-[12px] text-muted">ซ้าย = ต้นฉบับ · ขวา = คำแปล แก้ได้เลย · กด “ใช้คำแปล” แล้วระบบบันทึกเข้าหน้าเรือ</p>
+    ${jobs.map((j, i) => `<div class="grid sm:grid-cols-2 gap-2 border-t border-line pt-3"><p class="text-[12px] text-muted"><span class="lang-b ok mr-1">${j.from.toUpperCase()}</span>${esc(j.o[j.from])}</p><textarea id="trj${i}" class="inp !h-auto py-2" rows="2">${esc(j.out || '')}</textarea></div>`).join('')}
+    <div class="flex justify-end gap-2 sticky bottom-0 bg-white pt-3"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" onclick="trBoatApply('${slug}')"><i data-lucide="check" class="w-3.5 h-3.5"></i>ใช้คำแปล</button></div></div>`);
+  icons();
+}
+function trBoatApply(slug) {
+  (window.__trJobs || []).forEach((j, i) => { const v = $('#trj' + i)?.value.trim(); if (v) j.o[j.to] = v; });
+  closeModal(); $('#langBar')?.remove(); vBoatEdit(slug); toast('ใส่คำแปลแล้ว · บันทึกอัตโนมัติ');
+}
+{ const _alb = addLangBar; addLangBar = function (b) {
+  _alb(b);
+  const bar = $('#langBar'); if (!bar || bar.querySelector('.tr-btn') || !can('boats')) return;
+  const empty = boatI18nFields(b).filter(Boolean).some(o => !String(o.th || '').trim() !== !String(o.en || '').trim());
+  if (empty) { bar.insertAdjacentHTML('beforeend', `<button class="btn btn-o tr-btn" onclick="trBoat('${b.slug}')"><i data-lucide="languages" class="w-3.5 h-3.5"></i>แปลช่องที่ว่างอัตโนมัติ</button>`); icons(); }
+}; }
+
+/* ---------- วิเคราะห์เว็บไซต์ → เชื่อมต่อ API: โควตาการแปล ---------- */
+function trCard() {
+  if (!TRU.d) { trUsage().then(() => { if (CUR === 'analytics' && GA.tab === 'api') vAnalytics(); }).catch(() => {}); return '<div class="card p-5 mt-4 text-muted text-[12.5px]">กำลังโหลดโควตาการแปล…</div>'; }
+  const u = TRU.d;
+  return `<div class="card p-5 mt-4"><div class="flex items-center gap-2"><i data-lucide="languages" class="w-5 h-5 text-maroon"></i><p class="font-medium">ระบบแปลอัตโนมัติ · Google Cloud Translation</p><span class="lang-b ${u.enabled ? 'ok' : 'low'} ml-auto">${u.enabled ? 'พร้อมใช้' : 'ยังไม่พร้อม'}</span></div>
+    <div class="mt-4">${trMeter(u)}</div>
+    <p class="lbl mt-4">ประวัติการแปลเดือนนี้</p><ul class="text-[12px] grid gap-1.5 mt-1">${u.log.slice(0, 15).map(l => `<li class="flex justify-between gap-3"><span class="truncate">${new Date(l.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(l.user)} · ${esc(l.what)} <span class="text-muted">${l.from.toUpperCase()}→${l.to.toUpperCase()}</span></span><span class="tnum shrink-0 ${l.chars < 0 ? 'text-[#1e7a46]' : ''}">${nf(l.chars)}</span></li>`).join('') || '<li class="text-muted">ยังไม่มีการแปล</li>'}</ul></div>`;
+}
+{ const _gb = ggBody; ggBody = function () { const h = _gb(); return GA.tab === 'api' ? h + trCard() : h; }; }
 
 /* ---------- start: the server already checked the session ---------- */
 (function start() {

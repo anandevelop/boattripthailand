@@ -25,9 +25,10 @@ function serviceAccount(): SA | null {
   return saCache;
 }
 
-const SCOPES = 'https://www.googleapis.com/auth/analytics.readonly https://www.googleapis.com/auth/webmasters.readonly';
+// read-only analytics + Search Console, and Cloud Translation (admin auto-translate, capped in src/lib/translate.ts)
+const SCOPES = 'https://www.googleapis.com/auth/analytics.readonly https://www.googleapis.com/auth/webmasters.readonly https://www.googleapis.com/auth/cloud-translation';
 let token: { v: string; exp: number } | null = null;
-async function accessToken() {
+export async function accessToken() {
   if (token && token.exp > Date.now() + 60_000) return token.v;
   const sa = serviceAccount(); if (!sa) throw new GoogleError('no_key', 'ยังไม่ได้ใส่กุญแจ service account');
   const now = Math.floor(Date.now() / 1000), b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');

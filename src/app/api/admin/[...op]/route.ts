@@ -15,6 +15,7 @@ import { cleanSeo, SEO_KEY } from '@/lib/seo';
 import { analyticsData } from '@/lib/analytics';
 import { googleData } from '@/lib/google';
 import { pageSpeed } from '@/lib/pagespeed';
+import { deleteDraft, listDrafts, QuotaError, saveDraft, translate, usage as trUsage } from '@/lib/translate';
 import { audienceFile, cleanMarketing, conversionStatus, MKT_KEY } from '@/lib/marketing';
 
 /**
@@ -382,6 +383,32 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
   }
   try {
     if (a === 'boot' && method === 'GET') return json(await adminBoot(me));
+    if (a === 'translate') {   // auto-translate (Google) with a monthly character cap — src/lib/translate.ts
+      if (!can(me, 'content') && !can(me, 'boats')) throw new HttpError(403, 'ไม่มีสิทธิ์ใช้ระบบแปล');
+      if (!b0 && method === 'GET') return json(await trUsage());
+      if (b0 === 'drafts' && !c0 && method === 'GET') return json({ drafts: await listDrafts() });
+      if (b0 === 'drafts' && method === 'POST') {
+        const id = str(body.id, 20), lang = str(body.lang, 5);
+        if (!/^\d+$/.test(id) || !/^(th|en|ru|zh)$/.test(lang)) throw new HttpError(400, 'ข้อมูลไม่ถูกต้อง');
+        if (c0 === 'delete') await deleteDraft('article', id, lang);
+        else { if (JSON.stringify(body.value ?? null).length > 1_500_000) throw new HttpError(400, 'ใหญ่เกินไป'); await saveDraft('article', id, lang, body.value ?? {}); }
+        return json({ ok: true });
+      }
+      if (!b0 && method === 'POST') {
+        const texts = Array.isArray(body.texts) ? body.texts.map(t => (typeof t === 'string' ? t : '')).slice(0, 3000) : [];
+        const from = str(body.from, 5), to = str(body.to, 5), what = str(body.what, 120) || 'แปลอัตโนมัติ';
+        if (!/^(th|en|ru|zh)$/.test(from) || !/^(th|en|ru|zh)$/.test(to) || from === to) throw new HttpError(400, 'ภาษาไม่ถูกต้อง');
+        if (texts.join('').length > 150_000) throw new HttpError(400, 'ข้อความยาวเกินไปสำหรับการแปลครั้งเดียว');
+        try {
+          const r = await translate(texts, from, to, { html: body.html === true, user: me.name, what });
+          if (r.chars) await audit(actor(me), { action: 'update', entity: 'translate', ref: what, label: `แปลอัตโนมัติ ${from.toUpperCase()} → ${to.toUpperCase()} · ${what}`, changes: [{ f: 'ตัวอักษรที่ใช้', from: null, to: r.chars.toLocaleString() }] });
+          return json({ out: r.out, chars: r.chars, usage: await trUsage() });
+        } catch (e) {
+          if (e instanceof QuotaError) throw new HttpError(429, e.message);
+          throw new HttpError(502, 'แปลไม่สำเร็จ: ' + (e instanceof Error ? e.message : String(e)));
+        }
+      }
+    }
     if (a === 'analytics' && b0 === 'pagespeed' && method === 'GET') { await need(me, 'seo'); const q = new URL(req.url).searchParams; return json(await pageSpeed(q.get('strategy') === 'desktop' ? 'desktop' : 'mobile', q.get('refresh') === '1')); }
     if (a === 'analytics' && b0 === 'google' && method === 'GET') { await need(me, 'seo'); const q = new URL(req.url).searchParams, d = Number(q.get('days')); return json(await googleData([7, 28, 90].includes(d) ? d : 28, q.get('refresh') === '1')); }
     if (a === 'analytics' && method === 'GET') { await need(me, 'seo'); const d = Number(new URL(req.url).searchParams.get('days')); return json(await analyticsData([7, 28, 90].includes(d) ? d : 28)); }
