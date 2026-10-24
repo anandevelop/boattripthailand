@@ -10,7 +10,8 @@ rl._writeToOutput = s => { if (s.includes('วาง')) rl.output.write(s); else
 rl.question('วาง Gemini API key แล้วกด Enter: ', key => {
   rl.close(); console.log('');
   key = key.trim();
-  if (!/^[A-Za-z0-9_-]{30,}$/.test(key)) { console.error('รูปแบบ key ไม่ถูกต้อง (ควรขึ้นต้นด้วย AIza…)'); process.exit(1); }
+  // AI Studio keys: classic "AIza…" or the newer "AQ.…" format (contains dots)
+  if (!/^[A-Za-z0-9._-]{30,}$/.test(key)) { console.error('รูปแบบ key ไม่ถูกต้อง (ควรขึ้นต้นด้วย AIza… หรือ AQ.…)'); process.exit(1); }
   let env = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
   const set = (k, v) => { env = new RegExp(`^${k}=.*$`, 'm').test(env) ? env.replace(new RegExp(`^${k}=.*$`, 'm'), `${k}=${v}`) : env.replace(/\n*$/, '\n') + `${k}=${v}\n`; };
   if (!/^GEMINI_API_KEY=/m.test(env)) env = env.replace(/\n*$/, '\n') + '\n# Auto-translate (Gemini API free tier — project without billing)\n';
