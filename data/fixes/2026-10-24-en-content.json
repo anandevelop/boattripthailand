@@ -1,0 +1,184 @@
+{
+ "note": "2026-10-24 EN content cleanup (WordPress import leftovers). Applied to data/posts.json and, via scripts/fix-en-content.ts, to the database.",
+ "body": [
+  [
+   1018,
+   "นี่คือฉบับแปลบทส่งท้ายที่เน้นการโน้มน้าวใจ (Persuasive) และปิดท้ายด้วยการกระตุ้นให้ลูกค้าตัดสินใจ (Call-to-Action) ได้อย่างน่าสนใจครับ",
+   null
+  ],
+  [
+   1066,
+   "<strong>เที่ยวภูเก็ตงบเท่าไหร่ดี</strong> เป็นคำถามที่หลายคนสงสัยก่อนเริ่มวางแผนทริป โดยเฉพาะมือใหม่ที่ยังไม่เคยไปภูเก็ตมาก่อน ",
+   ""
+  ],
+  [
+   1047,
+   "<strong>ดำน้ำใกล้ภูเก็ต</strong> เป็นหนึ่งในกิจกรรมที่นักท่องเที่ยวไม่ควรพลาด เพราะบริเวณทะเลอันดามันรอบภูเก็ตเต็มไปด้วยแนวปะการัง",
+   ""
+  ],
+  [
+   1019,
+   "<br>เพราะการถามให้ชัดตั้งแต่ต้น จะทำให้คุณวางงบได้ตรง เที่ยวสบายใจ และไม่ต้องเจอค่าใช้จ่ายเซอร์ไพรส์หน้างาน",
+   ""
+  ],
+  [
+   1007,
+   "คำว่า “คุ้ม” ของแต่ละคนไม่เหมือนกัน บางคนคุ้มคือจ่ายน้อยที่สุด บางคนคุ้มคือได้พักจริง ไม่เหนื่อย และได้คุณภาพเวลา แต่สำ",
+   ""
+  ],
+  [
+   1006,
+   "16) เวลาออกเรือแนะนำกี่โมงให้ทะเลนิ่งและแสงสวย",
+   "16) What time should the boat depart for calm seas and beautiful light?"
+  ],
+  [
+   1061,
+   "เWhat to do in Phuket for 2 days 1 night?",
+   "What to do in Phuket for 2 days 1 night?"
+  ],
+  [
+   1017,
+   "rather than just rushing through destinations.ากกว่า",
+   "rather than just rushing through destinations."
+  ],
+  [
+   1013,
+   "ก่Before you message a service provider",
+   "Before you message a service provider"
+  ],
+  [
+   1011,
+   "greater flexibility for your trip.กว่า",
+   "greater flexibility for your trip."
+  ],
+  [
+   1011,
+   "ก่Before you decide, try answering these questions:",
+   "Before you decide, try answering these questions:"
+  ]
+ ],
+ "seo": {
+  "1005": {
+   "seoT": "Which Beach Trip Is the Most Comfortable and Worth It?",
+   "seoD": "Which kind of sea trip is the most comfortable, hassle-free and best value in the long run? We compare the main ways to travel to the islands.",
+   "kw": "best way to travel by sea",
+   "excerpt": "Which kind of sea trip is the most comfortable, hassle-free and best value in the long run? We compare the main ways to travel to the islands."
+  },
+  "1013": {
+   "seoT": "First-Time Boat Booking: Checklist Before Paying a Deposit",
+   "seoD": "Booking a boat for the first time? A checklist before you pay the deposit: hidden costs, what's included, routes, departure times and rescheduling terms.",
+   "excerpt": "Booking a boat for the first time? A checklist before you pay the deposit: hidden costs, what's included, routes, departure times and rescheduling terms."
+  },
+  "1030": {
+   "seoT": "Do You Need a Boat With Air Conditioning? Who It’s Best For"
+  },
+  "1031": {
+   "seoD": "Do you need a boat with a bedroom? Who it suits — couples, families, small kids or full-day trips — plus pros, cons and questions to ask before booking.",
+   "kw": "boat with a bedroom",
+   "excerpt": "Do you need a boat with a bedroom? Who it suits — couples, families, small kids or full-day trips — plus pros, cons and questions to ask before booking.",
+   "seoT": "Do You Need a Boat With a Bedroom? Who It’s Best For"
+  },
+  "1034": {
+   "seoD": "Should a boat have a swimming supervisor? Why in-water supervision matters for safety, especially for young children and older guests.",
+   "excerpt": "Should a boat have a swimming supervisor? Why in-water supervision matters for safety, especially for young children and older guests.",
+   "seoT": "Swimming Supervision on a Boat: Is It Necessary?"
+  },
+  "1035": {
+   "seoT": "First Aid Kit on a Boat: What Should Be Included?"
+  },
+  "1036": {
+   "seoT": "Snorkeling Guide: Do You Need One for a Safer Trip?"
+  },
+  "1038": {
+   "seoT": "Weekday Boat Rental: Is It Really Cheaper Than Weekends?"
+  },
+  "1040": {
+   "seoT": "Boat Rental Real Price: Why It Differs From the Website"
+  },
+  "1041": {
+   "seoT": "Boat Fuel Cost: Is It Included in the Rental Price?"
+  },
+  "1042": {
+   "seoT": "Boat Age: Does It Matter When Renting a Boat?"
+  },
+  "1043": {
+   "seoT": "Honeymoon at Sea – An Experience Hotels Can’t Match"
+  },
+  "1045": {
+   "seoT": "Best Month to Visit Phuket: Weather & Sea Compared"
+  },
+  "1046": {
+   "seoT": "10 Beautiful Islands Near Phuket You Must Visit"
+  },
+  "1047": {
+   "seoT": "Snorkeling Near Phuket: Top Andaman Sea Spots"
+  },
+  "1048": {
+   "seoT": "7 Hidden Islands Near Phuket Most Travelers Don’t Know"
+  },
+  "1049": {
+   "seoT": "7 Best Sunset Spots in Phuket"
+  },
+  "1050": {
+   "seoT": "Ocean Activities in Phuket You Should Not Miss"
+  },
+  "1051": {
+   "seoT": "First Time in Phuket Where Should You Go?"
+  },
+  "1052": {
+   "seoT": "Phuket Yacht Charter: How Many Islands in One Day?"
+  },
+  "1053": {
+   "seoT": "Yacht Charter Phuket Islands"
+  },
+  "1054": {
+   "seoT": "Phuket for Couples: 10 Romantic Places to Visit"
+  },
+  "1055": {
+   "seoT": "Phuket Low Season Travel: What to Do in Phuket"
+  },
+  "1056": {
+   "seoT": "Things to Do in Phuket: 10 Experiences Not to Miss"
+  },
+  "1057": {
+   "seoT": "Hidden Gems Phuket: Beautiful Places with Fewer Crowds"
+  },
+  "1058": {
+   "seoT": "Phuket Summer Travel: What to Do in Phuket During Summer"
+  },
+  "1059": {
+   "seoD": "What to do in Phuket during Songkran: festival activities, the best water-fight spots and the atmosphere you shouldn't miss in April.",
+   "excerpt": "What to do in Phuket during Songkran: festival activities, the best water-fight spots and the atmosphere you shouldn't miss in April.",
+   "seoT": "Phuket Songkran: What to Do During the Festival"
+  },
+  "1060": {
+   "seoT": "Half Day Boat Phuket: Best Routes You Can Visit"
+  },
+  "1061": {
+   "seoT": "Phuket 2 Days 1 Night: Best Itinerary for a Short Trip"
+  },
+  "1062": {
+   "seoT": "Phuket Relaxing Trip: Chill Travel Without Activities"
+  },
+  "1063": {
+   "seoD": "When is Phuket's sea most beautiful? The months with clear water, calm waves and the best island-hopping, with a detailed month-by-month guide.",
+   "excerpt": "When is Phuket's sea most beautiful? The months with clear water, calm waves and the best island-hopping, with a detailed month-by-month guide.",
+   "seoT": "Best Time to Visit Phuket: When Is the Sea Most Beautiful?"
+  },
+  "1064": {
+   "seoT": "Phuket Best Area for First Timers: Where to Stay"
+  },
+  "1065": {
+   "seoT": "Phuket Luxury Travel: How to Upgrade Your Trip"
+  },
+  "1066": {
+   "seoT": "Phuket Travel Budget: How Much Does It Cost"
+  },
+  "1067": {
+   "seoT": "Phuket Without Car: How to Travel Around Easily"
+  },
+  "1068": {
+   "seoT": "Phuket Yacht Day Trip: Is It Worth It?"
+  }
+ }
+}
