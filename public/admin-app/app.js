@@ -4386,7 +4386,7 @@ rerender = function () { route(); };
 PAGES.forEach(p => { if (p[0] === 'bookings') p[1] = 'ลีด'; });
 
 /* =====================================================================
-   แปลอัตโนมัติ (Google Cloud Translation) + ตัวนับโควตารายเดือน — เซิร์ฟเวอร์: src/lib/translate.ts
+   แปลอัตโนมัติ (Gemini API แบบฟรี) + ตัวนับโควตา — เซิร์ฟเวอร์: src/lib/translate.ts
    · ระบบหยุดแปลเองก่อนถึงโควตาฟรีของ Google (เพดาน TRANSLATE_MONTHLY_LIMIT, ค่าเริ่มต้น 450,000 ตัวอักษร)
    · บทความ: คำแปลขึ้นสถานะ “รอตรวจ” เก็บเป็นร่างบนเซิร์ฟเวอร์ ไม่แสดงบนเว็บจนกว่าจะกดอนุมัติ
    · เรือ: ตรวจ/แก้คำแปลในหน้าต่างก่อนใส่เข้าหน้าเรือ
@@ -4404,15 +4404,15 @@ function trMeter(u, add = 0) {
   const tone = after > lim ? '#a3222c' : after > lim * .8 ? '#b26a00' : '#1e7a46';
   return `<div><div class="flex flex-wrap justify-between gap-2 text-[12px]"><span>ใช้ไปเดือนนี้ <b class="tnum">${nf(used)}</b>${add ? ` + ครั้งนี้ <b class="tnum">${nf(add)}</b>` : ''} ตัวอักษร</span><span class="tnum text-muted">เพดาน ${nf(u.limit)} · ฟรี ${nf(u.free)}</span></div>
     <div class="mt-1.5 h-2 rounded-full bg-sand overflow-hidden flex"><div style="width:${pct(used)}%;background:${tone}"></div>${add ? `<div style="width:${Math.max(0, pct(after) - pct(used))}%;background:${tone};opacity:.45"></div>` : ''}</div>
-    <p class="text-[11px] text-muted mt-1">เหลือ ${nf(Math.max(0, u.limit - used))} ตัวอักษร · รีเซ็ตวันที่ 1 ของทุกเดือน · ถึงเพดานแล้วระบบหยุดแปลเอง จึงไม่เกินโควตาฟรีของ Google</p></div>`;
+    <p class="text-[11px] text-muted mt-1">เหลือ ${nf(Math.max(0, u.limit - used))} ตัวอักษร · วันนี้แปลไป ${nf(u.reqsToday || 0)}/${nf(u.dailyReq || 0)} ครั้ง · ถึงเพดานแล้วระบบหยุดแปลเอง${u.provider === 'gemini' ? ' · Gemini แบบฟรี ไม่ผูกบัตร จึงไม่มีค่าใช้จ่าย' : ''}</p></div>`;
 }
 /** confirm with an estimate and the monthly meter → resolves true/false */
 function trConfirm(title, chars, detail, note) {
   return trUsage(true).then(u => new Promise(res => {
-    const over = u.chars + chars > u.limit;
+    const over = u.chars + chars > u.limit || (u.reqsToday || 0) >= u.dailyReq;
     window.__trOk = v => { closeModal(); res(v); };
     openModal(`<div class="p-5 grid gap-4"><p class="font-medium">${title}</p><p class="text-[12.5px] text-muted">${detail}</p>${trMeter(u, chars)}
-      ${!u.enabled ? '<p class="text-[12.5px] text-[#a3222c]">ยังไม่พร้อมใช้: ยังไม่ได้ใส่กุญแจ Google หรือปิดระบบแปลไว้</p>' : over ? '<p class="text-[12.5px] text-[#a3222c]">เกินเพดานเดือนนี้ · แปลได้อีกครั้งวันที่ 1 เดือนหน้า</p>' : ''}
+      ${!u.enabled ? '<p class="text-[12.5px] text-[#a3222c]">ยังไม่พร้อมใช้: ยังไม่ได้ใส่ GEMINI_API_KEY ใน .env หรือปิดระบบแปลไว้</p>' : (u.reqsToday || 0) >= u.dailyReq ? '<p class="text-[12.5px] text-[#a3222c]">วันนี้แปลครบโควตาแล้ว · แปลต่อได้พรุ่งนี้</p>' : over ? '<p class="text-[12.5px] text-[#a3222c]">เกินเพดานเดือนนี้ · แปลได้อีกครั้งวันที่ 1 เดือนหน้า</p>' : ''}
       <p class="text-[11.5px] text-muted">${note}</p>
       <div class="flex justify-end gap-2"><button class="btn btn-o" onclick="__trOk(false)">ยกเลิก</button><button class="btn btn-p" ${over || !u.enabled ? 'disabled' : ''} onclick="__trOk(true)"><i data-lucide="languages" class="w-3.5 h-3.5"></i>แปล (~${nf(chars)} ตัวอักษร)</button></div></div>`);
     icons();
@@ -4516,8 +4516,9 @@ function trBoatApply(slug) {
 function trCard() {
   if (!TRU.d) { trUsage().then(() => { if (CUR === 'analytics' && GA.tab === 'api') vAnalytics(); }).catch(() => {}); return '<div class="card p-5 mt-4 text-muted text-[12.5px]">กำลังโหลดโควตาการแปล…</div>'; }
   const u = TRU.d;
-  return `<div class="card p-5 mt-4"><div class="flex items-center gap-2"><i data-lucide="languages" class="w-5 h-5 text-maroon"></i><p class="font-medium">ระบบแปลอัตโนมัติ · Google Cloud Translation</p><span class="lang-b ${u.enabled ? 'ok' : 'low'} ml-auto">${u.enabled ? 'พร้อมใช้' : 'ยังไม่พร้อม'}</span></div>
+  return `<div class="card p-5 mt-4"><div class="flex items-center gap-2"><i data-lucide="languages" class="w-5 h-5 text-maroon"></i><p class="font-medium">ระบบแปลอัตโนมัติ · ${u.provider === 'gemini' ? 'Gemini (ฟรี)' : u.provider === 'google' ? 'Google Cloud Translation' : 'ยังไม่ได้เชื่อม'}</p><span class="lang-b ${u.enabled ? 'ok' : 'low'} ml-auto">${u.enabled ? 'พร้อมใช้' : 'ยังไม่พร้อม'}</span></div>
     <div class="mt-4">${trMeter(u)}</div>
+    ${u.model ? `<p class="text-[11.5px] text-muted mt-2">โมเดล ${esc(u.model)}${u.provider === 'gemini' ? ' · ข้อความที่ส่งไปแปลอาจถูก Google ใช้ปรับปรุงระบบ จึงใช้แปลเฉพาะเนื้อหาเว็บ ไม่ใช้กับข้อมูลลูกค้า' : ''}</p>` : '<p class="text-[11.5px] text-muted mt-2">ใส่ GEMINI_API_KEY (จาก aistudio.google.com) ใน .env แล้วรีสตาร์ต</p>'}
     <p class="lbl mt-4">ประวัติการแปลเดือนนี้</p><ul class="text-[12px] grid gap-1.5 mt-1">${u.log.slice(0, 15).map(l => `<li class="flex justify-between gap-3"><span class="truncate">${new Date(l.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(l.user)} · ${esc(l.what)} <span class="text-muted">${l.from.toUpperCase()}→${l.to.toUpperCase()}</span></span><span class="tnum shrink-0 ${l.chars < 0 ? 'text-[#1e7a46]' : ''}">${nf(l.chars)}</span></li>`).join('') || '<li class="text-muted">ยังไม่มีการแปล</li>'}</ul></div>`;
 }
 { const _gb = ggBody; ggBody = function () { const h = _gb(); return GA.tab === 'api' ? h + trCard() : h; }; }
