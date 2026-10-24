@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 /**
  * 1. 301 redirects from the old WordPress URLs (table `redirects`, cached 5 min)
  * 2. trailing slash → none, /th/xxx → /xxx (Thai is the default language, English lives under /en)
+ * 3. โหมดปิดปรับปรุง: visitors get a 503 page with the contact channels; signed-in staff see the site
  */
 export const config = { runtime: 'nodejs', matcher: ['/((?!_next/|api/|admin|boats/|brand/|img/|site/|site-data.js|uploads/|feeds/|icon|favicon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|js|css|map)$).*)'] };
 
@@ -33,5 +34,12 @@ export async function middleware(req: NextRequest) {
 
   if (url.pathname.length > 1 && url.pathname.endsWith('/')) return NextResponse.redirect(new URL(url.pathname.replace(/\/+$/, '') + url.search, url), 308);
   if (key === '/th' || key.startsWith('/th/')) return NextResponse.redirect(new URL((key.slice(3) || '/') + url.search, url), 301);
+
+  const { maintenance, isStaff, maintenancePage } = await import('@/lib/maintenance');
+  const m = await maintenance();
+  if (m.on && !(await isStaff(req.cookies.get('btt_admin')?.value /* = SESSION_COOKIE in lib/auth */))) {
+    return new NextResponse(maintenancePage(m, key === '/en' || key.startsWith('/en/')), { status: 503,
+      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Retry-After': '3600', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
+  }
   return NextResponse.next();
 }
