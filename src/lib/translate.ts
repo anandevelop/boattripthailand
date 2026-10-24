@@ -2,15 +2,14 @@ import 'server-only';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { settings } from '@/db/schema';
-import { accessToken, GoogleError, googleStatus } from './google';
+import { GoogleError } from './google';
 
 /**
  * Admin auto-translate with hard caps.
  *
- * Provider (TRANSLATE_PROVIDER, default "gemini" when GEMINI_API_KEY is set):
- *  - gemini  → Gemini API free tier (Google AI Studio key, NO billing account on that project → cannot be charged).
- *              Free-tier content may be used by Google to improve its products: only public website text is sent.
- *  - google  → Google Cloud Translation v2 via the analytics service account (needs billing; kept for later).
+ * Provider: Gemini API free tier only (GEMINI_API_KEY from Google AI Studio, NO billing account on that
+ * project → cannot be charged). Free-tier content may be used by Google to improve its products: only public
+ * website text is sent.
  *
  * Caps (checked and reserved BEFORE calling the provider, under a row lock, given back if the call fails):
  *  - TRANSLATE_MONTHLY_LIMIT characters / Thailand month (default 450,000)
@@ -30,9 +29,7 @@ const month = () => thNow().slice(0, 7), day = () => thNow().slice(0, 10);
 /** characters as counted everywhere (tags included) */
 export const countChars = (texts: string[]) => texts.reduce((n, t) => n + [...t].length, 0);
 
-export function provider(): 'gemini' | 'google' | null {
-  const p = process.env.TRANSLATE_PROVIDER;
-  if (p === 'google') return googleStatus().key ? 'google' : null;
+export function provider(): 'gemini' | null {
   return process.env.GEMINI_API_KEY ? 'gemini' : null;
 }
 const LANG_NAME: Record<string, string> = { th: 'Thai', en: 'English', ru: 'Russian', zh: 'Simplified Chinese' };
@@ -43,7 +40,7 @@ export async function usage() {
   const cur = u && u.month === m ? u : { month: m, chars: 0, log: [] };
   const p = provider();
   return { month: cur.month, chars: cur.chars, log: cur.log, limit: LIMIT, free: FREE_TIER, reqsToday: cur.day === d ? cur.reqs ?? 0 : 0, dailyReq: DAILY_REQ,
-    provider: p, model: p === 'gemini' ? GEMINI_MODEL : p === 'google' ? 'Cloud Translation v2' : null, enabled: !!p && process.env.TRANSLATE_ENABLED !== 'false' };
+    provider: p, model: p ? GEMINI_MODEL : null, enabled: !!p && process.env.TRANSLATE_ENABLED !== 'false' };
 }
 
 export class QuotaError extends Error {}
@@ -101,15 +98,6 @@ Return ONLY a JSON array of strings with exactly the same number of items, in th
   }
 }
 
-async function cloudTranslate(texts: string[], from: string, to: string, html: boolean): Promise<string[]> {
-  const r = await fetch('https://translation.googleapis.com/language/translate/v2', {
-    method: 'POST', headers: { authorization: 'Bearer ' + await accessToken(), 'content-type': 'application/json' },
-    body: JSON.stringify({ q: texts, source: from, target: to, format: html ? 'html' : 'text' }), signal: AbortSignal.timeout(60_000) });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new GoogleError(r.status === 403 ? 'forbidden' : r.status === 429 ? 'quota' : 'api', j?.error?.message || `Translation ${r.status}`);
-  return (j.data?.translations ?? []).map((x: { translatedText: string }) => x.translatedText);
-}
-
 /** Translate texts (order kept, empty strings stay empty). `html` keeps tags, so article blocks stay intact. */
 export async function translate(texts: string[], from: string, to: string, opts: { html?: boolean; user: string; what: string }) {
   const p = provider();
@@ -117,13 +105,13 @@ export async function translate(texts: string[], from: string, to: string, opts:
   const idx = texts.map((t, i) => (t && t.trim() ? i : -1)).filter(i => i >= 0);
   const src = idx.map(i => texts[i]), n = countChars(src);
   if (!n) return { out: texts.map(() => ''), chars: 0 };
-  const plan = p === 'gemini' ? batches(src) : [src.map((_, i) => i)];
+  const plan = batches(src);
   const giveBack = await reserve(n, plan.length, { user: opts.user, what: opts.what.slice(0, 120), from, to });
   const done: string[] = new Array(src.length);
   let ok = 0;
   try {
     for (const b of plan) {
-      const res = p === 'gemini' ? await gemini(b.map(i => src[i]), from, to, !!opts.html) : await cloudTranslate(b.map(i => src[i]), from, to, !!opts.html);
+      const res = await gemini(b.map(i => src[i]), from, to, !!opts.html);
       if (res.length !== b.length) throw new GoogleError('api', 'คำแปลกลับมาไม่ครบ');
       b.forEach((i, k) => { done[i] = res[k]; }); ok++;
     }

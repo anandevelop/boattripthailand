@@ -4404,7 +4404,7 @@ function trMeter(u, add = 0) {
   const tone = after > lim ? '#a3222c' : after > lim * .8 ? '#b26a00' : '#1e7a46';
   return `<div><div class="flex flex-wrap justify-between gap-2 text-[12px]"><span>ใช้ไปเดือนนี้ <b class="tnum">${nf(used)}</b>${add ? ` + ครั้งนี้ <b class="tnum">${nf(add)}</b>` : ''} ตัวอักษร</span><span class="tnum text-muted">เพดาน ${nf(u.limit)} · ฟรี ${nf(u.free)}</span></div>
     <div class="mt-1.5 h-2 rounded-full bg-sand overflow-hidden flex"><div style="width:${pct(used)}%;background:${tone}"></div>${add ? `<div style="width:${Math.max(0, pct(after) - pct(used))}%;background:${tone};opacity:.45"></div>` : ''}</div>
-    <p class="text-[11px] text-muted mt-1">เหลือ ${nf(Math.max(0, u.limit - used))} ตัวอักษร · วันนี้แปลไป ${nf(u.reqsToday || 0)}/${nf(u.dailyReq || 0)} ครั้ง · ถึงเพดานแล้วระบบหยุดแปลเอง${u.provider === 'gemini' ? ' · Gemini แบบฟรี ไม่ผูกบัตร จึงไม่มีค่าใช้จ่าย' : ''}</p></div>`;
+    <p class="text-[11px] text-muted mt-1">เหลือ ${nf(Math.max(0, u.limit - used))} ตัวอักษร · วันนี้แปลไป ${nf(u.reqsToday || 0)}/${nf(u.dailyReq || 0)} ครั้ง · ถึงเพดานแล้วระบบหยุดแปลเอง${u.provider ? ' · Gemini แบบฟรี ไม่ผูกบัตร จึงไม่มีค่าใช้จ่าย' : ''}</p></div>`;
 }
 /** confirm with an estimate and the monthly meter → resolves true/false */
 function trConfirm(title, chars, detail, note) {
@@ -4517,11 +4517,33 @@ function trBoatApply(slug) {
 function trCard() {
   if (!TRU.d) { trUsage().then(() => { if (CUR === 'analytics' && GA.tab === 'api') vAnalytics(); }).catch(() => {}); return '<div class="card p-5 mt-4 text-muted text-[12.5px]">กำลังโหลดโควตาการแปล…</div>'; }
   const u = TRU.d;
-  return `<div class="card p-5 mt-4"><div class="flex items-center gap-2"><i data-lucide="languages" class="w-5 h-5 text-maroon"></i><p class="font-medium">ระบบแปลอัตโนมัติ · ${u.provider === 'gemini' ? 'Gemini (ฟรี)' : u.provider === 'google' ? 'Google Cloud Translation' : 'ยังไม่ได้เชื่อม'}</p><span class="lang-b ${u.enabled ? 'ok' : 'low'} ml-auto">${u.enabled ? 'พร้อมใช้' : 'ยังไม่พร้อม'}</span></div>
+  return `<div class="card p-5 mt-4"><div class="flex items-center gap-2"><i data-lucide="languages" class="w-5 h-5 text-maroon"></i><p class="font-medium">ระบบแปลอัตโนมัติ · ${u.provider ? 'Gemini (ฟรี)' : 'ยังไม่ได้เชื่อม'}</p><span class="lang-b ${u.enabled ? 'ok' : 'low'} ml-auto">${u.enabled ? 'พร้อมใช้' : 'ยังไม่พร้อม'}</span></div>
     <div class="mt-4">${trMeter(u)}</div>
-    ${u.model ? `<p class="text-[11.5px] text-muted mt-2">โมเดล ${esc(u.model)}${u.provider === 'gemini' ? ' · ข้อความที่ส่งไปแปลอาจถูก Google ใช้ปรับปรุงระบบ จึงใช้แปลเฉพาะเนื้อหาเว็บ ไม่ใช้กับข้อมูลลูกค้า' : ''}</p>` : '<p class="text-[11.5px] text-muted mt-2">ใส่ GEMINI_API_KEY (จาก aistudio.google.com) ใน .env แล้วรีสตาร์ต</p>'}
+    ${u.model ? `<p class="text-[11.5px] text-muted mt-2">โมเดล ${esc(u.model)}${u.provider ? ' · ข้อความที่ส่งไปแปลอาจถูก Google ใช้ปรับปรุงระบบ จึงใช้แปลเฉพาะเนื้อหาเว็บ ไม่ใช้กับข้อมูลลูกค้า' : ''}</p>` : '<p class="text-[11.5px] text-muted mt-2">ใส่ GEMINI_API_KEY (จาก aistudio.google.com) ใน .env แล้วรีสตาร์ต</p>'}
     <p class="lbl mt-4">ประวัติการแปลเดือนนี้</p><ul class="text-[12px] grid gap-1.5 mt-1">${u.log.slice(0, 15).map(l => `<li class="flex justify-between gap-3"><span class="truncate">${new Date(l.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(l.user)} · ${esc(l.what)} <span class="text-muted">${l.from.toUpperCase()}→${l.to.toUpperCase()}</span></span><span class="tnum shrink-0 ${l.chars < 0 ? 'text-[#1e7a46]' : ''}">${nf(l.chars)}</span></li>`).join('') || '<li class="text-muted">ยังไม่มีการแปล</li>'}</ul></div>`;
 }
+
+/* ---------- แจ้งเตือนโควตาการแปล: ใกล้เต็ม (80%) / เต็มแล้ว · เตือนในแอดมินวันละครั้ง ---------- */
+function trWarn(u) {
+  if (!u || !u.enabled) return '';
+  const m = u.chars / (u.limit || 1), d = (u.reqsToday || 0) / (u.dailyReq || 1);
+  if (m >= 1) return 'โควตาแปลเดือนนี้เต็มแล้ว · แปลได้อีกครั้งวันที่ 1 เดือนหน้า';
+  if (d >= 1) return 'วันนี้แปลครบ ' + nf(u.dailyReq) + ' ครั้งแล้ว · แปลต่อได้พรุ่งนี้';
+  if (m >= .8) return 'โควตาแปลเดือนนี้ใช้ไป ' + Math.round(m * 100) + '% (เหลือ ' + nf(Math.max(0, u.limit - u.chars)) + ' ตัวอักษร)';
+  if (d >= .8) return 'วันนี้แปลไป ' + nf(u.reqsToday) + '/' + nf(u.dailyReq) + ' ครั้ง ใกล้ครบโควตารายวัน';
+  return '';
+}
+function trCheck() {
+  if (typeof can === 'function' && !can('content') && !can('boats')) return;
+  trUsage(true).then(u => {
+    const w = trWarn(u); if (!w) return;
+    const k = 'trWarn:' + new Date().toISOString().slice(0, 10) + ':' + w.slice(0, 24);
+    try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (e) {}
+    toastErr('⚠ ' + w);
+  }).catch(() => {});
+}
+setTimeout(trCheck, 1500);
+{ const _tc = trCard; trCard = function () { const h = _tc(), w = trWarn(TRU.d); return w ? h.replace('<div class="mt-4">', `<p class="mt-3 text-[12.5px] rounded-lg px-3 py-2 bg-[#fff7f6] text-[#a3222c] ring-1 ring-[#f3c7c2]">${w}</p><div class="mt-4">`) : h; }; }
 { const _gb = ggBody; ggBody = function () { const h = _gb(); return GA.tab === 'api' ? h + trCard() : h; }; }
 
 /* ---------- start: the server already checked the session ---------- */
