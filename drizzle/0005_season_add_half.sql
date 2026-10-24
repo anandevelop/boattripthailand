@@ -1,0 +1,1 @@
+ALTER TABLE "season_calendars" ADD COLUMN "add_half" integer DEFAULT 0 NOT NULL;

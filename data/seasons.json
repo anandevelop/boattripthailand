@@ -1,0 +1,314 @@
+{
+ "calendars": [
+  {
+   "id": "std",
+   "name": "มาตรฐาน (Low พ.ค.–ต.ค.)",
+   "kind": "season",
+   "ranges": {
+    "low": [
+     [
+      "05-01",
+      "10-31"
+     ]
+    ],
+    "high": [
+     [
+      "11-01",
+      "04-30"
+     ]
+    ],
+    "peak": [
+     [
+      "12-20",
+      "01-10"
+     ]
+    ]
+   },
+   "src": "LOW 1 MAY – 31 OCT · HIGH 1 NOV – 30 APR · PEAK 20 DEC – 10 JAN"
+  },
+  {
+   "id": "may15",
+   "name": "Low 15 พ.ค.–15 ต.ค.",
+   "kind": "season",
+   "ranges": {
+    "low": [
+     [
+      "05-15",
+      "10-15"
+     ]
+    ],
+    "high": [
+     [
+      "11-01",
+      "12-19"
+     ],
+     [
+      "01-01",
+      "04-30"
+     ]
+    ],
+    "peak": [
+     [
+      "12-20",
+      "01-10"
+     ]
+    ]
+   },
+   "src": "LOW 15 MAY – 15 OCT · HIGH 1 NOV – 19 DEC / 1 JAN – 30 APR · PEAK 20 DEC – 10 JAN"
+  },
+  {
+   "id": "peak15",
+   "name": "Peak 15 ธ.ค.–15 ม.ค.",
+   "kind": "season",
+   "ranges": {
+    "low": [
+     [
+      "05-01",
+      "10-31"
+     ]
+    ],
+    "high": [
+     [
+      "11-01",
+      "04-30"
+     ]
+    ],
+    "peak": [
+     [
+      "12-15",
+      "01-15"
+     ]
+    ]
+   },
+   "src": "LOW MAY – OCT · HIGH NOV – APR · PEAK 15 DEC – 15 JAN"
+  },
+  {
+   "id": "peak20j",
+   "name": "Peak 20 ธ.ค.–20 ม.ค.",
+   "kind": "season",
+   "ranges": {
+    "low": [
+     [
+      "05-01",
+      "10-31"
+     ]
+    ],
+    "high": [
+     [
+      "11-01",
+      "04-30"
+     ]
+    ],
+    "peak": [
+     [
+      "12-20",
+      "01-20"
+     ]
+    ]
+   },
+   "src": "LOW MAY – OCT · HIGH NOV – APRIL · PEAK 20 DEC – 20 JAN"
+  },
+  {
+   "id": "highpeak",
+   "name": "High / Peak เท่านั้น",
+   "kind": "season",
+   "ranges": {
+    "high": [
+     [
+      "11-01",
+      "04-30"
+     ]
+    ],
+    "peak": [
+     [
+      "12-20",
+      "01-10"
+     ]
+    ]
+   },
+   "src": "HIGH 1 NOV – 30 APR · PEAK 20 DEC – 10 JAN (ไม่มีราคา Low)"
+  },
+  {
+   "id": "cn",
+   "name": "กลุ่ม Super · ฤดูกาลตามเดือน",
+   "kind": "season",
+   "ranges": {
+    "low": [
+     [
+      "03-01",
+      "06-30"
+     ],
+     [
+      "09-01",
+      "11-30"
+     ]
+    ],
+    "high": [
+     [
+      "07-01",
+      "08-31"
+     ],
+     [
+      "12-01",
+      "02-29"
+     ]
+    ]
+   },
+   "special": [
+    {
+     "label": "Chinese National Day",
+     "from": "2025-09-28",
+     "to": "2025-10-07"
+    },
+    {
+     "label": "Chinese New Year",
+     "from": "2026-02-12",
+     "to": "2026-02-26"
+    },
+    {
+     "label": "International Labour Day",
+     "from": "2026-04-28",
+     "to": "2026-05-05"
+    }
+   ],
+   "src": "หัวตารางไม่ระบุวัน · ใช้เดือนจากหมายเหตุ: Low มี.ค.–มิ.ย., ก.ย.–พ.ย. · High ก.ค.–ส.ค., ธ.ค.–ก.พ. · Special Days ตามวันที่ระบุ"
+  },
+  {
+   "id": "cnall",
+   "name": "กลุ่ม Super · ราคาเดียว + ช่วงพิเศษ",
+   "kind": "allyear",
+   "special": [
+    {
+     "label": "Chinese National Day",
+     "from": "2025-09-28",
+     "to": "2025-10-07"
+    },
+    {
+     "label": "Chinese New Year",
+     "from": "2026-02-12",
+     "to": "2026-02-26"
+    },
+    {
+     "label": "International Labour Day",
+     "from": "2026-04-28",
+     "to": "2026-05-05"
+    }
+   ],
+   "src": "ALL YEAR PRICE · SURCHARGE PERIOD (วันชาติจีน, ตรุษจีน, วันแรงงาน)"
+  },
+  {
+   "id": "nye",
+   "name": "ราคาเดียว + 5,000 ช่วงปีใหม่",
+   "kind": "allyear",
+   "add": 5000,
+   "special": [
+    {
+     "label": "ช่วงปีใหม่",
+     "from": "2024-12-24",
+     "to": "2025-01-05"
+    }
+   ],
+   "src": "Surcharge 24 Dec 2024 – 5 Jan 2025 +5,000 THB"
+  },
+  {
+   "id": "op",
+   "name": "ราคาเดียว + 5,000 (20 ธ.ค.–20 ม.ค.)",
+   "kind": "allyear",
+   "add": 5000,
+   "special": [
+    {
+     "label": "ช่วงปีใหม่",
+     "from": "12-20",
+     "to": "01-20"
+    }
+   ],
+   "src": "ALL YEAR EXCEPT 20 DEC – 20 JAN SURCHARGE + 5000 THB"
+  },
+  {
+   "id": "all",
+   "name": "ราคาเดียวทั้งปี",
+   "kind": "allyear",
+   "src": "ALL YEAR / ราคาตามระยะเวลาหรือจำนวนคน"
+  }
+ ],
+ "boats": {
+  "leopard-90-ft": "may15",
+  "splo-74-ft": "all",
+  "vtech-68-ft": "may15",
+  "dean-44-ft": "all",
+  "leopard-40-ft": "all",
+  "silver-craft-33-ft": "all",
+  "r5-47-ft": "all",
+  "r6-39-ft": "all",
+  "leopard-51-ft": "peak15",
+  "ocean-pearl-42-ft": "op",
+  "sambuca-53-ft": "peak15",
+  "azimut-46-ft": "peak15",
+  "pina-colada-40-ft": "peak20j",
+  "cranchi-58-ft": "peak15",
+  "satisfaction-55-ft": "peak15",
+  "princess-65-ft": "peak15",
+  "siam-princess-70-ft": "peak15",
+  "super-y-37-5-ft": "cnall",
+  "super-v-42-1-ft": "cnall",
+  "super-x-55-ft": "cn",
+  "super-s-45-ft": "cn",
+  "super-f-38-ft": "cn",
+  "whisky-48-ft": "all",
+  "vodka-46-ft": "all",
+  "tequlia-37-ft": "all",
+  "cognac-75-ft": "all",
+  "bluewing-44-ft": "nye",
+  "bluemetis-50-ft": "nye",
+  "bon-voyage-50-ft": "nye",
+  "blueket-75-ft": "all",
+  "blueaqua-75-ft": "all",
+  "bluecastle-42-ft": "all",
+  "flyingdolphin3-49-ft": "all",
+  "saawaa-deekaa-47-ft": "all",
+  "mata-44-ft": "all",
+  "silver-54-ft": "all",
+  "miss-red-54-ft": "all",
+  "black-wing-54-ft": "all",
+  "flyingdonphine1-72-ft": "all",
+  "missblue-49-ft": "all",
+  "supermario-indigo-53-ft": "all",
+  "mario-s-brother-indigo-53-ft": "all",
+  "nanea-40-ft": "std",
+  "madam-shadow-33-9-ft": "std",
+  "na-o-33-9-ft": "std",
+  "db37-40-ft": "highpeak",
+  "zoom-37-ft": "std",
+  "vice-38-ft": "all",
+  "aqva-37-ft": "all",
+  "kiri-40-ft": "all",
+  "senna-47-ft": "all",
+  "pepper-47-ft": "all",
+  "coco-40-ft": "all",
+  "tahaa-42-ft": "all",
+  "myra-leopard-47-ft": "all",
+  "summer-47-ft": "all",
+  "lobster-78-ft": "all",
+  "the-origin-90-ft": "all",
+  "lay-layan-45-ft": "all",
+  "aria-blue-71-ft": "std",
+  "pricessariel-78-ft": "std",
+  "orange-princess-54-ft": "std",
+  "pornpinyo-1n": "all",
+  "pornpinyo-speed-catamaran": "all",
+  "pornpinyo-speed-luxury": "all",
+  "pornpinyo-speed-boat": "all",
+  "pornpinyo-3n": "all",
+  "lucky-2n": "all",
+  "dimondsea-2n": "all",
+  "dimondsea-3n": "all"
+ },
+ "colmap": {
+  "super-x-55-ft": [
+   null,
+   "low",
+   "high",
+   "special"
+  ]
+ }
+}

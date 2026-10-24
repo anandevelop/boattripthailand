@@ -1,0 +1,57 @@
+{
+  "_tokens": "Text may use {boats} (number of boats on the site), {maxpax} (largest boat capacity), {from} (lowest price of any boat), {from:yacht} {from:sail} {from:power} {from:speed} {from:longtail} (lowest price of that boat type). Prices follow the visitor's currency.",
+  "hero": {
+    "kicker": { "th": "Yacht Charter ภูเก็ต", "en": "Yacht Charter Phuket" },
+    "title": { "th": "ล่องทะเลอันดามัน", "en": "Sail the Andaman" },
+    "words": [
+      { "th": "ในแบบของคุณ", "en": "your way" },
+      { "th": "กับคนที่คุณรัก", "en": "with family" },
+      { "th": "กับเพื่อนทั้งแก๊ง", "en": "with friends" },
+      { "th": "แบบส่วนตัว", "en": "in private" }
+    ],
+    "sub": { "th": "เรือส่วนตัว {boats} ลำ · ภูเก็ต กระบี่ พังงา", "en": "{boats} private boats · Phuket, Krabi, Phang Nga" },
+    "cta1": { "th": "ดูเรือทั้งหมด", "en": "Browse the fleet" },
+    "cta2": { "th": "ให้เราช่วยเลือก", "en": "Smart Match" }
+  },
+  "promo": {
+    "tag": { "th": "OVERNIGHT CHARTER", "en": "OVERNIGHT CHARTER" },
+    "title": { "th": "นอนกลางทะเล ตื่นมากับพระอาทิตย์ขึ้นที่อันดามัน", "en": "Sleep on the sea, wake up to an Andaman sunrise" },
+    "sub": { "th": "แพ็กเกจ 2 วัน 1 คืน บนเรือยอชต์ VTECH 68 ฟุต รวมอาหารทุกมื้อ ค่าอุทยาน และรถรับส่ง", "en": "2 days 1 night aboard the VTECH 68 ft yacht — all meals, park fees and transfers included." },
+    "cta": { "th": "ดูแพ็กเกจ", "en": "View package" },
+    "boat": "vtech-68-ft",
+    "price": 375000,
+    "start": "",
+    "end": ""
+  },
+  "faq": [
+    [
+      { "th": "Yacht charter ภูเก็ตราคาเท่าไหร่?", "en": "How much does a yacht charter in Phuket cost?" },
+      { "th": "ราคาขึ้นกับขนาดเรือ เส้นทาง และฤดูกาล ในโบรชัวร์ของเรา เรือคาตามารันเริ่มต้น {from:sail} สปีดโบ๊ทเริ่ม {from:speed} และเรือยอชต์ส่วนตัวเริ่ม {from:yacht} ต่อทริป (ทั้งลำ) ราคารวมกัปตัน ลูกเรือ ประกันภัย และ VAT 7%", "en": "Prices depend on boat size, route and season. In our brochure, sailing catamarans start at {from:sail}, speedboats at {from:speed} and private motor yachts at {from:yacht} per charter (whole boat), including captain, crew, insurance and 7% VAT." }
+    ],
+    [
+      { "th": "ราคา yacht charter รวมอะไรบ้าง?", "en": "What is included in a yacht charter?" },
+      { "th": "โดยทั่วไปรวมกัปตันและลูกเรือ น้ำมันเชื้อเพลิง อุปกรณ์ดำน้ำตื้น แพดเดิลบอร์ด น้ำดื่ม ผลไม้ ผ้าเย็น ประกันภัย และ VAT 7% ส่วนค่าอุทยานแห่งชาติ ค่าขึ้นเกาะ และรถรับส่ง ขึ้นอยู่กับแต่ละลำ — ดูรายละเอียดได้ในหน้าเรือแต่ละลำ", "en": "Most charters include captain and crew, fuel, snorkelling gear, paddle boards, drinking water, fruit, towels, insurance and 7% VAT. National-park fees, island landing fees and transfers vary by boat — each boat page lists exactly what is and isn’t included." }
+    ],
+    [
+      { "th": "ช่วงไหนเหมาะกับการเช่าเรือยอชต์ในภูเก็ตที่สุด?", "en": "When is the best time for a yacht charter in Phuket?" },
+      { "th": "High Season (พ.ย.–เม.ย.) ทะเลอันดามันสงบและฟ้าใส เหมาะที่สุดสำหรับไปพีพีและเกาะราชา ช่วง Low Season (พ.ค.–ต.ค.) ราคาดีกว่าและยังออกเรือได้เกือบทุกวัน โดยเลือกเส้นทางที่กำบังลม เช่น อ่าวพังงา", "en": "High season (November–April) brings calm, clear Andaman seas — ideal for Phi Phi and Racha. Low season (May–October) offers better rates and most days are still sailable on sheltered routes such as Phang Nga Bay." }
+    ],
+    [
+      { "th": "เช่าเรือยอชต์ได้กี่คน?", "en": "How many guests can join a yacht charter?" },
+      { "th": "ตั้งแต่ 2 คนบนเรือส่วนตัวขนาดเล็ก ไปจนถึง {maxpax} คนบนเรือคาตามารันขนาดใหญ่ ใช้ Smart Match หรือตัวกรองจำนวนคนในหน้าเรือทั้งหมดเพื่อหาลำที่พอดีกับกลุ่มของคุณ", "en": "From 2 guests on a small private boat up to {maxpax} on our largest catamaran. Use Smart Match or the guest filter on the fleet page to find the right size." }
+    ],
+    [
+      { "th": "ต้องจองล่วงหน้ากี่วัน และยกเลิกได้ไหม?", "en": "How far ahead should I book, and can I cancel?" },
+      { "th": "High Season แนะนำจองล่วงหน้า 1–2 สัปดาห์ (ช่วงปีใหม่ 1–2 เดือน) ชำระมัดจำ 50% เพื่อยืนยัน ยกเลิกน้อยกว่า 48 ชม. คิด 30% น้อยกว่า 24 ชม. คิด 50% และน้อยกว่า 12 ชม. หรือไม่มาคิด 100%", "en": "In high season book 1–2 weeks ahead (1–2 months for New Year). A 50% deposit confirms the boat. Cancellations under 48 h are charged 30%, under 24 h 50%, and under 12 h or no-show 100%." }
+    ],
+    [
+      { "th": "ออกเรือจากท่าไหน?", "en": "Which marinas do charters depart from?" },
+      { "th": "เรือของเราออกจาก Royal Phuket Marina, Ao Po Grand Marina, Chalong Pier, Boat Lagoon, ONE°15 Marina และ Coco Pier (Panwa) ในภูเก็ต — แต่ละลำระบุท่าเรือไว้ชัดเจน", "en": "Our boats depart from Royal Phuket Marina, Ao Po Grand Marina, Chalong Pier, Boat Lagoon, ONE°15 Marina and Coco Pier (Panwa) in Phuket — each boat page names its marina." }
+    ]
+  ],
+  "seo": {
+    "title": { "th": "Yacht Charter ภูเก็ต – เช่าเรือยอชต์ {boats} ลำ | Boat Trip Thailand", "en": "Yacht Charter Phuket – {boats} Private Boats | Boat Trip Thailand" },
+    "desc": { "th": "Yacht Charter ภูเก็ต เช่าเรือยอชต์ส่วนตัว คาตามารัน สปีดโบ๊ท {boats} ลำ ไปพีพี อ่าวพังงา เกาะราชา เริ่ม {from} รวมกัปตัน ลูกเรือ และประกันภัย จองตรงกับทีมงาน", "en": "Yacht charter in Phuket with {boats} private yachts, catamarans and speedboats. Phi Phi, Phang Nga Bay and Racha from {from} incl. crew & insurance. Book direct." },
+    "kw": { "th": "yacht charter ภูเก็ต", "en": "yacht charter phuket" }
+  }
+}

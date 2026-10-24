@@ -1,0 +1,24 @@
+# dependencies & build output
+node_modules
+.next
+*.tsbuildinfo
+next-env.d.ts
+
+# secrets — never commit
+.env
+.env.local
+.env.*.local
+
+# runtime data
+/uploads
+backup-*.sql
+
+# local-only
+_to_delete/
+.DS_Store
+
+# design mockups: single-file HTML exports (6–25 MB each), kept on disk only
+mockup/*.html
+
+# one-off backup made by scripts/localize-covers.mjs
+data/posts.wp-urls.backup.json

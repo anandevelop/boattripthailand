@@ -1,0 +1,3268 @@
+[
+ {
+  "cat": "show",
+  "pic": "fantasea",
+  "th": "ภูเก็ตแฟนตาซี",
+  "en": "Phuket FantaSea",
+  "loc": "Kamala",
+  "price": null,
+  "dur": "Evening",
+  "durTh": "ช่วงเย็น",
+  "tag": {
+   "th": "ธีมพาร์กวัฒนธรรมไทยที่ยิ่งใหญ่ที่สุด",
+   "en": "The Ultimate Thai Culture Theme Park"
+  },
+  "desc": {
+   "th": "โชว์ที่ยิ่งใหญ่ที่สุดของภูเก็ต ทั้งนักกายกรรมผาดโผน นักแสดงนับร้อย ช้างและสัตว์แสนรู้ กับเรื่องราวที่ผสานวัฒนธรรมไทยเข้ากับจินตนาการ\nภายในยังมีบุฟเฟต์ที่ใหญ่ที่สุดแห่งหนึ่งในเอเชีย เกมคาร์นิวัล ร้านค้ามากมาย พระราชวังช้าง Similan Adventure Centre และร้านอาหารอีกหลายแห่ง สนุกได้ทุกคนในครอบครัว",
+   "en": "Phuket FantaSea is the island's biggest show. With trapeze artists, a cast of hundreds, performing elephants and other animals and an exotic storyline that blends tradition with fantasy you'll have a wonderful evening out here.\nBut the extravaganza doesn't stop there as FantaSea also hosts one of the biggest buffets in Asia and is set in a theme park that offers carnival-like games, lots of shopping opportunities, a Palace of the Elephants, a Similan Adventure Centre and several other food outlets. It's spectacular, it's extravagant, it's impressive and great entertainment value for all."
+  }
+ },
+ {
+  "cat": "show",
+  "pic": "simon",
+  "th": "ไซมอน คาบาเรต์ ภูเก็ต",
+  "en": "Simon Cabaret Phuket",
+  "loc": "Patong",
+  "price": null,
+  "dur": "Evening",
+  "durTh": "ช่วงเย็น",
+  "tag": {
+   "th": "โชว์คาบาเรต์ที่ดีที่สุดในประเทศไทย",
+   "en": "The Most Ultimate Cabaret Show in Thailand"
+  },
+  "desc": {
+   "th": "ค่ำคืนแห่งความบันเทิงสุดอลังการที่ไม่เหมือนใคร หนึ่งในโชว์ยอดนิยมที่สุดของภูเก็ต ตั้งแต่ก้าวเข้าสู่โรงละครสุดหรูคุณจะรู้ทันทีว่าคืนนี้พิเศษ\nชมการแสดงแต่ละธีมเพลงอย่างมืออาชีพ หัวเราะไปกับมุกตลก และเพลิดเพลินกับความตระการตา หลังจบโชว์ยังมีโอกาสถ่ายรูปกับนักแสดงด้วย",
+   "en": "The unique & popular Simon Cabaret Show offers an evening of glamorous entertainment unlike any other. The show is one of Phuket's most popular events and from the moment you enter the stylish and luxurious venue, you realize that this is going to be a very different and special night.\nCome along and enjoy this unique show, be amazed at the professional approach to each musical theme, laugh along at the comedy and fun, and enjoy a visual spectacular that will have you leaving wishing there was more to see. There will be opportunities to meet the stars of the show for those unforgettable photo moments."
+  }
+ },
+ {
+  "cat": "show",
+  "pic": "siam",
+  "th": "สยามนิรมิต ภูเก็ต",
+  "en": "Siam Niramit Phuket",
+  "loc": "Phuket Town",
+  "price": null,
+  "dur": "Evening",
+  "durTh": "ช่วงเย็น",
+  "tag": {
+   "th": "การเดินทางสู่ศิลปวัฒนธรรมไทยอันตระการตา",
+   "en": "The Spectacular Journey Through Thailand's Arts & Culture"
+  },
+  "desc": {
+   "th": "สัมผัสมรดกวัฒนธรรมไทยในโชว์ระดับโลก นักแสดงกว่า 100 คน เครื่องแต่งกายตระการตา และเทคนิคบนเวทีอลังการ\nเดินชมหมู่บ้านไทยโบราณ ลิ้มลองอาหารไทยแท้ ก่อนชมการเดินทางผ่านประวัติศาสตร์และตำนานของไทยที่น่าจดจำ",
+   "en": "Experience Thailand's rich heritage in a spectacular world-class show featuring over 100 performers, dazzling costumes, and breathtaking stage effects. Explore the traditional Thai Village and enjoy authentic cuisine before witnessing an unforgettable cultural journey through Thailand's history and legends."
+  }
+ },
+ {
+  "cat": "show",
+  "pic": "carnival",
+  "th": "คาร์นิวัล เมจิก ภูเก็ต",
+  "en": "Carnival Magic Phuket",
+  "loc": "Kamala",
+  "price": null,
+  "dur": "Evening",
+  "durTh": "ช่วงเย็น",
+  "tag": {
+   "th": "ธีมพาร์กคาร์นิวัลไทยแห่งแรกของโลก",
+   "en": "The world's first Thai Carnival theme park"
+  },
+  "desc": {
+   "th": "ก้าวเข้าสู่โลกแห่งแสง สี และงานเฉลิมฉลอง ที่คาร์นิวัล เมจิก ภูเก็ต ธีมพาร์กคาร์นิวัลไทยแห่งแรกของโลก\nชมขบวนพาเหรด โชว์ระยิบระยับ และแสงไฟกว่า 40 ล้านดวงทั่วทั้งสวน ค่ำคืนแห่งความสุข วัฒนธรรม และจินตนาการที่ไม่เหมือนที่ไหนในประเทศไทย",
+   "en": "Step into a dazzling world of lights, colors, and celebration at Carnival Magic Phuket, the world's first Thai Carnival theme park. Enjoy spectacular parades, glittering shows, and over 40 million lights illuminating the park. A magical night of joy, culture, and fantasy — unlike anything else in Thailand!"
+  }
+ },
+ {
+  "cat": "water",
+  "pic": "andamanda",
+  "th": "สวนน้ำอันดามันดา ภูเก็ต",
+  "en": "Andamanda Water Park Phuket",
+  "loc": "Kathu",
+  "price": null,
+  "dur": "Full day",
+  "durTh": "ทั้งวัน",
+  "tag": {
+   "th": "สนุกสุดเหวี่ยงที่สวนน้ำอันดามันดา",
+   "en": "Splash into fun at Andamanda Water Park Phuket!"
+  },
+  "desc": {
+   "th": "สวนน้ำที่ใหญ่และสนุกที่สุดในภูเก็ต ได้แรงบันดาลใจจากตำนานไทยและวัฒนธรรมอันดามัน\nมีสไลเดอร์สุดหวาดเสียว สระคลื่น และลากูนให้พักผ่อนท่ามกลางบรรยากาศเขตร้อน เหมาะกับครอบครัว กลุ่มเพื่อน และทุกคนที่อยากคลายร้อน",
+   "en": "Dive into a world of fun and adventure at Andamanda Water Park, Phuket's biggest and most exciting water park inspired by Thai mythology and Andaman culture.\nEnjoy thrilling water slides, wave pools, and relaxing lagoons surrounded by tropical landscapes. Perfect for families, friends, and fun-seekers looking to cool off and make unforgettable memories in paradise!"
+  }
+ },
+ {
+  "cat": "city",
+  "pic": "oldtown",
+  "th": "ภูเก็ตเมืองเก่า & ถนนคนเดินหลาดใหญ่",
+  "en": "Phuket Old Town & Lard Yai Walking Street",
+  "loc": "Thalang Road",
+  "price": null,
+  "dur": "Sun 4–9 PM",
+  "durTh": "วันอาทิตย์ 16:00–21:00",
+  "tag": {
+   "th": "สัมผัสเสน่ห์ภูเก็ตเมืองเก่า",
+   "en": "Experience in Phuket Old Town"
+  },
+  "desc": {
+   "th": "ตลาดกลางคืนภูเก็ตเมืองเก่า หรือถนนคนเดิน “หลาดใหญ่” จัดทุกวันอาทิตย์ 16:00–21:00 บนถนนถลาง ใจกลางเมืองเก่า มีงานหัตถกรรมท้องถิ่น ของที่ระลึก และอาหารริมทางปักษ์ใต้หลากหลาย ท่ามกลางตึกสไตล์ชิโน-โปรตุกีสสีสันสดใส\nแนะนำให้มาถึงช่วงพระอาทิตย์ตก ก่อนคนจะแน่น และได้เห็นถนนตอนเปิดไฟสวยที่สุด ค่อยๆ เดินเล่น ชิมอาหารท้องถิ่น และชมสถาปัตยกรรมเอกลักษณ์ของย่านนี้",
+   "en": "The Phuket Old Town Night Market is known as the Phuket Walking Street or Lard Yai Market, and it takes place every Sunday from 4 PM to 9 PM on Thalang Road. It's a lively event where you can find local handicrafts, souvenirs, and a wide variety of southern Thai street food, all while enjoying the colorful Sino-Portuguese architecture of Old Phuket Town.\nArrive early: consider arriving around sunset to enjoy the area before the crowds become too dense and to experience the street when the lights are most striking. Take your time to wander, sample the local cuisine, and admire the unique architecture of the area."
+  }
+ },
+ {
+  "cat": "city",
+  "pic": "chalong",
+  "th": "วัดฉลอง ภูเก็ต",
+  "en": "Wat Chalong Phuket",
+  "loc": "Chalong",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "วัดที่ชาวภูเก็ตเคารพศรัทธามากที่สุด",
+   "en": "The most revered temple in Phuket"
+  },
+  "desc": {
+   "th": "วัดฉลองเป็นวัดที่สำคัญและได้รับความเคารพศรัทธามากที่สุดของภูเก็ต โดดเด่นด้วยสถาปัตยกรรมที่งดงามและบรรยากาศสงบร่มเย็น วัดนี้เกี่ยวข้องกับพระเกจิที่ชาวบ้านนับถือ 2 รูป คือหลวงพ่อแช่มและหลวงพ่อช่วง ซึ่งมีชื่อเสียงด้านการรักษาโรคและความเมตตาต่อชาวบ้าน\nชมพระมหาธาตุเจดีย์ที่ประดิษฐานพระบรมสารีริกธาตุ ภายในตกแต่งด้วยภาพจิตรกรรมพุทธประวัติ บริเวณวัดมีรูปปั้น ศาลาหลากสี และสวนร่มรื่น เหมาะทั้งเที่ยวชมและไหว้พระทำบุญ",
+   "en": "Wat Chalong is Phuket's most important and revered Buddhist temple, known for its stunning architecture and spiritual atmosphere. The temple is dedicated to two highly respected monks, Luang Pho Chaem and Luang Pho Chuang, who were famous for their healing powers and compassion for local people.\nVisitors can admire the beautiful Grand Pagoda (Chedi Phra Mahathat), which houses a sacred relic of the Lord Buddha and is decorated with intricate paintings that tell stories of the Buddha's life. The temple grounds are filled with ornate statues, colorful shrines, and peaceful gardens — making it a perfect place for both sightseeing and spiritual reflection."
+  }
+ },
+ {
+  "cat": "city",
+  "pic": "explore",
+  "th": "Explore Phuket ทัวร์เมืองภูเก็ต",
+  "en": "Explore Phuket City Tour",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "ธรรมชาติ วัฒนธรรม และอาหารภูเก็ต",
+   "en": "Nature, culture and Phuket food"
+  },
+  "desc": {
+   "th": "ภูเก็ตเป็นหนึ่งในจังหวัดแรกของไทยที่เปิดรับการท่องเที่ยว และกลายเป็นที่รู้จักไปทั่วโลกในเรื่องธรรมชาติที่สวยงามและการต้อนรับที่อบอุ่น\nจนถึงวันนี้ภูเก็ตยังต้อนรับนักท่องเที่ยวหลายล้านคนทุกปี และเป็นที่รักของผู้ที่ได้สัมผัสน้ำใจ ธรรมชาติอันงดงาม และวัฒนธรรมเฉพาะตัว รวมถึงอาหารไทยรสเยี่ยม",
+   "en": "When tourism first came to Thailand, Phuket was among the first provinces to embrace the industry and soon became a byword around the world for natural beauty and hospitality.\nJust as in the old days, Phuket still plays host to foreigners – the island receives millions of visitors each year and it holds a special place in the heart of millions more who have tasted its hospitality, witnessed Phuket's natural splendor and enjoyed its unique culture, including Thai food."
+  }
+ },
+ {
+  "cat": "activity",
+  "pic": "adventure",
+  "th": "The Adventure ช้าง · ATV · ซิปไลน์",
+  "en": "The Adventure: Elephant · ATV · Zipline",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "",
+  "durTh": "",
+  "tag": {
+   "th": "ผจญภัยสัมผัสวิถีชีวิตท้องถิ่นภาคใต้",
+   "en": "Discover southern Thailand local life"
+  },
+  "desc": {
+   "th": "สัมผัสวิถีชีวิตท้องถิ่นของภาคใต้ผ่านกิจกรรมสุดตื่นเต้น ทั้งเดินป่ากับช้าง โหนซิปไลน์กลางป่า และขับรถ ATV ลุยเส้นทางธรรมชาติ",
+   "en": "Discover southern Thailand local life with exciting activities: elephant trekking, zipline and an ATV tour."
+  }
+ },
+ {
+  "cat": "seatour",
+  "pic": "sunset",
+  "kw": [
+   "sunset"
+  ],
+  "th": "ล่องเรือชมพระอาทิตย์ตก",
+  "en": "Sunset Cruising",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "Evening",
+  "durTh": "ช่วงเย็น",
+  "tag": {
+   "th": "ล่องเรือซันเซ็ตสุดโรแมนติก · ดินเนอร์ เครื่องดื่ม จุดชมวิว",
+   "en": "Always magical sunset cruise · Dinner, drinks & viewpoint"
+  },
+  "desc": {
+   "th": "สัมผัสความงามของทะเลอันดามันขณะพระอาทิตย์ค่อยๆ ลับขอบฟ้า ล่องเรือไปบนคลื่นสีทอง ขณะที่ท้องฟ้าเปลี่ยนเป็นสีส้ม ชมพู และม่วง สะท้อนบนผิวน้ำระยิบระยับ\nบรรยากาศสงบเหมาะกับคู่รัก ครอบครัว หรือกลุ่มเพื่อน ท่ามกลางลมทะเลเย็นๆ และวิวพาโนรามา ค่ำคืนที่คุณจะจดจำไปอีกนาน",
+   "en": "Experience the breathtaking beauty of the Andaman Sea as the sun slowly sets on the horizon. Sail across golden waves while the sky transforms into shades of orange, pink, and purple, reflecting on the sparkling waters.\nThe serene atmosphere creates the perfect setting for couples, families, or friends to share unforgettable memories. With a gentle sea breeze and panoramic views, it's an evening you'll cherish forever."
+  }
+ },
+ {
+  "cat": "seatour",
+  "pic": "phiphi",
+  "kw": [
+   "phi phi"
+  ],
+  "th": "เกาะพีพี",
+  "en": "Phi Phi Islands",
+  "loc": "Krabi",
+  "price": null,
+  "dur": "Full day",
+  "durTh": "ทั้งวัน",
+  "tag": {
+   "th": "หมู่เกาะสวยระดับโลก พีพีดอน & พีพีเล",
+   "en": "Always amazing Phi Phi Island"
+  },
+  "desc": {
+   "th": "หมู่เกาะพีพีเป็นหนึ่งในเกาะที่สวยที่สุดในเอเชียตะวันออกเฉียงใต้ ทั้งหาดทรายคลาสสิก หน้าผาหินปูนตระการตา และน้ำทะเลสีเทอร์คอยซ์ที่เต็มไปด้วยปลาหลากสี สวรรค์ที่สมบูรณ์แบบ ประกอบด้วย 2 เกาะหลัก คือเกาะพีพีดอนและเกาะพีพีเล",
+   "en": "The Phi Phi islands are some of the loveliest in Southeast Asia. Classic beaches, stunning rock formations and vivid turquoise waters teeming with colorful marine life - it's paradise perfected. There are two islands, Phi Phi Don and Phi Phi Leh."
+  }
+ },
+ {
+  "cat": "seatour",
+  "pic": "jamesbond",
+  "kw": [
+   "james bond",
+   "phang nga",
+   "phangnga"
+  ],
+  "th": "เกาะตะปู (เกาะเจมส์บอนด์) อ่าวพังงา",
+  "en": "Koh Tapu – James Bond Island",
+  "loc": "Phang Nga Bay",
+  "price": null,
+  "dur": "Full day",
+  "durTh": "ทั้งวัน",
+  "tag": {
+   "th": "แลนด์มาร์กชื่อดังแห่งอ่าวพังงา",
+   "en": "The famous landmark of Phang Nga Bay"
+  },
+  "desc": {
+   "th": "เกาะเจมส์บอนด์เป็นแลนด์มาร์กชื่อดังของอ่าวพังงา โด่งดังไปทั่วโลกจากภาพยนตร์เจมส์บอนด์ “The Man with the Golden Gun” เอกลักษณ์ของอ่าวนี้คือหน้าผาหินปูนที่ตั้งตระหง่านขึ้นจากน้ำทะเลสีเขียวมรกต\nอ่าวพังงามีพื้นที่ราว 400 ตารางกิโลเมตร และมีเกาะกว่า 100 เกาะ หลายเกาะสวยงามและมีรูปทรงแปลกตาจนน่าอัศจรรย์",
+   "en": "James Bond Island is a famous landmark in Phang Nga Bay. It first found its way onto the international tourist map through its starring role in the James Bond movie 'The Man with the Golden Gun'. A distinctive feature of this famous bay is the number of sheer limestone cliffs that vertically jut out of the emerald-green water.\nPhang Nga Bay covers an area of 400 sq km and is home to some 100 islands, many of which could feature in The Guinness Book of Records either for their beauty or for their freakish shapes."
+  }
+ },
+ {
+  "cat": "seatour",
+  "pic": "khai",
+  "kw": [
+   "khai"
+  ],
+  "th": "เกาะไข่",
+  "en": "Khai Islands",
+  "loc": "Phang Nga",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "3 เกาะเล็ก น้ำใส ห่างภูเก็ตเพียง 15 นาที",
+   "en": "Three small islands, 15 minutes from Phuket"
+  },
+  "desc": {
+   "th": "เกาะไข่ตั้งอยู่ในตำบลพรุใน ทางตะวันออกเฉียงเหนือของเกาะยาวใหญ่ ประกอบด้วยเกาะเล็ก 3 เกาะ คือเกาะไข่ใน เกาะไข่นุ้ย และเกาะไข่นอก เมื่อมองจากมุมสูงจะคล้ายไข่ดาว อยู่ระหว่างเกาะสิเหร่ (ภูเก็ต) กับเกาะยาวใหญ่ (พังงา)\nน้ำทะเลใสและมีแนวปะการังสวยงาม จึงเป็นที่นิยมของนักท่องเที่ยวในภูเก็ต เพราะนั่งเรือเพียง 15 นาทีก็ถึง",
+   "en": "Located in Phru Nai subdistrict, to the north-east of Ko Yao Yai, Ko Khai is made up of three small private islands, namely Ko Khai Nai, Ko Khai Nui and Ko Khai Nok. These islands resemble a fried egg from an aerial view, and they occupy the ocean space between Ko Sirae (Phuket) and Ko Yao Yai (Phang-nga).\nThe water is crystal clear with stunning coral reefs, making this island popular with Phuket tourists, as it's just a short 15-minute boat ride away."
+  }
+ },
+ {
+  "cat": "seatour",
+  "pic": "racha",
+  "kw": [
+   "racha"
+  ],
+  "th": "เกาะราชา",
+  "en": "Racha Island",
+  "loc": "12 km south of Phuket",
+  "locTh": "ห่างภูเก็ต 12 กม.",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "สวรรค์เขตร้อนของนักดำน้ำ",
+   "en": "Tropical paradise for divers"
+  },
+  "desc": {
+   "th": "เกาะราชา หรือเกาะรายา อยู่ห่างจากภูเก็ตไปทางใต้ราว 12 กม. ขึ้นชื่อเรื่องน้ำทะเลใสและแนวปะการังสีสันสดใส แบ่งเป็น 2 เกาะหลัก คือราชาใหญ่และราชาน้อย\nราชาใหญ่เหมาะกับการดำน้ำตื้นและดำน้ำลึก มีหาดทรายขาวและน้ำทะเลสีเทอร์คอยซ์สงบ ส่วนราชาน้อยยังเงียบสงบ เหมาะกับนักดำน้ำที่มีประสบการณ์ เกาะราชาจึงเหมาะทั้งทริปวันเดียวและการพักผ่อนแบบสงบ",
+   "en": "Racha Island, also known as Raya Island, lies about 12 km south of Phuket and is renowned for its crystal-clear waters and vibrant coral reefs. The island is divided into two main parts: Racha Yai and Racha Noi.\nRacha Yai is popular for snorkeling and diving, offering beautiful white sandy beaches and calm turquoise waters. Racha Noi, on the other hand, is less developed and perfect for experienced divers. Together, they make Racha Island a tropical paradise ideal for day trips or peaceful getaways."
+  }
+ },
+ {
+  "cat": "seatour",
+  "pic": "coral",
+  "kw": [
+   "coral"
+  ],
+  "th": "เกาะเฮ (เกาะคอรัล)",
+  "en": "Coral Island (Koh He)",
+  "loc": "10 km south of Phuket",
+  "locTh": "ห่างภูเก็ต 10 กม.",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "ผจญภัยและสนุกริมทะเล",
+   "en": "Adventure & fun by the sea"
+  },
+  "desc": {
+   "th": "เกาะคอรัล หรือเกาะเฮ อยู่ห่างจากภูเก็ตไปทางใต้เพียง 10 กม. ขึ้นชื่อเรื่องแนวปะการังและสัตว์ทะเลหลากสี เหมาะกับการดำน้ำตื้นและกีฬาทางน้ำ\nมี 2 หาดหลัก คือหาดยาว (Long Beach) และหาดบานาน่า (Banana Beach) ทรายนุ่ม น้ำทะเลสงบ พร้อมกิจกรรมมากมาย ทั้งพาราเซล พายคายัค และบานาน่าโบ๊ท เหมาะทั้งสายผจญภัยและคนที่อยากเที่ยวทะเลสบายๆ",
+   "en": "Coral Island, locally called Koh He, is a popular destination just 10 km south of Phuket. It's famous for its lively coral reefs and colorful marine life, making it a favorite spot for snorkeling and water sports.\nThe island has two main beaches — Long Beach and Banana Beach — both offering soft sand and calm waters. With plenty of activities like parasailing, kayaking, and banana boat rides, Coral Island is perfect for both adventure lovers and those seeking a fun beach day."
+  }
+ },
+ {
+  "cat": "seatour",
+  "pic": "maiton",
+  "kw": [
+   "maiton"
+  ],
+  "th": "เกาะไม้ท่อน",
+  "en": "Maiton Island",
+  "loc": "15 min by speedboat",
+  "locTh": "สปีดโบ๊ท 15 นาที",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "เกาะส่วนตัวแห่งความสงบ",
+   "en": "Private island of tranquility"
+  },
+  "desc": {
+   "th": "เกาะไม้ท่อนเป็นเกาะส่วนตัว นั่งสปีดโบ๊ทจากภูเก็ตเพียงราว 15 นาที ขึ้นชื่อเรื่องหาดทรายขาวนุ่มและน้ำทะเลใส เป็นที่หลบมุมเงียบสงบห่างไกลผู้คน\nทะเลรอบเกาะอุดมสมบูรณ์ และเป็นหนึ่งในไม่กี่จุดที่มักพบโลมา ดำน้ำตื้น ว่ายน้ำ หรือพักผ่อนในบรรยากาศสงบหรูหรา",
+   "en": "Maiton Island is a private island located about 15 minutes by speedboat from Phuket. Known for its soft white sand and clear blue sea, this island offers a quiet and exclusive escape from the crowds.\nThe surrounding waters are rich with marine life, and it's one of the few spots where dolphins can often be seen. Visitors can enjoy snorkeling, swimming, or simply relaxing in a serene and luxurious atmosphere."
+  }
+ },
+ {
+  "cat": "seatour",
+  "pic": "hong",
+  "kw": [
+   "hong"
+  ],
+  "th": "เกาะห้อง กระบี่",
+  "en": "Hong Island Krabi",
+  "loc": "Krabi",
+  "price": null,
+  "dur": "Full day",
+  "durTh": "ทั้งวัน",
+  "tag": {
+   "th": "แก่นแท้ความงามแห่งอันดามัน",
+   "en": "The essence of Andaman beauty"
+  },
+  "desc": {
+   "th": "เกาะห้องซ่อนตัวอยู่ท่ามกลางหน้าผาหินปูนสูงตระหง่าน เป็นหนึ่งในอัญมณีที่สวยที่สุดของกระบี่ ลากูนสงบล้อมรอบด้วยน้ำทะเลสีเขียวมรกต เหมาะกับการพายคายัคและว่ายน้ำ\nพักผ่อนบนหาดทรายขาวละเอียด หรือสำรวจทะเลใสที่เต็มไปด้วยสัตว์ทะเลหลากสี ความงามบริสุทธิ์และบรรยากาศสงบทำให้ที่นี่ห้ามพลาดสำหรับคนรักธรรมชาติและการถ่ายภาพ",
+   "en": "Hidden among towering limestone cliffs, Hong Island is one of Krabi's most breathtaking gems. Its tranquil lagoon, surrounded by emerald-green waters, creates a secret haven for kayaking and swimming.\nVisitors can relax on powdery white sands or explore the crystal-clear sea filled with colorful marine life. The island's unspoiled beauty and peaceful atmosphere make it a must-visit for nature lovers and photographers alike."
+  }
+ },
+ {
+  "cat": "seatour",
+  "pic": "krabi4",
+  "kw": [
+   "4 island"
+  ],
+  "th": "ทัวร์ 4 เกาะ กระบี่",
+  "en": "4 Islands Krabi",
+  "loc": "Krabi",
+  "price": null,
+  "dur": "Full day",
+  "durTh": "ทั้งวัน",
+  "tag": {
+   "th": "ทะเลกระบี่ครบในทริปเดียว",
+   "en": "The essence of Andaman beauty"
+  },
+  "desc": {
+   "th": "ทัวร์ 4 เกาะพาชมวิวทะเลอันเป็นเอกลักษณ์ของกระบี่ ทั้งน้ำทะเลสีเทอร์คอยซ์ หาดทรายขาวนุ่ม และภูเขาหินปูนตระการตา\nแวะหาดถ้ำพระนาง เกาะไก่ เกาะทับ และเกาะปอดะ เดินบนสันทรายที่เชื่อมระหว่างเกาะ ดำน้ำตื้นในน้ำใส หรือนั่งชมวิวทะเลสวยๆ ลงตัวทั้งความสนุกและการพักผ่อน",
+   "en": "The 4 Islands Tour showcases Krabi's iconic coastal scenery — turquoise waters, soft white beaches, and dramatic limestone formations.\nThe trip includes Phra Nang Cave Beach, Chicken Island, Tup Island, and Poda Island. Visitors can walk on the sandbank connecting the islands, snorkel in clear waters, or simply soak in the breathtaking sea views. It's a perfect blend of adventure and relaxation that captures the spirit of Krabi in one unforgettable journey."
+  },
+  "itin": [
+   {
+    "th": "หาดถ้ำพระนาง",
+    "en": "Phra Nang Cave Beach"
+   },
+   {
+    "th": "เกาะไก่",
+    "en": "Chicken Island"
+   },
+   {
+    "th": "เกาะทับ – เดินบนสันทรายเชื่อมเกาะ",
+    "en": "Tup Island – Walk the sandbank between the islands"
+   },
+   {
+    "th": "เกาะปอดะ",
+    "en": "Poda Island"
+   }
+  ]
+ },
+ {
+  "cat": "seatour",
+  "pic": "similan",
+  "kw": [
+   "similan"
+  ],
+  "th": "หมู่เกาะสิมิลัน พังงา",
+  "en": "Similan Islands, Phang Nga",
+  "loc": "Phang Nga",
+  "price": null,
+  "dur": "Full day",
+  "durTh": "ทั้งวัน",
+  "tag": {
+   "th": "จุดดำน้ำระดับโลกแห่งอันดามัน",
+   "en": "Always stunning Similan Islands"
+  },
+  "desc": {
+   "th": "หมู่เกาะสิมิลันมีชื่อเสียงระดับโลกด้วยโขดหินแกรนิตรูปทรงแปลกตา หาดทรายขาวละเอียด และน้ำทะเลสีเทอร์คอยซ์\nได้รับการยกย่องเป็นหนึ่งในจุดดำน้ำที่ดีที่สุดของโลก ทัศนวิสัยใต้น้ำยอดเยี่ยม มีสัตว์ทะเลหลากหลาย รวมถึงกระเบนราหูและฉลามวาฬ พร้อมจุดชมวิวสวยและธรรมชาติบริสุทธิ์ ทริปที่น่าจดจำ",
+   "en": "The Similan Islands are world-renowned for their dramatic granite boulders, powdery white beaches, and dazzling turquoise waters.\nRecognized as one of the top diving destinations on the planet, the Similans boast spectacular visibility and a rich variety of marine life, including manta rays and whale sharks. With breathtaking viewpoints and pristine nature, a trip to the Similan Islands is an unforgettable experience of natural beauty and wonder."
+  }
+ },
+ {
+  "cat": "seatour",
+  "pic": "surin",
+  "kw": [
+   "surin"
+  ],
+  "th": "หมู่เกาะสุรินทร์ พังงา",
+  "en": "Surin Islands, Phang Nga",
+  "loc": "Phang Nga",
+  "price": null,
+  "dur": "Full day",
+  "durTh": "ทั้งวัน",
+  "tag": {
+   "th": "อัญมณีแห่งทะเลอันดามัน",
+   "en": "A true gem of the Andaman Sea"
+  },
+  "desc": {
+   "th": "หมู่เกาะสุรินทร์คืออัญมณีแห่งทะเลอันดามัน ขึ้นชื่อเรื่องน้ำทะเลใสและแนวปะการังสมบูรณ์ สวรรค์ของนักดำน้ำ เป็นบ้านของสัตว์ทะเลสีสันสดใสที่สุดแห่งหนึ่งของไทย ตั้งแต่ปลาเขตร้อนจนถึงเต่าทะเล\nนอกจากโลกใต้น้ำ ยังมีหาดทรายขาวและบรรยากาศสงบ เหมาะกับนักเดินทางที่ต้องการทั้งการผจญภัยและความสงบ",
+   "en": "The Surin Islands are a true gem of the Andaman Sea, famous for their crystal-clear waters and thriving coral reefs. A diver's paradise, the islands are home to some of the most vibrant marine life in Thailand, from colorful tropical fish to majestic sea turtles.\nBeyond the underwater world, the Surin Islands offer serene white-sand beaches and a peaceful atmosphere, perfect for travelers seeking both adventure and tranquility."
+  }
+ },
+ {
+  "cat": "water",
+  "pic": "jetski",
+  "op": "Phuket Jet Ski Club",
+  "th": "เจ็ตสกีทัวร์ 6 เกาะ 2 จุด",
+  "en": "Jet Ski Tour 6 Islands 2 Points",
+  "loc": "AA Marina",
+  "locTh": "ท่าเรือ AA Marina",
+  "price": null,
+  "dur": "4h · 09:00–13:00 / 13:30–17:30",
+  "durTh": "4 ชม. · 09:00–13:00 / 13:30–17:30",
+  "tag": {
+   "th": "ขี่เจ็ตสกีเที่ยวเกาะ ตื่นเต้นทุกจุดแวะ",
+   "en": "Always exciting jet ski island tour"
+  },
+  "desc": {
+   "th": "สัมผัสความตื่นเต้นของการขี่เจ็ตสกีเที่ยวเกาะสวยรอบภูเก็ต ทริป 4 ชั่วโมงพาคุณข้ามน้ำทะเลสีเทอร์คอยซ์ไปยังจุดที่สวยที่สุดของทะเลอันดามัน ทั้งดำน้ำดูปะการังและพักผ่อนบนหาดเงียบสงบ",
+   "en": "Discover the thrill of exploring Phuket's stunning islands on an unforgettable jet ski adventure! This 4-hour journey takes you across turquoise waters to some of the most exotic spots in the Andaman Sea. From snorkeling among coral reefs to relaxing on quiet beaches, every stop is filled with excitement and natural beauty."
+  },
+  "facts": [
+   {
+    "th": "รอบเช้า 09:00–13:00 · รอบบ่าย 13:30–17:30",
+    "en": "Morning 09:00–13:00 · Afternoon 13:30–17:30"
+   },
+   {
+    "th": "ออกจากท่าเรือ AA Marina ภูเก็ต",
+    "en": "Starts from AA Marina Pier, Phuket"
+   },
+   {
+    "th": "รวมเสื้อชูชีพ หน้ากากดำน้ำ เก้าอี้ชายหาด อาหารกลางวัน ประกัน ไกด์ รถรับ-ส่ง",
+    "en": "Life jacket, snorkel mask, beach chairs, lunch, insurance, guide & transfer included"
+   }
+  ],
+  "progs": {
+   "title": {
+    "th": "รุ่นเจ็ตสกีให้เลือก (2 ท่าน/ลำ)",
+    "en": "Jet ski models (2 pax per ski)"
+   },
+   "items": [
+    {
+     "th": "YAMAHA 2024 VX-C TR-1 1100CC",
+     "en": "YAMAHA 2024 VX-C TR-1 1100CC"
+    },
+    {
+     "th": "SEADOO GTX 130 1630CC",
+     "en": "SEADOO GTX 130 1630CC"
+    },
+    {
+     "th": "YAMAHA FX 1900CC",
+     "en": "YAMAHA FX 1900CC"
+    },
+    {
+     "th": "SEADOO RXP-X RS170 1900CC",
+     "en": "SEADOO RXP-X RS170 1900CC"
+    }
+   ]
+  },
+  "itin": [
+   {
+    "th": "เกาะรังนก – แวะแรก ว่ายน้ำ พักผ่อน ชมธรรมชาติบริสุทธิ์",
+    "en": "Rang Nok Island – First stop to swim, relax, and enjoy pristine nature."
+   },
+   {
+    "th": "เกาะนาคาใหญ่ – ดำน้ำดูปะการังและปลาเขตร้อน",
+    "en": "Naka Yai Island – Snorkel among colorful coral reefs and tropical fish."
+   },
+   {
+    "th": "เกาะลิง – พบลิงป่าแสนซน ถ่ายรูปสนุก",
+    "en": "Monkey Island – Meet playful wild monkeys and snap fun photos."
+   },
+   {
+    "th": "อ่าวปอ แกรนด์ มารีน่า – แวะชมมารีน่าเรือยอชต์วิวสวย",
+    "en": "Ao Por Grand Marina – A quick stop at a marina with yachts and a stunning view."
+   },
+   {
+    "th": "เกาะนาคาน้อย – เกาะส่วนตัว พร้อมอาหารกลางวันริมหาด",
+    "en": "Naka Noi Island – Private island escape with a delicious beachside lunch."
+   },
+   {
+    "th": "เกาะแพ – เดินบนสันทรายกลางทะเล",
+    "en": "Phrae Island – Walk on soft sandbanks in the middle of the sea."
+   },
+   {
+    "th": "เกาะรังใหญ่ – ว่ายน้ำ อาบแดด หรือนั่งชิล",
+    "en": "Rang Yai Island – The activity hub: swim, sunbathe, or just chill."
+   },
+   {
+    "th": "ป่าโกงกาง – ล่องผ่านป่าชายเลนก่อนกลับ",
+    "en": "Mangrove Forest – Cruise through peaceful mangroves before heading back."
+   }
+  ]
+ },
+ {
+  "cat": "stay",
+  "pic": "supicha",
+  "th": "ศุภิชา พูล แอคเซส โฮเทล",
+  "en": "Supicha Pool Access Hotel",
+  "loc": "Phuket Town",
+  "locTh": "ตัวเมืองภูเก็ต",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "โรงแรม 4 ดาว สไตล์ชิโน-โคโลเนียล ห้องติดสระ",
+   "en": "4-star Sino-Colonial hotel with pool access rooms"
+  },
+  "desc": {
+   "th": "ศุภิชา พูล แอคเซส โฮเทล แบรนด์ใหม่ระดับ 4 ดาว ออกแบบสไตล์ชิโน-โคโลเนียลร่วมสมัย ใจกลางเมืองภูเก็ต มีห้องพัก 79 ห้องพร้อมสิ่งอำนวยความสะดวกครบ เน้นที่พักสบาย เดินทางสะดวก ในราคาคุ้มค่า\nพักผ่อนอย่างสงบในห้องส่วนตัวพร้อมระเบียง ท่ามกลางบรรยากาศร่มรื่น",
+   "en": "Supicha Pool Access Hotel is a new 4-star brand with a contemporary Sino-Colonial design in Phuket Town. It has 79 guest rooms with standard facilities, focusing on comfortable, convenient accommodation in Phuket at an affordable price.\nEnjoy the peace and tranquility of the resort while staying in one of the 79 private rooms with your own balcony."
+  },
+  "facts": [
+   {
+    "th": "79 ห้อง",
+    "en": "79 rooms"
+   },
+   {
+    "th": "ห้อง Pool Access / Pool View",
+    "en": "Pool Access / Pool View rooms"
+   },
+   {
+    "th": "ราคารวม Service Charge และ VAT",
+    "en": "Rates include service charge & VAT"
+   }
+  ],
+  "rates": {
+   "unit": {
+    "th": "/คืน",
+    "en": "/night"
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "ก.ย.–ต.ค.",
+      "en": "Sep–Oct"
+     },
+     "ranges": [
+      [
+       "2025-09-03",
+       "2025-10-31"
+      ]
+     ]
+    },
+    {
+     "label": {
+      "th": "พ.ย.–ธ.ค.",
+      "en": "Nov–Dec"
+     },
+     "ranges": [
+      [
+       "2025-11-01",
+       "2025-12-27"
+      ]
+     ]
+    },
+    {
+     "label": {
+      "th": "Peak Season",
+      "en": "Peak Season"
+     },
+     "ranges": [
+      [
+       "2025-12-28",
+       "2026-01-03"
+      ]
+     ],
+     "peak": true
+    },
+    {
+     "label": {
+      "th": "ม.ค.–เม.ย.",
+      "en": "Jan–Apr"
+     },
+     "ranges": [
+      [
+       "2026-01-04",
+       "2026-04-30"
+      ]
+     ]
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "Pool Access / Pool View",
+       "d": {
+        "th": "เตียงคู่ / เตียงแยก",
+        "en": "DBL / TWN"
+       },
+       "v": [
+        1200,
+        1700,
+        2200,
+        1700
+       ]
+      },
+      {
+       "n": "Extra Bed",
+       "d": {
+        "th": "รวมอาหารเช้า",
+        "en": "incl. breakfast"
+       },
+       "v": [
+        600,
+        600,
+        600,
+        600
+       ],
+       "extra": true
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "stay",
+  "pic": "blumonkey",
+  "th": "บลู มังกี้ ฮับ แอนด์ โฮเทล บางเทา",
+  "en": "Blu Monkey Hub & Hotel Bangtao Beach",
+  "loc": "Bangtao, Choeng Thale",
+  "locTh": "บางเทา เชิงทะเล",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "โรงแรมดีไซน์เพลง ใกล้หาดบางเทา · เตียงดูดวิญญาณ",
+   "en": "Music-inspired hotel near Bangtao Beach · “soul-sucking beds”"
+  },
+  "desc": {
+   "th": "บลู มังกี้ ฮับ แอนด์ โฮเทล บางเทา ภูเก็ต ในเครือ Blu Monkey Hotels มีห้องพัก 73 ห้อง ตั้งอยู่ใกล้หาดบางเทา ต.เชิงทะเล อ.ถลาง ห่างหาดบางเทาเพียง 1.7 กม. (ขับรถราว 4 นาที) ห่าง Porto de Phuket 800 เมตร และห่าง Villa Market – Boat Avenue 450 เมตร\nโรงแรมได้แรงบันดาลใจจากความสุขของเสียงเพลง ใช้คลื่นเสียงเป็นองค์ประกอบหลักของการออกแบบ พร้อมกราฟิกหัวลิงซึ่งเป็นสัญลักษณ์ของแบรนด์ทั่วทั้งโรงแรม\nห้องพักขึ้นชื่อเรื่องเตียงและเครื่องนอนนุ่มสบายจนได้ฉายาว่า “#เตียงดูดวิญญาณ” นอนแล้วไม่อยากลุก มีสระว่ายน้ำ ฟิตเนส และห้องประชุม",
+   "en": "Blu Monkey Hub & Hotel Bangtao Beach Phuket is a member of the Blu Monkey Hotels group, offering a total of 73 rooms. It is near Bangtao Beach in Choeng Thale, Thalang — only 1.7 km from Bangtao Beach (about a 4-minute drive), 800 m from Porto de Phuket and 450 m from Villa Market – Boat Avenue.\nThe hotel is inspired by the joy of music, with sound waves as the key design element, along with the signature monkey head graphic — the Blu Monkey Hotels brand symbol — throughout the property.\nThe rooms are known for exceptionally soft beds and bedding, famously called “soul-sucking beds” because once you lie down, you won't want to get up. Guests can also enjoy a swimming pool, fitness center and meeting rooms."
+  },
+  "facts": [
+   {
+    "th": "73 ห้อง",
+    "en": "73 rooms"
+   },
+   {
+    "th": "ห่างหาดบางเทา 1.7 กม.",
+    "en": "1.7 km to Bangtao Beach"
+   },
+   {
+    "th": "สระว่ายน้ำ · ฟิตเนส · ห้องประชุม",
+    "en": "Pool · Fitness · Meeting rooms"
+   }
+  ],
+  "rates": {
+   "unit": {
+    "th": "/คืน",
+    "en": "/night"
+   },
+   "sub": [
+    {
+     "th": "ห้องอย่างเดียว",
+     "en": "Room only"
+    },
+    {
+     "th": "รวมอาหารเช้า",
+     "en": "Breakfast"
+    }
+   ],
+   "cols": [
+    {
+     "label": {
+      "th": "High Season",
+      "en": "High Season"
+     },
+     "ranges": [
+      [
+       "2025-11-01",
+       "2025-12-19"
+      ],
+      [
+       "2026-01-13",
+       "2026-03-31"
+      ]
+     ]
+    },
+    {
+     "label": {
+      "th": "Peak Season",
+      "en": "Peak Season"
+     },
+     "ranges": [
+      [
+       "2025-12-20",
+       "2026-01-12"
+      ]
+     ],
+     "peak": true
+    },
+    {
+     "label": {
+      "th": "Low Season",
+      "en": "Low Season"
+     },
+     "ranges": [
+      [
+       "2026-04-01",
+       "2026-10-31"
+      ]
+     ]
+    }
+   ],
+   "groups": [
+    {
+     "name": {
+      "th": "ห้องพัก",
+      "en": "Rooms"
+     },
+     "rows": [
+      {
+       "n": "Superior King / Twin",
+       "d": {
+        "th": "2 ท่าน",
+        "en": "2 guests"
+       },
+       "v": [
+        [
+         1100,
+         1200
+        ],
+        [
+         1300,
+         1400
+        ],
+        [
+         900,
+         1000
+        ]
+       ]
+      },
+      {
+       "n": "Deluxe King",
+       "d": {
+        "th": "2 ท่าน",
+        "en": "2 guests"
+       },
+       "v": [
+        [
+         1400,
+         1500
+        ],
+        [
+         1600,
+         1700
+        ],
+        [
+         1200,
+         1300
+        ]
+       ]
+      },
+      {
+       "n": "Superior Triple",
+       "d": {
+        "th": "3 ท่าน",
+        "en": "3 guests"
+       },
+       "v": [
+        [
+         1600,
+         1750
+        ],
+        [
+         1800,
+         1950
+        ],
+        [
+         1400,
+         1550
+        ]
+       ]
+      },
+      {
+       "n": "King Bed + Bunk Bed",
+       "d": {
+        "th": "4 ท่าน",
+        "en": "4 guests"
+       },
+       "v": [
+        [
+         1900,
+         2100
+        ],
+        [
+         2100,
+         2300
+        ],
+        [
+         1700,
+         1900
+        ]
+       ]
+      },
+      {
+       "n": "Connecting (King + Bunk)",
+       "d": {
+        "th": "4 ท่าน",
+        "en": "4 guests"
+       },
+       "v": [
+        [
+         2100,
+         2300
+        ],
+        [
+         2300,
+         2500
+        ],
+        [
+         1900,
+         2100
+        ]
+       ]
+      },
+      {
+       "n": "Connecting (King + King)",
+       "d": {
+        "th": "4 ท่าน",
+        "en": "4 guests"
+       },
+       "v": [
+        [
+         2500,
+         2700
+        ],
+        [
+         2700,
+         2900
+        ],
+        [
+         2300,
+         2500
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "name": {
+      "th": "ห้องแบบ Pod",
+      "en": "Pod rooms"
+     },
+     "rows": [
+      {
+       "n": "Chimpanzee Pod",
+       "d": {
+        "th": "Deluxe เตียงคู่ / แยก",
+        "en": "Deluxe Double / Twin"
+       },
+       "v": [
+        [
+         1400,
+         1600
+        ],
+        [
+         2000,
+         2500
+        ],
+        [
+         1300,
+         1500
+        ]
+       ]
+      },
+      {
+       "n": "Chimpanzee Bath Pod",
+       "d": {
+        "th": "อ่างอาบน้ำที่ระเบียง",
+        "en": "Bathtub at balcony"
+       },
+       "v": [
+        [
+         1700,
+         1900
+        ],
+        [
+         2600,
+         2800
+        ],
+        [
+         1600,
+         1800
+        ]
+       ]
+      },
+      {
+       "n": "Gorilla Pod",
+       "d": {
+        "th": "Deluxe 3 เตียง",
+        "en": "Deluxe Triple"
+       },
+       "v": [
+        [
+         1900,
+         2200
+        ],
+        [
+         2800,
+         3100
+        ],
+        [
+         1800,
+         2100
+        ]
+       ]
+      },
+      {
+       "n": "Orangutan Pod",
+       "d": {
+        "th": "เตียงคู่หรือแยก + เตียงสองชั้น",
+        "en": "Double or Twin + Bunk Bed"
+       },
+       "v": [
+        [
+         2200,
+         2600
+        ],
+        [
+         3000,
+         3400
+        ],
+        [
+         2100,
+         2500
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "stay",
+  "pic": "nhlagoon",
+  "marina": "lagoon",
+  "th": "เอ็นเอช โบ๊ทลากูน ภูเก็ต รีสอร์ท",
+  "en": "NH Boat Lagoon Phuket Resort",
+  "loc": "Boat Lagoon",
+  "locTh": "โบ๊ทลากูน",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "ไลฟ์สไตล์ริมมารีน่าต้นตำรับของภูเก็ต",
+   "en": "Phuket's original lifestyle destination"
+  },
+  "desc": {
+   "th": "มารีน่าคึกคักตลอดทั้งวัน ออกไปสำรวจสิ่งอำนวยความสะดวกมากมาย แล้วกลับมาพักผ่อนสบายๆ ที่รีสอร์ท มีกิจกรรมสำหรับครอบครัว ทั้งลานสเก็ตน้ำแข็ง คอร์ตเทนนิส และคิดส์คลับ\nสระว่ายน้ำ 50 เมตรอยู่ใจกลางรีสอร์ท ล้อมรอบด้วยสวนร่มรื่น มีจากุซซี่สำหรับผู้ใหญ่และโซนเด็ก ห้องอาหาร Harbour เสิร์ฟอาหารนานาชาติตลอดวันพร้อมบุฟเฟต์อาหารเช้า วิวมารีน่าและสระว่ายน้ำ",
+   "en": "The marina bustles with energy throughout the day. Explore its many facilities, then return to laidback lounging at this Phuket holiday resort. Family fun includes an ice rink, tennis court and kids' club.\nThe 50-meter swimming pool is at the heart of the resort, surrounded by lush gardens — adults can enjoy the Jacuzzi while kids splash in their dedicated zone. Harbour Restaurant serves around-the-world flavors all day, starting with a bustling breakfast buffet, with views of the marina and pool."
+  },
+  "facts": [
+   {
+    "th": "Deluxe (Resort Wing) 35 ตร.ม. · 108 ห้อง ระเบียงวิวสระ",
+    "en": "Deluxe (Resort Wing) 35 sqm · 108 rooms, pool-view balcony"
+   },
+   {
+    "th": "Lagoon Suite 72 ตร.ม. · 6 ห้อง แยกห้องนอน-ห้องนั่งเล่น",
+    "en": "Lagoon Suite 72 sqm · 6 units, separate living room"
+   },
+   {
+    "th": "สระ 50 เมตร · ฟิตเนส · คิดส์คลับ · ลานสเก็ต · เทนนิส",
+    "en": "50 m pool · Gym · Kids' club · Ice rink · Tennis"
+   }
+  ],
+  "rates": {
+   "unit": {
+    "th": "/เดือน",
+    "en": "/month"
+   },
+   "note": {
+    "th": "ราคาเช่ารายเดือน (Net) ห้องฝั่ง Marina",
+    "en": "Monthly rates (net), Marina rooms"
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "ราคาต่อเดือน",
+      "en": "Monthly rate"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "Marina Superior",
+       "d": {
+        "th": "34 ตร.ม.",
+        "en": "34 sqm"
+       },
+       "v": [
+        30250
+       ]
+      },
+      {
+       "n": "Marina Grand",
+       "d": {
+        "th": "43 ตร.ม.",
+        "en": "43 sqm"
+       },
+       "v": [
+        52250
+       ]
+      },
+      {
+       "n": "Marina Suite",
+       "d": {
+        "th": "93 ตร.ม.",
+        "en": "93 sqm"
+       },
+       "v": [
+        81950
+       ]
+      },
+      {
+       "n": "Marina Penthouse 1 Bedroom",
+       "d": {
+        "th": "110 ตร.ม.",
+        "en": "110 sqm"
+       },
+       "v": [
+        105000
+       ]
+      },
+      {
+       "n": "Marina Penthouse 2 Bedroom",
+       "d": {
+        "th": "146 ตร.ม.",
+        "en": "146 sqm"
+       },
+       "v": [
+        119500
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "spa",
+  "pic": "phumontra",
+  "th": "ภูมนตรา มาสสาจ แอนด์ สปา (เมืองเก่า)",
+  "en": "Phumontra Massage & Spa Old Town",
+  "loc": "Phang Nga Rd, Old Town",
+  "locTh": "ถ.พังงา เมืองเก่า",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "สปาบรรยากาศไทยร่วมสมัย ในตึกชิโน-โปรตุกีส",
+   "en": "Modern Thai spa in a Sino-Portuguese building"
+  },
+  "desc": {
+   "th": "ภูมนตรา มาสสาจ แอนด์ สปา สาขาเมืองเก่า 1 ตั้งอยู่บนถนนพังงา ต.ตลาดใหญ่ อ.เมืองภูเก็ต บรรยากาศไทยร่วมสมัยผสานเสน่ห์ย่านเมืองเก่า เดินทางสะดวก ใกล้แหล่งท่องเที่ยว คาเฟ่ และพิพิธภัณฑ์\nบริการหลากหลาย ทั้งนวดไทย นวดน้ำมัน นวดเท้า อโรมา และแพ็กเกจสปา โดยนักบำบัดที่ผ่านการฝึกอบรม ปรับเทคนิคตามความต้องการของแต่ละคน เน้นความสะอาด ความสงบ และบรรยากาศเป็นกันเอง",
+   "en": "Phumontra Massage & Spa Old Town 1 is on Phang Nga Road in Talad Yai, Mueang Phuket — a refined, modern Thai spa blending old-town charm with contemporary services, close to cafes, museums and attractions.\nSet in a beautiful Sino-Portuguese building, it offers traditional Thai massage, oil massage, foot massage, aromatherapy and spa packages by professionally trained therapists who tailor techniques to each guest. Cleanliness, tranquility and a friendly atmosphere are top priorities."
+  },
+  "rates": {
+   "title": {
+    "th": "ราคาบริการ",
+    "en": "Treatment prices"
+   },
+   "rowLabel": {
+    "th": "บริการ",
+    "en": "Treatment"
+   },
+   "flat": true,
+   "allCols": true,
+   "unit": {
+    "th": "",
+    "en": ""
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "30 นาที",
+      "en": "30 min"
+     },
+     "ranges": null
+    },
+    {
+     "label": {
+      "th": "60 นาที",
+      "en": "60 min"
+     },
+     "ranges": null
+    },
+    {
+     "label": {
+      "th": "90 นาที",
+      "en": "90 min"
+     },
+     "ranges": null
+    },
+    {
+     "label": {
+      "th": "120 นาที",
+      "en": "120 min"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "Thai Massage",
+       "d": {
+        "th": "นวดไทย",
+        "en": ""
+       },
+       "v": [
+        null,
+        null,
+        450,
+        600
+       ]
+      },
+      {
+       "n": "Thai Herbal Hot Compress Massage",
+       "d": {
+        "th": "นวดไทยประคบสมุนไพร",
+        "en": ""
+       },
+       "v": [
+        null,
+        null,
+        750,
+        900
+       ]
+      },
+      {
+       "n": "Foot + Head, Neck, Back, Shoulder",
+       "d": {
+        "th": "นวดเท้า + ศีรษะ คอ บ่า ไหล่",
+        "en": ""
+       },
+       "v": [
+        null,
+        400,
+        550,
+        700
+       ]
+      },
+      {
+       "n": "Aroma Massage",
+       "d": {
+        "th": "นวดน้ำมันอโรมา",
+        "en": ""
+       },
+       "v": [
+        null,
+        500,
+        700,
+        900
+       ]
+      },
+      {
+       "n": "Hot Aroma Massage",
+       "d": {
+        "th": "นวดน้ำมันอโรมาร้อน",
+        "en": ""
+       },
+       "v": [
+        null,
+        600,
+        800,
+        1000
+       ]
+      },
+      {
+       "n": "Oil Herbal Hot Compress Massage",
+       "d": {
+        "th": "นวดน้ำมัน + ประคบสมุนไพร",
+        "en": ""
+       },
+       "v": [
+        null,
+        null,
+        900,
+        1100
+       ]
+      },
+      {
+       "n": "Cream Massage",
+       "d": {
+        "th": "นวดครีม",
+        "en": ""
+       },
+       "v": [
+        null,
+        500,
+        700,
+        900
+       ]
+      },
+      {
+       "n": "Facial Massage",
+       "d": {
+        "th": "นวดหน้า",
+        "en": ""
+       },
+       "v": [
+        null,
+        400,
+        null,
+        null
+       ]
+      },
+      {
+       "n": "Body Scrub",
+       "d": {
+        "th": "ขัดผิว",
+        "en": ""
+       },
+       "v": [
+        null,
+        null,
+        700,
+        null
+       ]
+      },
+      {
+       "n": "Migraine Massage",
+       "d": {
+        "th": "นวดแก้ไมเกรน",
+        "en": ""
+       },
+       "v": [
+        300,
+        null,
+        null,
+        null
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "spa",
+  "pic": "kimspa",
+  "th": "คิม มาสสาจ แอนด์ สปา",
+  "en": "Kim's Massage & Spa",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "1.5h",
+  "durTh": "1.30 ชม.",
+  "tag": {
+   "th": "ผ่อนคลายหลังเที่ยว คลายปวดหลัง ปวดหัว เจ็ตแล็ก",
+   "en": "Unwind after sightseeing · back pain, headaches, jet lag"
+  },
+  "desc": {
+   "th": "มอบรางวัลให้ตัวเองหลังเที่ยวภูเก็ตมาทั้งวันที่ Kim's Massage and Spa มีแพ็กเกจหลากหลาย ไม่เพียงผ่อนคลาย แต่ยังช่วยบรรเทาอาการปวดหลัง ปวดศีรษะ และอาการเมื่อยล้า รวมถึงช่วยเรื่องการนอนหลับและเจ็ตแล็ก\nทีมนักบำบัดมืออาชีพพร้อมคลายความตึงของกล้ามเนื้อและข้อต่อจากการเดินทาง ให้คุณกลับมาสดชื่นเต็มที่",
+   "en": "Indulge in a special treatment after a day of exploring Phuket. Kim's Massage and Spa offers a variety of packages that not only relax you but also relieve back pain, headaches and other aches — and can even help with sleep issues or jet lag.\nWhichever package you choose, the professional therapists are ready to ease the muscle and joint tension built up during your travels, leaving you completely refreshed."
+  },
+  "rates": {
+   "title": {
+    "th": "ราคาบริการ",
+    "en": "Treatment prices"
+   },
+   "rowLabel": {
+    "th": "บริการ",
+    "en": "Treatment"
+   },
+   "flat": true,
+   "allCols": true,
+   "unit": {
+    "th": "",
+    "en": ""
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "1.30 ชม.",
+      "en": "1.5 hrs"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "Traditional Thai Massage, Back & Shoulder – Neck",
+       "d": {
+        "th": "นวดไทย + หลัง ไหล่ คอ",
+        "en": ""
+       },
+       "v": [
+        600
+       ]
+      },
+      {
+       "n": "Foot & Hand Reflexology",
+       "d": {
+        "th": "นวดกดจุดเท้าและมือ",
+        "en": ""
+       },
+       "v": [
+        600
+       ]
+      },
+      {
+       "n": "Back & Shoulder Special",
+       "d": {
+        "th": "นวดหลังและไหล่พิเศษ",
+        "en": ""
+       },
+       "v": [
+        650
+       ]
+      },
+      {
+       "n": "Aromatic Oil Massage",
+       "d": {
+        "th": "นวดน้ำมันหอมระเหย",
+        "en": ""
+       },
+       "v": [
+        750
+       ]
+      },
+      {
+       "n": "Swedish Oil Massage",
+       "d": {
+        "th": "นวดน้ำมันสวีดิช",
+        "en": ""
+       },
+       "v": [
+        850
+       ]
+      },
+      {
+       "n": "Herbal Hot Compress Massage",
+       "d": {
+        "th": "นวดประคบสมุนไพร",
+        "en": ""
+       },
+       "v": [
+        850
+       ]
+      },
+      {
+       "n": "Aromatic Oil Massage",
+       "d": {
+        "th": "นวดน้ำมันหอมระเหย (อีกราคาในเมนู)",
+        "en": "(second price on menu)"
+       },
+       "v": [
+        900
+       ]
+      },
+      {
+       "n": "Hot Oil Massage",
+       "d": {
+        "th": "นวดน้ำมันร้อน",
+        "en": ""
+       },
+       "v": [
+        900
+       ]
+      },
+      {
+       "n": "Herbal Hot Compress Massage",
+       "d": {
+        "th": "นวดประคบสมุนไพร (อีกราคาในเมนู)",
+        "en": "(second price on menu)"
+       },
+       "v": [
+        950
+       ]
+      },
+      {
+       "n": "Tamarind Body Scrub",
+       "d": {
+        "th": "ขัดผิวมะขาม",
+        "en": ""
+       },
+       "v": [
+        950
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "spa",
+  "pic": "mookda",
+  "th": "มุกดา สปา",
+  "en": "Mookda Spa",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "ห้องทรีตเมนต์ส่วนตัว · อบสมุนไพร ซาวน่า · ชิโรธารา",
+   "en": "Private treatment rooms · Herbal steam & sauna · Shirodhara"
+  },
+  "desc": {
+   "th": "สปาที่มีห้องทรีตเมนต์ส่วนตัว ให้คุณผ่อนคลายกับทรีตเมนต์หลากหลาย ทั้งนวดน้ำมันและขัดผิว บางแพ็กเกจรวมการอบไอน้ำสมุนไพรไทยและซาวน่า ใช้ผลิตภัณฑ์ดูแลผมและผิวกายของมุกดาเองที่มีคุณภาพสูง\nไฮไลต์คือชิโรธารา (Shirodhara) จากศาสตร์อายุรเวท หยดน้ำมันลงบนหน้าผากอย่างแม่นยำ กระตุ้นจุดสำคัญบนศีรษะเพื่อความผ่อนคลายและสมดุลสูงสุด",
+   "en": "Mookda Spa offers private treatment rooms for a variety of rejuvenating treatments including oil massages and body scrubs. Some packages include the Thai herbal steam sauna, and the spa uses Mookda's own high-quality hair and body care products.\nThe Shirodhara massage, derived from Ayurveda, involves the precise application of oil on the forehead, targeting key acupuncture points on the head for ultimate relaxation and balance."
+  },
+  "rates": {
+   "title": {
+    "th": "ราคาบริการ",
+    "en": "Treatment prices"
+   },
+   "rowLabel": {
+    "th": "บริการ",
+    "en": "Treatment"
+   },
+   "flat": true,
+   "allCols": true,
+   "unit": {
+    "th": "",
+    "en": ""
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "ราคา (บาท)",
+      "en": "Price (THB)"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "Thai Massage",
+       "d": {
+        "th": "นวดไทย · 60 นาที",
+        "en": "60 min"
+       },
+       "v": [
+        1200
+       ]
+      },
+      {
+       "n": "Thai Herbal Body Scrub",
+       "d": {
+        "th": "ขัดผิวสมุนไพรไทย · 60 นาที",
+        "en": "60 min"
+       },
+       "v": [
+        1200
+       ]
+      },
+      {
+       "n": "Thai Herbal Body Mask",
+       "d": {
+        "th": "พอกตัวสมุนไพรไทย · 60 นาที",
+        "en": "60 min"
+       },
+       "v": [
+        1200
+       ]
+      },
+      {
+       "n": "Aromatherapy Oil Body Massage",
+       "d": {
+        "th": "นวดน้ำมันอโรมา · 60 นาที",
+        "en": "60 min"
+       },
+       "v": [
+        1200
+       ]
+      }
+     ]
+    },
+    {
+     "name": {
+      "th": "แพ็กเกจสปา",
+      "en": "Spa packages"
+     },
+     "rows": [
+      {
+       "n": "Mookda Special Package A",
+       "d": {
+        "th": "90 นาที · นวดไทย + ศีรษะ คอ หลัง ไหล่ ด้วยยาหม่องสมุนไพร",
+        "en": "90 min · Thai massage + head, neck, back & shoulder with herbal balm"
+       },
+       "v": [
+        2000
+       ]
+      },
+      {
+       "n": "Mookda Aloe Vera Sunburn Package",
+       "d": {
+        "th": "180 นาที · นวดน้ำมันอโรมา + พอกตัวว่านหางจระเข้ + นวดหน้าและทรีตเมนต์ว่านหางจระเข้",
+        "en": "180 min · Aroma oil massage + aloe vera body mask + aloe vera facial"
+       },
+       "v": [
+        3500
+       ]
+      },
+      {
+       "n": "Mookda Coconut Package",
+       "d": {
+        "th": "180 นาที · อบไอน้ำสมุนไพร ซาวน่า จากุซซี่ + ขัดผิวมะพร้าว + นวดน้ำมันมะพร้าว + สปาผมหรือนวดเท้า",
+        "en": "180 min · Herbal steam, sauna & Jacuzzi + coconut scrub + coconut oil massage + hair spa or foot massage"
+       },
+       "v": [
+        3800
+       ]
+      },
+      {
+       "n": "Shirodhara Package",
+       "d": {
+        "th": "210 นาที · อบไอน้ำสมุนไพร ซาวน่า จากุซซี่ + ขัดผิวสมุนไพร + ชิโรธาราและนวดน้ำมันอโรมา + นวดเท้า + สระ ไดร์ เซ็ตผม",
+        "en": "210 min · Herbal steam, sauna & Jacuzzi + herbal scrub + Shirodhara & aroma oil massage + foot reflexology + shampoo, blow dry & set"
+       },
+       "v": [
+        4300
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "animal",
+  "pic": "elephant",
+  "th": "Elephant Jungle Sanctuary ภูเก็ต",
+  "en": "Elephant Jungle Sanctuary Phuket",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "ประสบการณ์กับช้างอย่างมีจริยธรรม",
+   "en": "The ethical elephant experience in paradise"
+  },
+  "desc": {
+   "th": "สัมผัสธรรมชาติและใกล้ชิดยักษ์ใหญ่ใจดีที่ Elephant Jungle Sanctuary Phuket หนึ่งในปางช้างที่มีจริยธรรมและยั่งยืนที่สุดของไทย\nได้ใกล้ชิดช้างที่ได้รับการช่วยเหลือในธรรมชาติ ป้อนอาหาร เดินเคียงข้าง และร่วมอาบโคลนและอาบน้ำในลำธารไปกับช้าง\nเรียนรู้เรื่องราวของช้างแต่ละตัว การดูแล และพันธกิจของปางช้างในการปกป้องช้าง ทุกการมาเยือนช่วยสนับสนุนการท่องเที่ยวอย่างมีจริยธรรมและคุณภาพชีวิตของช้าง",
+   "en": "Discover the beauty of nature and connect with gentle giants at the Elephant Jungle Sanctuary Phuket, one of Thailand's most ethical and sustainable elephant sanctuaries.\nHere, you'll have the rare opportunity to interact with rescued elephants in a natural environment — feed them, walk beside them, and even join them in a refreshing mud spa and river bath!\nLearn about the elephants' stories, their care, and the sanctuary's mission to protect these amazing creatures. Every visit supports ethical tourism and helps improve the elephants' wellbeing."
+  },
+  "rates": {
+   "title": {
+    "th": "โปรแกรม",
+    "en": "Programs"
+   },
+   "rowLabel": {
+    "th": "โปรแกรม",
+    "en": "Program"
+   },
+   "flat": true,
+   "allCols": true,
+   "unit": {
+    "th": "/ท่าน",
+    "en": "/person"
+   },
+   "note": {
+    "th": "ทุกโปรแกรมรวมไกด์ภาษาอังกฤษ น้ำดื่ม อาหารช้าง ประกัน",
+    "en": "All include English-speaking guide, water, elephant food & insurance"
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "บาท/ท่าน",
+      "en": "THB/person"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "Feed Me",
+       "d": {
+        "th": "ให้อาหารและเรียนรู้เรื่องช้าง",
+        "en": "Feed and learn about elephants"
+       },
+       "v": [
+        900
+       ]
+      },
+      {
+       "n": "Feed & Shower",
+       "d": {
+        "th": "ให้อาหารผลไม้ และอาบน้ำช้างใต้ฝักบัวจำลองฝน",
+        "en": "Feed fruit & join the elephant rain shower"
+       },
+       "v": [
+        2000
+       ]
+      },
+      {
+       "n": "Half Day Experience",
+       "d": {
+        "th": "ครึ่งวัน + อาหารไทย 1 มื้อ",
+        "en": "Half day + one Thai meal"
+       },
+       "v": [
+        2900
+       ]
+      },
+      {
+       "n": "Walk With Elephants",
+       "d": {
+        "th": "เดินป่ากับช้างที่ได้รับการช่วยเหลือ + อาหารไทย 2 มื้อ",
+        "en": "Jungle walk with rescued elephants + two Thai meals"
+       },
+       "v": [
+        6000
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "animal",
+  "pic": "tiger",
+  "th": "ไทเกอร์ คิงดอม ภูเก็ต",
+  "en": "Tiger Kingdom Phuket",
+  "loc": "Kathu",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "ประสบการณ์ใกล้ชิดเสือ",
+   "en": "Wild encounter experience"
+  },
+  "desc": {
+   "th": "Tiger Kingdom Phuket ให้คุณได้ใกล้ชิดเสือในสภาพแวดล้อมที่ปลอดภัยและได้รับการดูแลอย่างดี ตั้งอยู่ที่กะทู้ ผู้มาเยือนสามารถพบ สัมผัส และถ่ายรูปกับเสือหลายวัยหลายขนาด ภายใต้การดูแลของครูฝึกที่มีประสบการณ์\nเสือทุกตัวได้รับการเลี้ยงดูตั้งแต่แรกเกิดและคุ้นเคยกับคน เลือกโซนได้ตามขนาดเสือ ตั้งแต่ลูกเสือขี้เล่นจนถึงเสือโตเต็มวัย ที่นี่ยังส่งเสริมการอนุรักษ์และการเรียนรู้เรื่องสัตว์ป่าด้วย",
+   "en": "Tiger Kingdom Phuket offers a once-in-a-lifetime opportunity to get up close with majestic tigers in a safe and well-managed environment. Located in Kathu, this attraction allows visitors to meet, touch, and take photos with tigers of various ages and sizes under the supervision of experienced trainers.\nAll tigers are raised with care from birth and are accustomed to human interaction. Visitors can choose different enclosures based on tiger size — from playful cubs to full-grown adults. The facility also promotes wildlife conservation and education, making it not only an exciting but also an inspiring experience for animal lovers visiting Phuket."
+  },
+  "rates": {
+   "title": {
+    "th": "ราคา",
+    "en": "Prices"
+   },
+   "rowLabel": {
+    "th": "โซนเสือ",
+    "en": "Tiger zone"
+   },
+   "flat": true,
+   "allCols": true,
+   "unit": {
+    "th": "/ท่าน",
+    "en": "/person"
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "บาท/ท่าน",
+      "en": "THB/person"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "name": {
+      "th": "บัตรเดี่ยว",
+      "en": "Single ticket"
+     },
+     "rows": [
+      {
+       "n": "Medium Tiger",
+       "d": {
+        "th": "อายุ 15+ สูง 160+ ซม.",
+        "en": "15+ yrs, 160 cm+"
+       },
+       "v": [
+        920
+       ]
+      },
+      {
+       "n": "Small Tiger",
+       "d": {
+        "th": "อายุ 15+ สูง 160+ ซม.",
+        "en": "15+ yrs, 160 cm+"
+       },
+       "v": [
+        920
+       ]
+      },
+      {
+       "n": "Big Tiger",
+       "d": {
+        "th": "อายุ 15+ สูง 160+ ซม.",
+        "en": "15+ yrs, 160 cm+"
+       },
+       "v": [
+        1020
+       ]
+      },
+      {
+       "n": "Smallest Tiger",
+       "d": {
+        "th": "ทุกวัย",
+        "en": "All ages"
+       },
+       "v": [
+        1020
+       ]
+      },
+      {
+       "n": "Special Tiger",
+       "d": {
+        "th": "อายุ 15+ สูง 160+ ซม.",
+        "en": "15+ yrs, 160 cm+"
+       },
+       "v": [
+        1320
+       ]
+      },
+      {
+       "n": "Giant Tiger",
+       "d": {
+        "th": "อายุ 15+ สูง 160+ ซม.",
+        "en": "15+ yrs, 160 cm+"
+       },
+       "v": [
+        1320
+       ]
+      },
+      {
+       "n": "White Tiger",
+       "d": {
+        "th": "อายุ 15+ สูง 160+ ซม.",
+        "en": "15+ yrs, 160 cm+"
+       },
+       "v": [
+        1320
+       ]
+      },
+      {
+       "n": "Cheetah",
+       "d": {
+        "th": "อายุ 4+ สูง 110+ ซม.",
+        "en": "4+ yrs, 110 cm+"
+       },
+       "v": [
+        1320
+       ]
+      }
+     ]
+    },
+    {
+     "name": {
+      "th": "แพ็กเกจ",
+      "en": "Packages"
+     },
+     "rows": [
+      {
+       "n": "P2A",
+       "d": {
+        "th": "Big หรือ Smallest + Medium หรือ Small",
+        "en": "Big or Smallest + Medium or Small"
+       },
+       "v": [
+        1720
+       ]
+      },
+      {
+       "n": "P2B",
+       "d": {
+        "th": "Cheetah + White Tiger หรือ Giant",
+        "en": "Cheetah + White Tiger or Giant"
+       },
+       "v": [
+        2220
+       ]
+      },
+      {
+       "n": "P3",
+       "d": {
+        "th": "Big + Smallest + Medium หรือ Small",
+        "en": "Big + Smallest + Medium or Small"
+       },
+       "v": [
+        2520
+       ]
+      },
+      {
+       "n": "P4",
+       "d": {
+        "th": "Big + Medium + Small + Smallest",
+        "en": "Big + Medium + Small + Smallest"
+       },
+       "v": [
+        3320
+       ]
+      },
+      {
+       "n": "P All",
+       "d": {
+        "th": "ทุกโซน + ช่างภาพฟรี 1 กรง (USB)",
+        "en": "All zones + free photographer 1 cage (USB)"
+       },
+       "v": [
+        6920
+       ]
+      }
+     ]
+    },
+    {
+     "name": {
+      "th": "บริการเสริม",
+      "en": "Extras"
+     },
+     "rows": [
+      {
+       "n": {
+        "th": "ถ่ายรูป 30–50 ภาพ",
+        "en": "Photos 30–50 shots"
+       },
+       "d": {
+        "th": "ส่งไฟล์/อีเมล · ต่อกรง",
+        "en": "File/e-mail · per cage"
+       },
+       "v": [
+        550
+       ]
+      },
+      {
+       "n": {
+        "th": "ถ่ายรูป 30–50 ภาพ + คลิปสั้น",
+        "en": "Photos 30–50 + short clip"
+       },
+       "d": {
+        "th": "USB · ต่อกรง",
+        "en": "USB · per cage"
+       },
+       "v": [
+        650
+       ]
+      },
+      {
+       "n": "Walk around",
+       "d": {
+        "th": "เดินชม ไม่เข้ากรง",
+        "en": "Cannot go inside the cage"
+       },
+       "v": [
+        520
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "animal",
+  "pic": "dolphin",
+  "th": "โชว์โลมา ภูเก็ต",
+  "en": "Phuket Dolphin Show",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "45 min",
+  "durTh": "45 นาที",
+  "tag": {
+   "th": "โลมาแสนรู้ แมวน้ำแสนซน · 3 รอบต่อวัน",
+   "en": "Clever dolphins and playful seals · 3 shows daily"
+  },
+  "desc": {
+   "th": "โชว์โลมาภูเก็ตเต็มไปด้วยความสนุกและความประทับใจ ทั้งการกระโดดลอดห่วงอย่างผาดโผน การทรงตัวที่น่าทึ่ง และการวาดภาพสุดสร้างสรรค์ที่แสดงถึงความฉลาดของโลมา พร้อมแมวน้ำแสนซนที่มาเพิ่มสีสันให้ผู้ชม\nเปิดทุกวัน ยกเว้นวันจันทร์ 3 รอบ 11:00, 14:00 และ 17:00 รอบละ 45 นาที กรุณาจองล่วงหน้าอย่างน้อย 3 ชั่วโมงก่อนรอบแสดง",
+   "en": "The Phuket Dolphin Show is full of fun and wonder — daring hoop jumps, impressive balancing acts and creative painting that show off the dolphins' intelligence, plus playful seals adding to the entertainment.\nOpen daily except Monday with 3 shows at 11:00, 14:00 and 17:00 (45 min each). Please book at least 3 hours before showtime."
+  },
+  "facts": [
+   {
+    "th": "ปิดวันจันทร์ · รอบ 11:00 / 14:00 / 17:00",
+    "en": "Closed Mon · Shows 11:00 / 14:00 / 17:00"
+   },
+   {
+    "th": "เด็กสูง 90–130 ซม. ใช้ราคาเด็ก",
+    "en": "Child price: height 90–130 cm"
+   },
+   {
+    "th": "ต่ำกว่า 90 ซม. ฟรี (นั่งตักผู้ปกครอง)",
+    "en": "Under 90 cm free (on parent's lap)"
+   }
+  ],
+  "rates": {
+   "title": {
+    "th": "ราคาบัตร",
+    "en": "Tickets"
+   },
+   "rowLabel": {
+    "th": "ที่นั่ง",
+    "en": "Seating"
+   },
+   "flat": true,
+   "allCols": true,
+   "unit": {
+    "th": "/ท่าน",
+    "en": "/person"
+   },
+   "sub": [
+    {
+     "th": "เด็ก",
+     "en": "Child"
+    },
+    {
+     "th": "ผู้ใหญ่",
+     "en": "Adult"
+    }
+   ],
+   "cols": [
+    {
+     "label": {
+      "th": "ชาวไทย",
+      "en": "Thai"
+     },
+     "ranges": null
+    },
+    {
+     "label": {
+      "th": "ชาวต่างชาติ",
+      "en": "Foreigner"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "Regular",
+       "d": {
+        "th": "แถว E, F, G",
+        "en": "Rows E, F, G"
+       },
+       "v": [
+        [
+         215,
+         335
+        ],
+        [
+         350,
+         585
+        ]
+       ]
+      },
+      {
+       "n": "Deluxe",
+       "d": {
+        "th": "แถว C, D",
+        "en": "Rows C, D"
+       },
+       "v": [
+        [
+         250,
+         425
+        ],
+        [
+         450,
+         755
+        ]
+       ]
+      },
+      {
+       "n": "VIP",
+       "d": {
+        "th": "แถว B",
+        "en": "Row B"
+       },
+       "v": [
+        [
+         350,
+         515
+        ],
+        [
+         515,
+         875
+        ]
+       ]
+      },
+      {
+       "n": "VVIP",
+       "d": {
+        "th": "แถว A",
+        "en": "Row A"
+       },
+       "v": [
+        [
+         425,
+         600
+        ],
+        [
+         600,
+         1050
+        ]
+       ]
+      },
+      {
+       "n": "Swimming with dolphins",
+       "d": {
+        "th": "ว่ายน้ำกับโลมา",
+        "en": ""
+       },
+       "v": [
+        [
+         5690,
+         5690
+        ],
+        [
+         5690,
+         5690
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "animal",
+  "pic": "birdpark",
+  "th": "ภูเก็ต เบิร์ด พาร์ค",
+  "en": "Phuket Bird Park",
+  "loc": "Phuket",
+  "price": 350,
+  "dur": "10:00–17:00",
+  "durTh": "10:00–17:00",
+  "tag": {
+   "th": "สวนนกที่ใหญ่ที่สุดในไทย นกกว่า 100 สายพันธุ์",
+   "en": "Thailand's largest bird park · 100+ species"
+  },
+  "desc": {
+   "th": "สวนนกที่ใหญ่ที่สุดในประเทศไทย มีนกกว่า 1,000 ตัว มากกว่า 100 สายพันธุ์จากเอเชีย แอฟริกา และอเมริกาใต้ ท่ามกลางสวนสวย น้ำตก และพรรณไม้เขียวขจี\nใกล้ชิดนกมาคอว์ นกเงือก นกแก้ว นกกระจอกเทศ และนกฮูก ให้อาหารและถ่ายรูปกับนก ชมโชว์นกแสนรู้ที่สะกดคำและคิดเลขได้\nเปิดทุกวัน 10:00–17:00 (เข้าชมรอบสุดท้าย 2 ชั่วโมงก่อนปิด) · รอบโชว์ 10:30, 13:30, 15:30",
+   "en": "See the largest bird park in Thailand, home to more than 1,000 birds of over 100 exotic species from Asia, Africa and South America, set among gardens, cascading waterfalls and lush greenery.\nMeet macaws, hornbills, parrots, ostriches and owls up close — have them perch on your arm and eat from your hand — and watch an impressive bird show where birds spell words and solve math equations.\nOpen daily 10:00–17:00 (last entry 2 hours before closing) · Shows 10:30, 13:30, 15:30."
+  },
+  "facts": [
+   {
+    "th": "บัตรเข้าชม 350 บาท",
+    "en": "Ticket 350 THB"
+   },
+   {
+    "th": "โชว์นก 10:30 / 13:30 / 15:30",
+    "en": "Bird shows 10:30 / 13:30 / 15:30"
+   },
+   {
+    "th": "ให้อาหารนกและถ่ายรูปใกล้ชิด",
+    "en": "Bird feeding & photo ops"
+   }
+  ]
+ },
+ {
+  "cat": "animal",
+  "pic": "lionland",
+  "th": "ไลอ้อน แลนด์ ภูเก็ต",
+  "en": "Lion Land Phuket",
+  "loc": "Phuket",
+  "price": 810,
+  "dur": "15 min",
+  "durTh": "15 นาที",
+  "tag": {
+   "th": "เล่นกับลูกสิงโตอย่างใกล้ชิด 15 นาที",
+   "en": "15-minute close encounter with lion cubs"
+  },
+  "desc": {
+   "th": "ประสบการณ์ยอดนิยมคือการเล่นกับลูกสิงโตแสนน่ารัก ลูบ เล่น และป้อนอาหาร ลูกสิงโตขี้เล่นมาก ลองเล่นไล่จับหรือปล้ำมือกันได้ มีมุมถ่ายรูปมากมาย ทั้งเซลฟี่และช่างภาพมืออาชีพ\nเลือกได้ตามขนาด ตั้งแต่ลูกสิงโตแรกเกิด ตัวเล็กที่สุด ตัวเล็ก ตัวกลาง และสิงโตขาว พร้อมเจ้าหน้าที่ให้ความรู้เรื่องสิงโต",
+   "en": "The most popular experience is interacting with adorable lion cubs — pet them, play with them and even feed them. Cubs are incredibly playful, so try a game of tag or hand-wrestling, with countless photo opportunities.\nChoose from newborn, smallest, small, medium and white lions, and learn about lions from knowledgeable staff."
+  },
+  "facts": [
+   {
+    "th": "รวมค่าเข้า + เล่นกับสิงโต 15 นาที",
+    "en": "Entry + 15-min lion interaction"
+   },
+   {
+    "th": "Small Lion: สูง 150+ ซม. อายุ 15+ · Medium/Big: สูง 160+ ซม. อายุ 15+",
+    "en": "Small: 150 cm+, 15+ yrs · Medium/Big: 160 cm+, 15+ yrs"
+   },
+   {
+    "th": "ยกเลิกฟรีก่อน 24 ชม. · ไม่รองรับรถเข็น",
+    "en": "Free cancellation 24 h before · Not wheelchair/stroller accessible"
+   }
+  ]
+ },
+ {
+  "cat": "animal",
+  "pic": "croc",
+  "th": "ฟาร์มจระเข้ภูเก็ต",
+  "en": "Phuket Crocodile Farm",
+  "loc": "Phuket",
+  "price": 189,
+  "dur": "",
+  "tag": {
+   "th": "โชว์จระเข้ และถ่ายรูปบนหลังจระเข้",
+   "en": "Crocodile show and photos with a crocodile"
+  },
+  "desc": {
+   "th": "ถ้ายังไม่เคยถ่ายรูปกับจระเข้ ก็เหมือนยังมาไม่ถึงเมืองไทย! ฟาร์มจระเข้ภูเก็ตมีโชว์จระเข้สุดหวาดเสียวโดยครูฝึกมืออาชีพ หลังโชว์ถ่ายรูปบนหลังจระเข้ได้\nเดินชมบ่อจระเข้ได้อิสระ มีร้านของที่ระลึกและสินค้าหนังจระเข้ ฟู้ดคอร์ทมีน้ำผลไม้ ไอศกรีมมะพร้าว และอาหารไทย",
+   "en": "If you don't have a photo with a crocodile, you haven't really been to Thailand! Phuket Crocodile Farm has a breathtaking show by professional trainers, and afterwards you can have your photo taken on top of a crocodile.\nWander freely among the enclosures, browse the souvenir and reptile-leather shop, and refresh yourself with fruit shakes, coconut ice cream and Thai dishes at the food court."
+  },
+  "rates": {
+   "title": {
+    "th": "ราคาบัตร",
+    "en": "Tickets"
+   },
+   "rowLabel": {
+    "th": "บัตร",
+    "en": "Ticket"
+   },
+   "flat": true,
+   "allCols": true,
+   "unit": {
+    "th": "/ท่าน",
+    "en": "/person"
+   },
+   "note": {
+    "th": "เด็กสูงต่ำกว่า 150 ซม. · ต่ำกว่า 90 ซม. นั่งตักฟรี · ไม่รวมรถรับ-ส่ง",
+    "en": "Child under 150 cm · under 90 cm free on lap · transfer not included"
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "ผู้ใหญ่",
+      "en": "Adult"
+     },
+     "ranges": null
+    },
+    {
+     "label": {
+      "th": "เด็ก",
+      "en": "Child"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": {
+        "th": "บัตรเข้าชม",
+        "en": "Entrance ticket"
+       },
+       "v": [
+        189,
+        100
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "tourth",
+  "pic": "sawanu",
+  "op": "Sawanu",
+  "th": "Sawanu จอยทัวร์ 1 วัน",
+  "en": "Sawanu Joined Day Tours",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "Full day",
+  "durTh": "ทั้งวัน",
+  "tag": {
+   "th": "จอยทัวร์เรือใหม่ คุณภาพสูง ราคาคุ้มค่า",
+   "en": "Quality joined tours on a new fleet"
+  },
+  "desc": {
+   "th": "หนึ่งในผู้ให้บริการทัวร์เรือชั้นนำของภูเก็ต ให้บริการทัวร์เรือคุณภาพสูงในราคาคุ้มค่า ด้วยเรือใหม่และทีมลูกเรือมากประสบการณ์ พาเที่ยวทะเลอันดามัน ทั้งภูเก็ต กระบี่ พังงา และหมู่เกาะสิมิลัน มีทั้งแบบจอยทัวร์และทัวร์ส่วนตัว",
+   "en": "As one of the top members of the prestigious boat tour operators based in Phuket, Sawanu offers affordable boat tours of the highest quality on a new fleet with experienced crew — unforgettable escapes to the Andaman Sea including Phuket, Krabi, Phang Nga and the Similan Islands, in both group and private tours."
+  },
+  "progs": {
+   "title": {
+    "th": "โปรแกรมจอยทัวร์",
+    "en": "Joined tour programs"
+   },
+   "items": [
+    {
+     "th": "พีพี – เกาะไข่",
+     "en": "Phi Phi – Khai"
+    },
+    {
+     "th": "พีพี – เกาะไผ่",
+     "en": "Phi Phi – Bamboo"
+    },
+    {
+     "th": "เกาะเจมส์บอนด์ – เกาะนาคา – พายแคนู",
+     "en": "James Bond – Naka Island – Canoe"
+    },
+    {
+     "th": "สิมิลัน (ออกจากท่าทับละมุ)",
+     "en": "Similan (from Thap Lamu Pier)"
+    },
+    {
+     "th": "สุรินทร์ (ออกจากท่าทับละมุ)",
+     "en": "Surin (from Thap Lamu Pier)"
+    },
+    {
+     "th": "เกาะห้อง กระบี่ – เกาะห้อง พังงา",
+     "en": "Hong Krabi – Hong Phang Nga"
+    },
+    {
+     "th": "พีพี – เกาะเจมส์บอนด์",
+     "en": "Phi Phi – James Bond"
+    },
+    {
+     "th": "พีพี – กระบี่ – เจมส์บอนด์ (2 วัน 1 คืน)",
+     "en": "Phi Phi – Krabi – James Bond (2 days 1 night)"
+    },
+    {
+     "th": "เรือ Semi-Yacht (MINDY): พีพี – เกาะไข่ 1 วัน",
+     "en": "Semi-Yacht (MINDY): Phi Phi – Khai, day trip"
+    },
+    {
+     "th": "เรือ Semi-Yacht (MINDY): เกาะไข่ – เกาะรังใหญ่ ครึ่งวัน เช้า / บ่าย",
+     "en": "Semi-Yacht (MINDY): Khai – Rang Yai, half day morning / afternoon"
+    }
+   ]
+  }
+ },
+ {
+  "cat": "tourth",
+  "pic": "cisimilan",
+  "op": "Check In Andaman",
+  "th": "สิมิลัน 1 วัน กับ Check In Andaman",
+  "en": "Similan Islands Full-Day Tour",
+  "loc": "Thap Lamu Pier",
+  "locTh": "ท่าเรือทับละมุ",
+  "price": null,
+  "dur": "08:00–16:15",
+  "durTh": "08:00–16:15",
+  "tag": {
+   "th": "ดำน้ำ ชมเต่าทะเล ชายหาดขาวละเอียด",
+   "en": "Sea turtles, coral reefs and powdery beaches"
+  },
+  "desc": {
+   "th": "สัมผัสความงามระดับโลกกับทริปเต็มวันสู่หมู่เกาะสิมิลันของ Check-in Andaman ดำน้ำชมแนวปะการังและสัตว์ทะเลหลากสี ตามหาเต่าทะเล ถ่ายรูปกับน้ำทะเลสีเทอร์คอยซ์ และพักผ่อนบนหาดทรายขาวละเอียด",
+   "en": "Experience world-class beauty with Check-in Andaman's full-day adventure to the Similan Islands. Discover sea turtle habitats, snorkel among vibrant coral reefs and colorful marine life, capture stunning photos with turquoise waters as your backdrop, and unwind on powdery white beaches."
+  },
+  "itin": [
+   {
+    "th": "08:00–09:00 – เช็กอินที่ท่าเรือส่วนตัว (ทับละมุ) อาหารเช้า และบรีฟโปรแกรม",
+    "en": "08:00–09:00 – Check in at Check-in Andaman's private pier (Thap Lamu), breakfast and briefing"
+   },
+   {
+    "th": "09:00–10:20 – ออกเรือมุ่งหน้าหมู่เกาะสิมิลัน",
+    "en": "09:00–10:20 – Cruise to the Similan Islands"
+   },
+   {
+    "th": "10:20–11:00 – ดำน้ำจุดที่ 1 เกาะ 9 (เกาะบางู) – ปลาหายากและโลกใต้น้ำสีสันสดใส",
+    "en": "10:20–11:00 – Snorkeling stop 1, Island No. 9 (Koh Ba Ngu) – rare fish and vibrant underwater life"
+   },
+   {
+    "th": "11:00–12:00 – เกาะ 8 (เกาะสิมิลัน) – จุดชมวิวหินเรือใบ อ่าวโดนัลด์ดั๊ก",
+    "en": "11:00–12:00 – Island No. 8 (Koh Similan) – Sail Rock viewpoint over Donald Duck Bay"
+   },
+   {
+    "th": "12:00–13:00 – อาหารกลางวันและเวลาอิสระ",
+    "en": "12:00–13:00 – Lunch and free time"
+   },
+   {
+    "th": "13:00–14:00 – ดำน้ำจุดที่ 2 เกาะ 7 (เกาะปายู) – เต่าทะเลมักว่ายมาใกล้ๆ",
+    "en": "13:00–14:00 – Snorkeling stop 2, Island No. 7 (Koh Payu) – sea turtles often swim nearby"
+   },
+   {
+    "th": "14:00–15:00 – เกาะ 4 (เกาะเมี่ยง) – 2 หาดที่เดินถึงกัน",
+    "en": "14:00–15:00 – Island No. 4 (Koh Miang) – two connected beaches"
+   },
+   {
+    "th": "15:00–16:15 – เดินทางกลับท่าเรือ พร้อมของว่าง",
+    "en": "15:00–16:15 – Return to the pier, light refreshments"
+   }
+  ]
+ },
+ {
+  "cat": "tourth",
+  "pic": "cisurin",
+  "op": "Check In Andaman",
+  "th": "สุรินทร์ 1 วัน กับ Check In Andaman",
+  "en": "Surin Islands Full-Day Tour",
+  "loc": "Thap Lamu Pier",
+  "locTh": "ท่าเรือทับละมุ",
+  "price": null,
+  "dur": "07:00–16:30",
+  "durTh": "07:00–16:30",
+  "tag": {
+   "th": "ดำน้ำอ่าวใส เยี่ยมหมู่บ้านมอแกน",
+   "en": "Clear bays and the Moken village"
+  },
+  "desc": {
+   "th": "ค้นพบความงามบริสุทธิ์ของหมู่เกาะสุรินทร์กับ Check-in Andaman ดำน้ำในอ่าวน้ำใส เยี่ยมชมหมู่บ้านมอแกนที่มีเอกลักษณ์ และใช้เวลาทั้งวันไปกับธรรมชาติ วัฒนธรรม และความทรงจำที่ไม่มีวันลืม",
+   "en": "Discover the untouched beauty of the Surin Islands with Check-in Andaman. Snorkel in crystal-clear bays, visit the unique Moken village, and enjoy a day filled with nature, culture and unforgettable memories."
+  },
+  "itin": [
+   {
+    "th": "07:00 – ถึงท่าเรือส่วนตัว (ทับละมุ) เช็กอิน อาหารเช้า พบไกด์",
+    "en": "07:00 – Arrive at Check-in Andaman's private pier (Thap Lamu), check-in, breakfast, meet your guide"
+   },
+   {
+    "th": "08:10 – ออกเดินทางด้วยสปีดโบ๊ทสู่หมู่เกาะสุรินทร์",
+    "en": "08:10 – Depart by speedboat to the Surin Islands"
+   },
+   {
+    "th": "10:00 – ถึงอุทยานฯ ดำน้ำจุดแรก อ่าวช่องขาด – ปะการังทั้งน้ำตื้นและน้ำลึก",
+    "en": "10:00 – Mu Ko Surin National Park; first snorkel at Ao Chong Kad – shallow and deep reefs"
+   },
+   {
+    "th": "11:00 – เยี่ยมหมู่บ้านมอแกน เรียนรู้วัฒนธรรมชาวเล ซื้อของที่ระลึก",
+    "en": "11:00 – Visit the Moken Village, learn about the sea gypsies and shop for souvenirs"
+   },
+   {
+    "th": "12:00 – อาหารกลางวันและพักผ่อน",
+    "en": "12:00 – Lunch and free time"
+   },
+   {
+    "th": "13:00 – ดำน้ำอ่าวแม่ยาย – ปลาหายากและสวนปะการัง",
+    "en": "13:00 – Snorkel at Ao Mae Yai – rare fish and coral gardens"
+   },
+   {
+    "th": "14:00 – อ่าวเต่า – มักพบเต่ากระ",
+    "en": "14:00 – Ao Tao – often visited by hawksbill turtles"
+   },
+   {
+    "th": "15:00 – เดินทางกลับ",
+    "en": "15:00 – Return trip"
+   },
+   {
+    "th": "16:30 – ถึงท่าเรือ ทานอาหารเย็นแบบบุฟเฟต์ ชมพระอาทิตย์ตก",
+    "en": "16:30 – Back at the pier, buffet dinner and sunset photos"
+   }
+  ]
+ },
+ {
+  "cat": "water",
+  "pic": "bananabeach",
+  "op": "Banana Beach",
+  "th": "Banana Beach เกาะเฮ",
+  "en": "Banana Beach, Coral Island",
+  "loc": "Coral Island",
+  "locTh": "เกาะเฮ",
+  "price": null,
+  "dur": "08:30–14:00 / 10:00–17:00",
+  "durTh": "08:30–14:00 / 10:00–17:00",
+  "tag": {
+   "th": "บีชคลับบนเกาะเฮ · ดำน้ำ · กีฬาทางน้ำ · ทุกวัน",
+   "en": "Beach club on Coral Island · Snorkel · Sea sports · Daily"
+  },
+  "desc": {
+   "th": "วันพักผ่อนที่ Banana Beach บนเกาะเฮ (Coral Island) เลือกได้ 3 แพ็กเกจ ทุกแพ็กเกจรวมรถรับ-ส่ง (เฉพาะพื้นที่ที่กำหนด) เรือสปีดโบ๊ท อาหารกลางวันบุฟเฟต์ เครื่องดื่ม ไกด์ ค่าอุทยาน และประกันอุบัติเหตุ\nPremium: ดำน้ำ 2 จุด + เลือกพาราเซลหรือบานาน่าโบ๊ท และคายัคใส 20 นาทีหรือบานาน่าสวิง · Snorkeling: ดำน้ำ 2 จุด + คายัคใส 20 นาที · Everyday: คายัคทะเล 20 นาที",
+   "en": "A beach day at Banana Beach on Coral Island with three packages. All include land transfer (specific area), speedboat transfer, buffet lunch, drinks, tour guide, national park fee and travel insurance.\nPremium: 2 snorkeling points + parasailing or banana boat, and clear kayak 20 min or banana swing · Snorkeling: 2 snorkeling points + clear kayak 20 min · Everyday: sea kayak 20 min."
+  },
+  "rates": {
+   "title": {
+    "th": "ราคาขาย",
+    "en": "Selling price"
+   },
+   "rowLabel": {
+    "th": "แพ็กเกจ",
+    "en": "Package"
+   },
+   "flat": true,
+   "unit": {
+    "th": "/ท่าน",
+    "en": "/person"
+   },
+   "note": {
+    "th": "เด็ก 4–12 ปี · ให้บริการทุกวัน",
+    "en": "Child 4–12 yrs · Daily"
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "ผู้ใหญ่",
+      "en": "Adult"
+     },
+     "ranges": null
+    },
+    {
+     "label": {
+      "th": "เด็ก",
+      "en": "Child"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "Banana Beach Premium",
+       "d": {
+        "th": "ดำน้ำ 2 จุด + พาราเซล/บานาน่าโบ๊ท + คายัคใส/บานาน่าสวิง",
+        "en": "2 snorkel points + parasail/banana boat + clear kayak/banana swing"
+       },
+       "v": [
+        3500,
+        3000
+       ]
+      },
+      {
+       "n": "Banana Beach Snorkeling",
+       "d": {
+        "th": "ดำน้ำ 2 จุด + คายัคใส 20 นาที",
+        "en": "2 snorkel points + clear kayak 20 min"
+       },
+       "v": [
+        2800,
+        2300
+       ]
+      },
+      {
+       "n": "Everyday Banana Beach",
+       "d": {
+        "th": "คายัคทะเล 20 นาที",
+        "en": "Sea kayak 20 min"
+       },
+       "v": [
+        2200,
+        1700
+       ]
+      }
+     ]
+    },
+    {
+     "name": {
+      "th": "กีฬาทางน้ำเพิ่มเติม (ต่อครั้ง)",
+      "en": "Sea sport add-ons"
+     },
+     "rows": [
+      {
+       "n": "Discovery Scuba Diving",
+       "d": {
+        "th": "30 นาที",
+        "en": "30 min"
+       },
+       "v": [
+        2100,
+        null
+       ]
+      },
+      {
+       "n": "Parasailing",
+       "d": {
+        "th": "ลอยฟ้า 3 นาที",
+        "en": "3 min in the air"
+       },
+       "v": [
+        1800,
+        null
+       ]
+      },
+      {
+       "n": "Banana Boat",
+       "d": {
+        "th": "15 นาที",
+        "en": "15 min"
+       },
+       "v": [
+        800,
+        null
+       ]
+      },
+      {
+       "n": "Zipline",
+       "d": {
+        "th": "11 จุด: ซิปไลน์ 7 + โรยตัว 3",
+        "en": "11 platforms: 7 zipline + 3 abseil"
+       },
+       "v": [
+        1800,
+        null
+       ]
+      },
+      {
+       "n": "Clear Kayak",
+       "d": {
+        "th": "30 นาที/ลำ",
+        "en": "30 min per boat"
+       },
+       "v": [
+        800,
+        null
+       ]
+      },
+      {
+       "n": "Sea Kayak",
+       "d": {
+        "th": "30 นาที/ลำ",
+        "en": "30 min per boat"
+       },
+       "v": [
+        400,
+        null
+       ]
+      },
+      {
+       "n": "Banana Swing",
+       "d": {
+        "th": "3 นาที",
+        "en": "3 min"
+       },
+       "v": [
+        500,
+        null
+       ]
+      },
+      {
+       "n": "Sea Walker",
+       "d": {
+        "th": "30 นาที",
+        "en": "30 min"
+       },
+       "v": [
+        2100,
+        null
+       ]
+      },
+      {
+       "n": "Speed Boat Fun Drive",
+       "d": {
+        "th": "5 นาที",
+        "en": "5 min"
+       },
+       "v": [
+        1500,
+        null
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "tourth",
+  "pic": "johngray",
+  "op": "John Gray",
+  "th": "Hong by Starlight กับ John Gray",
+  "en": "John Gray's Hong by Starlight",
+  "loc": "Ao Po Pier",
+  "locTh": "ท่าเรืออ่าวปอ",
+  "price": null,
+  "dur": "10:20–21:30",
+  "durTh": "10:20–21:30",
+  "tag": {
+   "th": "พายคายัคอ่าวพังงา กลางวันถึงกลางคืน · ลอยกระทง · แพลงก์ตอนเรืองแสง",
+   "en": "Phang Nga Bay by day and night · Krathong · Bioluminescent plankton"
+  },
+  "desc": {
+   "th": "ทัวร์ Hong Island by Starlight ออกแบบโดย John Gray ผู้บุกเบิกการพายเรือคายัคในทะเลของไทย เพื่อหลีกหนีฝูงชน ไฮไลต์คือได้ชมความงามของอ่าวพังงาทั้งกลางวันและกลางคืน\nรับจากโรงแรมไปท่าเรืออ่าวปอ ทานอาหารกลางวันบนเรือ พายคายัคที่ทำพิเศษเข้าถ้ำและ “ห้อง” (ลากูนกลางเขาหินปูน) โดยไกด์มืออาชีพ ชมสัตว์อย่างปลาตีน ลิงแสม นกเงือก ทานบุฟเฟต์อาหารเย็นพร้อมชมพระอาทิตย์ตก แล้วลอยกระทงและชมแพลงก์ตอนเรืองแสงยามค่ำ",
+   "en": "Originally designed by John Gray, the pioneer of sea kayaking in Thailand, the Hong Island Tour by Starlight was created to escape the crowds. The highlight is experiencing Phang Nga Bay both by day and by night.\nHotel pickup to Ao Po Pier, lunch onboard, then paddle a custom kayak through sea caves and hidden 'hongs' with professional guides. Spot mudskippers, macaques and hornbills, enjoy a buffet dinner at sunset, then float a krathong and see bioluminescent plankton after dark."
+  },
+  "itin": [
+   {
+    "th": "10:20 – รับจากโรงแรม",
+    "en": "10:20 – Hotel pickup"
+   },
+   {
+    "th": "11:30 – ท่าเรืออ่าวปอ – ขึ้นเรือ อาหารกลางวันแบบไทย บรีฟความปลอดภัย",
+    "en": "11:30 – Ao Po Pier – board, Thai-style lunch, safety briefing"
+   },
+   {
+    "th": "13:00 – เกาะเจมส์บอนด์ – ล่องชมและถ่ายรูปจากเรือ",
+    "en": "13:00 – James Bond Island – cruise past for photos"
+   },
+   {
+    "th": "14:00 – เกาะพนัก – พายคายัคเข้าถ้ำและห้อง 1–2 แห่ง",
+    "en": "14:00 – Phanak Island – kayak 1–2 sea caves and hongs"
+   },
+   {
+    "th": "16:00 – เกาะห้อง – สำรวจอีก 2 ถ้ำ",
+    "en": "16:00 – Hong Island – explore two more caves"
+   },
+   {
+    "th": "17:30 – บุฟเฟต์อาหารเย็นชมพระอาทิตย์ตก",
+    "en": "17:30 – Thai buffet dinner at sunset"
+   },
+   {
+    "th": "18:30 – ลอยกระทง ชมแพลงก์ตอนเรืองแสง",
+    "en": "18:30 – Float a krathong, bioluminescent plankton"
+   },
+   {
+    "th": "20:20 – ออกเรือกลับ",
+    "en": "20:20 – Depart by boat"
+   },
+   {
+    "th": "21:30 – ถึงโรงแรม",
+    "en": "21:30 – Back at the hotel"
+   }
+  ]
+ },
+ {
+  "cat": "tourth",
+  "pic": "onceyacht",
+  "op": "Once Yachting",
+  "th": "Once Yachting จอยทัวร์เรือคาตามารัน",
+  "en": "Once Yachting Joined Trips",
+  "loc": "Chalong Marina",
+  "locTh": "ท่าเรือฉลอง",
+  "price": null,
+  "dur": "Full day",
+  "durTh": "ทั้งวัน",
+  "tag": {
+   "th": "เรือ Premium Catamaran · สไลเดอร์ · สระลอยน้ำ · คายัคใส",
+   "en": "Premium catamaran · Slider · Floating pool · Clear kayak"
+  },
+  "desc": {
+   "th": "จอยทัวร์บนเรือคาตามารันพรีเมียม 2 โปรแกรม: หมู่เกาะสิมิลัน (เริ่ม 15 ต.ค. 2568) และพีพี 5 เกาะ – มาหยา – ไผ่ – ไข่ – ไม้ท่อน (เริ่ม 1 ต.ค. 2568)\nรวมลูกเรือมืออาชีพ โฮสเตส เครื่องดื่มต้อนรับ น้ำดื่ม น้ำอัดลม ผลไม้ อุปกรณ์ดำน้ำ เสื้อชูชีพ ผ้าเช็ดตัว รถชัตเติลที่ท่าเรือฉลอง และประกันอุบัติเหตุ ฟรีห้องแอร์ สไลเดอร์ สระลอยน้ำ คายัคใส และเบ็ดตกปลา (ไม่รวมค่าอุทยาน รถรับ-ส่ง และอาหาร)",
+   "en": "Joined trips on a premium catamaran: Similan Islands (from 15 Oct 2025) and Phi Phi 5 Islands – Maya – Bamboo – Khai – Maiton (from 1 Oct 2025).\nIncludes professional crew, hostess, welcome drink and snacks, soft drinks, water, fruit, snorkel gear, life jackets, towels, shuttle at Chalong Marina and travel insurance. Complimentary air-con, slider, floating pool, clear kayak and fishing rods (national park fees, land transfer and food not included)."
+  },
+  "progs": {
+   "title": {
+    "th": "โปรแกรม",
+    "en": "Programs"
+   },
+   "items": [
+    {
+     "th": "หมู่เกาะสิมิลัน",
+     "en": "Similan Islands"
+    },
+    {
+     "th": "พีพี – มาหยา – เกาะไผ่ – เกาะไข่ – เกาะไม้ท่อน",
+     "en": "Phi Phi – Maya – Bamboo – Khai – Maiton"
+    }
+   ]
+  }
+ },
+ {
+  "cat": "tourth",
+  "pic": "dimonsea",
+  "op": "Diamond Sea",
+  "th": "Diamond Sea สปีดโบ๊ท 1 วัน",
+  "en": "Diamond Sea Luxury Speedboat Day Trips",
+  "loc": "Boat Lagoon Pier",
+  "locTh": "ท่าเรือโบ๊ทลากูน",
+  "price": null,
+  "dur": "07:00–17:30",
+  "durTh": "07:00–17:30",
+  "tag": {
+   "th": "พีพี + เกาะไข่ · เจมส์บอนด์ + เกาะยาวใหญ่ · ไกด์ไทย/อังกฤษ",
+   "en": "Phi Phi + Khai · James Bond + Yao Yai · Thai & English guide"
+  },
+  "desc": {
+   "th": "ทริปสปีดโบ๊ทหรู 2 เส้นทาง รับจากโรงแรม ออกจากท่าโบ๊ทลากูน พร้อมอาหารเช้าเบาๆ\nพีพี + เกาะไข่: อ่าวลิง ดำน้ำอ่าวต้นไทร บุฟเฟต์บนเกาะพีพีดอน ถ้ำไวกิ้ง ว่ายน้ำอ่าวปิเละ หาดมาหยา และพักผ่อนดำน้ำที่เกาะไข่\nเจมส์บอนด์ + เกาะยาวใหญ่: พักผ่อนที่ Palm Beach Club เกาะยาวใหญ่ สำรวจเกาะพนัก พายแคนูเกาะห้อง บุฟเฟต์ที่เกาะปันหยี ชมเขาพิงกัน–เขาตะปู และว่ายน้ำที่เกาะนาคา",
+   "en": "Two luxury speedboat routes with hotel pickup from Boat Lagoon Pier and a light breakfast.\nPhi Phi + Khai: Monkey Bay, snorkeling at Ton Sai Bay, buffet lunch on Phi Phi Don, Viking Cave, swim at Pileh Lagoon, Maya Beach and relax at Khai Island.\nJames Bond + Yao Yai: Palm Beach Club on Yao Yai, Panak Island caves, canoeing at Hong Island, buffet lunch at Panyee floating village, Khao Ping Kan and Khao Tapu (James Bond Island), and a swim at Naka Island."
+  },
+  "rates": {
+   "title": {
+    "th": "ราคาขาย",
+    "en": "Selling price"
+   },
+   "rowLabel": {
+    "th": "โปรแกรม",
+    "en": "Program"
+   },
+   "flat": true,
+   "unit": {
+    "th": "/ท่าน",
+    "en": "/person"
+   },
+   "note": {
+    "th": "เด็ก 4–11 ปี",
+    "en": "Child 4–11 yrs"
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "ผู้ใหญ่",
+      "en": "Adult"
+     },
+     "ranges": null
+    },
+    {
+     "label": {
+      "th": "เด็ก",
+      "en": "Child"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "Phi Phi Island + Khai Island",
+       "v": [
+        3700,
+        2400
+       ]
+      },
+      {
+       "n": "James Bond Island + Naka Island",
+       "v": [
+        3700,
+        2500
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "tourth",
+  "pic": "hype",
+  "op": "Hype Yacht",
+  "th": "Hype Yacht ทริปเรือยอชต์หรู",
+  "en": "Hype Yacht Experience",
+  "loc": "Phuket",
+  "price": 8500,
+  "dur": "Full day",
+  "durTh": "ทั้งวัน",
+  "tag": {
+   "th": "เรือยอชต์ใหม่ · อาหารกูร์เมต์ · แชมเปญ ค็อกเทล · DJ",
+   "en": "Brand-new luxury yacht · Gourmet lunch · Champagne · DJ booth"
+  },
+  "desc": {
+   "th": "ทริปเรือจากภูเก็ตบนเรือยอชต์หรูลำใหม่ สลับเส้นทางตามฤดูกาล: หมู่เกาะพีพี 15 พ.ย.–16 เม.ย. และเกาะห้อง กระบี่ / อ่าวพังงา 17 เม.ย.–14 พ.ย.\nบริการอบอุ่นจากลูกเรือ อาหารกลางวันกูร์เมต์ แชมเปญ สปิริต และค็อกเทล เรือมีระบบเสียงและบูธ DJ ราคาเดียวทุกวัยเพราะจำกัดจำนวนคน อัปเกรดห้อง VIP Cabin +4,000 หรือ Master Suite +5,000 บาท",
+   "en": "A boat tour from Phuket on a brand-new luxury yacht, with destinations by season: Phi Phi Islands 15 Nov–16 Apr and Koh Hong – Krabi / Phang Nga Bay 17 Apr–14 Nov.\nWarm service, gourmet lunch, champagne, spirits and cocktails, a great sound system and DJ booth. One price for all ages due to limited capacity. Upgrade to a VIP Cabin (+4,000) or Master Suite (+5,000 THB)."
+  },
+  "facts": [
+   {
+    "th": "ราคาเดียวทุกวัย 8,500 บาท",
+    "en": "8,500 THB for all ages"
+   },
+   {
+    "th": "VIP Cabin +4,000 · Master Suite +5,000",
+    "en": "VIP Cabin +4,000 · Master Suite +5,000"
+   },
+   {
+    "th": "รวมอาหารกลางวัน ค่าอุทยาน รถรับ-ส่ง (เขตภูเก็ต)",
+    "en": "Lunch, park fee & shared transfer (Phuket) included"
+   }
+  ]
+ },
+ {
+  "cat": "lounge",
+  "pic": "corallounge",
+  "op": "The Coral Lounge",
+  "th": "เดอะ คอรัล พรีเมียม เลานจ์ สนามบินภูเก็ต",
+  "en": "The Coral Premium Lounge, Phuket Airport",
+  "loc": "Phuket International Airport (HKT)",
+  "locTh": "ท่าอากาศยานภูเก็ต (HKT)",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "เลานจ์สนามบินภูเก็ต · 82 ที่นั่ง · อาหารจากวัตถุดิบท้องถิ่น",
+   "en": "Phuket airport lounge · 82 seats · locally sourced Thai dishes"
+  },
+  "desc": {
+   "th": "ทันทีที่ก้าวเข้ามา คุณจะพบโทนสีฟ้าอ่อนและสีทรายที่สะท้อนสีสันของชายฝั่งอันดามัน ที่นั่งสบาย 82 ที่ แสงไฟนุ่มนวล และมุมพักผ่อนสงบ ให้ความรู้สึกเหมือนคาบาน่าส่วนตัว\nเลานจ์ภูมิใจนำเสนอรสชาติไทยด้วยวัตถุดิบท้องถิ่น ทั้งของว่างและอาหารจานหลัก พร้อมเครื่องดื่มซิกเนเจอร์ Coral Cabana Fizz ที่ทำจากสับปะรดภูเก็ต หวานอมเปรี้ยว ได้รสชาติของเกาะในแก้วเดียว",
+   "en": "As soon as you step inside, you're greeted by soft blues and sandy neutrals echoing the colours of the Andaman shore. With 82 comfortable seats, calming lighting and serene spaces, the lounge feels like your own private cabana.\nThe Coral Premium Class Lounge showcases the rich flavours of Thailand with locally sourced ingredients — from light snacks to gourmet meals. Try the signature Coral Cabana Fizz, made with Phuket pineapple, for a true taste of the island."
+  },
+  "facts": [
+   {
+    "th": "ห้องรับรองขาออกระหว่างประเทศ (First Class) · ขาเข้าระหว่างประเทศ · ขาออกในประเทศ",
+    "en": "International Departure (First Class) · International Arrival · Domestic Departure"
+   },
+   {
+    "th": "อาหาร เครื่องดื่ม Wi-Fi จอแสดงเที่ยวบิน นวดคอบ่าไหล่",
+    "en": "Food, drinks, Wi-Fi, flight info, neck & shoulder massage"
+   },
+   {
+    "th": "ห้องอาบน้ำ (First Class มีค่าบริการเพิ่ม) · ห้องประชุม",
+    "en": "Shower room (extra charge at First Class) · Meeting room"
+   }
+  ],
+  "progs": {
+   "title": {
+    "th": "บริการ",
+    "en": "Services"
+   },
+   "items": [
+    {
+     "th": "Premium Service – บริการรับส่งอย่างพรีเมียม",
+     "en": "Premium Service"
+    },
+    {
+     "th": "Lounge Service – พักผ่อนในเลานจ์ก่อนบิน",
+     "en": "Lounge Service"
+    },
+    {
+     "th": "Arrival Service – บริการช่วยเหลือขาเข้า",
+     "en": "Arrival Service"
+    },
+    {
+     "th": "Departure Service – บริการช่วยเหลือขาออก",
+     "en": "Departure Service"
+    }
+   ]
+  }
+ },
+ {
+  "cat": "lounge",
+  "pic": "yona",
+  "th": "Yona Beach Club",
+  "en": "Yona Beach Club",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "09:30–21:30",
+  "durTh": "09:30–21:30",
+  "tag": {
+   "th": "คาบาน่าริมสระ · Sunset Terrace · แพ็กเกจเช้า/บ่าย",
+   "en": "Poolside cabanas · Sunset Terrace · Morning & afternoon packages"
+  },
+  "desc": {
+   "th": "บีชคลับ 2 ชั้น: Beach Club ชั้น 1 และ Sunset Terrace ชั้น 2 เลือกที่นั่งได้ตั้งแต่ Sea Bed สำหรับ 2 คน จนถึง Maxi Cabana สำหรับ 8 คน ทุกแพ็กเกจรวมเครดิตใช้จ่ายอาหารและเครื่องดื่ม\nแพ็กเกจเช้า 09:30–14:00 · แพ็กเกจบ่าย 14:00–21:30",
+   "en": "A two-level beach club: Beach Club on the 1st floor and Sunset Terrace on the 2nd. Choose from a Sea Bed for two up to a Maxi Cabana for eight — every package includes credit to spend on food and drinks.\nMorning package 9:30 AM–2 PM · Afternoon package 2 PM–9:30 PM."
+  },
+  "rates": {
+   "title": {
+    "th": "แพ็กเกจที่นั่ง",
+    "en": "Seating packages"
+   },
+   "rowLabel": {
+    "th": "ที่นั่ง",
+    "en": "Seating"
+   },
+   "flat": true,
+   "unit": {
+    "th": "",
+    "en": ""
+   },
+   "note": {
+    "th": "ในวงเล็บ = เครดิตใช้จ่าย",
+    "en": "(credit to spend)"
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "เช้า 09:30–14:00",
+      "en": "Morning 9:30–14:00"
+     },
+     "ranges": null
+    },
+    {
+     "label": {
+      "th": "บ่าย 14:00–21:30",
+      "en": "Afternoon 14:00–21:30"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "name": {
+      "th": "Beach Club ชั้น 1",
+      "en": "Beach Club · 1st floor"
+     },
+     "rows": [
+      {
+       "n": "Maxi Cabana",
+       "d": {
+        "th": "เช้า 7 ท่าน · บ่าย 8 ท่าน",
+        "en": "7 pax AM · 8 pax PM"
+       },
+       "v": [
+        "28,000 (14,000)",
+        "52,000 (36,000)"
+       ]
+      },
+      {
+       "n": "Medium Cabana",
+       "d": {
+        "th": "เช้า 5 · บ่าย 6 ท่าน",
+        "en": "5 pax AM · 6 pax PM"
+       },
+       "v": [
+        "20,000 (10,000)",
+        "36,000 (24,000)"
+       ]
+      },
+      {
+       "n": "Small Cabana",
+       "d": {
+        "th": "4 ท่าน",
+        "en": "4 pax"
+       },
+       "v": [
+        "16,000 (8,000)",
+        "24,000 (16,000)"
+       ]
+      },
+      {
+       "n": "Pool Bed",
+       "d": {
+        "th": "เช้า 3 · บ่าย 4 ท่าน",
+        "en": "3 pax AM · 4 pax PM"
+       },
+       "v": [
+        "12,000 (6,000)",
+        "22,000 (14,000)"
+       ]
+      },
+      {
+       "n": "Sea Bed",
+       "d": {
+        "th": "เช้า 2 · บ่าย 3 ท่าน",
+        "en": "2 pax AM · 3 pax PM"
+       },
+       "v": [
+        "8,000 (4,000)",
+        "15,000 (9,000)"
+       ]
+      }
+     ]
+    },
+    {
+     "name": {
+      "th": "Sunset Terrace ชั้น 2",
+      "en": "Sunset Terrace · 2nd floor"
+     },
+     "rows": [
+      {
+       "n": "Balcony Sofa",
+       "d": {
+        "th": "เช้า 4 · บ่าย 6 ท่าน",
+        "en": "4 pax AM · 6 pax PM"
+       },
+       "v": [
+        "16,000 (8,000)",
+        "30,000 (18,000)"
+       ]
+      },
+      {
+       "n": "Sunset Sofa",
+       "d": {
+        "th": "เช้า 3 · บ่าย 4 ท่าน",
+        "en": "3 pax AM · 4 pax PM"
+       },
+       "v": [
+        "12,000 (6,000)",
+        "20,000 (12,000)"
+       ]
+      },
+      {
+       "n": "Sunset Bed",
+       "d": {
+        "th": "เช้า 2 · บ่าย 3 ท่าน",
+        "en": "2 pax AM · 3 pax PM"
+       },
+       "v": [
+        "8,000 (4,000)",
+        "15,000 (9,000)"
+       ]
+      },
+      {
+       "n": "Pool Sofa",
+       "d": {
+        "th": "2 ท่าน",
+        "en": "2 pax"
+       },
+       "v": [
+        "8,000 (4,000)",
+        "10,000 (6,000)"
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "food",
+  "pic": "kaneang",
+  "th": "ก้านเอี้ยง แอท เพียร์",
+  "en": "Kan Eang@Pier",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "รสชาติภูเก็ตแท้ · ตำนานอาหารใต้กว่า 50 ปี",
+   "en": "A true taste of Phuket – a 50-year culinary legacy"
+  },
+  "desc": {
+   "th": "ก้านเอี้ยง แอท เพียร์ หนึ่งในร้านอาหารที่เป็นตำนานและเก่าแก่ที่สุดของภูเก็ต ให้บริการชุมชนมากว่า 50 ปี ขึ้นชื่อเรื่องการรักษารสชาติอาหารใต้ดั้งเดิมที่เข้มข้นจัดจ้าน อย่างแกงใต้รสเผ็ด ปรุงอย่างพิถีพิถันและจัดจานสวยงาม สะท้อนรสชาติแท้ของภูเก็ต\nยังโดดเด่นเรื่องอาหารทะเลสดคุณภาพดี เป็นร้านโปรดของทั้งคนไทยและนักท่องเที่ยวต่างชาติ",
+   "en": "Kan Eang@Pier is one of Phuket's most iconic and long-standing restaurants, serving the local community for over 50 years. Renowned for preserving the bold, authentic flavors of traditional Southern Thai cuisine, it offers beloved local dishes such as spicy southern curries, carefully prepared and beautifully presented.\nKan Eang@Pier is also well known for fresh, high-quality seafood, making it a favorite among both Thai locals and international visitors."
+  },
+  "facts": [
+   {
+    "th": "เปิดมากว่า 50 ปี",
+    "en": "Over 50 years of history"
+   },
+   {
+    "th": "อาหารใต้ดั้งเดิม แกงใต้รสจัด",
+    "en": "Traditional Southern Thai, spicy curries"
+   },
+   {
+    "th": "อาหารทะเลสด · ม็อกเทลและน้ำผลไม้สกัดเย็น",
+    "en": "Fresh seafood · mocktails & cold-pressed juices"
+   }
+  ]
+ },
+ {
+  "cat": "activity",
+  "th": "มวยไทยไฟต์ไนท์",
+  "en": "Muay Thai Fight Night",
+  "loc": "Patong",
+  "price": 1800,
+  "dur": "3h",
+  "pic": "muaythai"
+ },
+ {
+  "cat": "activity",
+  "th": "คลาสทำอาหารไทย",
+  "en": "Thai Cooking Class",
+  "loc": "Chalong",
+  "price": 1700,
+  "dur": "4h",
+  "pic": "cookingclass"
+ },
+ {
+  "cat": "outdoor",
+  "pic": "hanuman",
+  "op": "Hanuman World",
+  "th": "ฮานุมาน เวิลด์ ซิปไลน์ 28 ฐาน",
+  "en": "Hanuman World Zipline 28 Platforms",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "โหนซิปไลน์กลางป่าฝน 28 ฐาน (FH2) พร้อมแพ็กเกจเสริม",
+   "en": "28-platform rainforest zipline (FH2) with add-on packages"
+  },
+  "desc": {
+   "th": "ผจญภัยโหนซิปไลน์ 28 ฐาน (โปรแกรม FH2) กลางป่าฝนที่ Hanuman World ภูเก็ต เลือกแพ็กเกจเสริมได้ตามสไตล์ ทั้งเครื่องเล่นในสวน (Roller, Skywalk, Luge 2 รอบ) อาหารที่ร้าน Three Monkeys ขับ ATV 30 นาที หรือให้อาหารช้าง",
+   "en": "A 28-platform rainforest zipline adventure (FH2 program) at Hanuman World Phuket. Choose an add-on package: park rides (Roller, Skywalk, Luge ×2), a meal at Three Monkeys Restaurant, a 30-minute ATV ride or elephant feeding."
+  },
+  "rates": {
+   "title": {
+    "th": "แพ็กเกจ",
+    "en": "Packages"
+   },
+   "rowLabel": {
+    "th": "แพ็กเกจ",
+    "en": "Package"
+   },
+   "flat": true,
+   "allCols": true,
+   "unit": {
+    "th": "/ท่าน",
+    "en": "/person"
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "ราคา (บาท)",
+      "en": "Price (THB)"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "SD2 · Zipline + Three Monkeys",
+       "d": {
+        "th": "ซิปไลน์ 28 ฐาน + อาหาร 1 จานจากเซ็ตเมนู พร้อมน้ำอัดลม",
+        "en": "28 platforms + one dish from set menu with soft drink"
+       },
+       "v": [
+        2990
+       ]
+      },
+      {
+       "n": "SD3 · Zipline + ATV",
+       "d": {
+        "th": "ซิปไลน์ 28 ฐาน + ATV 30 นาที",
+        "en": "28 platforms + ATV 30 min"
+       },
+       "v": [
+        3590
+       ]
+      },
+      {
+       "n": "SD4 · Zipline + Elephant Feeding",
+       "d": {
+        "th": "ซิปไลน์ 28 ฐาน + ให้อาหารช้าง",
+        "en": "28 platforms + elephant feeding"
+       },
+       "v": [
+        3590
+       ]
+      },
+      {
+       "n": "SD1 · Zipline + Hanuman World",
+       "d": {
+        "th": "ซิปไลน์ 28 ฐาน + Roller, Skywalk, Luge 2 รอบ",
+        "en": "28 platforms + Roller, Skywalk, Luge (2 rides)"
+       },
+       "v": [
+        3990
+       ]
+      },
+      {
+       "n": "SD5 · Zipline + ATV + Elephant Feeding",
+       "d": {
+        "th": "ซิปไลน์ 28 ฐาน + ATV + ให้อาหารช้าง",
+        "en": "28 platforms + ATV + elephant feeding"
+       },
+       "v": [
+        4290
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "cat": "outdoor",
+  "pic": "shooting",
+  "op": "Phuket Shooting Range",
+  "th": "ภูเก็ต ชูตติ้ง เรนจ์ สนามยิงปืน",
+  "en": "Phuket Shooting Range",
+  "loc": "Phuket",
+  "price": null,
+  "dur": "",
+  "tag": {
+   "th": "สนามยิงปืนแห่งแรกของเกาะ · 24 ช่องยิงในร่ม · สนามกลางแจ้ง",
+   "en": "The island's first shooting range · 24 indoor galleries · outdoor courses"
+  },
+  "desc": {
+   "th": "สนามยิงปืนแห่งแรกและดีที่สุดบนเกาะภูเก็ต มีช่องยิงในร่ม 24 ช่อง ห้องสาธิตส่วนตัว และครูฝึกมืออาชีพ พร้อมสนามกลางแจ้ง 2 สนามที่มีด่านจำลองสถานการณ์ ท้าทายและตื่นเต้น\nมีกระสุนให้เลือกหลายขนาด ทั้งปืนพก .22, .38, .45, 9 มม. และลูกซอง รวมถึงยิงธนูและปืน BB",
+   "en": "The first and best shooting range on the island, with 24 indoor galleries, a private demonstration room and professionally trained instructors, plus two outdoor ranges with combat scenario courses.\nA wide selection of ammunition for handguns (.22, .38, .45, 9 mm) and shotguns, plus archery and BB guns."
+  },
+  "rates": {
+   "title": {
+    "th": "ราคา (ต่อชุด ต่อคน)",
+    "en": "Prices (one set per person)"
+   },
+   "rowLabel": {
+    "th": "ประเภท",
+    "en": "Type"
+   },
+   "flat": true,
+   "allCols": true,
+   "unit": {
+    "th": "",
+    "en": ""
+   },
+   "cols": [
+    {
+     "label": {
+      "th": "ราคา (บาท)",
+      "en": "Price (THB)"
+     },
+     "ranges": null
+    }
+   ],
+   "groups": [
+    {
+     "rows": [
+      {
+       "n": "Archery",
+       "d": {
+        "th": "ยิงธนู 10 ดอก",
+        "en": "10 arrows"
+       },
+       "v": [
+        890
+       ]
+      },
+      {
+       "n": ".22 CMMG",
+       "d": {
+        "th": "10 นัด",
+        "en": "10 rounds"
+       },
+       "v": [
+        990
+       ]
+      },
+      {
+       "n": "Caliber .22 Short-Long",
+       "d": {
+        "th": "10 นัด",
+        "en": "10 rounds"
+       },
+       "v": [
+        990
+       ]
+      },
+      {
+       "n": "BB Gun",
+       "d": {
+        "th": "1 แม็กกาซีน",
+        "en": "1 magazine"
+       },
+       "v": [
+        990
+       ]
+      },
+      {
+       "n": "Caliber .38",
+       "d": {
+        "th": "10 นัด",
+        "en": "10 rounds"
+       },
+       "v": [
+        1180
+       ]
+      },
+      {
+       "n": "Caliber .45",
+       "d": {
+        "th": "10 นัด",
+        "en": "10 rounds"
+       },
+       "v": [
+        1180
+       ]
+      },
+      {
+       "n": "Caliber 9 mm",
+       "d": {
+        "th": "10 นัด",
+        "en": "10 rounds"
+       },
+       "v": [
+        1180
+       ]
+      },
+      {
+       "n": "Shotgun",
+       "d": {
+        "th": "10 นัด",
+        "en": "10 rounds"
+       },
+       "v": [
+        1300
+       ]
+      },
+      {
+       "n": "Sporting Clay",
+       "d": {
+        "th": "10 นัด",
+        "en": "10 rounds"
+       },
+       "v": [
+        1300
+       ]
+      },
+      {
+       "n": "Auto Benelli Shotgun",
+       "d": {
+        "th": "10 นัด",
+        "en": "10 rounds"
+       },
+       "v": [
+        1300
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+]

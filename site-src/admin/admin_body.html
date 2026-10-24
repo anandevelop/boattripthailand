@@ -1,0 +1,51 @@
+<body>
+<div class="flex min-h-screen">
+  <!-- SIDEBAR -->
+  <aside id="side" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-[236px] shrink-0 bg-white border-r border-line flex flex-col -translate-x-full lg:translate-x-0 transition-transform">
+    <div class="h-16 px-5 flex items-center gap-2.5 border-b border-line">
+      <img src="data:image/png;base64,LOGON_B64" alt="" class="w-9 h-9 object-contain"/>
+      <div class="leading-none"><p class="text-[13px] font-medium tracking-wide">BOAT TRIP</p><p class="text-[9px] tracking-[.3em] text-muted mt-1">ADMIN</p></div>
+    </div>
+    <nav id="nav" class="flex-1 overflow-y-auto no-sb p-3 space-y-0.5"></nav>
+    <div class="p-3 border-t border-line">
+      <div class="flex items-center gap-2.5 p-2 rounded-xl hover:bg-sand">
+        <img id="meAva" alt="" class="w-8 h-8 rounded-full object-cover"/>
+        <div class="min-w-0 flex-1"><p class="text-[13px] leading-tight">Kwang</p><p class="text-[11px] text-muted">Admin · ฝ่ายขาย</p></div>
+        <i data-lucide="log-out" class="w-4 h-4 text-muted"></i>
+      </div>
+    </div>
+  </aside>
+  <div id="sideMask" class="fixed inset-0 z-30 bg-black/30 hidden lg:hidden" onclick="toggleSide(false)"></div>
+
+  <!-- MAIN -->
+  <div class="flex-1 min-w-0 flex flex-col">
+    <header class="sticky top-0 z-20 h-16 bg-white/90 backdrop-blur border-b border-line flex items-center gap-3 px-4 sm:px-6">
+      <button class="lg:hidden btn-g btn !px-2" onclick="toggleSide(true)" aria-label="Menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
+      <div class="min-w-0"><p id="crumb" class="text-[11px] text-muted"></p><h1 id="pageTitle" class="text-[17px] font-medium leading-tight truncate"></h1></div>
+      <div class="ml-auto flex items-center gap-2">
+        <label class="hidden md:flex items-center gap-2 h-9 w-64 px-3 rounded-full bg-sand"><i data-lucide="search" class="w-4 h-4 text-muted"></i><input id="gq" class="bg-transparent w-full text-[13px]" placeholder="ค้นหาลีด ลูกค้า เรือ…" /></label>
+        <button class="btn btn-g !px-2 relative" onclick="toast('มีลีดใหม่รอติดต่อ')" aria-label="Notifications"><i data-lucide="bell" class="w-[18px] h-[18px]"></i><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-maroon"></span></button>
+        <a href="boattripthailand-mockup.html" target="_blank" class="btn btn-o hidden sm:inline-flex"><i data-lucide="external-link" class="w-3.5 h-3.5"></i>ดูหน้าเว็บ</a>
+      </div>
+    </header>
+    <div class="px-4 sm:px-6 py-2 text-[11px] text-muted bg-[#fff8e6] border-b border-[#f3e3b8]">Mockup ระบบหลังบ้าน · ข้อมูลเรือมาจากโบรชัวร์จริง · ลีดและลูกค้าเป็นข้อมูลตัวอย่าง · การแก้ไขเก็บไว้ชั่วคราวในหน้านี้เท่านั้น</div>
+    <main id="view" class="flex-1 p-4 sm:p-6"></main>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div id="drawerMask" class="fixed inset-0 z-50 bg-black/30 hidden" onclick="closeDrawer()"></div>
+<aside id="drawer" class="drawer fixed top-0 right-0 z-50 h-full w-full max-w-[520px] bg-white shadow-2xl flex flex-col"></aside>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/40" onclick="closeModal()"></div>
+  <div id="modalBox" class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto fade"></div>
+</div>
+
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] hidden"><div class="bg-ink text-white text-[13px] px-4 h-10 rounded-full flex items-center gap-2 shadow-xl"><i data-lucide="check" class="w-4 h-4"></i><span id="toastT"></span></div></div>
+
+<script>window.FLEET=__FLEET__;window.THUMBS=__THUMBS__;window.TEAM_IMG=__TEAMIMG__;window.SEASONS=__SEASONS__;window.ACTIMG=__ACTIMG__;window.WPDATA=__WPDATA__;</script>
+<script src="admin.js"></script>
+</body>
+</html>
