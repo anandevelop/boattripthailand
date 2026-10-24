@@ -4024,12 +4024,110 @@ let NF_LOADED = false;
 { const _va = vAnalytics; vAnalytics = function () {
   const site = GA.tab === 'site'; if (site) GA.tab = 'overview';
   try { _va(); } finally { if (site) GA.tab = 'site'; }
-  const bar = [...$$('#view .flex.gap-1.overflow-x-auto')].pop();
+  const bar = $('#view .flex.gap-1.overflow-x-auto');   // the main tab bar (the Meta tab has its own sub-tabs further down)
   if (bar) { if (site) bar.querySelector('.tab.on')?.classList.remove('on'); bar.insertAdjacentHTML('afterbegin', `<button class="tab inline-flex items-center gap-1.5 ${site ? 'on' : ''}" onclick="GA.tab='site';vAnalytics()"><i data-lucide="activity" class="w-3.5 h-3.5"></i>ข้อมูลจริง</button>`); }
   const note = [...$$('#view .rounded-xl')].find(x => x.textContent.includes('ตัวเลขทั้งหมดในหน้านี้เป็นข้อมูลตัวอย่าง'));
   if (note) note.lastChild.textContent = site ? 'แท็บนี้เป็นข้อมูลจริง: ผู้เข้าชมนับจากเว็บไซต์เอง ลีดและการปิดการขายมาจากระบบลีด · แท็บ Google Analytics / Search Console / Meta ยังเป็นข้อมูลตัวอย่างจนกว่าจะเชื่อม API' : 'แท็บนี้เป็นข้อมูลตัวอย่าง จนกว่าจะเชื่อม API ของ Google / Meta · ข้อมูลจริงอยู่ในแท็บ “ข้อมูลจริง”';
   const exp = [...$$('#view button')].find(b => b.textContent.trim() === 'ส่งออก'); if (exp) exp.setAttribute('onclick', site ? 'anCsv()' : "toast('ส่งออกได้เฉพาะแท็บข้อมูลจริง')");
   if (site) { const f = $('#view .fade'); if (f) f.innerHTML = anBody(); }
+  icons();
+}; PAGES.find(p => p[0] === 'analytics')[3] = vAnalytics; }
+
+/* ---------- วิเคราะห์เว็บไซต์ → Google Analytics 4 + Search Console: ข้อมูลจริงจาก /api/admin/analytics/google ---------- */
+const GG = { d: {}, loading: {}, st: null };
+function ggLoad(refresh) {
+  const k = GA.days; if (GG.loading[k]) return; GG.loading[k] = true;
+  api('GET', `analytics/google?days=${k}${refresh ? '&refresh=1' : ''}`).then(d => { GG.d[k] = { ...d, t: Date.now() }; GG.st = d.status; if (refresh) toast('โหลดข้อมูลใหม่จาก Google แล้ว'); })
+    .catch(e => { GG.failAt = Date.now(); fail(e); }).finally(() => { GG.loading[k] = false; if (CUR === 'analytics') vAnalytics(); });
+}
+const ggTh = s => /[\u0E00-\u0E7F]/.test(s);
+const ggDur = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+const ggPct = (n, d = 1) => (n * 100).toFixed(d) + '%';
+const ggBars = (rows, o) => { const r = rows.filter(x => x[1] > 0); return r.length ? bars(r, o) : '<p class="text-[12px] text-muted">ยังไม่มีข้อมูลในช่วงนี้</p>'; };
+const ggPath = u => { try { return decodeURIComponent(new URL(u).pathname); } catch { return u; } };
+/** fill days without a position (no impressions) with the previous day's value so the chart does not drop to 0 */
+const ggPos = a => { let last = a.find(x => x.position)?.position || 0; return a.map(x => (last = x.position || last)); };
+function ggErr(e, what) {
+  const hint = e.code === 'forbidden' ? `เพิ่มอีเมล <b class="font-mono">${esc(GG.st?.email || '')}</b> เป็นผู้ใช้ใน ${what === 'ga' ? 'GA4 (Admin → Property access management → Viewer)' : 'Search Console (Settings → Users and permissions → Restricted)'} แล้วกด “โหลดใหม่”`
+    : e.code === 'not_found' ? (what === 'ga' ? 'ตรวจ GA4_PROPERTY_ID ใน .env (ต้องเป็นตัวเลข ไม่ใช่ G-XXXX)' : 'ตรวจ GSC_SITE_URL ใน .env ให้ตรงกับ property ใน Search Console เช่น sc-domain:boattripthailand.com')
+    : e.code === 'auth' || e.code === 'no_key' ? 'ตรวจกุญแจ service account ใน .env (GOOGLE_SERVICE_ACCOUNT_JSON)' : 'ลองกด “โหลดใหม่” อีกครั้ง ถ้ายังไม่ได้ให้ดู log ของเซิร์ฟเวอร์';
+  return `<div class="card p-6"><p class="font-medium text-[#a3222c] flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4"></i>ดึงข้อมูลจาก ${what === 'ga' ? 'Google Analytics' : 'Search Console'} ไม่สำเร็จ</p>
+    <p class="text-[12.5px] mt-2">${esc(e.error)}</p><p class="text-[12.5px] text-muted mt-2">${hint}</p><button class="btn btn-o !h-8 mt-4" onclick="ggLoad(true)"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>โหลดใหม่</button></div>`;
+}
+function ggSetup() {
+  const s = GG.st || { key: false, email: null, ga: { on: false }, gsc: { on: false } };
+  const row = (ok, t, d) => `<li class="flex gap-3"><i data-lucide="${ok ? 'check-circle-2' : 'circle'}" class="w-4 h-4 shrink-0 mt-0.5 ${ok ? 'text-[#1e7a46]' : 'text-muted'}"></i><div><p class="text-[13px] font-medium">${t}</p><p class="text-[12px] text-muted mt-0.5">${d}</p></div></li>`;
+  const env = `# Google Analytics 4 + Search Console (อ่านอย่างเดียว)\nGOOGLE_SERVICE_ACCOUNT_JSON=<ผลจาก: base64 -i ไฟล์กุญแจ.json | tr -d '\\n'>\nGA4_PROPERTY_ID=<ตัวเลข property เช่น 412345678>\nGSC_SITE_URL=sc-domain:boattripthailand.com`;
+  return `<div class="grid xl:grid-cols-2 gap-4 items-start">
+    <div class="card p-5"><p class="font-medium">สถานะการเชื่อมต่อ</p><ul class="grid gap-3 mt-4">
+      ${row(s.key, 'กุญแจ service account', s.key ? `ใช้บัญชี <span class="font-mono">${esc(s.email)}</span>` : 'ยังไม่ได้ใส่ GOOGLE_SERVICE_ACCOUNT_JSON ใน .env')}
+      ${row(s.ga.on, 'Google Analytics 4', s.ga.on ? 'Property ' + esc(s.ga.property) : 'ยังไม่ได้ใส่ GA4_PROPERTY_ID')}
+      ${row(s.gsc.on, 'Search Console', s.gsc.on ? esc(s.gsc.site) : 'ยังไม่ได้ใส่ GSC_SITE_URL')}</ul>
+      ${s.ga.on || s.gsc.on ? '<button class="btn btn-o !h-8 mt-4" onclick="ggLoad(true)"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>โหลดข้อมูลใหม่จาก Google</button>' : ''}
+      <p class="text-[11.5px] text-muted mt-4">ข้อมูลเก็บไว้ 30 นาทีแล้วค่อยดึงใหม่ · Search Console มีข้อมูลช้ากว่าจริงประมาณ 3 วัน</p></div>
+    <div class="card p-5"><p class="font-medium">วิธีเชื่อมต่อ (ทำครั้งเดียว)</p><ol class="grid gap-2.5 mt-3 text-[12.5px] list-decimal pl-5">
+      <li>Google Cloud → เปิด <b>Google Analytics Data API</b> และ <b>Google Search Console API</b></li>
+      <li>สร้าง Service account → Keys → Add key → JSON (ดาวน์โหลดไฟล์กุญแจ เก็บเป็นความลับ)</li>
+      <li>GA4 → Admin → Property access management → เพิ่มอีเมล service account เป็น <b>Viewer</b></li>
+      <li>Search Console → Settings → Users and permissions → เพิ่มอีเมลเดียวกัน แบบ <b>Restricted</b></li>
+      <li>ใส่ 3 บรรทัดด้านล่างใน <span class="font-mono">.env</span> บนเซิร์ฟเวอร์ แล้วรีสตาร์ต (<span class="font-mono">docker compose up -d</span>)</li></ol>
+      <pre class="p-3.5 mt-3 rounded-xl bg-[#1d1416] text-[#f1e6e6] text-[11px] leading-relaxed overflow-auto whitespace-pre-wrap break-all">${esc(env)}</pre>
+      <p class="text-[11px] text-muted mt-3">กุญแจอยู่บนเซิร์ฟเวอร์เท่านั้น ไม่ถูกส่งมาที่เบราว์เซอร์ · ระบบขอสิทธิ์อ่านอย่างเดียว</p></div></div>`;
+}
+function ggGa(G) {
+  const T = G.totals, cur = G.cur.map(x => x.sessions), prev = G.prev.map(x => x.sessions), t = T.cur.sessions;
+  const cr = o => o.sessions ? o.keyEvents / o.sessions : 0;
+  const DEV = { mobile: 'มือถือ', desktop: 'คอมพิวเตอร์', tablet: 'แท็บเล็ต' }, EV = { booking_submit: 'ฟอร์มขอใบเสนอราคา', whatsapp_click: 'WhatsApp', line_click: 'LINE', phone_click: 'โทร' };
+  return `<div class="grid grid-cols-2 xl:grid-cols-4 gap-3">${kpi('ผู้ใช้งาน', nf(T.cur.users), delta(T.cur.users, T.prev.users))}${kpi('เซสชัน', nf(t), delta(t, T.prev.sessions))}${kpi('เวลาใช้งานเฉลี่ย', ggDur(T.cur.avgDur), delta(T.cur.avgDur, T.prev.avgDur), 'นาที:วินาที ต่อเซสชัน')}${kpi('อัตราแปลง', ggPct(cr(T.cur), 2), delta(cr(T.cur), cr(T.prev)), nf(T.cur.keyEvents) + ' key events')}</div>
+    <div class="card p-5 mt-4"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">เซสชันต่อวัน</p>${legend()}</div>${lineChart(cur, prev, { label: 'เซสชัน', h: 200 })}</div>
+    <div class="grid xl:grid-cols-3 gap-4 mt-4 items-start">
+      <div class="card xl:col-span-2 overflow-hidden"><p class="font-medium px-5 pt-4 pb-2">หน้าที่มีคนดูมากที่สุด</p><div class="overflow-x-auto"><table class="tbl min-w-[560px]"><thead><tr><th>หน้า</th><th class="text-right">การดู</th><th class="text-right">เวลาเฉลี่ย (วิ)</th><th class="text-right">Key events</th></tr></thead><tbody>
+        ${G.pages.map(p => `<tr><td><p class="truncate max-w-[300px]">${esc(anPageName(p.path))}</p><p class="text-[11px] text-muted truncate max-w-[300px]">${esc(p.path)}</p></td><td class="text-right tnum">${nf(p.views)}</td><td class="text-right tnum">${Math.round(p.eng)}</td><td class="text-right tnum">${nf(p.keyEvents)}</td></tr>`).join('') || '<tr><td colspan="4" class="text-muted">ยังไม่มีข้อมูลในช่วงนี้</td></tr>'}</tbody></table></div></div>
+      <div class="grid gap-4"><div class="card p-5"><p class="font-medium mb-3">ช่องทางที่ลูกค้ามา</p>${ggBars(G.channels.map(r => [esc(r.name), r.sessions]))}</div>
+        <div class="card p-5"><p class="font-medium mb-3">ช่องทางติดต่อ (Key events)</p>${ggBars(G.events.map(r => [EV[r.name] || r.name, r.count, r.name]))}</div>
+        <div class="card p-5"><p class="font-medium mb-3">อุปกรณ์</p>${ggBars(G.devices.map(r => [DEV[r.name] || esc(r.name), r.sessions]))}</div>
+        <div class="card p-5"><p class="font-medium mb-3">ประเทศ</p>${ggBars(G.countries.map(r => [esc(r.name), r.sessions]))}</div></div></div>`;
+}
+function ggGsc(S) {
+  const T = S.totals, ck = S.cur.map(x => x.clicks), pk = S.prev.map(x => x.clicks);
+  const qs = S.queries.filter(q => !GA.qLang || (GA.qLang === 'th') === ggTh(q.q)).slice(0, 30);
+  const opp = S.queries.filter(q => q.position > 4 && q.position <= 20 && q.impressions >= 30).sort((a, b) => b.impressions - a.impressions).slice(0, 4);
+  return `<div class="grid grid-cols-2 xl:grid-cols-4 gap-3">${kpi('คลิก', nf(T.cur.clicks), delta(T.cur.clicks, T.prev.clicks))}${kpi('การแสดงผล', nf(T.cur.impressions), delta(T.cur.impressions, T.prev.impressions))}${kpi('CTR เฉลี่ย', ggPct(T.cur.ctr, 2), delta(T.cur.ctr, T.prev.ctr))}${kpi('อันดับเฉลี่ย', T.cur.position ? T.cur.position.toFixed(1) : '—', delta(T.cur.position, T.prev.position, true), 'ยิ่งน้อยยิ่งดี')}</div>
+    <div class="grid xl:grid-cols-2 gap-4 mt-4 items-start">
+      <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">คลิกต่อวัน</p>${legend()}</div>${lineChart(ck, pk, { label: 'คลิก' })}</div>
+      <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">อันดับเฉลี่ยต่อวัน <span class="text-[11px] text-muted font-normal">(บนสุด = อันดับดีกว่า)</span></p>${legend()}</div>${lineChart(ggPos(S.cur), ggPos(S.prev), { label: '', fmt: v => (+v).toFixed(1), invert: true })}</div></div>
+    <div class="grid xl:grid-cols-3 gap-4 mt-4 items-start">
+      <div class="card xl:col-span-2 overflow-hidden"><div class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 pb-2"><p class="font-medium">คำค้นหาที่พาคนมาเว็บ</p><div class="flex p-0.5 rounded-full bg-sand">${[['', 'ทั้งหมด'], ['th', 'TH'], ['en', 'EN']].map(([k, l]) => `<button class="h-7 px-3 rounded-full text-[12px] ${GA.qLang === k ? 'bg-white shadow-sm' : 'text-muted'}" onclick="GA.qLang='${k}';vAnalytics()">${l}</button>`).join('')}</div></div>
+        <div class="overflow-x-auto"><table class="tbl min-w-[620px]"><thead><tr><th>คำค้นหา</th><th class="text-right">คลิก</th><th class="text-right">การแสดงผล</th><th class="text-right">CTR</th><th class="text-right">อันดับ</th></tr></thead><tbody>
+        ${qs.map(q => `<tr><td><span class="lang-b ok mr-1.5">${ggTh(q.q) ? 'TH' : 'EN'}</span>${esc(q.q)}</td><td class="text-right tnum">${nf(q.clicks)}</td><td class="text-right tnum">${nf(q.impressions)}</td><td class="text-right tnum">${ggPct(q.ctr)}</td><td class="text-right tnum">${q.position.toFixed(1)}</td></tr>`).join('') || '<tr><td colspan="5" class="text-muted">ยังไม่มีข้อมูลในช่วงนี้</td></tr>'}</tbody></table></div>
+        <p class="text-[11px] text-muted px-5 py-2.5">${fmtD(S.range.startDate)} – ${fmtD(S.range.endDate)} · Google ไม่แสดงคำค้นหาที่มีคนค้นน้อยมาก (เพื่อความเป็นส่วนตัว)</p></div>
+      <div class="grid gap-4"><div class="card p-5"><p class="font-medium flex items-center gap-2"><i data-lucide="target" class="w-4 h-4 text-maroon"></i>โอกาสเพิ่มคลิก</p><p class="text-[11.5px] text-muted mt-1">คำที่คนเห็นเยอะแต่ยังอยู่อันดับ 5–20 · ปรับ Title หรือเขียนบทความเพิ่มจะได้คลิกมากขึ้น</p>
+        <ul class="mt-3 grid gap-2.5">${opp.map(q => `<li class="rounded-xl bg-sand p-3"><p class="text-[13px]">${esc(q.q)}</p><p class="text-[11.5px] text-muted mt-0.5 tnum">อันดับ ${q.position.toFixed(1)} · เห็น ${nf(q.impressions)} ครั้ง · CTR ${ggPct(q.ctr)}</p><button class="text-[12px] text-maroon mt-1.5" onclick="newArticle()">เขียนบทความสำหรับคำนี้ →</button></li>`).join('') || '<li class="text-[12px] text-muted">ยังไม่มีคำที่เข้าเงื่อนไข</li>'}</ul></div>
+        <div class="card p-5"><p class="font-medium mb-3">หน้าที่ได้คลิกจาก Google มากที่สุด</p>${ggBars(S.pages.map(p => [esc(anPageName(ggPath(p.page))), p.clicks, 'อันดับ ' + p.position.toFixed(1)]))}</div></div></div>`;
+}
+function ggBody() {
+  const s = GG.st, D = GG.d[GA.days];
+  if (GA.tab === 'api') return ggSetup();
+  const which = GA.tab, on = s && (which === 'ga' ? s.ga.on : s.gsc.on);
+  if (!D) return GG.loading[GA.days] ? '<div class="card p-10 text-center text-muted">กำลังโหลดข้อมูลจาก Google…</div>' : ggErr({ error: 'ติดต่อเซิร์ฟเวอร์ไม่สำเร็จ', code: 'api' }, which);
+  if (!on) return `<div class="card p-6 mb-4"><p class="font-medium">ยังไม่ได้เชื่อม ${which === 'ga' ? 'Google Analytics 4' : 'Search Console'}</p><p class="text-[12.5px] text-muted mt-1">ระหว่างนี้ดูผู้เข้าชมจริงได้ที่แท็บ “ข้อมูลจริง” (ระบบนับเอง)</p></div>${ggSetup()}`;
+  const X = which === 'ga' ? D.ga : D.gsc;
+  if (!X || X.error) return ggErr(X || { error: 'ไม่มีข้อมูล', code: 'api' }, which);
+  return which === 'ga' ? ggGa(X) : ggGsc(X);
+}
+{ const _va2 = vAnalytics; vAnalytics = function () {
+  if (GA.tab === 'overview') GA.tab = 'site';
+  const D = GG.d[GA.days];
+  const retry = !GG.failAt || Date.now() - GG.failAt > 60_000;
+  if (retry && (!GG.st || ((GA.tab === 'ga' || GA.tab === 'gsc') && (!D || Date.now() - D.t > 10 * 60_000)))) ggLoad();
+  if (GG.st) Object.assign(GA, { gaOn: GG.st.ga.on, prop: GG.st.ga.property || '', gscOn: GG.st.gsc.on, site: GG.st.gsc.site || GA.site });
+  _va2();
+  [...$$('#view .tab')].find(b => (b.getAttribute('onclick') || '').includes("GA.tab='overview'"))?.remove();
+  $$('#view p').forEach(p => { if (p.textContent.includes('แสดงข้อมูลตัวอย่าง') && /Google/.test(p.parentElement?.textContent || '')) p.textContent = 'ยังไม่เชื่อมต่อ'; });
+  const note = [...$$('#view .rounded-xl')].find(x => x.className.includes('fff8e6'));
+  if (note) { const msg = { site: 'แท็บนี้เป็นข้อมูลจริง: ผู้เข้าชมนับจากเว็บไซต์เอง ลีดและการปิดการขายมาจากระบบลีด', meta: 'แท็บ Meta ยังเป็นข้อมูลตัวอย่าง · ข้อมูลจริงอยู่ในแท็บ “ข้อมูลจริง”, Google Analytics และ Search Console' }[GA.tab];
+    if (msg) note.lastChild.textContent = msg; else note.remove(); }
+  if (['ga', 'gsc', 'api'].includes(GA.tab)) { const f = $('#view .fade'); if (f) f.innerHTML = ggBody(); }
   icons();
 }; PAGES.find(p => p[0] === 'analytics')[3] = vAnalytics; }
 

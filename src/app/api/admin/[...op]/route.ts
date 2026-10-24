@@ -13,6 +13,7 @@ import { cleanHome, HOME_KEY } from '@/lib/home';
 import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
 import { analyticsData } from '@/lib/analytics';
+import { googleData } from '@/lib/google';
 import { audienceFile, cleanMarketing, conversionStatus, MKT_KEY } from '@/lib/marketing';
 
 /**
@@ -380,6 +381,7 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
   }
   try {
     if (a === 'boot' && method === 'GET') return json(await adminBoot(me));
+    if (a === 'analytics' && b0 === 'google' && method === 'GET') { await need(me, 'seo'); const q = new URL(req.url).searchParams, d = Number(q.get('days')); return json(await googleData([7, 28, 90].includes(d) ? d : 28, q.get('refresh') === '1')); }
     if (a === 'analytics' && method === 'GET') { await need(me, 'seo'); const d = Number(new URL(req.url).searchParams.get('days')); return json(await analyticsData([7, 28, 90].includes(d) ? d : 28)); }
     if (a === 'leads' && !b0 && method === 'GET') { await need(me, 'leads'); return json(await leadsFor(me)); }
     if (a === 'audit' && !b0 && method === 'GET') { await need(me, 'audit'); return json({ audit: await auditList() }); }
