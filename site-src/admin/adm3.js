@@ -86,8 +86,7 @@ function addLangBar(b) {
   const f = boatI18nFields(b), th = langPct(f, 'th'), en = langPct(f, 'en');
   head0.insertAdjacentHTML('afterend', `<div id="langBar" class="card p-3 mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
     <i data-lucide="languages" class="w-5 h-5 text-maroon shrink-0"></i>
-    <div class="flex-1 grid grid-cols-2 gap-4">${[['ไทย', th], ['English', en]].map(([l, p]) => `<div><div class="flex justify-between text-[12px]"><span>${l}</span><span class="tnum ${p === 100 ? 'text-[#1e7a46]' : 'text-muted'}">${p === 100 ? 'ครบ' : p + '%'}</span></div><div class="mt-1 h-1.5 rounded-full bg-sand overflow-hidden"><div class="h-full rounded-full ${p === 100 ? 'bg-[#1e7a46]' : 'bg-maroon'}" style="width:${p}%"></div></div></div>`).join('')}</div>
-    <button class="btn btn-o" onclick="autoTranslate('${b.slug}')"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i>แปลช่องที่ว่างอัตโนมัติ</button></div>`);
+    <div class="flex-1 grid grid-cols-2 gap-4">${[['ไทย', th], ['English', en]].map(([l, p]) => `<div><div class="flex justify-between text-[12px]"><span>${l}</span><span class="tnum ${p === 100 ? 'text-[#1e7a46]' : 'text-muted'}">${p === 100 ? 'ครบ' : p + '%'}</span></div><div class="mt-1 h-1.5 rounded-full bg-sand overflow-hidden"><div class="h-full rounded-full ${p === 100 ? 'bg-[#1e7a46]' : 'bg-maroon'}" style="width:${p}%"></div></div></div>`).join('')}</div></div>`);
 }
 function autoTranslate(slug) {
   const b = bySlug(slug); let n = 0;

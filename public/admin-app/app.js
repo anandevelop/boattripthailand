@@ -530,8 +530,7 @@ function addLangBar(b) {
   const f = boatI18nFields(b), th = langPct(f, 'th'), en = langPct(f, 'en');
   head0.insertAdjacentHTML('afterend', `<div id="langBar" class="card p-3 mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
     <i data-lucide="languages" class="w-5 h-5 text-maroon shrink-0"></i>
-    <div class="flex-1 grid grid-cols-2 gap-4">${[['ไทย', th], ['English', en]].map(([l, p]) => `<div><div class="flex justify-between text-[12px]"><span>${l}</span><span class="tnum ${p === 100 ? 'text-[#1e7a46]' : 'text-muted'}">${p === 100 ? 'ครบ' : p + '%'}</span></div><div class="mt-1 h-1.5 rounded-full bg-sand overflow-hidden"><div class="h-full rounded-full ${p === 100 ? 'bg-[#1e7a46]' : 'bg-maroon'}" style="width:${p}%"></div></div></div>`).join('')}</div>
-    <button class="btn btn-o" onclick="autoTranslate('${b.slug}')"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i>แปลช่องที่ว่างอัตโนมัติ</button></div>`);
+    <div class="flex-1 grid grid-cols-2 gap-4">${[['ไทย', th], ['English', en]].map(([l, p]) => `<div><div class="flex justify-between text-[12px]"><span>${l}</span><span class="tnum ${p === 100 ? 'text-[#1e7a46]' : 'text-muted'}">${p === 100 ? 'ครบ' : p + '%'}</span></div><div class="mt-1 h-1.5 rounded-full bg-sand overflow-hidden"><div class="h-full rounded-full ${p === 100 ? 'bg-[#1e7a46]' : 'bg-maroon'}" style="width:${p}%"></div></div></div>`).join('')}</div></div>`);
 }
 function autoTranslate(slug) {
   const b = bySlug(slug); let n = 0;
@@ -794,7 +793,6 @@ function vArticleEdit(id) {
         <div class="card p-2 flex flex-wrap items-center gap-2">
           <div class="flex gap-1">${LANGS.map(([c, C, l]) => `<button class="tab ${k === c ? 'on' : ''}" onclick="AE.lang='${c}';vArticleEdit(${a.id})">${C} · ${l}</button>`).join('')}</div>
           <div id="artTr" class="flex gap-1 ml-1">${trBadge(a)}</div>
-          <button class="btn btn-o ml-auto" onclick="artTranslate(${a.id})"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i>แปล${(a.tr.th === 'orig' || a.tr.th === 'ok') ? ' TH → EN' : ' EN → TH'} อัตโนมัติ</button>
         </div>
         ${mt ? `<div class="rounded-xl bg-[#fff6e5] text-[#7a4a00] p-3.5 flex flex-col sm:flex-row sm:items-center gap-3"><i data-lucide="bot" class="w-5 h-5 shrink-0"></i><p class="flex-1 text-[12.5px]">ภาษา${Lname[k]}เป็นคำแปลจากเครื่อง ต้องให้ทีมตรวจก่อน · ระหว่างนี้หน้า ${k.toUpperCase()} จะยังไม่แสดงบนเว็บ</p><button class="btn btn-p" onclick="artApprove(${a.id})"><i data-lucide="check" class="w-3.5 h-3.5"></i>ตรวจแล้ว อนุมัติ</button></div>` : ''}
         ${empty && a.title[other] ? `<div class="rounded-xl bg-sand p-3.5 flex flex-col sm:flex-row sm:items-center gap-3"><i data-lucide="languages" class="w-5 h-5 text-maroon shrink-0"></i><p class="flex-1 text-[12.5px]">ยังไม่มีเวอร์ชันภาษา${Lname[k]} · เขียนเองได้เลย หรือกดแปลอัตโนมัติจากภาษา${Lname[other]}แล้วค่อยตรวจ</p></div>` : ''}
