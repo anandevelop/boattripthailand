@@ -270,11 +270,26 @@ async function boatOp(u: User, slug: string, method: string, b: Record<string, u
   const info = await clientInfo();
   const [cur] = await db.select().from(boats).where(eq(boats.slug, slug));
   if (method === 'DELETE') {
-    if (!cur) return json({ ok: true });
-    await db.delete(boats).where(eq(boats.slug, slug));
-    await audit(actor(u), { action: 'delete', entity: 'boat', ref: slug, label: cur.name, ...info });
+    if (!cur) return json({ ok: true, redirects: [] });
+    // boats with leads are kept for the sales history → hide instead
+    const used = await db.select({ id: leads.id }).from(leads).where(eq(leads.boatSlug, slug));
+    if (used.length) throw new HttpError(409, `เรือลำนี้มีลีด ${used.length} รายการ · ลบไม่ได้เพื่อเก็บประวัติ ใช้ “ซ่อนจากเว็บ” แทน`);
+    // keep Google rankings: 301 the boat page (TH + EN) → the fleet page, and repoint older redirects so there is never a chain
+    const made: { from: string; to: string; code: number }[] = [];
+    await db.transaction(async tx => {
+      for (const pre of ['', '/en']) {
+        const from = `${pre}/yacht-charter/${slug}`, to = `${pre}/yacht-charter`;
+        const old = await tx.update(redirects).set({ to, code: 301 }).where(eq(redirects.to, from)).returning();
+        made.push(...old.map(r => ({ from: r.from, to: r.to, code: r.code })));
+        await tx.insert(redirects).values({ from, to, code: 301 }).onConflictDoUpdate({ target: redirects.from, set: { to, code: 301 } });
+        made.push({ from, to, code: 301 });
+      }
+      await tx.delete(boats).where(eq(boats.slug, slug));
+    });
+    await audit(actor(u), { action: 'delete', entity: 'boat', ref: slug, label: cur.name, ...info,
+      changes: [{ f: 'เรือ', from: `${cur.name} (${cur.active ? 'แสดงบนเว็บ' : 'ซ่อน'})`, to: null }, { f: 'Redirect', from: null, to: `/yacht-charter/${slug} → /yacht-charter (301)` }] });
     clearSiteCache();
-    return json({ ok: true });
+    return json({ ok: true, redirects: made });
   }
   const oldSlug = str(b.oldSlug, 120);
   const [prev] = !cur && oldSlug ? await db.select().from(boats).where(eq(boats.slug, oldSlug)) : [];

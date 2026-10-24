@@ -21,7 +21,7 @@ export const LIMIT = Math.max(0, Number(process.env.TRANSLATE_MONTHLY_LIMIT) || 
 export const DAILY_REQ = Math.max(1, Number(process.env.TRANSLATE_DAILY_REQUESTS) || 400);
 /** Gemini free tier: requests per day for this model (AI Studio → Rate limits). Not a character allowance. */
 export const FREE_RPD = Math.max(1, Number(process.env.GEMINI_FREE_RPD) || 500);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 const CHUNK = 6_000;   // characters per Gemini request (keeps the answer well inside the output limit)
 
 type LogRow = { at: string; user: string; what: string; chars: number; from: string; to: string };
@@ -49,7 +49,7 @@ export async function usage() {
 
 export class QuotaError extends Error {}
 /** reserve n characters + r requests or throw QuotaError; returns a give-back function */
-async function reserve(n: number, r: number, meta: Omit<LogRow, 'at' | 'chars'>) {
+export async function reserve(n: number, r: number, meta: Omit<LogRow, 'at' | 'chars'>) {
   const m = month(), d = day();
   const read = async (t: typeof db) => {
     await t.insert(settings).values({ key: USAGE_KEY, value: { month: m, chars: 0, log: [] } }).onConflictDoNothing();

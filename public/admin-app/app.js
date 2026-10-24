@@ -250,7 +250,7 @@ function vBoats() {
   const q = BF.q.toLowerCase();
   const list = FLEET.filter(b => (!BF.type || b.type === BF.type) && (!q || (b.name + ' ' + b.marinaP + ' ' + b.subtitle).toLowerCase().includes(q)));
   $('#view').innerHTML = `
-    ${head('จัดการเรือ', `${FLEET.length} ลำ · เปิดแสดง ${FLEET.filter(b => b.active).length} ลำ`, `<button class="btn btn-o" onclick="toast('นำเข้าข้อมูลจากโบรชัวร์ PDF (จำลอง)')"><i data-lucide="file-up" class="w-3.5 h-3.5"></i>นำเข้า PDF</button><button class="btn btn-p" onclick="boatEdit()"><i data-lucide="plus" class="w-3.5 h-3.5"></i>เพิ่มเรือ</button>`)}
+    ${head('จัดการเรือ', `${FLEET.length} ลำ · เปิดแสดง ${FLEET.filter(b => b.active).length} ลำ`, `<button class="btn btn-o" onclick="boatPdf()"><i data-lucide="file-up" class="w-3.5 h-3.5"></i>นำเข้า PDF</button><button class="btn btn-p" onclick="boatEdit()"><i data-lucide="plus" class="w-3.5 h-3.5"></i>เพิ่มเรือ</button>`)}
     <div class="card">
       <div class="p-3 flex flex-col lg:flex-row gap-2 lg:items-center border-b border-line">
         <div class="flex gap-1 overflow-x-auto no-sb">${[['', 'ทั้งหมด'], ...Object.entries(TYPE_TH)].map(([k, l]) => `<button class="tab ${BF.type === k ? 'on' : ''}" onclick="BF.type='${k}';vBoats()">${l} <span class="opacity-60">${k ? FLEET.filter(b => b.type === k).length : FLEET.length}</span></button>`).join('')}</div>
@@ -2455,7 +2455,7 @@ function boatDel(slug) {
   openModal(`<div class="p-5 grid gap-3"><div class="flex items-start gap-3"><span class="w-10 h-10 rounded-full bg-[#fbecec] grid place-items-center shrink-0"><i data-lucide="trash-2" class="w-5 h-5 text-[#a3222c]"></i></span><div><p class="font-medium">ลบ ${esc(b.name)}?</p>
       <p class="text-[12.5px] text-muted mt-1">${bk.length ? `เรือลำนี้มีลีด ${bk.length} รายการ${up.length ? ` (กำลังดำเนินการ ${up.length})` : ''} · ลบไม่ได้เพื่อเก็บประวัติ แนะนำให้ “ซ่อนจากเว็บ” แทน` : 'ข้อมูลเรือ ราคา และ SEO จะถูกลบ · ระบบตั้ง redirect 301 จาก URL เดิมไปหน้ารวมเรือให้อัตโนมัติ เพื่อไม่ให้อันดับ Google หาย'}</p></div></div>
     <div class="flex justify-end gap-2 mt-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button>${b.active ? `<button class="btn btn-o" onclick="bySlug('${slug}').active=false;bySlug('${slug}').status='hidden';closeModal();toast('ซ่อนจากเว็บแล้ว');route()">ซ่อนจากเว็บ</button>` : ''}
-      ${bk.length ? '' : `<button class="btn !bg-[#a3222c] text-white" onclick="REDIR.unshift({from:'/yacht-charter/${slug}',to:'/yacht-charter',code:301,hits:0});boatRemove('${slug}');closeModal();toast('ลบเรือแล้ว · ตั้ง redirect 301 ให้แล้ว');go('boats');vBoats()">ลบถาวร</button>`}</div></div>`);
+      ${bk.length ? '' : `<button class="btn !bg-[#a3222c] text-white" onclick="boatRemove('${slug}');closeModal();toast('ลบเรือแล้ว · ตั้ง redirect 301 ให้แล้ว');go('boats');vBoats()">ลบถาวร</button>`}</div></div>`);
 }
 
 /* ---------- editor ---------- */
@@ -3717,7 +3717,95 @@ function boatTick(force, only) {
 }
 setInterval(() => boatTick(false), 1500);
 { const _bs = boatSave; boatSave = function (slug) { _bs(slug); boatTick(true, bySlug(slug) ? slug : undefined); }; }
-{ const _bd = boatDel; boatDel = function (slug, ...r) { _bd(slug, ...r); if (!bySlug(slug) && BSYNC.has(slug)) api('DELETE', 'boats/' + encodeURIComponent(slug)).then(() => { BSYNC.delete(slug); AUDIT_DIRTY = true; }).catch(fail); }; }
+/* delete = remove from the list right away, then delete on the server (also makes the 301 redirects); put it back if the server refuses */
+{ const _rm = boatRemove; boatRemove = function (slug) {
+  const i = FLEET.findIndex(b => b.slug === slug); if (i < 0) return; const b = FLEET[i], cal = SZ.boats[slug];
+  _rm(slug); if (BSNAP && BSNAP.slug === slug) BSNAP = null;
+  if (!BSYNC.has(slug)) return;   // never saved on the server
+  BSYNC.delete(slug);
+  api('DELETE', 'boats/' + encodeURIComponent(slug)).then(r => {
+    (r.redirects || []).forEach(x => { const k = REDIR.findIndex(y => y.from === x.from); if (k >= 0) REDIR.splice(k, 1); REDIR.unshift(Object.assign({ hits: 0 }, x)); });
+    AUDIT_DIRTY = true;
+  }).catch(e => {
+    if (!bySlug(slug)) FLEET.splice(Math.min(i, FLEET.length), 0, b);
+    if (cal) SZ.boats[slug] = cal; BSYNC.set(slug, JSON.stringify(boatPayload(b)));
+    fail(e); if (CUR === 'boats') route();
+  });
+}; }
+{ const _bb = boatBulk; boatBulk = function (op, v) {
+  if (op !== 'del' || v === '__ok') return _bb(op, v);
+  const S = [...BSEL].map(bySlug).filter(Boolean), keep = S.filter(b => bookingsOf(b.slug).length);
+  openModal(`<div class="p-5 grid gap-3"><p class="font-medium">ลบเรือ ${S.length - keep.length} ลำถาวร?</p>
+    <p class="text-[12.5px] text-muted">${esc(S.filter(b => !keep.includes(b)).map(b => b.name).join(', ')) || '—'}</p>
+    ${keep.length ? `<p class="text-[12.5px] text-[#a3222c]">ข้าม ${keep.length} ลำที่มีลีด (${esc(keep.map(b => b.name).join(', '))}) · ใช้ “ซ่อนจากเว็บ” แทน</p>` : ''}
+    <p class="text-[11.5px] text-muted">ข้อมูลเรือ ราคา และ SEO จะถูกลบ · ระบบตั้ง redirect 301 จาก URL เดิมไปหน้ารวมเรือให้อัตโนมัติ</p>
+    <div class="flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button>${S.length > keep.length ? `<button class="btn !bg-[#a3222c] text-white" onclick="closeModal();boatBulk('del','__ok')">ลบถาวร</button>` : ''}</div></div>`);
+}; }
+
+/* ---------- นำเข้าเรือจากโบรชัวร์ PDF (Gemini อ่านไฟล์ → ตรวจ → สร้างเป็นฉบับร่าง) ---------- */
+let BPDF = [], BPDF_FILE = '';
+function boatPdf() {
+  if (!can('boats')) return toast('ไม่มีสิทธิ์จัดการเรือ');
+  trUsage(true).catch(() => null).then(u => {
+    openModal(`<div class="p-5 grid gap-4"><div class="flex items-center justify-between"><p class="font-medium">นำเข้าเรือจากโบรชัวร์ PDF</p><button class="btn btn-g !px-2" onclick="closeModal()"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+      <p class="text-[12.5px] text-muted">เลือกไฟล์ PDF ของซัพพลายเออร์ (ไม่เกิน 14 MB) · Gemini จะอ่านชื่อเรือ สเปก ตารางราคา สิ่งที่รวม/ไม่รวม แล้วให้ตรวจก่อน · เรือที่สร้างจะเป็น “ฉบับร่าง” ยังไม่แสดงบนเว็บ</p>
+      <label class="grid place-items-center gap-2 rounded-xl border border-dashed border-[rgb(35_20_22/.25)] bg-sand/50 p-6 cursor-pointer text-[13px]"><i data-lucide="file-up" class="w-6 h-6 text-maroon"></i><span id="bpName">คลิกเพื่อเลือกไฟล์ PDF</span><input id="bpFile" type="file" accept="application/pdf,.pdf" class="hidden" onchange="$('#bpName').textContent=this.files[0]?.name||'คลิกเพื่อเลือกไฟล์ PDF'"/></label>
+      ${u ? trMeter(u) : ''}
+      <p class="text-[11.5px] text-muted">ใช้โควตา Gemini 1 ครั้ง + ~10,000 ตัวอักษร (ฟรี) · ยังไม่ดึงรูปจาก PDF ให้ เพิ่มรูปจากคลังสื่อภายหลัง · ตัวเลขจาก AI ต้องตรวจกับ PDF ทุกครั้ง</p>
+      ${u && !u.enabled ? '<p class="text-[12.5px] text-[#a3222c]">ยังไม่ได้เชื่อม Gemini (GEMINI_API_KEY) จึงอ่าน PDF ไม่ได้</p>' : ''}
+      <div class="flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button id="bpGo" class="btn btn-p" ${u && !u.enabled ? 'disabled' : ''} onclick="boatPdfRead()"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i>อ่าน PDF</button></div></div>`);
+    icons();
+  });
+}
+async function boatPdfRead() {
+  const f = $('#bpFile')?.files?.[0]; if (!f) return toast('เลือกไฟล์ PDF ก่อน');
+  if (f.size > 14 * 1048576) return toastErr('ไฟล์ใหญ่เกิน 14 MB');
+  const go = $('#bpGo'); go.disabled = true; go.innerHTML = '<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i>กำลังอ่าน… (อาจใช้ 1–2 นาที)'; icons();
+  const fd = new FormData(); fd.append('file', f);
+  try {
+    const r = await fetch('/api/admin/boats-pdf', { method: 'POST', body: fd, credentials: 'same-origin' });
+    let j = {}; try { j = await r.json(); } catch (e) { }
+    if (r.status === 401) { location.href = '/admin/login?next=' + encodeURIComponent(location.hash || ''); return; }
+    if (!r.ok) throw new Error(j.error || 'อ่าน PDF ไม่สำเร็จ');
+    TRU.at = 0; AUDIT_DIRTY = true;
+    if (!j.boats.length) { closeModal(); return toastErr('ไม่พบข้อมูลเรือในไฟล์นี้ (ไม่เสียโควตา)'); }
+    BPDF = j.boats.map(b => Object.assign(b, { _on: !FLEET.some(x => slugify(x.name) === slugify(b.name)) }));
+    boatPdfReview(f.name);
+  } catch (e) { fail(e); go.disabled = false; go.innerHTML = '<i data-lucide="sparkles" class="w-3.5 h-3.5"></i>อ่าน PDF'; icons(); }
+}
+function boatPdfReview(file = BPDF_FILE) {
+  BPDF_FILE = file;
+  const n = BPDF.filter(b => b._on).length;
+  openModal(`<div class="flex flex-col max-h-[86vh]"><div class="p-5 pb-3"><p class="font-medium">พบเรือ ${BPDF.length} ลำใน ${esc(file || 'PDF')}</p><p class="text-[12px] text-muted mt-1">ติ๊กเลือกลำที่จะสร้าง · ตรวจชื่อ ขนาด และราคาให้ตรงกับ PDF · แก้ละเอียดต่อได้ในหน้าแก้ไขเรือ</p></div>
+    <div class="px-5 overflow-y-auto grid gap-2.5">${BPDF.map((b, i) => { const dup = FLEET.find(x => slugify(x.name) === slugify(b.name)); const rows = b.tables.reduce((k, t) => k + t.rows.length, 0);
+      return `<div class="card p-3.5 ${b._on ? '' : 'opacity-60'}"><label class="flex items-start gap-3"><input type="checkbox" class="accent-[#70000e] w-4 h-4 mt-1" ${b._on ? 'checked' : ''} onchange="BPDF[${i}]._on=this.checked;boatPdfReview()"/>
+        <div class="flex-1 grid gap-2"><div class="grid sm:grid-cols-[2fr_1.4fr_.8fr_.8fr] gap-2">
+          <input class="inp" value="${esc(b.name)}" oninput="BPDF[${i}].name=this.value" title="ชื่อเรือ"/>
+          <select class="inp" onchange="BPDF[${i}].type=this.value">${Object.entries(TYPE_TH).map(([k, v]) => `<option value="${k}" ${k === b.type ? 'selected' : ''}>${v}</option>`).join('')}</select>
+          <input class="inp" type="number" value="${b.ft ?? ''}" placeholder="ft" oninput="BPDF[${i}].ft=+this.value||null" title="ความยาว (ft)"/>
+          <input class="inp" type="number" value="${b.pax ?? ''}" placeholder="คน" oninput="BPDF[${i}].pax=+this.value||null" title="จำนวนคนสูงสุด"/></div>
+          <p class="text-[11.5px] text-muted">${esc(b.marina || 'ไม่ระบุท่าเรือ')} · เริ่ม ${b.from_ ? nf(b.from_) + ' THB' : '—'} · ราคา ${rows} โปรแกรม${b.tables.length > 1 ? ` (${b.tables.length} ตาราง)` : ''} · รวม ${b.includes.length} · ไม่รวม ${b.not_included.length} · สเปก ${b.info.length} รายการ</p>
+          ${b.tables[0] ? `<p class="text-[11px] text-muted truncate">${esc(b.tables[0].columns.join(' | '))} → ${esc((b.tables[0].rows[0] || []).join(' | '))}</p>` : '<p class="text-[11.5px] text-[#b26a00]">ไม่พบตารางราคา</p>'}
+          ${dup ? `<p class="text-[11.5px] text-[#a3222c]">มีเรือชื่อนี้อยู่แล้ว (${esc(dup.name)}) · ถ้าเลือก จะสร้างเป็นอีกลำ</p>` : ''}</div></label></div>`; }).join('')}</div>
+    <div class="p-5 pt-3 flex justify-end gap-2 border-t border-[rgb(35_20_22/.08)] mt-3"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" ${n ? '' : 'disabled'} onclick="boatPdfCreate()">สร้างเป็นฉบับร่าง (${n} ลำ)</button></div></div>`);
+  $('#modalBox').style.maxWidth = '820px'; icons();
+}
+{ const _cm = closeModal; closeModal = function () { _cm(); $('#modalBox').style.maxWidth = ''; }; }
+function boatPdfCreate() {
+  const pick = BPDF.filter(b => b._on && b.name.trim()); if (!pick.length) return;
+  const marina = m => MARINAS.find(x => m && (x.toLowerCase().includes(m.toLowerCase()) || m.toLowerCase().includes(x.split(' (')[0].toLowerCase()))) || m || MARINAS[0];
+  pick.forEach(p => {
+    const name = p.name.trim(), slug = uniqSlug(name), mar = marina(p.marina);
+    const tables = p.tables.length ? p.tables : [{ caption: '', columns: ['Program', 'Low Season', 'High Season', 'Peak Season'], rows: [['', '', '', '']] }];
+    const b = { slug, title: name.toUpperCase(), name, subtitle: p.subtitle || '', type: p.type, ft: p.ft, pax: p.pax, from_: p.from_, marina: mar, marinaP: mar,
+      info: p.info.length ? p.info : [['Boat Name', name], ['Size', (p.ft || '') + ' ft.'], ['Capacity', (p.pax || '') + ' passengers']],
+      includes: p.includes, complimentary: p.complimentary, not_included: p.not_included, time_slots: p.time_slots, notes: p.notes, remarks: [], tables, active: false, status: 'draft', featured: false, imgs: [] };
+    b.i18n = { name: tr(name, name), subtitle: tr(), desc: tr(), programs: tables.map(t => t.rows.map(r => tr(autoTh(r[0] || '') || '', r[0] || ''))), includes: [], complimentary: [], not_included: [], slots: [], notes: tr(), seoTitle: tr(), seoDesc: tr() };
+    FLEET.unshift(b);
+  });
+  closeModal(); BPDF = []; boatTick(true);
+  toast(`สร้างฉบับร่าง ${pick.length} ลำแล้ว · เพิ่มรูปและตรวจราคาก่อนเผยแพร่`); go('boats'); vBoats();
+}
 { const _br = boatRename; boatRename = function (old, val) { const b = bySlug(old); _br(old, val); if (b && b.slug !== old) { if (BSYNC.has(old)) { RENAMED[b.slug] = old; BSYNC.set(b.slug, BSYNC.get(old)); } boatTick(true, b.slug); } }; }
 
 /* ---------- season calendars ---------- */
