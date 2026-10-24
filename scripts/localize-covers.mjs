@@ -57,15 +57,31 @@ if (DB) {
   const { default: pg } = await import('pg');
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
-  let n = 0;
-  for (const url of ok) {
-    const local = toLocal(urls.get(url));
+  // look for old WordPress links in the database itself (not only those still in posts.json)
+  const { rows } = await client.query(`SELECT id, coalesce(cover, '') || ' ' || blocks::text AS t FROM posts WHERE cover LIKE '%wp-content/uploads%' OR blocks::text LIKE '%wp-content/uploads%'`);
+  const dbUrls = new Map();
+  for (const r of rows) for (const m of r.t.matchAll(RE)) dbUrls.set(m[0], m[1]);
+  console.log(`ฐานข้อมูล: พบลิงก์รูปเว็บเดิม ${dbUrls.size} ลิงก์ ใน ${rows.length} บทความ`);
+  let n = 0; const dbFailed = [];
+  for (const [url, rel] of dbUrls) {
+    const dest = path.join(OUT_DIR, decodeURIComponent(rel));
+    if (!(fs.existsSync(dest) && fs.statSync(dest).size > 0)) {
+      try {
+        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 BTT-migration' } });
+        const type = res.headers.get('content-type') || '';
+        if (!res.ok || !type.startsWith('image/')) throw new Error(`HTTP ${res.status} ${type}`);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
+      } catch (e) { dbFailed.push([url, String(e.message || e)]); continue; }
+    }
     const r = await client.query(
       `UPDATE posts SET cover = replace(cover, $1, $2), blocks = replace(blocks::text, $1, $2)::jsonb
-       WHERE cover LIKE '%' || $1 || '%' OR blocks::text LIKE '%' || $1 || '%'`, [url, local]);
+       WHERE cover LIKE '%' || $1 || '%' OR blocks::text LIKE '%' || $1 || '%'`, [url, toLocal(rel)]);
     n += r.rowCount;
   }
   await client.end();
-  console.log(`แก้ลิงก์ในฐานข้อมูลแล้ว ${n} แถว (หน้าเว็บอัปเดตภายใน 5 นาที)`);
+  console.log(`แก้ลิงก์ในฐานข้อมูลแล้ว ${n} จุด · เหลือที่แก้ไม่ได้ ${dbFailed.length} (หน้าเว็บอัปเดตภายใน 5 นาที)`);
+  for (const [u, e] of dbFailed) console.log('  ✗', u, '-', e);
+  if (dbFailed.length) process.exit(1);
 }
 process.exit(failed.length ? 1 : 0);
