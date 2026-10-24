@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
  *   GOOGLE_SERVICE_ACCOUNT_JSON  the key file contents — raw JSON or base64 (base64 -i key.json | tr -d '\n')
  *     or GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
  *   GA4_PROPERTY_ID              numeric property id (GA4 → Admin → Property details), not G-XXXX
- *   GSC_SITE_URL                 sc-domain:boattripthailand.com  or  https://www.boattripthailand.com/
+ *   GSC_SITE_URL                 https://boattripthailand.com/  (URL-prefix)  or  sc-domain:boattripthailand.com
  * The service account email must be added as Viewer in GA4 and as a user (Restricted) in Search Console.
  */
 type SA = { client_email: string; private_key: string };

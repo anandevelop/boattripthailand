@@ -27,7 +27,7 @@ script = src[script_start: src.rindex('</script>')]
 
 # ---------------- head ----------------
 head_meta = must(head_meta, '<link rel="icon" type="image/png" href="data:image/png;base64,FAV_B64" />', '<link rel="icon" type="image/png" href="/icon.png" />')
-head_meta = head_meta.replace('https://www.boattripthailand.com/og/yacht-charter-phuket.jpg', 'https://www.boattripthailand.com/boats/leopard-90-ft-hero.webp')
+head_meta = head_meta.replace('https://boattripthailand.com/og/yacht-charter-phuket.jpg', 'https://boattripthailand.com/boats/leopard-90-ft-hero.webp')
 head = ('<!DOCTYPE html>\n<html lang="th" class="scroll-smooth">\n<head>' + head_meta +
         '<link rel="stylesheet" href="/site/mockup.css?v=__V__" />\n<link rel="stylesheet" href="/site/tw.css?v=__V__" />\n</head>\n')
 

@@ -10,7 +10,7 @@
 /* server-rendered pages: drop "already built/bound" markers so this browser binds its own handlers */
 document.querySelectorAll('[data-built],[data-swipe]').forEach(el => { el.removeAttribute('data-built'); el.removeAttribute('data-swipe'); });
 window.__LANG__ = /^\/en(\/|$)/.test(location.pathname) ? 'en' : 'th';
-const SITE_ORIGIN = (window.__CFG__ || {}).site || 'https://www.boattripthailand.com';
+const SITE_ORIGIN = (window.__CFG__ || {}).site || 'https://boattripthailand.com';
 const PAGE_MAP = { '/about-us': '#/about', '/privacy-policy': '#/privacy', '/terms-and-conditions': '#/terms', '/cookie-preferences': '#/cookies', '/design-system': '#/design', '/destinations': '#/destinations', '/blog': '#/blog', '/yacht-charter': '#/fleet' };
 const HASH_MAP = Object.fromEntries(Object.entries(PAGE_MAP).map(([p, h]) => [h.slice(1), p]));
 

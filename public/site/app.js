@@ -10,7 +10,7 @@
 /* server-rendered pages: drop "already built/bound" markers so this browser binds its own handlers */
 document.querySelectorAll('[data-built],[data-swipe]').forEach(el => { el.removeAttribute('data-built'); el.removeAttribute('data-swipe'); });
 window.__LANG__ = /^\/en(\/|$)/.test(location.pathname) ? 'en' : 'th';
-const SITE_ORIGIN = (window.__CFG__ || {}).site || 'https://www.boattripthailand.com';
+const SITE_ORIGIN = (window.__CFG__ || {}).site || 'https://boattripthailand.com';
 /* contact & brand details from /admin → ตั้งค่า (window.__SET__); these are the values when nothing is saved there */
 const SET = Object.assign({ phone: '+66 61 172 5854', wa: '+66 61 172 5854', email: 'boattripthailand@gmail.com', line: '@boattripthailand', lineUrl: 'https://lin.ee/kkzkoX7',
   company: 'Boat Trip (Thailand) Co., Ltd.', tat: '34/03754', map: 'https://maps.app.goo.gl/82Rp4Z99B1Jj5WNTA',
@@ -1971,7 +1971,7 @@ document.addEventListener('keydown', e => {
 /* =========================================================
    SEO — homepage content, FAQ, meta & JSON-LD (keyword: "yacht charter")
    ========================================================= */
-const SITE = 'https://www.boattripthailand.com';
+const SITE = SITE_ORIGIN;
 const SEO_META = HOME ? {
   th: { get title() { return homeTxt(HOME.seo.title, 'th'); }, get desc() { return homeTxt(HOME.seo.desc, 'th'); } },
   en: { get title() { return homeTxt(HOME.seo.title, 'en'); }, get desc() { return homeTxt(HOME.seo.desc, 'en'); } },

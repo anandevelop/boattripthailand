@@ -3,7 +3,7 @@
 	reverse_proxy app:3000
 }
 
-# old domain without www → www (adjust if you prefer the bare domain)
-boattripthailand.com {
-	redir https://www.boattripthailand.com{uri} permanent
+# the site lives on the bare domain (no www) — send www to it
+www.boattripthailand.com {
+	redir https://boattripthailand.com{uri} permanent
 }
