@@ -1262,7 +1262,7 @@ const SEOV = { tab: 'overview', type: '', issue: '', lang: 'th', q: '', page: 0,
 function vSeo() {
   const tabs = [['overview', 'ภาพรวม', 'gauge'], ['pages', 'Meta ทุกหน้า', 'file-text'], ['keywords', 'คีย์เวิร์ด', 'tag'], ['redirects', 'Redirect & 404', 'shuffle'], ['schema', 'Schema', 'code'], ['sitemap', 'Sitemap & Robots', 'network'], ['settings', 'ตั้งค่า SEO', 'settings-2']];
   const P = auditAll();
-  $('#view').innerHTML = `${head('SEO', 'ตรวจและจัดการ SEO ทุกหน้า ทั้งภาษาไทยและอังกฤษ · ปัญหาคำนวณจากข้อมูลจริงในระบบ ตัวเลขจาก Google เป็นตัวอย่าง', `<button class="btn btn-o" onclick="toast('ตรวจทั้งเว็บใหม่แล้ว · ${P.length} หน้า');vSeo()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>ตรวจใหม่</button>`)}
+  $('#view').innerHTML = `${head('SEO', 'ตรวจและจัดการ SEO ทุกหน้า ทั้งภาษาไทยและอังกฤษ · ปัญหาคำนวณจากข้อมูลจริงในระบบ · ตัวเลขจาก Google ดึงจาก Search Console', `<button class="btn btn-o" onclick="toast('ตรวจทั้งเว็บใหม่แล้ว · ${P.length} หน้า');vSeo()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>ตรวจใหม่</button>`)}
     <div class="card"><div class="px-3 py-3 flex gap-1 overflow-x-auto no-sb border-b border-line">${tabs.map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${SEOV.tab === k ? 'on' : ''}" onclick="SEOV.tab='${k}';vSeo()"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>
     <div id="seoBody" class="p-4 sm:p-5 fade">${({ overview: seoOverview, pages: seoPagesTab, keywords: seoKw, redirects: seoRedir, schema: seoSchema, sitemap: seoSitemap, settings: seoSettings })[SEOV.tab](P)}</div></div>`;
   icons();
@@ -1976,8 +1976,7 @@ const _seoOverview11 = seoOverview;
 seoOverview = function (P) { return _seoOverview11(P).replace(`GSC.on=true;vSeo();toast('เชื่อมต่อแล้ว (จำลอง) · แสดงข้อมูลตัวอย่าง')`, `GA.tab='api';go('analytics')`); };
 /* dashboard: small web-traffic card */
 const _vDash11 = PAGES.find(p => p[0] === 'dashboard')[3];
-PAGES.find(p => p[0] === 'dashboard')[3] = function () { _vDash11(); const ul = $$('#view ul').pop(); if (!ul) return; const u = sum(SER.users.slice(-7)), pu = sum(SER.users.slice(-14, -7)), c = sum(SER.clicks.slice(-7));
-  ul.parentElement.insertAdjacentHTML('beforeend', `<p class="font-medium mt-6 flex items-center gap-2"><i data-lucide="chart-line" class="w-4 h-4 text-maroon"></i>ผู้เข้าชมเว็บ 7 วัน <span class="text-[10.5px] text-muted font-normal">ตัวอย่าง</span></p><div class="mt-3 flex items-end justify-between gap-3 cursor-pointer" onclick="go('analytics')"><div><p class="text-[22px] font-medium tnum leading-none">${nf(u)}</p><p class="text-[11.5px] text-muted mt-1">ผู้ใช้ · ${nf(c)} คลิกจาก Google</p></div><span class="text-[12px] tnum ${u >= pu ? 'text-[#1e7a46]' : 'text-[#a3222c]'}">${u >= pu ? '▲' : '▼'} ${Math.abs((u - pu) / pu * 100).toFixed(1)}%</span></div>`); icons(); };
+PAGES.find(p => p[0] === 'dashboard')[3] = function () { _vDash11(); dashTraffic(); icons(); };   // real numbers: see dashTraffic()
 
 
 
@@ -4152,13 +4151,163 @@ function ggBody() {
   if (GG.st) Object.assign(GA, { gaOn: GG.st.ga.on, prop: GG.st.ga.property || '', gscOn: GG.st.gsc.on, site: GG.st.gsc.site || GA.site });
   _va2();
   [...$$('#view .tab')].find(b => (b.getAttribute('onclick') || '').includes("GA.tab='overview'"))?.remove();
-  $$('#view p').forEach(p => { if (p.textContent.includes('แสดงข้อมูลตัวอย่าง') && /Google/.test(p.parentElement?.textContent || '')) p.textContent = 'ยังไม่เชื่อมต่อ'; });
+  $$('#view p').forEach(p => { if (p.textContent.includes('แสดงข้อมูลตัวอย่าง')) p.textContent = /Meta/.test(p.parentElement?.textContent || '') && typeof MS !== 'undefined' && MS.d?.pixelId ? 'เชื่อมต่อแล้ว · Pixel ' + MS.d.pixelId : 'ยังไม่เชื่อมต่อ'; });
   const note = [...$$('#view .rounded-xl')].find(x => x.className.includes('fff8e6'));
-  if (note) { const msg = { site: 'แท็บนี้เป็นข้อมูลจริง: ผู้เข้าชมนับจากเว็บไซต์เอง ลีดและการปิดการขายมาจากระบบลีด', meta: 'แท็บ Meta ยังเป็นข้อมูลตัวอย่าง · ข้อมูลจริงอยู่ในแท็บ “ข้อมูลจริง”, Google Analytics และ Search Console' }[GA.tab];
+  if (note) { const msg = { site: 'แท็บนี้เป็นข้อมูลจริง: ผู้เข้าชมนับจากเว็บไซต์เอง ลีดและการปิดการขายมาจากระบบลีด' }[GA.tab];
     if (msg) note.lastChild.textContent = msg; else note.remove(); }
   if (['ga', 'gsc', 'api'].includes(GA.tab)) { const f = $('#view .fade'); if (f) f.innerHTML = ggBody(); }
   icons();
 }; PAGES.find(p => p[0] === 'analytics')[3] = vAnalytics; }
+
+/* =====================================================================
+   ข้อมูลจริงแทนข้อมูลตัวอย่างที่เหลือ: แดชบอร์ด (ผู้เข้าชม), SEO (ภาพรวม Search Console + อันดับคีย์เวิร์ด), Meta
+   ===================================================================== */
+/** Google data for a range, shared with วิเคราะห์เว็บไซต์ (GG); calls `then` after it arrives */
+function ggGet(days, then) {
+  const D = GG.d[days];
+  if (D && Date.now() - D.t < 10 * 60_000) return D;
+  if (!GG.loading[days] && (!GG.failAt || Date.now() - GG.failAt > 60_000)) { GG.loading[days] = true;
+    api('GET', 'analytics/google?days=' + days).then(d => { GG.d[days] = { ...d, t: Date.now() }; GG.st = d.status; })
+      .catch(() => { GG.failAt = Date.now(); }).finally(() => { GG.loading[days] = false; then && then(); }); }
+  return D || null;
+}
+const ggOk = x => x && !x.error;
+
+/* ---------- แดชบอร์ด → ผู้เข้าชมเว็บ 7 วัน (ตัวนับของเว็บเอง + คลิกจาก Google) ---------- */
+const DT = { d: null, at: 0, loading: false };
+function dashTraffic() {
+  if (!can('seo')) return;
+  // sits under "ต้องทำตอนนี้" on the dashboard (that card has room below its list)
+  const box = [...$$('#view .card')].find(c => c.textContent.includes('ต้องทำตอนนี้')); if (!box) return;
+  const again = () => { if (CUR === 'dashboard') { $('#dashTr')?.remove(); dashTraffic(); icons(); } };
+  if (!DT.loading && (!DT.d || Date.now() - DT.at > 5 * 60_000)) { DT.loading = true;
+    api('GET', 'analytics?days=7').then(d => { DT.d = d; DT.at = Date.now(); }).catch(() => {}).finally(() => { DT.loading = false; again(); }); }
+  const g = ggGet(7, again)?.gsc, D = DT.d;
+  const s = D ? sum(D.cur.map(x => x.sessions)) : 0, ps = D ? sum(D.prev.map(x => x.sessions)) : 0, v = D ? sum(D.cur.map(x => x.views)) : 0;
+  const ch = ps ? Math.round((s - ps) / ps * 100) : null;
+  box.insertAdjacentHTML('beforeend', `<div id="dashTr" class="border-t border-line mt-5 pt-1"><p class="font-medium mt-4 flex items-center gap-2"><i data-lucide="chart-line" class="w-4 h-4 text-maroon"></i>ผู้เข้าชมเว็บ 7 วัน</p>
+    <div class="mt-3 flex items-end justify-between gap-3 cursor-pointer" onclick="GA.tab='site';go('analytics')">${!D ? '<p class="text-[12px] text-muted">กำลังโหลด…</p>' : `<div><p class="text-[22px] font-medium tnum leading-none">${nf(s)}</p>
+      <p class="text-[11.5px] text-muted mt-1">เซสชัน · ${nf(v)} เพจวิว${ggOk(g) ? ` · ${nf(g.totals.cur.clicks)} คลิกจาก Google` : ''}</p></div>
+      ${ch === null ? '<span class="text-[11.5px] text-muted whitespace-nowrap">ยังไม่มีข้อมูลเทียบ</span>' : `<span class="text-[12px] tnum ${ch >= 0 ? 'text-[#1e7a46]' : 'text-[#a3222c]'}">${ch >= 0 ? '▲' : '▼'} ${Math.abs(ch)}%</span>`}`}</div></div>`);
+}
+
+{ const _dash = PAGES.find(p => p[0] === 'dashboard')[3]; PAGES.find(p => p[0] === 'dashboard')[3] = function () { _dash.apply(this, arguments); dashTraffic(); icons(); }; }
+
+/* ---------- SEO → ภาพรวม: การ์ด Search Console ใช้ข้อมูลจริง 28 วัน ---------- */
+{ const _so = seoOverview; seoOverview = function (P) {
+  GSC.on = false;   // the original card only knows sample numbers; it is replaced below
+  const html = _so(P), S = ggGet(28, () => { if (CUR === 'seo' && SEOV.tab === 'overview') vSeo(); })?.gsc;
+  if (!ggOk(S)) return html;
+  const T = S.totals.cur, c = S.cur.map(x => x.clicks), mx = Math.max(1, ...c);
+  const card = `<div class="flex items-center justify-between"><p class="font-medium">Google Search Console · 28 วัน</p><span class="text-[11px] text-muted">ข้อมูลจริง · ถึง ${fmtD(S.range.endDate)}</span></div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">${[['คลิก', nf(T.clicks)], ['การแสดงผล', nf(T.impressions)], ['CTR เฉลี่ย', ggPct(T.ctr)], ['อันดับเฉลี่ย', T.position ? T.position.toFixed(1) : '—']].map(([l, v]) => `<div><p class="text-[11px] text-muted">${l}</p><p class="text-[20px] font-medium tnum">${v}</p></div>`).join('')}</div>
+    <div class="flex items-end gap-[2px] h-28 border-b border-line mt-4">${S.cur.map(x => `<div class="flex-1 h-full flex items-end" title="${fmtD(x.date)} · ${x.clicks} คลิก"><div class="w-full rounded-t-[4px] bg-maroon/80" style="height:${x.clicks / mx * 100}%"></div></div>`).join('')}</div>
+    <div class="flex justify-between text-[10.5px] text-muted mt-1"><span>${fmtD(S.cur[0]?.date)}</span><button class="text-maroon" onclick="GA.tab='gsc';go('analytics')">ดูรายละเอียด →</button><span>${fmtD(S.range.endDate)}</span></div>`;
+  return html.replace(/<div class="flex flex-col sm:flex-row sm:items-center gap-4"><div class="w-11 h-11 rounded-xl bg-sand grid place-items-center shrink-0"><i data-lucide="plug"[\s\S]*?<\/button><\/div>/, card);
+}; }
+
+/* ---------- SEO → ภาพรวม: Core Web Vitals จริงจาก PageSpeed Insights (/api/admin/analytics/pagespeed) ---------- */
+const PSI = { d: null, loading: false };
+function psiLoad(refresh) {
+  if (PSI.loading) return; PSI.loading = true; if (refresh) vSeo();
+  api('GET', 'analytics/pagespeed' + (refresh ? '?refresh=1' : '')).then(d => { PSI.d = d; }).catch(e => { PSI.d = { error: e.message }; })
+    .finally(() => { PSI.loading = false; if (CUR === 'seo' && SEOV.tab === 'overview') vSeo(); });
+}
+function psiCard() {
+  if (!PSI.d && !PSI.loading) psiLoad();
+  const D = PSI.d, head = `<div class="flex justify-between items-center"><p class="font-medium">Core Web Vitals</p><button class="text-[11px] text-maroon disabled:text-muted" ${PSI.loading ? 'disabled' : ''} onclick="psiLoad(true)">${PSI.loading ? 'กำลังตรวจ… (~30 วินาที)' : 'ตรวจใหม่'}</button></div>`;
+  if (!D || PSI.loading && !D) return `<div class="rounded-2xl ring-1 ring-line p-5">${head}<p class="text-[12px] text-muted mt-3">กำลังตรวจความเร็วหน้าแรกด้วย PageSpeed Insights…</p></div>`;
+  if (D.error) return `<div class="rounded-2xl ring-1 ring-line p-5">${head}<p class="text-[12px] text-[#a3222c] mt-3">ตรวจไม่สำเร็จ: ${esc(D.error)}</p><p class="text-[11px] text-muted mt-1">ลองกด “ตรวจใหม่” ภายหลัง · ถ้าตรวจบ่อยควรใส่ PAGESPEED_API_KEY ใน .env</p></div>`;
+  const f = D.field, fmtMs = m => m.v >= 1000 ? (m.v / 1000).toFixed(1) + ' วินาที' : Math.round(m.v) + ' ms';
+  const rows = f ? [['LCP', f.lcp, 'โหลดภาพหลัก', fmtMs], ['INP', f.inp, 'ตอบสนองการกด', fmtMs], ['CLS', f.cls, 'หน้าขยับระหว่างโหลด', m => m.v.toFixed(2)]]
+    : [['LCP', D.lab.lcp, 'โหลดภาพหลัก', fmtMs], ['TBT', D.lab.tbt, 'หน้าค้างระหว่างโหลด', fmtMs], ['CLS', D.lab.cls, 'หน้าขยับระหว่างโหลด', m => m.v.toFixed(2)]];
+  return `<div class="rounded-2xl ring-1 ring-line p-5">${head}
+    <div class="mt-3 grid gap-2.5">${rows.filter(r => r[1]).map(([k, m, l, fm]) => `<div class="flex items-center gap-3"><span class="w-10 text-[12px] font-medium">${k}</span><span class="flex-1 text-[12px] text-muted">${l}</span><span class="lang-b ${m.cat}">${fm(m)}</span></div>`).join('')}</div>
+    <p class="text-[11px] text-muted mt-3">${f ? 'จากผู้ใช้ Chrome จริง 28 วัน' : 'ผลทดสอบ (lab) · Google ยังมีข้อมูลผู้ใช้จริงไม่พอ'} · มือถือ · คะแนน ${D.score}/100 · ${esc(D.url.replace(/^https?:\/\//, ''))} · ${new Date(D.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</p></div>`;
+}
+{ const _so2 = seoOverview; seoOverview = function (P) {
+  return _so2(P).replace(/<div class="rounded-2xl ring-1 ring-line p-5"><div class="flex justify-between"><p class="font-medium">Core Web Vitals<\/p>[\s\S]*?ระบบจริงดึงจาก PageSpeed Insights API ทุกสัปดาห์<\/p><\/div>/, () => psiCard());
+}; }
+
+/* ---------- SEO → คีย์เวิร์ด: อันดับจริงจาก Search Console · คีย์เวิร์ดที่ติดตามบันทึกใน ตั้งค่า SEO (SSET.kwTrack) ---------- */
+KW.length = 0;
+(Array.isArray(SSET.kwTrack) ? SSET.kwTrack : []).forEach(k => k && k.q && KW.push({ q: String(k.q), l: k.l === 'en' ? 'en' : 'th', url: String(k.url || ''), pos: null, ch: 0 }));
+const KWV = { all: false };
+seoKw = function () {
+  const nv = KW.map(({ q, l, url }) => ({ q, l, url }));
+  if (JSON.stringify(nv) !== JSON.stringify(SSET.kwTrack || [])) SSET.kwTrack = nv;   // autosaved with the SEO settings
+  const S = ggGet(28, () => { if (CUR === 'seo' && SEOV.tab === 'keywords') vSeo(); })?.gsc, on = ggOk(S), loading = !S && GG.loading[28];
+  const pos = q => { const r = on && S.qpos[q.trim().toLowerCase()]; return r ? { p: r[0], imp: r[1], clk: r[2], prev: S.qprev[q.trim().toLowerCase()] ?? null } : null; };
+  const cell = r => !on ? '<span class="text-muted">—</span>' : r ? `${r.p.toFixed(1)}` : '<span class="text-muted text-[11.5px]">ยังไม่ติดอันดับ</span>';
+  const chg = r => { if (!r || r.prev == null) return '<span class="text-muted">—</span>'; const d = Math.round((r.prev - r.p) * 10) / 10;
+    return d > 0 ? `<span class="text-[#1e7a46] inline-flex items-center gap-0.5"><i data-lucide="trending-up" class="w-3.5 h-3.5"></i>${d}</span>` : d < 0 ? `<span class="text-[#a3222c] inline-flex items-center gap-0.5"><i data-lucide="trending-down" class="w-3.5 h-3.5"></i>${-d}</span>` : '<span class="text-muted">0</span>'; };
+  const P = seoPages(), kwUse = {}, mine = [];
+  P.forEach(p => p.kw && LANGS.forEach(([k]) => { const w = (p.kw[k] || '').trim(); if (!w) return; (kwUse[w.toLowerCase()] ??= []).push(p.name); mine.push({ q: w, l: k, url: p.url[k], name: p.name }); }));
+  const cannib = Object.entries(kwUse).filter(([, v]) => v.length > 1);
+  const rows = mine.map(m => ({ ...m, r: pos(m.q) })).sort((a, b) => (b.r ? b.r.imp : -1) - (a.r ? a.r.imp : -1));
+  const shown = KWV.all ? rows : rows.slice(0, 30);
+  const sugg = on ? Object.entries(S.qpos).filter(([q]) => !KW.some(k => k.q.toLowerCase() === q)).sort((a, b) => b[1][1] - a[1][1]).slice(0, 8) : [];
+  const note = loading ? 'กำลังโหลดอันดับจาก Search Console…' : on ? `อันดับเฉลี่ยจาก Search Console ${fmtD(S.range.startDate)} – ${fmtD(S.range.endDate)} · เทียบ 28 วันก่อนหน้า` : 'เชื่อม Search Console ที่ วิเคราะห์เว็บไซต์ → เชื่อมต่อ API เพื่อดูอันดับจริง';
+  const head = '<thead><tr><th>คีย์เวิร์ด</th><th>ภาษา</th><th>หน้าเป้าหมาย</th><th class="text-right">การแสดงผล</th><th class="text-center">อันดับ</th><th class="text-center">เทียบช่วงก่อน</th><th></th></tr></thead>';
+  return `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3"><p class="text-[12px] text-muted">${note}</p><button class="btn btn-p" onclick="seoAddKw()"><i data-lucide="plus" class="w-4 h-4"></i>เพิ่มคีย์เวิร์ด</button></div>
+    ${cannib.length ? `<div class="rounded-xl bg-[#fff6e5] text-[#7a4a00] p-3.5 mb-3 text-[12.5px]"><b class="font-medium">คีย์เวิร์ดชนกัน:</b> ${cannib.map(([w, v]) => `“${esc(w)}” ใช้ใน ${v.length} หน้า (${v.map(esc).join(', ')})`).join(' · ')} · ควรให้ 1 คีย์เวิร์ดหลักต่อ 1 หน้า</div>` : ''}
+    <p class="font-medium mb-2">คีย์เวิร์ดที่ติดตาม</p>
+    <div class="overflow-x-auto rounded-xl ring-1 ring-line"><table class="tbl min-w-[760px]">${head}<tbody>
+    ${KW.map((w, n) => { const r = pos(w.q); return `<tr><td>${esc(w.q)}</td><td><span class="lang-b ok">${w.l.toUpperCase()}</span></td><td class="text-muted truncate max-w-[260px]">${esc(w.url) || '—'}</td><td class="text-right tnum">${r ? nf(r.imp) : '—'}</td><td class="text-center tnum">${cell(r)}</td><td class="text-center tnum">${chg(r)}</td>
+      <td class="text-right"><button class="btn btn-g !px-2" title="เลิกติดตาม" onclick="KW.splice(${n},1);vSeo()"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`; }).join('') || '<tr><td colspan="7" class="text-muted">ยังไม่ได้เลือกคีย์เวิร์ดที่จะติดตาม · กด “เพิ่มคีย์เวิร์ด” หรือเลือกจากคำที่คนค้นจริงด้านล่าง</td></tr>'}</tbody></table></div>
+    ${sugg.length ? `<div class="mt-3 flex flex-wrap items-center gap-2 text-[12px]"><span class="text-muted">คำที่คนค้นแล้วเจอเว็บเรามากที่สุด:</span>${sugg.map(([q, r]) => `<button class="h-7 px-2.5 rounded-full bg-sand hover:bg-maroon-50 inline-flex items-center gap-1" onclick="KW.push({q:${esc(JSON.stringify(q))},l:'${ggTh(q) ? 'th' : 'en'}',url:'',pos:null,ch:0});vSeo()"><i data-lucide="plus" class="w-3 h-3"></i>${esc(q)} <span class="text-muted tnum">#${r[0].toFixed(0)}</span></button>`).join('')}</div>` : ''}
+    <p class="font-medium mt-6 mb-2">คีย์เวิร์ดหลักของแต่ละหน้า <span class="text-[11.5px] text-muted font-normal">(ตั้งในหน้าแก้ไขบทความ / เรือ · ${rows.length} รายการ)</span></p>
+    <div class="overflow-x-auto rounded-xl ring-1 ring-line"><table class="tbl min-w-[760px]">${head}<tbody>
+    ${shown.map(m => `<tr><td>${esc(m.q)}</td><td><span class="lang-b ok">${m.l.toUpperCase()}</span></td><td class="text-muted truncate max-w-[260px]" title="${esc(m.url)}">${esc(m.name)}</td><td class="text-right tnum">${m.r ? nf(m.r.imp) : '—'}</td><td class="text-center tnum">${cell(m.r)}</td><td class="text-center tnum">${chg(m.r)}</td><td></td></tr>`).join('') || '<tr><td colspan="7" class="text-muted">ยังไม่มีหน้าที่ตั้งคีย์เวิร์ดหลัก</td></tr>'}</tbody></table></div>
+    ${rows.length > 30 ? `<button class="btn btn-o !h-8 mt-3" onclick="KWV.all=!KWV.all;vSeo()">${KWV.all ? 'แสดงน้อยลง' : `แสดงทั้งหมด ${rows.length} รายการ`}</button>` : ''}`;
+};
+
+/* ---------- วิเคราะห์เว็บไซต์ → Meta: สถานะจริงจากเซิร์ฟเวอร์ + event ที่ระบบส่งจริง (conversion_events) ---------- */
+const MS = { d: null, at: 0, loading: false };
+function msLoad() {
+  if (MS.loading || (MS.d && Date.now() - MS.at < 60_000)) return; MS.loading = true;
+  api('GET', 'marketing/status').then(d => { MS.d = d; MS.at = Date.now(); MP.on = !!d.pixelId; MP.id = d.pixelId || ''; MP.capiOn = d.capi; })
+    .catch(() => {}).finally(() => { MS.loading = false; if (CUR === 'analytics' && GA.tab === 'meta') vAnalytics(); });
+}
+const _metaBody0 = metaBody;
+metaBody = function () {
+  msLoad();
+  if (!['setup', 'events', 'catalog', 'audiences', 'utm'].includes(MP.sub)) MP.sub = 'setup';
+  const D = MS.d, sub = [['setup', 'สถานะ & ตั้งค่า'], ['events', 'Events'], ['catalog', 'แคตตาล็อกสินค้า'], ['audiences', 'กลุ่มเป้าหมาย'], ['utm', 'ลิงก์โฆษณา (UTM)']];
+  const nav = `<div class="flex gap-1 overflow-x-auto no-sb mb-4">${sub.map(([k, l]) => `<button class="h-8 px-3 rounded-full text-[12.5px] whitespace-nowrap ${MP.sub === k ? 'bg-maroon text-white' : 'text-muted hover:bg-white'}" onclick="MP.sub='${k}';vAnalytics()">${l}</button>`).join('')}</div>`;
+  if (MP.sub === 'utm') return _metaBody0().replace(`onclick="toast('คัดลอกลิงก์แล้ว')"><i data-lucide="copy" class="w-3.5 h-3.5"></i>คัดลอก`, `onclick="navigator.clipboard?.writeText($('#utmOut').value).then(()=>toast('คัดลอกลิงก์แล้ว'))"><i data-lucide="copy" class="w-3.5 h-3.5"></i>คัดลอก`);
+  if (!D) return nav + '<div class="card p-10 text-center text-muted">กำลังโหลด…</div>';
+  const row = (ok, t, d) => `<li class="flex gap-3"><i data-lucide="${ok ? 'check-circle-2' : 'circle'}" class="w-4 h-4 shrink-0 mt-0.5 ${ok ? 'text-[#1e7a46]' : 'text-muted'}"></i><div><p class="text-[13px] font-medium">${t}</p><p class="text-[12px] text-muted mt-0.5">${d}</p></div></li>`;
+  const C = D.counts || {}, ST = { sent: ['ส่งแล้ว', 'ok'], failed: ['ไม่สำเร็จ', 'low'], skipped: ['ไม่ได้ส่ง', 'mid'] };
+  let b = '';
+  if (MP.sub === 'setup') b = `<div class="grid xl:grid-cols-2 gap-4 items-start">
+    <div class="card p-5"><p class="font-medium">สถานะการเชื่อมต่อ</p><ul class="grid gap-3 mt-4">
+      ${row(!!D.pixelId, 'Meta Pixel (บนหน้าเว็บ)', D.pixelId ? 'Pixel ' + esc(D.pixelId) + ' · โหลดหลังลูกค้ายอมรับคุกกี้การตลาด (PDPA)' : 'ยังไม่ได้ใส่ NEXT_PUBLIC_META_PIXEL_ID')}
+      ${row(D.capi, 'Conversions API (จากเซิร์ฟเวอร์)', D.capi ? 'ส่ง Lead → QualifiedLead → Converted ตามสถานะลีดในหลังบ้าน' : 'ยังไม่ได้ใส่ META_CAPI_TOKEN')}
+      ${row(!D.test, 'โหมดใช้งานจริง', D.test ? 'ยังเปิด META_TEST_EVENT_CODE อยู่ · event ไปที่ Test events เท่านั้น ลบออกเมื่อทดสอบเสร็จ' : 'ไม่ได้ตั้ง Test Event Code')}</ul>
+      <div class="grid grid-cols-3 gap-3 mt-5">${['sent', 'skipped', 'failed'].map(k => `<div class="rounded-xl bg-sand p-3"><p class="text-[11.5px] text-muted">${ST[k][0]} · 30 วัน</p><p class="text-[20px] font-medium tnum mt-1">${nf(C[k] || 0)}</p></div>`).join('')}</div></div>
+    <div class="card p-5"><p class="font-medium">วิธีเชื่อมต่อ (ทำครั้งเดียว)</p><ol class="grid gap-2.5 mt-3 text-[12.5px] list-decimal pl-5">
+      <li>Meta Business Suite → Events Manager → สร้าง Dataset (Pixel) แล้วคัดลอก Pixel ID</li>
+      <li>Dataset → Settings → Conversions API → Generate access token</li>
+      <li>ใส่ค่าใน <span class="font-mono">.env</span> บนเซิร์ฟเวอร์ แล้ว build ใหม่ (<span class="font-mono">docker compose up -d --build</span>) เพราะ Pixel ID ฝังในหน้าเว็บตอน build</li>
+      <li>ทดสอบด้วย Test Event Code ใน Events Manager → Test events แล้วลบออก</li>
+      <li>ยืนยันโดเมนใน Business Settings → Brand safety → Domains (ใส่รหัสได้ที่ SEO → ตั้งค่า SEO)</li></ol>
+      <pre class="p-3.5 mt-3 rounded-xl bg-[#1d1416] text-[#f1e6e6] text-[11px] leading-relaxed overflow-auto whitespace-pre-wrap break-all">${esc('NEXT_PUBLIC_META_PIXEL_ID=<Pixel ID>\nMETA_PIXEL_ID=<Pixel ID เดียวกัน>\nMETA_CAPI_TOKEN=<access token>\nMETA_TEST_EVENT_CODE=   # ใส่เฉพาะตอนทดสอบ')}</pre></div></div>`;
+  if (MP.sub === 'events') b = `<div class="card overflow-hidden"><div class="px-5 pt-4 pb-2"><p class="font-medium">Event ที่เซิร์ฟเวอร์ส่งไป Meta ล่าสุด</p><p class="text-[11.5px] text-muted">Conversions API · ส่งเมื่อมีลีดใหม่ / เซลล์เปลี่ยนสถานะลีด${D.capi ? '' : ' · ตอนนี้ยังไม่ได้ใส่ token จึงบันทึกเป็น “ไม่ได้ส่ง”'}</p></div>
+      <div class="overflow-x-auto"><table class="tbl min-w-[680px]"><thead><tr><th>เวลา</th><th>ลีด</th><th>Event</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead><tbody>
+      ${(D.recent || []).filter(r => r.platform === 'meta' || !r.platform).map(r => `<tr><td class="tnum whitespace-nowrap">${new Date(r.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</td><td class="font-mono text-[12px]">${esc(r.ref || '—')}</td><td class="font-mono text-[12.5px]">${esc(r.event)}</td><td><span class="lang-b ${(ST[r.status] || ['', 'mid'])[1]}">${(ST[r.status] || [r.status])[0]}</span></td><td class="text-[11.5px] text-muted truncate max-w-[260px]">${esc(typeof r.detail === 'string' ? r.detail : r.detail ? JSON.stringify(r.detail) : '')}</td></tr>`).join('') || '<tr><td colspan="5" class="text-muted">ยังไม่มี event</td></tr>'}</tbody></table></div></div>
+    <div class="card overflow-hidden mt-4"><p class="font-medium px-5 pt-4 pb-2">Event ที่หน้าเว็บส่งผ่าน Pixel</p><p class="text-[11.5px] text-muted px-5 pb-2">ส่งอัตโนมัติหลังลูกค้ายอมรับคุกกี้ · ดูจำนวนได้ใน Events Manager</p>
+      <div class="overflow-x-auto"><table class="tbl min-w-[620px]"><thead><tr><th>Event</th><th>เกิดเมื่อ</th><th>ข้อมูลที่ส่ง</th></tr></thead><tbody>${MP_EVENTS.map(x => `<tr><td class="font-mono text-[12.5px]">${esc(x.e ?? x[0])}</td><td>${esc(x.w ?? x[1])}</td><td class="text-[11.5px] text-muted font-mono">${esc(x.p ?? x[2])}</td></tr>`).join('')}</tbody></table></div></div>`;
+  if (MP.sub === 'catalog') { const ok = FLEET.filter(x => x.active !== false && x.from_), url = location.origin + '/feeds/meta-catalog.csv';
+    b = `<div class="card p-5"><p class="font-medium">แคตตาล็อกสินค้าสำหรับโฆษณาแบบไดนามิก</p><p class="text-[12px] text-muted mt-1">Meta ใช้ไฟล์นี้แสดงโฆษณาเรือลำที่ลูกค้าเคยดู · อัปเดตอัตโนมัติจากข้อมูลเรือในหลังบ้าน · id ตรงกับ content_ids ที่ Pixel ส่ง</p>
+      <div class="grid sm:grid-cols-2 gap-3 mt-4">${[['ภาษาอังกฤษ (ลิงก์ /en)', url], ['ภาษาไทย', url + '?lang=th']].map(([l, u]) => `<div><p class="lbl">${l}</p><div class="flex items-center gap-2 rounded-xl bg-sand px-3 h-10 min-w-0"><i data-lucide="link" class="w-4 h-4 text-muted shrink-0"></i><a class="font-mono text-[12px] truncate hover:text-maroon" href="${u}" target="_blank">${esc(u)}</a><button class="btn btn-g !h-7 !px-2 ml-auto" onclick="navigator.clipboard?.writeText('${u}').then(()=>toast('คัดลอกลิงก์แล้ว'))"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button></div></div>`).join('')}</div>
+      <p class="text-[12.5px] mt-4">มีเรือในแคตตาล็อก <b>${ok.length}</b> ลำ · ไม่รวมเรือที่ยังไม่มีราคาเริ่มต้นหรือไม่มีรูป</p>
+      <p class="text-[11.5px] text-muted mt-2">ใส่ลิงก์นี้ที่ Commerce Manager → Catalog → Data sources → Data feed → Scheduled feed (ให้ดึงทุกวัน) · ลิงก์ใช้ได้เมื่อเว็บขึ้นโดเมนจริงแล้ว</p></div>`; }
+  if (MP.sub === 'audiences') b = _metaBody0().replace(/^[\s\S]*?<\/div>(?=<div class="grid)/, '')
+    .replace(/ประมาณ [^<]*? คน \(ตัวอย่าง\)/g, 'สร้างใน Ads Manager').replace(/<button class="btn btn-o !h-8" onclick="toast\('คัดลอกเงื่อนไขแล้ว[^"]*"\>คัดลอกเงื่อนไข<\/button>/g, '');
+  return nav + b;
+};
+
 
 /* ---------- ใช้ประโยชน์จากลีด: conversion toggles + message templates saved to /api/admin/settings/marketing ---------- */
 if (BOOT.mkt) { Object.assign(AU.conv, BOOT.mkt.conv); if (BOOT.mkt.tpl) TPL.splice(0, TPL.length, ...BOOT.mkt.tpl.map(t => ({ ...t }))); }

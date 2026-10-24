@@ -99,10 +99,11 @@ async function gsc(days: number) {
   const end = 3, cur = { startDate: thDay(end + days - 1), endDate: thDay(end) }, prev = { startDate: thDay(end + days * 2 - 1), endDate: thDay(end + days) };
   type R = { keys?: string[]; clicks: number; impressions: number; ctr: number; position: number };
   const q = (b: object) => post(url, { dataState: 'final', ...b }) as Promise<{ rows?: R[] }>;
-  const [daily, queries, pages] = await Promise.all([
+  const [daily, queries, pages, prevQueries] = await Promise.all([
     q({ startDate: prev.startDate, endDate: cur.endDate, dimensions: ['date'], rowLimit: 400 }),
-    q({ ...cur, dimensions: ['query'], rowLimit: 100 }),
+    q({ ...cur, dimensions: ['query'], rowLimit: 1000 }),
     q({ ...cur, dimensions: ['page'], rowLimit: 20 }),
+    q({ ...prev, dimensions: ['query'], rowLimit: 1000 }),
   ]);
   const m = new Map((daily.rows ?? []).map(r => [r.keys![0], r]));
   const series = days2(end, days * 2).map(d => { const r = m.get(d); return { date: d, clicks: r?.clicks ?? 0, impressions: r?.impressions ?? 0, position: r?.position ?? 0 }; });
@@ -110,7 +111,10 @@ async function gsc(days: number) {
   const p = series.slice(0, days), c = series.slice(days);
   return {
     range: cur, prev: p, cur: c, totals: { cur: sum(c), prev: sum(p) },
-    queries: (queries.rows ?? []).map(r => ({ q: r.keys![0], clicks: r.clicks, impressions: r.impressions, ctr: r.ctr, position: r.position })),
+    queries: (queries.rows ?? []).slice(0, 100).map(r => ({ q: r.keys![0], clicks: r.clicks, impressions: r.impressions, ctr: r.ctr, position: r.position })),
+    // keyword tracking (SEO → คีย์เวิร์ด): query (lower-case) → [position, impressions, clicks] now, and position in the previous period
+    qpos: Object.fromEntries((queries.rows ?? []).map(r => [r.keys![0].toLowerCase(), [Math.round(r.position * 10) / 10, r.impressions, r.clicks]])),
+    qprev: Object.fromEntries((prevQueries.rows ?? []).map(r => [r.keys![0].toLowerCase(), Math.round(r.position * 10) / 10])),
     pages: (pages.rows ?? []).map(r => ({ page: r.keys![0], clicks: r.clicks, impressions: r.impressions, position: r.position })),
   };
 }

@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  * 1. 301 redirects from the old WordPress URLs (table `redirects`, cached 5 min)
  * 2. trailing slash → none, /th/xxx → /xxx (Thai is the default language, English lives under /en)
  */
-export const config = { runtime: 'nodejs', matcher: ['/((?!_next/|api/|admin|boats/|brand/|img/|site/|site-data.js|uploads/|icon|favicon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|js|css|map)$).*)'] };
+export const config = { runtime: 'nodejs', matcher: ['/((?!_next/|api/|admin|boats/|brand/|img/|site/|site-data.js|uploads/|feeds/|icon|favicon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|js|css|map)$).*)'] };
 
 let cache: { at: number; map: Map<string, { to: string; code: number }> } | null = null;
 async function redirectMap() {
