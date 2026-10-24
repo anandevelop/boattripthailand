@@ -4496,9 +4496,10 @@ function trBoat(slug) {
 }
 function trBoatReview(slug, jobs) {
   window.__trJobs = jobs;
-  openModal(`<div class="p-5 grid gap-3 max-h-[80vh] overflow-auto"><p class="font-medium">ตรวจคำแปลก่อนใช้ · ${jobs.length} ช่อง</p><p class="text-[12px] text-muted">ซ้าย = ต้นฉบับ · ขวา = คำแปล แก้ได้เลย · กด “ใช้คำแปล” แล้วระบบบันทึกเข้าหน้าเรือ</p>
-    ${jobs.map((j, i) => `<div class="grid sm:grid-cols-2 gap-2 border-t border-line pt-3"><p class="text-[12px] text-muted"><span class="lang-b ok mr-1">${j.from.toUpperCase()}</span>${esc(j.o[j.from])}</p><textarea id="trj${i}" class="inp !h-auto py-2" rows="2">${esc(j.out || '')}</textarea></div>`).join('')}
-    <div class="flex justify-end gap-2 sticky bottom-0 bg-white pt-3"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" onclick="trBoatApply('${slug}')"><i data-lucide="check" class="w-3.5 h-3.5"></i>ใช้คำแปล</button></div></div>`);
+  // header and buttons stay put; only the list scrolls (the buttons no longer cover the last fields)
+  openModal(`<div class="p-5 flex flex-col gap-3 max-h-[85vh]"><div><p class="font-medium">ตรวจคำแปลก่อนใช้ · ${jobs.length} ช่อง</p><p class="text-[12px] text-muted mt-1">ซ้าย = ต้นฉบับ · ขวา = คำแปล แก้ได้เลย · กด “ใช้คำแปล” แล้วระบบบันทึกเข้าหน้าเรือ</p></div>
+    <div class="min-h-0 overflow-auto -mx-5 px-5 grid gap-3">${jobs.map((j, i) => `<div class="grid sm:grid-cols-2 gap-2 border-t border-line pt-3"><p class="text-[12px] text-muted"><span class="lang-b ok mr-1">${j.from.toUpperCase()}</span>${esc(j.o[j.from])}</p><textarea id="trj${i}" class="inp !h-auto py-2" rows="2">${esc(j.out || '')}</textarea></div>`).join('')}</div>
+    <div class="flex justify-end gap-2 border-t border-line pt-3"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" onclick="trBoatApply('${slug}')"><i data-lucide="check" class="w-3.5 h-3.5"></i>ใช้คำแปล</button></div></div>`);
   icons();
 }
 function trBoatApply(slug) {
