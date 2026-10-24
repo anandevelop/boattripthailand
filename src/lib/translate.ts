@@ -12,12 +12,13 @@ import { GoogleError } from './google';
  * website text is sent.
  *
  * Caps (checked and reserved BEFORE calling the provider, under a row lock, given back if the call fails):
- *  - TRANSLATE_MONTHLY_LIMIT characters / Thailand month (default 450,000)
- *  - TRANSLATE_DAILY_REQUESTS requests / day (default 200) — stays below Gemini's free daily quota
+ *  - TRANSLATE_MONTHLY_LIMIT characters / Thailand month (default 3,000,000)
+ *  - TRANSLATE_DAILY_REQUESTS requests / day (default 400) — stays below Gemini's free 500/day.
+ *    The day follows Gemini's own reset (midnight Pacific = 14:00–15:00 Thai time).
  */
 export const USAGE_KEY = 'translate.usage';
-export const LIMIT = Math.max(0, Number(process.env.TRANSLATE_MONTHLY_LIMIT) || 450_000);
-export const DAILY_REQ = Math.max(1, Number(process.env.TRANSLATE_DAILY_REQUESTS) || 200);
+export const LIMIT = Math.max(0, Number(process.env.TRANSLATE_MONTHLY_LIMIT) || 3_000_000);
+export const DAILY_REQ = Math.max(1, Number(process.env.TRANSLATE_DAILY_REQUESTS) || 400);
 /** Gemini free tier: requests per day for this model (AI Studio → Rate limits). Not a character allowance. */
 export const FREE_RPD = Math.max(1, Number(process.env.GEMINI_FREE_RPD) || 500);
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
@@ -26,7 +27,9 @@ const CHUNK = 6_000;   // characters per Gemini request (keeps the answer well i
 type LogRow = { at: string; user: string; what: string; chars: number; from: string; to: string };
 type Usage = { month: string; chars: number; log: LogRow[]; day?: string; reqs?: number };
 const thNow = () => new Date(Date.now() + 7 * 3600_000).toISOString();
-const month = () => thNow().slice(0, 7), day = () => thNow().slice(0, 10);
+const month = () => thNow().slice(0, 7);
+/** Gemini resets its daily quota at midnight Pacific → count our daily requests on the same day */
+const day = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
 /** characters as counted everywhere (tags included) */
 export const countChars = (texts: string[]) => texts.reduce((n, t) => n + [...t].length, 0);
 
@@ -58,7 +61,7 @@ async function reserve(n: number, r: number, meta: Omit<LogRow, 'at' | 'chars'>)
   await db.transaction(async t => {
     const u = await read(t as unknown as typeof db);
     if (u.chars + n > LIMIT) throw new QuotaError(`เกินเพดานเดือนนี้: ใช้ไปแล้ว ${u.chars.toLocaleString()} + ครั้งนี้ ${n.toLocaleString()} > ${LIMIT.toLocaleString()} ตัวอักษร · เปิดใหม่วันที่ 1 เดือนหน้า`);
-    if ((u.reqs ?? 0) + r > DAILY_REQ) throw new QuotaError(`วันนี้แปลครบโควตาแล้ว (${DAILY_REQ} ครั้ง/วัน) · แปลต่อได้พรุ่งนี้`);
+    if ((u.reqs ?? 0) + r > DAILY_REQ) throw new QuotaError(`วันนี้แปลครบโควตาแล้ว (${DAILY_REQ} ครั้ง/วัน) · แปลต่อได้หลัง 14:00–15:00 น. (เวลารีเซ็ตของ Google)`);
     await t.update(settings).set({ value: { ...u, chars: u.chars + n, reqs: (u.reqs ?? 0) + r, log: [{ at: new Date().toISOString(), chars: n, ...meta }, ...u.log].slice(0, 300) } }).where(eq(settings.key, USAGE_KEY));
   });
   return async (note: string) => db.transaction(async t => {

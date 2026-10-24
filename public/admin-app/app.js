@@ -4400,11 +4400,24 @@ function trUsage(force) {
   return api('GET', 'translate').then(d => { TRU.d = d; TRU.at = Date.now(); return d; });
 }
 function trMeter(u, add = 0) {
-  const used = u.chars, lim = u.limit || 1, after = used + add, pct = v => Math.min(100, v / lim * 100);
-  const tone = after > lim ? '#a3222c' : after > lim * .8 ? '#b26a00' : '#1e7a46';
-  return `<div><div class="flex flex-wrap justify-between gap-2 text-[12px]"><span>ใช้ไปเดือนนี้ <b class="tnum">${nf(used)}</b>${add ? ` + ครั้งนี้ <b class="tnum">${nf(add)}</b>` : ''} ตัวอักษร</span><span class="tnum text-muted">เพดานที่เราตั้ง ${nf(u.limit)}</span></div>
-    <div class="mt-1.5 h-2 rounded-full bg-sand overflow-hidden flex"><div style="width:${pct(used)}%;background:${tone}"></div>${add ? `<div style="width:${Math.max(0, pct(after) - pct(used))}%;background:${tone};opacity:.45"></div>` : ''}</div>
-    <p class="text-[11px] text-muted mt-1">เหลือ ${nf(Math.max(0, u.limit - used))} ตัวอักษร · วันนี้แปลไป ${nf(u.reqsToday || 0)}/${nf(u.dailyReq || 0)} ครั้ง${u.freeRpd ? ` (Gemini ให้ฟรี ${nf(u.freeRpd)} ครั้ง/วัน)` : ''} · ถึงเพดานแล้วระบบหยุดแปลเอง${u.provider ? ' · Gemini แบบฟรี ไม่ผูกบัตร จึงไม่มีค่าใช้จ่าย' : ''}</p></div>`;
+  const bar = (used, lim, extra = 0) => { const p = v => Math.min(100, v / (lim || 1) * 100), after = used + extra;
+    const tone = after > lim ? '#a3222c' : after > lim * .8 ? '#b26a00' : '#1e7a46';
+    return `<div class="mt-1 h-2 rounded-full bg-sand overflow-hidden flex"><div style="width:${p(used)}%;background:${tone}"></div>${extra ? `<div style="width:${Math.max(0, p(after) - p(used))}%;background:${tone};opacity:.45"></div>` : ''}</div>`; };
+  const rq = u.reqsToday || 0, addR = add ? Math.max(1, Math.ceil(add / 6000)) : 0;
+  return `<div class="grid gap-3 text-[12px]">
+    <div><div class="flex flex-wrap justify-between gap-2"><span><b>① ตัวอักษรที่แปลเดือนนี้</b> · ใช้ไป <b class="tnum">${nf(u.chars)}</b>${add ? ` + ครั้งนี้ ~<b class="tnum">${nf(add)}</b>` : ''}</span><span class="tnum text-muted">จากเพดาน ${nf(u.limit)}</span></div>
+      ${bar(u.chars, u.limit, add)}<p class="text-[11px] text-muted mt-1">เหลือ ${nf(Math.max(0, u.limit - u.chars))} ตัวอักษร · เริ่มนับใหม่ทุกวันที่ 1</p></div>
+    <div><div class="flex flex-wrap justify-between gap-2"><span><b>② จำนวนครั้งที่แปลวันนี้</b> · ใช้ไป <b class="tnum">${nf(rq)}</b>${addR ? ` + ครั้งนี้ ~<b class="tnum">${addR}</b>` : ''} ครั้ง</span><span class="tnum text-muted">จากเพดาน ${nf(u.dailyReq)}</span></div>
+      ${bar(rq, u.dailyReq, addR)}<p class="text-[11px] text-muted mt-1">เหลือ ${nf(Math.max(0, u.dailyReq - rq))} ครั้ง · เริ่มนับใหม่ทุกวันราว 14:00–15:00 น. (ตามเวลารีเซ็ตของ Google)</p></div>
+  </div>`;
+}
+function trHelp(u) {
+  return `<div class="mt-4 rounded-xl bg-sand/60 p-4 text-[12px] leading-relaxed"><p class="font-medium mb-1.5">อ่านตัวเลขยังไง</p><ul class="grid gap-1 list-disc pl-4">
+    <li><b>เพดานทั้ง 2 ตัวเป็นตัวเลขที่เราตั้งเอง</b> เพื่อกันใช้เกินโควตาฟรี · ถึงเพดานตัวไหนก่อน ปุ่มแปลจะหยุดทำงานเอง</li>
+    <li><b>① ตัวอักษร/เดือน ${nf(u.limit)}</b> ≈ บทความยาว (~8,000 ตัวอักษร) ได้ราว ${nf(Math.floor(u.limit / 8000))} บทความ หรือหน้าเรือ (~300 ตัวอักษร) หลายพันลำ</li>
+    <li><b>② ครั้ง/วัน ${nf(u.dailyReq)}</b> · 1 ครั้ง = ส่งข้อความไปแปลได้ไม่เกิน ~6,000 ตัวอักษร · หน้าเรือใช้ 1 ครั้ง · บทความยาวอาจใช้ 2–3 ครั้ง</li>
+    <li>Gemini ให้ฟรี ${nf(u.freeRpd || 500)} ครั้ง/วัน และไม่ได้ผูกบัตรไว้ → <b>ไม่มีค่าใช้จ่ายแน่นอน</b> ถ้าครบโควตาแค่แปลไม่ได้ชั่วคราว</li>
+    <li>ระบบจะเตือนเมื่อใช้ถึง 80% และเมื่อเต็ม · แปลเสร็จต้องตรวจก่อนเผยแพร่ทุกครั้ง</li></ul></div>`;
 }
 /** confirm with an estimate and the monthly meter → resolves true/false */
 function trConfirm(title, chars, detail, note) {
@@ -4412,7 +4425,7 @@ function trConfirm(title, chars, detail, note) {
     const over = u.chars + chars > u.limit || (u.reqsToday || 0) >= u.dailyReq;
     window.__trOk = v => { closeModal(); res(v); };
     openModal(`<div class="p-5 grid gap-4"><p class="font-medium">${title}</p><p class="text-[12.5px] text-muted">${detail}</p>${trMeter(u, chars)}
-      ${!u.enabled ? '<p class="text-[12.5px] text-[#a3222c]">ยังไม่พร้อมใช้: ยังไม่ได้ใส่ GEMINI_API_KEY ใน .env หรือปิดระบบแปลไว้</p>' : (u.reqsToday || 0) >= u.dailyReq ? '<p class="text-[12.5px] text-[#a3222c]">วันนี้แปลครบโควตาแล้ว · แปลต่อได้พรุ่งนี้</p>' : over ? '<p class="text-[12.5px] text-[#a3222c]">เกินเพดานเดือนนี้ · แปลได้อีกครั้งวันที่ 1 เดือนหน้า</p>' : ''}
+      ${!u.enabled ? '<p class="text-[12.5px] text-[#a3222c]">ยังไม่พร้อมใช้: ยังไม่ได้ใส่ GEMINI_API_KEY ใน .env หรือปิดระบบแปลไว้</p>' : (u.reqsToday || 0) >= u.dailyReq ? '<p class="text-[12.5px] text-[#a3222c]">วันนี้แปลครบโควตาแล้ว · แปลต่อได้หลัง 14:00–15:00 น.</p>' : over ? '<p class="text-[12.5px] text-[#a3222c]">เกินเพดานเดือนนี้ · แปลได้อีกครั้งวันที่ 1 เดือนหน้า</p>' : ''}
       <p class="text-[11.5px] text-muted">${note}</p>
       <div class="flex justify-end gap-2"><button class="btn btn-o" onclick="__trOk(false)">ยกเลิก</button><button class="btn btn-p" ${over || !u.enabled ? 'disabled' : ''} onclick="__trOk(true)"><i data-lucide="languages" class="w-3.5 h-3.5"></i>แปล (~${nf(chars)} ตัวอักษร)</button></div></div>`);
     icons();
@@ -4519,6 +4532,7 @@ function trCard() {
   const u = TRU.d;
   return `<div class="card p-5 mt-4"><div class="flex items-center gap-2"><i data-lucide="languages" class="w-5 h-5 text-maroon"></i><p class="font-medium">ระบบแปลอัตโนมัติ · ${u.provider ? 'Gemini (ฟรี)' : 'ยังไม่ได้เชื่อม'}</p><span class="lang-b ${u.enabled ? 'ok' : 'low'} ml-auto">${u.enabled ? 'พร้อมใช้' : 'ยังไม่พร้อม'}</span></div>
     <div class="mt-4">${trMeter(u)}</div>
+    ${trHelp(u)}
     ${u.model ? `<p class="text-[11.5px] text-muted mt-2">โมเดล ${esc(u.model)}${u.provider ? ' · ข้อความที่ส่งไปแปลอาจถูก Google ใช้ปรับปรุงระบบ จึงใช้แปลเฉพาะเนื้อหาเว็บ ไม่ใช้กับข้อมูลลูกค้า' : ''}</p>` : '<p class="text-[11.5px] text-muted mt-2">ใส่ GEMINI_API_KEY (จาก aistudio.google.com) ใน .env แล้วรีสตาร์ต</p>'}
     <p class="lbl mt-4">ประวัติการแปลเดือนนี้</p><ul class="text-[12px] grid gap-1.5 mt-1">${u.log.slice(0, 15).map(l => `<li class="flex justify-between gap-3"><span class="truncate">${new Date(l.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(l.user)} · ${esc(l.what)} <span class="text-muted">${l.from.toUpperCase()}→${l.to.toUpperCase()}</span></span><span class="tnum shrink-0 ${l.chars < 0 ? 'text-[#1e7a46]' : ''}">${nf(l.chars)}</span></li>`).join('') || '<li class="text-muted">ยังไม่มีการแปล</li>'}</ul></div>`;
 }
@@ -4528,7 +4542,7 @@ function trWarn(u) {
   if (!u || !u.enabled) return '';
   const m = u.chars / (u.limit || 1), d = (u.reqsToday || 0) / (u.dailyReq || 1);
   if (m >= 1) return 'โควตาแปลเดือนนี้เต็มแล้ว · แปลได้อีกครั้งวันที่ 1 เดือนหน้า';
-  if (d >= 1) return 'วันนี้แปลครบ ' + nf(u.dailyReq) + ' ครั้งแล้ว · แปลต่อได้พรุ่งนี้';
+  if (d >= 1) return 'วันนี้แปลครบ ' + nf(u.dailyReq) + ' ครั้งแล้ว · แปลต่อได้หลัง 14:00–15:00 น.';
   if (m >= .8) return 'โควตาแปลเดือนนี้ใช้ไป ' + Math.round(m * 100) + '% (เหลือ ' + nf(Math.max(0, u.limit - u.chars)) + ' ตัวอักษร)';
   if (d >= .8) return 'วันนี้แปลไป ' + nf(u.reqsToday) + '/' + nf(u.dailyReq) + ' ครั้ง ใกล้ครบโควตารายวัน';
   return '';
