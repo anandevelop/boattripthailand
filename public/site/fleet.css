@@ -107,7 +107,7 @@
 .fx-clr { font-size: 13px; color: var(--fx-muted); white-space: nowrap; }
 
 /* grid + cards */
-.fx-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.fx-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
 .fx-card { position: relative; border-radius: 22px; background: #fff; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 0 #fff, 0 14px 40px -26px rgb(58 0 7 / .45), 0 0 0 1px var(--fx-line); transition: transform .45s var(--fx-ease), box-shadow .45s var(--fx-ease); }
 .fx-card:hover { transform: translateY(-4px); box-shadow: 0 26px 60px -30px rgb(58 0 7 / .55), 0 0 0 1px var(--fx-line); }
 .fx-ph { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--fx-sand); }
@@ -209,7 +209,8 @@
 .fx-x { width: 40px; height: 40px; border-radius: 99px; display: grid; place-items: center; }
 .fx-x:hover { background: rgb(255 255 255 / .7); }
 
-@media (max-width: 1080px) { .fx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1180px) { .fx-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .fx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) {
   .fx-stats { display: none; }
   .fx-fw { top: 78px; margin-top: 18px; }
@@ -223,8 +224,8 @@
   .fx-mfind .f svg { width: 18px; height: 18px; }
   .fx-bar { margin: 16px 0 14px; }
   .fx-bar .r { width: 100%; margin: 0; justify-content: space-between; }
-  .fx-grid { grid-template-columns: 1fr; gap: 16px; }
-  .fx-card.fx-pick { grid-column: auto; grid-template-columns: 1fr; }
+  .fx-grid { gap: 16px; }
+  .fx-card.fx-pick { grid-column: 1 / -1; grid-template-columns: 1fr; }
   .fx-card.fx-pick .fx-ph { aspect-ratio: 4 / 3; }
   .fx-card.fx-pick .fx-why { display: none; }
   .fx-dests { width: auto; }
@@ -249,12 +250,14 @@
   .fx-nm b { font-size: 20px; }
   .fx-nm { right: 16px; }
   .fx-more { display: none; }
-  .fx-cmp .n, .fx-cmp .y { font-size: 0; gap: 0; } .fx-cmp { padding: 0 9px; }
   .fx-specs { gap: 10px; font-size: 12.5px; }
   .fx-price .amt { font-size: 19px; }
   .fx-price .amt span { font-size: 14px; }
   .fx-book { height: 42px; padding: 0 18px; font-size: 14.5px; letter-spacing: .04em; }
+  .fx-body { padding: 12px 14px 14px; }
+  .fx-price .lbl { font-size: 12px; }
 }
+@container (max-width: 250px) { .fx-cmp .n, .fx-cmp .y { font-size: 0; gap: 0; } .fx-cmp { padding: 0 9px; } }
 
 /* ---------- compare tray: glass pill, photos of the picked boats + empty slots ---------- */
 #cmpTray.fx-tray { position: fixed; left: 50%; bottom: 18px; z-index: 45; display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 10px; border-radius: 34px; max-width: calc(100vw - 20px);
@@ -294,3 +297,5 @@
 #cmpBody td, #cmpBody th { overflow-wrap: anywhere; vertical-align: top; }
 #cmpBody thead img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
 @media (max-width: 640px) { #cmpBody thead th:first-child { width: 96px; } }
+
+@media (max-width: 600px) { .fx-grid { grid-template-columns: 1fr; } }
