@@ -18,13 +18,14 @@ import { publicSeo, seoConfig } from './seo';
  */
 const ROOT = process.cwd();
 const read = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
-let assets: { shell: string; app: vm.Script; lucide: vm.Script; version: string } | null = null;
+let assets: { shell: string; app: vm.Script; fleet: vm.Script; lucide: vm.Script; version: string } | null = null;
 function loadAssets() {
   if (assets && process.env.NODE_ENV === 'production') return assets;
   const appPath = path.join(ROOT, 'public/site/app.js');
-  const version = String(Math.floor(statSync(appPath).mtimeMs));
+  // fleet.js (หน้าเรือทั้งหมด) runs right after app.js, in the browser and here
+  const version = String(Math.floor(Math.max(statSync(appPath).mtimeMs, statSync(path.join(ROOT, 'public/site/fleet.js')).mtimeMs)));
   if (assets && assets.version === version) return assets;
-  assets = { shell: read('site/shell.html').replaceAll('__V__', version), app: new vm.Script(read('public/site/app.js'), { filename: 'app.js' }), lucide: new vm.Script(read('public/site/lucide.min.js'), { filename: 'lucide.js' }), version };
+  assets = { shell: read('site/shell.html').replaceAll('__V__', version), app: new vm.Script(read('public/site/app.js'), { filename: 'app.js' }), fleet: new vm.Script(read('public/site/fleet.js'), { filename: 'fleet.js' }), lucide: new vm.Script(read('public/site/lucide.min.js'), { filename: 'lucide.js' }), version };
   return assets;
 }
 
@@ -164,6 +165,7 @@ function run(a: NonNullable<typeof assets>, url: URL, data: SiteData, page: Reco
   const ctx = vm.createContext(sandbox);
   a.lucide.runInContext(ctx);
   a.app.runInContext(ctx, { timeout: 5000 });
+  a.fleet.runInContext(ctx, { timeout: 5000 });
   for (let round = 0; round < 5 && timers.length; round++) { const batch = timers.splice(0).sort((x, y) => x.ms - y.ms); for (const t of batch) { try { t.fn(); } catch (e) { console.error('[ssr timer]', e); } } }
   vm.runInContext('typeof afterRoute === "function" && afterRoute(); typeof icons === "function" && icons();', ctx);
   document.documentElement.setAttribute('lang', lang);
