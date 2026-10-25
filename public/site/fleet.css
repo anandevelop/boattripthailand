@@ -287,3 +287,10 @@
   .fx-tgo { height: 46px; padding: 0 18px; font-size: 15px; }
   .fx-tx { width: 36px; height: 36px; }
 }
+
+/* compare dialog: every boat column the same width → photos the same size (long text like cabins wraps instead of widening its column) */
+#cmpBody table { table-layout: fixed; }
+#cmpBody thead th:first-child { width: 150px; }
+#cmpBody td, #cmpBody th { overflow-wrap: anywhere; vertical-align: top; }
+#cmpBody thead img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+@media (max-width: 640px) { #cmpBody thead th:first-child { width: 96px; } }
