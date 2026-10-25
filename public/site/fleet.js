@@ -322,10 +322,34 @@ function fxFormExtras(form) {
 }
 { const _bf = buildForm; buildForm = function (wrap) { const f = _bf(wrap); try { fxFormExtras(f); } catch (e) { } return f; }; }
 
+
+/* ---------- the same card on the home page and every other boat grid ---------- */
+boatCard = function (b, i = 0) {
+  const keep = Object.assign({}, FX, { dest: new Set(FX.dest) });
+  Object.assign(FX, { type: 'all', dest: new Set(), pax: 2, paxSet: false, dur: '', bud: FX_MAX, sort: 'smart', date: '', fav: false });
+  try { return fxCard(b, '', i, []); } finally { Object.assign(FX, keep); }
+};
+
+/* ---------- compare tray: the picked boats' photos, empty slots up to 3, one button ---------- */
+updateCompareUI = function () {
+  $$('[data-cmp]').forEach(b => b.setAttribute('aria-pressed', CMP.includes(b.dataset.cmp)));
+  const tray = $('#cmpTray'); if (!tray) return;
+  if (!tray.classList.contains('fx-tray')) tray.className = 'fx-tray';
+  const n = CMP.length;
+  tray.classList.toggle('on', n > 0); tray.setAttribute('aria-hidden', String(!n)); tray.setAttribute('aria-label', L('เปรียบเทียบเรือ', 'Compare boats'));
+  tray.innerHTML = `<div class="fx-tth">${CMP.map(s => { const b = bySlug(s), nm = b ? fxEsc(niceTitle(b.title)) : s; return `<button type="button" onclick="toggleCompare('${s}')" title="${L('นำออก', 'Remove')} ${nm}" aria-label="${L('นำออก', 'Remove')} ${nm}"><img src="${bimg(s, 'hero')}" alt=""><span>${FXI('x')}</span></button>`; }).join('')}${'<i aria-hidden="true"></i>'.repeat(Math.max(0, 3 - n))}</div>
+    <p class="fx-tp"><b><span class="l">${L('เปรียบเทียบ ', 'Compare ')}</span>${L(`${n} ลำ`, `${n} boat${n === 1 ? '' : 's'}`)}</b><small>${n < 2 ? L('เลือกอีกอย่างน้อย 1 ลำ', 'Pick at least one more') : L('เลือกได้สูงสุด 3 ลำ', 'Up to 3 boats')}</small></p>
+    <button type="button" id="cmpGo" class="fx-tgo" onclick="openCompare()" ${n < 2 ? 'disabled' : ''}>${L('เปรียบเทียบ', 'Compare')}</button>
+    <button type="button" class="fx-tx" onclick="CMP = []; updateCompareUI()" aria-label="${L('ล้างรายการเปรียบเทียบ', 'Clear comparison')}">${FXI('x')}</button><div id="cmpItems" hidden></div>`;   // #cmpItems: app.js's own first run (before this file) writes into it
+  if (window.lucide) lucide.createIcons();
+};
+
 /* ---------- start ---------- */
 if (!FX_SSR) {
   addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
   addEventListener('resize', () => { fxInd = null; fxMoveInd(); });
   try { if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); } catch (e) { }
 }
+{ const g = $('#boatGrid'); if (g) { g.className = 'fx-grid mt-6'; try { renderBoats(); } catch (e) { } } }
+updateCompareUI();
 if ((VH.hash || '').startsWith('#/fleet')) { renderFleetPage(); if (typeof afterRoute === 'function') afterRoute(); }
