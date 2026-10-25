@@ -353,3 +353,141 @@ if (!FX_SSR) {
 { const g = $('#boatGrid'); if (g) { g.className = 'fx-grid mt-6'; try { renderBoats(); } catch (e) { } } }
 updateCompareUI();
 if ((VH.hash || '').startsWith('#/fleet')) { renderFleetPage(); if (typeof afterRoute === 'function') afterRoute(); }
+
+/* =====================================================================
+   Boat page → "ท่าเรือ · จุดขึ้นเรือ" (marina section)
+   Real map (MapLibre, loaded only when the section scrolls near) · pier name on top ·
+   one navigate button (Apple Maps on iPhone/iPad, Google Maps elsewhere) · taxi card.
+   Pier list lives here; boats are matched through MARINA_CANON (app.js).
+   ok: true = pin checked on the pier itself · false = approximate, so navigation
+   searches the pier by name instead of the coordinates.
+   ===================================================================== */
+const PIERS = [
+  { c: 'Chalong Pier', n: 'Chalong Pier', th: 'ท่าเทียบเรืออ่าวฉลอง', adTh: 'ถ.เจ้าฟ้าตะวันออก ต.ฉลอง อ.เมืองภูเก็ต จ.ภูเก็ต', adEn: 'Chao Fa East Rd, Chalong, Mueang Phuket', ll: [7.8215, 98.3608], ok: false, q: 'Chalong Pier, Phuket' },
+  { c: 'Royal Phuket Marina', n: 'Royal Phuket Marina', th: 'รอยัล ภูเก็ต มารีน่า', adTh: 'ถ.เทพกระษัตรี ต.เกาะแก้ว อ.เมืองภูเก็ต จ.ภูเก็ต', adEn: 'Thepkasattri Rd, Ko Kaeo, Mueang Phuket', ll: [7.96658, 98.3915], ok: true },
+  { c: 'Boat Lagoon', n: 'Boat Lagoon Phuket', th: 'โบ๊ทลากูน ภูเก็ต', adTh: 'ถ.เทพกระษัตรี ต.เกาะแก้ว อ.เมืองภูเก็ต จ.ภูเก็ต', adEn: 'Thepkasattri Rd, Ko Kaeo, Mueang Phuket', ll: [7.96667, 98.38667], ok: true },
+  { c: 'Ao Po Grand Marina', n: 'Ao Po Grand Marina', th: 'อ่าวปอ แกรนด์ มารีน่า', adTh: 'ต.ป่าคลอก อ.ถลาง จ.ภูเก็ต', adEn: 'Pa Khlok, Thalang, Phuket', ll: [8.06939, 98.44461], ok: true },
+  { c: 'ONE°15 Marina Panwa', n: 'ONE°15 Marina Panwa', th: 'วันฟิฟทีน มารีน่า พันวา', adTh: 'ต.วิชิต อ.เมืองภูเก็ต จ.ภูเก็ต', adEn: 'Cape Panwa, Wichit, Mueang Phuket', ll: [7.8085, 98.4085], ok: false, q: 'ONE15 Marina Panwa, Phuket' },
+  { c: 'Coco Pier Panwa', n: 'Coco Pier Panwa', th: 'ท่าเรือโคโค่ พันวา', adTh: 'แหลมพันวา ต.วิชิต อ.เมืองภูเก็ต จ.ภูเก็ต', adEn: 'Cape Panwa, Wichit, Mueang Phuket', ll: [7.803, 98.404], ok: false, q: 'Coco Pier Panwa, Phuket' },
+  { c: 'Nakalay Pier (Kalim)', n: 'Nakalay Pier (Kalim)', th: 'ท่าเรือนาคาเล (กะหลิม)', adTh: 'หาดกะหลิม ต.ป่าตอง อ.กะทู้ จ.ภูเก็ต', adEn: 'Kalim Beach, Patong, Kathu, Phuket', ll: [7.9118, 98.2925], ok: false, q: 'Nakalay Pier Kalim, Phuket' },
+];
+const PR = { p: null, b: null, map: null, pin: null, is3d: true, styleOk: false, io: null };
+const PR_ML = '/site/vendor/maplibre-gl-4.7.1/maplibre-gl';
+const PR_STYLE = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
+const PR_SAT = { version: 8, sources: { sat: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, attribution: 'Imagery © Esri' } }, layers: [{ id: 'sat', type: 'raster', source: 'sat' }] };
+const PR_IOS = !FX_SSR && typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+const PR_ANCHOR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 22V8M5 12H2a10 10 0 0 0 20 0h-3"/></svg>';
+
+const pierOf = b => { const c = b && MARINA_CANON(b.marina); return PIERS.find(p => p.c === c) || null; };
+const prDest = p => p.ok ? p.ll.join(',') : p.q;
+const prGoogle = p => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(prDest(p))}&travelmode=driving`;
+const prApple = p => `https://maps.apple.com/?daddr=${encodeURIComponent(prDest(p))}&q=${encodeURIComponent(p.n)}`;
+const prNavText = () => L(`นำทางด้วย ${PR_IOS ? 'Apple Maps' : 'Google Maps'}`, `Navigate with ${PR_IOS ? 'Apple Maps' : 'Google Maps'}`);
+
+function pierHTML(b, p) {
+  const ll = p.ll.map(x => x.toFixed(5)).join(', ');
+  return `<div class="pr-h">
+      <p class="pr-eye">${FXI('anchor')}<span>${fxEsc(niceTitle(b.title))} · ${L('ท่าเรือ · จุดขึ้นเรือ', 'Marina · where you board')}</span></p>
+      <h2>${fxEsc(p.n)}</h2>
+      <div class="pr-sub"><p>${fxEsc(L(`${p.th} · ${p.adTh}`, p.adEn))}</p><button type="button" class="pr-chip" onclick="pierCopy()" title="${L('คัดลอกพิกัด + ลิงก์นำทาง', 'Copy location + directions link')}">${FXI('copy')}<span class="tabular-nums">${p.ok ? ll : L('คัดลอกลิงก์แผนที่', 'Copy map link')}</span></button></div>
+    </div>
+    <div class="pr-map" id="prMap">
+      <div class="pr-gl" id="prGl" role="region" aria-label="${L('แผนที่ท่าเรือ', 'Marina map')} ${fxEsc(p.n)}"></div>
+      <div class="pr-ph" id="prPh"><span class="pr-ph-pin">${PR_ANCHOR}</span><b>${fxEsc(p.n)}</b><small id="prPhT">${L('กำลังโหลดแผนที่…', 'Loading map…')}</small></div>
+      <div class="pr-ov pr-tl"><div class="pr-seg pr-g" role="group" aria-label="${L('แบบแผนที่', 'Map type')}"><button type="button" class="on" data-s="map" onclick="pierStyle(this)">${L('แผนที่', 'Map')}</button><button type="button" data-s="sat" onclick="pierStyle(this)">${L('ดาวเทียม', 'Satellite')}</button></div></div>
+      <div class="pr-ov pr-tr">
+        <button type="button" class="pr-mb pr-g" onclick="PR.map && PR.map.zoomIn()" aria-label="${L('ซูมเข้า', 'Zoom in')}">${FXI('plus')}</button>
+        <button type="button" class="pr-mb pr-g" onclick="PR.map && PR.map.zoomOut()" aria-label="${L('ซูมออก', 'Zoom out')}">${FXI('minus')}</button>
+        <button type="button" class="pr-mb pr-g on" id="pr3d" onclick="pier3d()" aria-label="${L('มุมมอง 3 มิติ', '3D view')}">3D</button>
+        <button type="button" class="pr-mb pr-g" onclick="PR.map && PR.map.easeTo({ bearing: 0, duration: 600 })" aria-label="${L('หันทิศเหนือ', 'Face north')}"><svg id="prCmp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 4 10-4 10-4-10z"/><path d="m12 2 4 10H8z" fill="currentColor"/></svg></button>
+        <button type="button" class="pr-mb pr-g" onclick="pierFocus(1200)" aria-label="${L('กลับไปที่ท่าเรือ', 'Back to the marina')}">${FXI('locate-fixed')}</button>
+      </div>
+    </div>
+    <div class="pr-acts">
+      <a class="pr-btn pr-p" id="prNav" href="${PR_IOS ? prApple(p) : prGoogle(p)}" target="_blank" rel="noopener">${FXI('navigation')}<span>${prNavText()}</span></a>
+      <button type="button" class="pr-btn pr-s" onclick="pierTaxi(true)">${FXI('smartphone')}<span>${L('บัตรให้คนขับแท็กซี่', 'Card for your taxi driver')}</span></button>
+    </div>`;
+}
+
+function pierMount(slug) {
+  const b = bySlug(slug), sec = $('#marinaSec'), p = pierOf(b);
+  if (!b || !sec || !p) return;
+  pierDrop();
+  PR.p = p; PR.b = b;
+  sec.classList.add('pr');
+  sec.innerHTML = pierHTML(b, p);
+  if (FX_SSR) return;
+  if (window.lucide) lucide.createIcons();
+  // load the map library only when the section is about to scroll into view
+  PR.io = new IntersectionObserver(es => { if (es[0].isIntersecting) { PR.io.disconnect(); PR.io = null; pierMap(); } }, { rootMargin: '300px 0px' });
+  PR.io.observe($('#prMap'));
+}
+function pierDrop() {
+  if (PR.io) { PR.io.disconnect(); PR.io = null; }
+  if (PR.map) { try { PR.map.remove(); } catch (e) { } PR.map = null; PR.pin = null; }
+  PR.styleOk = false; PR.is3d = true;
+}
+let prLib = null;
+function pierLib() {
+  if (window.maplibregl) return Promise.resolve();
+  return prLib || (prLib = new Promise((ok, no) => {
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = PR_ML + '.css'; document.head.appendChild(css);
+    const s = document.createElement('script'); s.src = PR_ML + '.js'; s.async = true; s.onload = ok; s.onerror = () => { prLib = null; no(); }; document.head.appendChild(s);
+  }));
+}
+function pierFail(msg) { const ph = $('#prPh'); if (!ph) return; ph.classList.remove('off'); $('#prMap').classList.add('fail'); $('#prPhT').textContent = msg || L('โหลดแผนที่ไม่ได้ · ปุ่มนำทางยังใช้งานได้', 'Map unavailable · directions still work'); }
+function pierMap() {
+  const p = PR.p, box = $('#prGl'); if (!p || !box) return;
+  pierLib().then(() => {
+    if (PR.p !== p || !document.body.contains(box)) return;   // the visitor moved on to another boat
+    const m = new maplibregl.Map({
+      container: box, style: PR_STYLE, center: [p.ll[1], p.ll[0]], zoom: 12.5, pitch: 0, bearing: 0, attributionControl: { compact: true }, cooperativeGestures: true,
+      locale: L({ 'CooperativeGesturesHandler.WindowsHelpText': 'กด Ctrl ค้างไว้แล้วเลื่อนเพื่อซูม', 'CooperativeGesturesHandler.MacHelpText': 'กด ⌘ ค้างไว้แล้วเลื่อนเพื่อซูม', 'CooperativeGesturesHandler.MobileHelpText': 'ใช้สองนิ้วเพื่อเลื่อนแผนที่' }, {}),
+    });
+    PR.map = m;
+    m.on('error', () => { if (!PR.styleOk) pierFail(); });
+    m.on('style.load', () => {
+      const first = !PR.styleOk; PR.styleOk = true; $('#prPh') && $('#prPh').classList.add('off');
+      if (first) setTimeout(() => pierFocus(2600), 250);
+    });
+    m.on('rotate', () => { const c = $('#prCmp'); if (c) c.style.transform = `rotate(${-m.getBearing()}deg)`; });
+    const el = document.createElement('div');
+    el.innerHTML = `<div class="pr-pin"><span class="ring"></span><span class="stem"></span><span class="head">${PR_ANCHOR}</span><div class="lab pr-g">${fxEsc(p.n)}<small>${fxEsc(p.th)}</small></div></div>`;
+    PR.pin = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.ll[1], p.ll[0]]).addTo(m);
+  }).catch(() => pierFail());
+}
+function pierFocus(dur = 1400) {
+  const m = PR.map, p = PR.p; if (!m || !p) return;
+  m.flyTo({ center: [p.ll[1], p.ll[0]], zoom: 15, pitch: PR.is3d ? 58 : 0, bearing: PR.is3d ? -18 : 0, duration: dur, essential: true });
+}
+function pier3d() { PR.is3d = !PR.is3d; const b = $('#pr3d'); if (b) b.classList.toggle('on', PR.is3d); if (PR.map) PR.map.easeTo({ pitch: PR.is3d ? 58 : 0, bearing: PR.is3d ? -18 : 0, duration: 800 }); }
+function pierStyle(btn) {
+  $$('#prMap .pr-seg button').forEach(x => x.classList.toggle('on', x === btn));
+  if (PR.map) PR.map.setStyle(btn.dataset.s === 'sat' ? PR_SAT : PR_STYLE);
+}
+function pierCopy() {
+  const p = PR.p; if (!p) return;
+  const txt = `${p.n} (${p.th}) — ${prGoogle(p)}`;
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast(L('คัดลอกพิกัด + ลิงก์นำทางแล้ว', 'Location + directions link copied')), () => toast(txt));
+}
+/* full-screen card the guest shows to a taxi / Grab driver: big Thai name, address, GPS */
+function pierTaxi(on) {
+  let t = $('#prTaxi');
+  if (on && PR.p) {
+    const p = PR.p;
+    if (!t) { t = document.createElement('div'); t.id = 'prTaxi'; t.className = 'pr-taxi'; t.setAttribute('role', 'dialog'); t.setAttribute('aria-modal', 'true'); t.onclick = e => { if (e.target === t) pierTaxi(false); }; document.body.appendChild(t); }
+    t.setAttribute('aria-label', L('บัตรให้คนขับแท็กซี่', 'Card for your taxi driver'));
+    t.innerHTML = `<div class="pr-tcard">
+      <p class="k">Please take me to</p><p class="k2">กรุณาไปส่งที่</p>
+      <h3>${fxEsc(p.th)}</h3><p class="en">${fxEsc(p.n)}</p>
+      <p class="ad">${fxEsc(p.adTh)}</p>${p.ok ? `<p class="ll tabular-nums">GPS ${p.ll.join(', ')}</p>` : ''}
+      <div class="ft"><a class="pr-btn pr-s call" href="${TEL}">${FXI('phone')}<span>${L('โทรหาทีมงาน', 'Call our team')} ${fxEsc(SET.phone)}</span></a><button type="button" class="pr-btn pr-s" onclick="pierTaxi(false)">${L('ปิด', 'Close')}</button></div>
+      <p class="rot">หันหน้าจอให้คนขับดู · Show this screen to your driver</p></div>`;
+    if (window.lucide) lucide.createIcons();
+    requestAnimationFrame(() => t.classList.add('on'));
+  } else if (t) t.classList.remove('on');
+}
+
+{ const _renderDetail = renderDetail; renderDetail = function (slug) { _renderDetail(slug); try { pierMount(slug); } catch (e) { console.warn('[pier]', e); } }; }
+if (!FX_SSR) addEventListener('keydown', e => { if (e.key === 'Escape') pierTaxi(false); });
+if ((VH.hash || '').startsWith('#/boat/')) { try { pierMount(decodeURIComponent(VH.hash.slice(7))); } catch (e) { } }
