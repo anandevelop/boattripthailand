@@ -17,10 +17,24 @@ const FX_DEST = {
   naka: [/naka|rang ?yai/i, 'เกาะนาคา', 'Naka Island', 'รังใหญ่', 'Rang Yai'],
   sunset: [/promthep|phromthep|sunset/i, 'พระอาทิตย์ตก', 'Sunset cruise', 'แหลมพรหมเทพ', 'Promthep Cape'],
 };
+/* where the guest stays → drive time to each boat's pier (road ≈ 1.4 × straight line, 32–40 km/h, +5 min parking) */
+const FX_STAY = {
+  patong: ['ป่าตอง', 'Patong', 7.8961, 98.2965], karon: ['กะตะ / กะรน', 'Kata / Karon', 7.83, 98.298], kamala: ['กมลา', 'Kamala', 7.9506, 98.283],
+  bangtao: ['บางเทา / ลากูน่า', 'Bang Tao / Laguna', 7.998, 98.295], town: ['ภูเก็ตเมือง', 'Phuket Town', 7.8804, 98.3923], chalong: ['ฉลอง', 'Chalong', 7.845, 98.34],
+  rawai: ['ราไวย์ / ในหาน', 'Rawai / Nai Harn', 7.773, 98.324], airport: ['สนามบิน / ในยาง', 'Airport / Nai Yang', 8.1132, 98.3169], panwa: ['พันวา / เกาะแก้ว', 'Panwa / Koh Kaew', 7.83, 98.41],
+};
+const fxKm = (a, b) => { const r = x => x * Math.PI / 180, dLa = r(b[0] - a[0]), dLo = r(b[1] - a[1]); return 12742 * Math.asin(Math.sqrt(Math.sin(dLa / 2) ** 2 + Math.cos(r(a[0])) * Math.cos(r(b[0])) * Math.sin(dLo / 2) ** 2)); };
+function fxDrive(b) {
+  if (!FX.stay || !FX_STAY[FX.stay]) return null;
+  const p = pierOf(b); if (!p) return null;
+  const s = FX_STAY[FX.stay], d = fxKm([s[2], s[3]], p.ll) * 1.4, base = d / (d > 20 ? 40 : 32) * 60 + 5, r5 = x => Math.max(10, Math.round(x / 5) * 5);
+  const lo = r5(base * .9); return { lo, hi: Math.max(lo + 5, r5(base * 1.15)), km: d };
+}
+const fxStayL = k => FX_STAY[k] ? (LANG === 'en' ? FX_STAY[k][1] : FX_STAY[k][0]) : '';
 const FX_DUR = { half: ['ครึ่งวัน', 'Half day'], full: ['เต็มวัน', 'Full day'], night: ['ค้างคืน', 'Overnight'] };
 const FX_TYPES = ['all', 'yacht', 'sail', 'power', 'speed', 'longtail'];
 const FX_MIN = 15000, FX_MAX = 200000;
-const FX = { type: 'all', dest: new Set(), pax: 2, paxSet: false, dur: '', bud: FX_MAX, sort: 'smart', date: '', fav: false };
+const FX = { type: 'all', dest: new Set(), pax: 2, paxSet: false, dur: '', bud: FX_MAX, sort: 'smart', date: '', fav: false, stay: '' };
 let fxBuiltFor = '', fxPop = null, fxInd = null;
 const fxL = (a) => LANG === 'en' ? a[1] : a[0];
 const fxDL = k => LANG === 'en' ? FX_DEST[k][2] : FX_DEST[k][1];
@@ -72,7 +86,7 @@ function fxPrice(b) {
 const fxPer = b => Math.round(fxPrice(b).total / Math.max(1, FX.pax));
 
 /* ---------- filter · smart order ---------- */
-const fxActive = () => !!(FX.dest.size || FX.dur || FX.bud < FX_MAX || FX.paxSet || FX.date);
+const fxActive = () => !!(FX.dest.size || FX.dur || FX.bud < FX_MAX || FX.paxSet || FX.date || FX.stay);
 function fxPass(b, ignoreType) {
   return (ignoreType || FX.type === 'all' || b.type === FX.type) && (!FX.fav || FAV.includes(b.slug)) && (b.pax || 0) >= FX.pax
     && (FX.bud >= FX_MAX || fxPrice(b).total <= FX.bud) && (!FX.dest.size || [...FX.dest].every(d => b.fxDest.includes(d))) && (!FX.dur || b.fxDur.includes(FX.dur));
@@ -80,31 +94,34 @@ function fxPass(b, ignoreType) {
 function fxScore(b) {
   const fill = FX.pax / (b.pax || 1); let s = fill >= .45 ? 30 : fill * 60;   // not a big empty boat for a small group
   s += b.fxRank >= 0 ? 12 - b.fxRank * .8 : 0;                               // our recommended boats
-  return s + 34 * (1 - Math.min(1, fxPer(b) / 20000));                      // value per guest
+  s += 34 * (1 - Math.min(1, fxPer(b) / 20000));                            // value per guest
+  const dr = fxDrive(b); if (FX.stay) s -= dr ? Math.max(0, dr.hi - 20) * .45 : 18;   // a long drive counts against it
+  return s;
 }
+const fxNear = b => { const d = fxDrive(b); return d ? d.hi : 999; };
 function fxList() {
   const rank = b => b.fxRank >= 0 ? b.fxRank : 99;
   const by = { smart: fxActive() ? (a, b) => fxScore(b) - fxScore(a) : (a, b) => rank(a) - rank(b) || (b.ft || 0) - (a.ft || 0),
-    pp: (a, b) => fxPer(a) - fxPer(b), low: (a, b) => fxPrice(a).total - fxPrice(b).total, high: (a, b) => fxPrice(b).total - fxPrice(a).total, size: (a, b) => (b.ft || 0) - (a.ft || 0) }[FX.sort] || (() => 0);
+    pp: (a, b) => fxPer(a) - fxPer(b), low: (a, b) => fxPrice(a).total - fxPrice(b).total, high: (a, b) => fxPrice(b).total - fxPrice(a).total, size: (a, b) => (b.ft || 0) - (a.ft || 0), near: (a, b) => fxNear(a) - fxNear(b) || fxPrice(a).total - fxPrice(b).total }[FX.sort] || (() => 0);
   return FLEET.filter(b => fxPass(b)).sort(by);
 }
 
 /* ---------- the search lives in the URL: shareable, and usable as ad landing pages ---------- */
 function fxRead() {
   const h = VH.hash || '', i = h.indexOf('?'), q = new URLSearchParams(i < 0 ? '' : h.slice(i + 1));
-  Object.assign(FX, { type: 'all', dest: new Set(), pax: 2, paxSet: false, dur: '', bud: FX_MAX, sort: 'smart', date: '', fav: q.has('fav') });
+  Object.assign(FX, { type: 'all', dest: new Set(), pax: 2, paxSet: false, dur: '', bud: FX_MAX, sort: 'smart', date: '', fav: q.has('fav'), stay: FX_STAY[q.get('stay')] ? q.get('stay') : '' });
   if (/^\d{4}-\d{2}-\d{2}$/.test(q.get('date') || '') && q.get('date') >= todayISO()) FX.date = q.get('date');
   if (+q.get('pax') > 0) { FX.pax = Math.min(200, Math.round(+q.get('pax'))); FX.paxSet = true; }
   (q.get('to') || '').split(',').filter(k => FX_DEST[k]).forEach(k => FX.dest.add(k));
   if (FX_DUR[q.get('dur')]) FX.dur = q.get('dur');
   if (+q.get('budget') >= FX_MIN) FX.bud = Math.min(FX_MAX, +q.get('budget'));
   if (FX_TYPES.includes(q.get('type'))) FX.type = q.get('type');
-  if (['pp', 'low', 'high', 'size'].includes(q.get('sort'))) FX.sort = q.get('sort');
+  if (['pp', 'low', 'high', 'size'].includes(q.get('sort')) || (q.get('sort') === 'near' && FX.stay)) FX.sort = q.get('sort');
 }
 function fxWrite() {
   const q = new URLSearchParams();
   if (FX.fav) q.set('fav', ''); if (FX.date) q.set('date', FX.date); if (FX.paxSet) q.set('pax', FX.pax); if (FX.dest.size) q.set('to', [...FX.dest].join(','));
-  if (FX.dur) q.set('dur', FX.dur); if (FX.bud < FX_MAX) q.set('budget', FX.bud); if (FX.type !== 'all') q.set('type', FX.type); if (FX.sort !== 'smart') q.set('sort', FX.sort);
+  if (FX.stay) q.set('stay', FX.stay); if (FX.dur) q.set('dur', FX.dur); if (FX.bud < FX_MAX) q.set('budget', FX.bud); if (FX.type !== 'all') q.set('type', FX.type); if (FX.sort !== 'smart') q.set('sort', FX.sort);
   const s = q.toString().replace(/^fav=(&|$)/, 'fav$1');
   VHASH = '#/fleet' + (s ? '?' + s : '');
   if (!FX_SSR) try { history.replaceState(history.state, '', hashToPath(VHASH)); seoAlternates(); } catch (e) { }
@@ -134,6 +151,7 @@ function fxBuild(v) {
       <div class="fx-finder" id="fxFinder">
         <div class="fx-seg" onclick="fxOpenDate(event)"><small>${FXI('calendar')}${L('วันที่ไป', 'Date')}<span id="fxSeason"></span></small><input type="date" id="fxDate" class="fx-dv" min="${todayISO()}" aria-label="${L('วันที่ไป', 'Date')}"></div>
         <button class="fx-seg" data-pop="fxPDest"><small>${FXI('map-pin')}${L('อยากไปไหน', 'Where to')}</small><b id="fxVDest"></b></button>
+        <button class="fx-seg" data-pop="fxPStay"><small>${FXI('bed-double')}${L('พักที่ไหน', 'Staying in')}</small><b id="fxVStay"></b></button>
         <div class="fx-seg" style="cursor:default"><small>${FXI('users')}${L('ไปกี่คน', 'Guests')}</small><div class="fx-step"><button type="button" onclick="fxStep(-1)" aria-label="${L('ลด', 'Fewer')}">${FXI('minus')}</button><b class="tnum fx-vpax"></b><button type="button" onclick="fxStep(1)" aria-label="${L('เพิ่ม', 'More')}">${FXI('plus')}</button></div></div>
         <button class="fx-seg" data-pop="fxPDur"><small>${FXI('clock')}${L('ระยะเวลา', 'Duration')}</small><b id="fxVDur"></b></button>
         <button class="fx-seg" data-pop="fxPBud"><small>${FXI('wallet')}${L('งบต่อลำ', 'Budget per boat')}</small><b id="fxVBud"></b></button>
@@ -141,6 +159,7 @@ function fxBuild(v) {
       </div>
       <button class="fx-mfind" onclick="fxSheet(true)">${FXI('search')}<div><b>${L('หาเรือที่ใช่', 'Find your boat')}</b><small id="fxMSum"></small></div><span class="f">${FXI('sliders-horizontal')}</span></button>
       <div class="fx-pop" id="fxPDest" onclick="event.stopPropagation()"><h4>${L('อยากไปไหน · เลือกได้หลายที่', 'Where to · pick one or more')}</h4><div class="fx-dests" id="fxDests"></div></div>
+      <div class="fx-pop" id="fxPStay" onclick="event.stopPropagation()" style="width:420px"><h4>${L('พักที่ไหน · ดูเวลาขับรถไปท่าเรือของแต่ละลำ', 'Where are you staying? · see the drive to each boat\'s pier')}</h4><div class="fx-stays" id="fxStays"></div><p class="fx-pnote">${L('เวลาโดยประมาณ ไม่รวมช่วงรถติด', 'Rough times, without rush-hour traffic')}</p></div>
       <div class="fx-pop" id="fxPDur" onclick="event.stopPropagation()"><h4>${L('ระยะเวลา', 'Duration')}</h4><div class="fx-chips" id="fxDurs"></div></div>
       <div class="fx-pop" id="fxPBud" onclick="event.stopPropagation()" style="width:340px"><h4>${L('งบต่อลำ (รวมค่าคนเกินแล้ว)', 'Budget per boat (extra guests included)')}</h4>
         <div class="fx-budv tnum" id="fxBudV"></div><div class="fx-hist" id="fxHist"></div>
@@ -153,7 +172,7 @@ function fxBuild(v) {
       <div class="r"><span class="tnum" id="fxCount"></span>
         <label class="fx-sort"><span class="sr-only">${L('เรียงลำดับ', 'Sort')}</span><select id="fxSort">
           <option value="smart">${L('เรียงแบบฉลาด ✦', 'Smart order ✦')}</option><option value="pp">${L('ราคาต่อคน ต่ำ → สูง', 'Price per guest, low → high')}</option>
-          <option value="low">${L('ราคาต่อลำ ต่ำ → สูง', 'Price per boat, low → high')}</option><option value="high">${L('ราคาต่อลำ สูง → ต่ำ', 'Price per boat, high → low')}</option><option value="size">${L('เรือใหญ่ก่อน', 'Largest first')}</option></select>${FXI('chevron-down')}</label></div>
+          <option value="low">${L('ราคาต่อลำ ต่ำ → สูง', 'Price per boat, low → high')}</option><option value="high">${L('ราคาต่อลำ สูง → ต่ำ', 'Price per boat, high → low')}</option><option value="size">${L('เรือใหญ่ก่อน', 'Largest first')}</option><option value="near" id="fxSortNear">${L('ใกล้ที่พักก่อน', 'Closest to my stay')}</option></select>${FXI('chevron-down')}</label></div>
     </div>
     <div class="fx-ins" id="fxIns" hidden><span class="fx-spark">${FXI('sparkles')}</span><span id="fxInsT"></span><button class="fx-share" onclick="fxShare()">${FXI('link')}<span>${L('แชร์ผลค้นหา', 'Share this search')}</span></button><button class="fx-clr" onclick="fxReset()">${L('ล้าง', 'Clear')}</button></div>
     <div class="fx-grid" id="fxGrid"></div>
@@ -193,16 +212,18 @@ function fxDraw() {
   const ins = $('#fxIns');
   if (act && list.length && !big) {
     ins.hidden = false;
-    $('#fxInsT').innerHTML = `${FX.date ? fxDate(FX.date) + ' · ' : ''}${FX.pax} ${t('guests')}${FX.dest.size ? ' · ' + [...FX.dest].map(fxDL).join(' + ') : ''}${FX.dur ? ' · ' + fxL(FX_DUR[FX.dur]) : ''} — <b>${L(`${list.length} ลำ`, `${list.length} boats`)}</b>${value ? L(` · คุ้มสุดคือ <b>${fxEsc(niceTitle(value.title))}</b> ≈ ${baht(fxPer(value))}/คน`, ` · best value <b>${fxEsc(niceTitle(value.title))}</b> ≈ ${baht(fxPer(value))}/guest`) : ''}`;
+    $('#fxInsT').innerHTML = `${FX.date ? fxDate(FX.date) + ' · ' : ''}${FX.pax} ${t('guests')}${FX.dest.size ? ' · ' + [...FX.dest].map(fxDL).join(' + ') : ''}${FX.stay ? ' · ' + L('พัก', 'staying in ') + fxStayL(FX.stay) : ''}${FX.dur ? ' · ' + fxL(FX_DUR[FX.dur]) : ''} — <b>${L(`${list.length} ลำ`, `${list.length} boats`)}</b>${value ? L(` · คุ้มสุดคือ <b>${fxEsc(niceTitle(value.title))}</b> ≈ ${baht(fxPer(value))}/คน`, ` · best value <b>${fxEsc(niceTitle(value.title))}</b> ≈ ${baht(fxPer(value))}/guest`) : ''}`;
   } else ins.hidden = true;
   // finder labels
   const dl = [...FX.dest].map(fxDL), se = FX.date ? seasonOf(FX.date) : '';
   $('#fxSeason').innerHTML = se ? ` · <span class="fx-season ${se}">${se[0].toUpperCase() + se.slice(1)}</span>` : '';
   fxSetV('#fxVDest', dl.length ? dl.join(', ') : L('ทุกเกาะ', 'Anywhere'), !dl.length);
+  fxSetV('#fxVStay', FX.stay ? fxStayL(FX.stay) : L('ไม่ระบุ', 'Not set'), !FX.stay);
+  const sn = $('#fxSortNear'); if (sn) sn.disabled = !FX.stay;
   fxSetV('#fxVDur', FX.dur ? fxL(FX_DUR[FX.dur]) : L('ได้ทั้งหมด', 'Any'), !FX.dur);
   fxSetV('#fxVBud', FX.bud >= FX_MAX ? L('ไม่จำกัด', 'No limit') : L('ไม่เกิน ', 'Up to ') + baht(FX.bud), FX.bud >= FX_MAX);
   $$('.fx-vpax').forEach(e => e.textContent = `${FX.pax} ${t('guests')}`);
-  $('#fxMSum').textContent = [FX.date ? fxDate(FX.date) : L('ทุกวัน', 'Any date'), `${FX.pax} ${t('guests')}`, dl.length ? dl.join(', ') : L('ทุกเกาะ', 'Anywhere'), FX.dur ? fxL(FX_DUR[FX.dur]) : '', FX.bud < FX_MAX ? '≤ ' + baht(FX.bud) : ''].filter(Boolean).join(' · ');
+  $('#fxMSum').textContent = [FX.date ? fxDate(FX.date) : L('ทุกวัน', 'Any date'), `${FX.pax} ${t('guests')}`, dl.length ? dl.join(', ') : L('ทุกเกาะ', 'Anywhere'), FX.stay ? L('พัก', '') + fxStayL(FX.stay) : '', FX.dur ? fxL(FX_DUR[FX.dur]) : '', FX.bud < FX_MAX ? '≤ ' + baht(FX.bud) : ''].filter(Boolean).join(' · ');
   ['#fxDate', '#fxDate2'].forEach(id => { const i = $(id); if (i && i.value !== FX.date) i.value = FX.date; });
   if ($('#fxSort').value !== FX.sort) $('#fxSort').value = FX.sort;
   fxPops(); fxWrite(); icons(); updateCompareUI(); updateFavUI();
@@ -229,6 +250,7 @@ function fxCard(b, mode, i, list) {
         <div><span>${FXI('users')}</span><div><b>${FX.pax} ${t('guests')} ${fill < 75 ? L('นั่งสบาย', 'with room to spare') : L('พอดีลำ', 'a snug fit')}</b> · ${L('จุได้', 'takes')} ${b.pax} ${t('guests')}</div></div>
         <div><span>${FXI('waves')}</span><div><b>${b.fxDest.slice(0, 3).map(fxDL).join(' · ') || L('โปรแกรมรอบภูเก็ต', 'Around Phuket')}</b> · ${L('ออกจาก', 'from')} ${fxEsc(b.marinaP)}</div></div></div>` : ''}
       <div class="fx-specs">${b.ft ? `<span>${FXI('move-horizontal')}${b.ft} ft</span>` : ''}${b.pax ? `<span>${FXI('users')}${b.pax} ${t('guests')}</span>` : ''}<span class="m">${FXI('anchor')}<span>${fxEsc(b.marinaP)}</span></span></div>
+      ${(() => { const d = fxDrive(b); return d ? `<div class="fx-drive ${d.hi <= 30 ? 'near' : d.hi <= 50 ? 'mid' : 'far'}">${FXI('car')}<span>${L(`ขับรถจาก${fxStayL(FX.stay)} ≈ <b>${d.lo}–${d.hi} นาที</b>`, `<b>${d.lo}–${d.hi} min</b> drive from ${fxStayL(FX.stay)}`)}</span></div>` : ''; })()}
       ${FX.paxSet && !pick ? `<div class="fx-fit"><div class="t"><span>${L('กลุ่มคุณ', 'Your group')} <b>${FX.pax}</b> / ${b.pax} ${t('guests')}</span><span>${fill < 35 ? L('กว้างขวางมาก', 'very spacious') : fill < 75 ? L('นั่งสบาย', 'comfortable') : L('เต็มพอดี', 'snug')}</span></div><div class="fx-meter"><i style="width:${fill}%"></i></div></div>` : ''}
       ${pick && alts.length ? `<p class="fx-alt-h">${L('ทางเลือกใกล้เคียง', 'Similar options')}</p><div class="fx-alts">${alts.map(x => `<a class="fx-alt" href="#/boat/${x.slug}"><img src="${bimg(x.slug, 'hero')}" alt="" loading="lazy"><div><b>${fxEsc(niceTitle(x.title))}</b><small>${x.pax} ${t('guests')} · ${baht(fxPrice(x).total)}</small></div></a>`).join('')}</div>` : ''}
       ${!pick && tags.length ? `<div class="fx-tags">${tags.map(d => `<span class="fx-tag ${FX.dest.has(d) ? 'hit' : ''}">${fxDL(d)}</span>`).join('')}</div>` : ''}
@@ -240,6 +262,9 @@ function fxCard(b, mode, i, list) {
 /* ---------- popovers / mobile sheet ---------- */
 function fxPops() {
   $('#fxDests').innerHTML = Object.keys(FX_DEST).map(k => `<button type="button" class="fx-dest ${FX.dest.has(k) ? 'on' : ''}" onclick="fxToggleDest('${k}')"><span class="e">${FXI('waves')}</span><span><b>${fxDL(k)}</b><small><span class="h">${LANG === 'en' ? FX_DEST[k][4] : FX_DEST[k][3]} · </span>${FLEET.filter(b => b.fxDest.includes(k) && (b.pax || 0) >= FX.pax).length} ${L('ลำ', 'boats')}</small></span></button>`).join('');
+  const near = k => { const keep = FX.stay; FX.stay = k; const m = Math.min(...FLEET.map(b => fxNear(b))); FX.stay = keep; return m; };
+  $('#fxStays').innerHTML = Object.keys(FX_STAY).map(k => `<button type="button" class="fx-stay ${FX.stay === k ? 'on' : ''}" onclick="fxSetStay('${k}')"><b>${fxStayL(k)}</b><small class="tnum">${L(`ท่าใกล้สุด ≈ ${near(k)} นาที`, `nearest pier ≈ ${near(k)} min`)}</small></button>`).join('')
+    + (FX.stay ? `<button type="button" class="fx-stay clr" onclick="fxSetStay('')">${FXI('x')}<b>${L('ไม่ระบุ', 'Clear')}</b></button>` : '');
   $('#fxDurs').innerHTML = [['', [L('ได้ทั้งหมด', 'Any'), L('ได้ทั้งหมด', 'Any')]], ...Object.entries(FX_DUR)].map(([k, l]) => `<button type="button" class="fx-chip ${FX.dur === k ? 'on' : ''}" onclick="fxSetDur('${k}')">${fxL(l)}<i>${FLEET.filter(b => (!k || b.fxDur.includes(k)) && (b.pax || 0) >= FX.pax).length}</i></button>`).join('');
   const bins = 16, w = (FX_MAX - FX_MIN) / bins, hb = Array(bins).fill(0);
   FLEET.filter(b => (b.pax || 0) >= FX.pax).forEach(b => { const n = fxPrice(b).total; if (n) hb[Math.max(0, Math.min(bins - 1, Math.floor((n - FX_MIN) / w)))]++; });
@@ -258,7 +283,7 @@ function fxShowPop(id, seg) {
 if (!FX_SSR) document.addEventListener('click', e => { if (fxPop && !e.target.closest('.fx-pop')) fxShowPop(null); });
 function fxOpenDate(e) { e.stopPropagation(); fxShowPop(null); const i = $('#fxDate'); if (i && i._dpVis && e.target !== i._dpVis) dpOpen(i); }
 function fxSheet(on) {
-  const pops = ['#fxPDest', '#fxPDur', '#fxPBud'].map(s => $(s));
+  const pops = ['#fxPDest', '#fxPStay', '#fxPDur', '#fxPBud'].map(s => $(s));
   if (on) { fxShowPop(null); pops.forEach(p => $('#fxSBody').appendChild(p)); $('#fxVeil').classList.add('on'); document.body.style.overflow = 'hidden'; }
   else { pops.forEach(p => $('#fxBox').appendChild(p)); $('#fxVeil').classList.remove('on'); document.body.style.overflow = ''; }
 }
@@ -275,9 +300,10 @@ function fxMoveInd() {
 /* ---------- actions ---------- */
 function fxType(k) { FX.type = k; fxDraw(); }
 function fxToggleDest(k) { FX.dest.has(k) ? FX.dest.delete(k) : FX.dest.add(k); fxDraw(); }
+function fxSetStay(k) { FX.stay = k; if (k && FX.sort === 'smart') FX.sort = 'near'; if (!k && FX.sort === 'near') FX.sort = 'smart'; fxShowPop(null); fxDraw(); }
 function fxSetDur(k) { FX.dur = k; fxDraw(); }
 function fxStep(d) { FX.pax = Math.max(1, Math.min(200, FX.pax + d)); FX.paxSet = true; fxDraw(); }
-function fxReset() { const fav = FX.fav; Object.assign(FX, { type: 'all', dest: new Set(), pax: 2, paxSet: false, dur: '', bud: FX_MAX, sort: 'smart', date: '', fav }); fxDraw(); }
+function fxReset() { const fav = FX.fav; Object.assign(FX, { type: 'all', dest: new Set(), pax: 2, paxSet: false, dur: '', bud: FX_MAX, sort: 'smart', date: '', fav, stay: '' }); fxDraw(); }
 function fxToResults() { const r = $('#fxResults'); if (r) scrollTo({ top: r.getBoundingClientRect().top + scrollY - 170, behavior: 'smooth' }); }
 function fxShare() {
   const u = location.href;
@@ -290,7 +316,7 @@ function fxBook(slug) {
   const f = modalForm; if (!f) return;
   if (FX.date) f.date.value = FX.date;
   if (FX.paxSet && f.adults) f.adults.value = FX.pax;
-  const extra = [FX.pax > fxMaxPax() ? L(`กลุ่ม ${FX.pax} คน · ต้องการเรือหลายลำ`, `Group of ${FX.pax} · several boats needed`) : '', !slug && FX.dest.size ? L('อยากไป: ', 'Wants to visit: ') + [...FX.dest].map(fxDL).join(', ') : ''].filter(Boolean).join('\n');
+  const extra = [FX.pax > fxMaxPax() ? L(`กลุ่ม ${FX.pax} คน · ต้องการเรือหลายลำ`, `Group of ${FX.pax} · several boats needed`) : '', !slug && FX.dest.size ? L('อยากไป: ', 'Wants to visit: ') + [...FX.dest].map(fxDL).join(', ') : '', FX.stay ? L('พักที่: ', 'Staying in: ') + fxStayL(FX.stay) : ''].filter(Boolean).join('\n');
   if (extra && f.note && !f.note.value) f.note.value = extra;
 }
 
@@ -326,7 +352,7 @@ function fxFormExtras(form) {
 /* ---------- the same card on the home page and every other boat grid ---------- */
 boatCard = function (b, i = 0) {
   const keep = Object.assign({}, FX, { dest: new Set(FX.dest) });
-  Object.assign(FX, { type: 'all', dest: new Set(), pax: 2, paxSet: false, dur: '', bud: FX_MAX, sort: 'smart', date: '', fav: false });
+  Object.assign(FX, { type: 'all', dest: new Set(), pax: 2, paxSet: false, dur: '', bud: FX_MAX, sort: 'smart', date: '', fav: false, stay: '' });
   try { return fxCard(b, '', i, []); } finally { Object.assign(FX, keep); }
 };
 
@@ -343,16 +369,6 @@ updateCompareUI = function () {
     <button type="button" class="fx-tx" onclick="CMP = []; updateCompareUI()" aria-label="${L('ล้างรายการเปรียบเทียบ', 'Clear comparison')}">${FXI('x')}</button><div id="cmpItems" hidden></div>`;   // #cmpItems: app.js's own first run (before this file) writes into it
   if (window.lucide) lucide.createIcons();
 };
-
-/* ---------- start ---------- */
-if (!FX_SSR) {
-  addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
-  addEventListener('resize', () => { fxInd = null; fxMoveInd(); });
-  try { if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); } catch (e) { }
-}
-{ const g = $('#boatGrid'); if (g) { g.className = 'fx-grid mt-6'; try { renderBoats(); } catch (e) { } } }
-updateCompareUI();
-if ((VH.hash || '').startsWith('#/fleet')) { renderFleetPage(); if (typeof afterRoute === 'function') afterRoute(); }
 
 /* =====================================================================
    Boat page → "ท่าเรือ · จุดขึ้นเรือ" (marina section)
@@ -491,3 +507,13 @@ function pierTaxi(on) {
 { const _renderDetail = renderDetail; renderDetail = function (slug) { _renderDetail(slug); try { pierMount(slug); } catch (e) { console.warn('[pier]', e); } }; }
 if (!FX_SSR) addEventListener('keydown', e => { if (e.key === 'Escape') pierTaxi(false); });
 if ((VH.hash || '').startsWith('#/boat/')) { try { pierMount(decodeURIComponent(VH.hash.slice(7))); } catch (e) { } }
+
+/* ---------- start ---------- */
+if (!FX_SSR) {
+  addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
+  addEventListener('resize', () => { fxInd = null; fxMoveInd(); });
+  try { if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); } catch (e) { }
+}
+{ const g = $('#boatGrid'); if (g) { g.className = 'fx-grid mt-6'; try { renderBoats(); } catch (e) { } } }
+updateCompareUI();
+if ((VH.hash || '').startsWith('#/fleet')) { renderFleetPage(); if (typeof afterRoute === 'function') afterRoute(); }

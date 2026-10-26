@@ -63,6 +63,24 @@
 .fx-chip:hover { background: #fff; } .fx-chip:active { transform: scale(.96); }
 .fx-chip.on { background: var(--fx-m); color: #fff; box-shadow: 0 8px 18px -10px rgb(112 0 14 / .8); }
 .fx-chip i { font-style: normal; font-size: 11.5px; opacity: .6; }
+/* where are you staying → drive time to the pier */
+.fx-stays { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.fx-stay { text-align: left; padding: 9px 11px; border-radius: 16px; background: rgb(255 255 255 / .7); box-shadow: inset 0 0 0 1px rgb(35 20 22 / .1); transition: background .2s, color .2s, transform .15s; }
+.fx-stay:hover { background: #fff; } .fx-stay:active { transform: scale(.97); }
+.fx-stay b { display: block; font-weight: 500; font-size: 13px; line-height: 1.25; }
+.fx-stay small { display: block; font-size: 11px; color: var(--fx-muted); margin-top: 1px; }
+.fx-stay.on { background: var(--fx-m); color: #fff; box-shadow: 0 8px 18px -10px rgb(112 0 14 / .8); }
+.fx-stay.on small { color: rgb(255 255 255 / .75); }
+.fx-stay.clr { display: flex; align-items: center; gap: 6px; color: var(--fx-muted); }
+.fx-stay.clr svg { width: 13px; height: 13px; }
+.fx-pnote { margin: 10px 0 0; font-size: 11px; color: var(--fx-muted); }
+.fx-drive { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11.5px; color: var(--fx-muted); min-width: 0; }
+.fx-drive span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-drive b { font-weight: 500; }
+.fx-drive svg { width: 13px; height: 13px; flex: none; }
+.fx-drive.near svg, .fx-drive.near b { color: #2f7a4a; }
+.fx-drive.mid svg, .fx-drive.mid b { color: #9a6400; }
+@media (max-width: 600px) { .fx-stays { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .fx-dests { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 400px; }
 .fx-dest { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 8px; border-radius: 16px; background: rgb(255 255 255 / .6); box-shadow: inset 0 0 0 1px rgb(35 20 22 / .08); text-align: left; transition: background .2s, box-shadow .2s; }
 .fx-dest:hover { background: #fff; }
