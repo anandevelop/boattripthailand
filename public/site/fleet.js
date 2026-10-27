@@ -974,6 +974,191 @@ function fxLegalFix(kind) {
 { const _rl = renderLegal; renderLegal = function (kind) { _rl(kind); try { fxLegalFix(kind); } catch (e) { } }; }
 { const h = VH.hash || ''; const m = h.match(/^#\/(privacy|terms|cookies)$/); if (m) { try { renderLegal(m[1]); } catch (e) { } } }
 
+/* =====================================================================
+   Terms & Conditions — detailed, built from the boat brochures in the system (notes, remarks, not included)
+   and how the website works (request → written confirmation, per-boat prices, seasons, USD on the EN site).
+   Keeps the company's own commercial rules (deposit, balance, card fees, cancellation fees, bank account).
+   Replaces legalDocs().terms from app.js.
+   ===================================================================== */
+const TM_UPDATED = ['27 ตุลาคม 2569', '27 October 2026'];
+function fxTerms() {
+  const E = LANG === 'en', T = (th, en) => E ? en : th, ul = a => `<ul>${a.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  const mail = `<a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>`, pv = `<a href="#/privacy">${T('นโยบายความเป็นส่วนตัว', 'Privacy Policy')}</a>`;
+  const table = (head, rows) => `<div class="legal-table"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  return {
+    title: T('ข้อกำหนดและเงื่อนไข', 'Terms & Conditions'),
+    intro: T(`ข้อกำหนดนี้ใช้กับการเช่าเรือ ทัวร์ กิจกรรม และบริการทั้งหมดที่จองกับ ${COMPANY} ("บริษัท" หรือ "เรา") ผ่านเว็บไซต์ boattripthailand.com โทรศัพท์ LINE WhatsApp หรืออีเมล กรุณาอ่านก่อนชำระเงิน การชำระมัดจำถือว่าคุณ ("ลูกค้า") และผู้โดยสารทุกคนในการจองได้อ่านและยอมรับข้อกำหนดนี้แล้ว เงื่อนไขเฉพาะของเรือแต่ละลำที่แสดงในหน้าเรือและในใบยืนยันการจองถือเป็นส่วนหนึ่งของข้อกำหนดนี้`,
+      `These terms apply to every boat charter, tour, activity and service booked with ${COMPANY} ("we", "us") through boattripthailand.com, by phone, LINE, WhatsApp or email. Please read them before paying. Paying a deposit means you (the "customer") and every passenger in the booking have read and accepted them. The specific conditions of each boat shown on its page and in your booking confirmation form part of these terms.`),
+    secs: [
+      ['about', T('เกี่ยวกับบริษัทและบริการ', 'About us and our service'), `<p>${T(`${COMPANY} เป็นบริษัทนำเที่ยวที่ได้รับอนุญาต ใบอนุญาตเลขที่ ${SET.tat} เราจัดหาและประสานงานการเช่าเรือแบบเหมาลำพร้อมกัปตันและลูกเรือ เรือแต่ละลำดำเนินการโดยเจ้าของเรือหรือผู้ประกอบการเรือที่เป็นพันธมิตรของเรา ซึ่งรับผิดชอบการเดินเรือ ลูกเรือ และมาตรฐานความปลอดภัยของเรือตามกฎหมาย`,
+        `${COMPANY} is a licensed tour operator (TAT licence ${SET.tat}). We arrange and coordinate private charters with captain and crew. Each boat is operated by its owner or a partner boat operator, who is responsible for navigation, crew and the boat's legal safety standards.`)}</p>`],
+
+      ['booking', T('การขอใบเสนอราคาและการยืนยันการจอง', 'Requests and booking confirmation'), ul(E ? [
+        'Sending a request through the website, LINE, WhatsApp or by phone is <b>not yet a booking</b> and costs nothing. Our team first checks the boat\'s availability for your date.',
+        'A booking is confirmed only when <b>(1)</b> we confirm the boat, program, date, time and price in writing (LINE, WhatsApp or email) with a booking reference, and <b>(2)</b> we receive the deposit.',
+        'Please check the confirmation carefully – boat, program, date, departure time and marina, number of guests and extras – and tell us at once if anything is wrong.',
+        'The customer who books must be 20 or older and is responsible for passing these terms to every passenger.',
+        'Until the deposit is received the boat is not held for you, and the date may be booked by someone else.',
+      ] : [
+        'การส่งคำขอผ่านเว็บไซต์ LINE WhatsApp หรือโทรศัพท์ <b>ยังไม่ถือเป็นการจอง</b> และไม่มีค่าใช้จ่าย ทีมงานจะตรวจสอบคิวเรือในวันที่คุณต้องการก่อน',
+        'การจองจะสมบูรณ์เมื่อ <b>(1)</b> เรายืนยันเรือ โปรแกรม วันที่ เวลา และราคาเป็นลายลักษณ์อักษร (LINE WhatsApp หรืออีเมล) พร้อมเลขอ้างอิงการจอง และ <b>(2)</b> ได้รับเงินมัดจำแล้ว',
+        'กรุณาตรวจสอบใบยืนยัน ได้แก่ เรือ โปรแกรม วันที่ เวลาและท่าเรือที่ออก จำนวนผู้โดยสาร และบริการเสริม หากมีข้อผิดพลาดให้แจ้งเราทันที',
+        'ผู้ทำการจองต้องมีอายุ 20 ปีขึ้นไป และมีหน้าที่แจ้งข้อกำหนดนี้แก่ผู้โดยสารทุกคน',
+        'ก่อนได้รับเงินมัดจำ เรือยังไม่ถูกกันไว้ให้คุณ และวันนั้นอาจถูกจองโดยลูกค้ารายอื่นได้',
+      ])],
+
+      ['prices', T('ราคา', 'Prices'), ul(E ? [
+        'Prices are <b>per boat (whole charter)</b>, not per person, and include <b>7% VAT</b>, as published in each boat\'s current brochure.',
+        'Each boat has a <b>base number of guests</b> included in the price. Guests above it pay an <b>extra-guest fee per person</b> shown on the boat page; on many boats children above 4 years count as guests. The number of guests can never exceed the boat\'s legal maximum.',
+        'Prices depend on the <b>season</b> of your travel date (e.g. Low, High, Peak), and some boats add a <b>holiday surcharge</b> on special dates such as New Year, Chinese New Year, Songkran and other holidays shown on the boat page.',
+        'Prices on the <b>English site are shown in US dollars as an estimate</b>. The price in Thai baht in your confirmation is the one you pay.',
+        'Prices shown on the website are for reference and may change before a booking is confirmed. The price in your written confirmation is final. If an obvious error is found in a price on the website, we will tell you before confirming.',
+      ] : [
+        'ราคาเป็น<b>ราคาเหมาลำทั้งลำ</b> ไม่ใช่ราคาต่อคน และ<b>รวม VAT 7%</b> ตามโบรชัวร์ปัจจุบันของเรือแต่ละลำ',
+        'เรือแต่ละลำมี<b>จำนวนผู้โดยสารพื้นฐาน</b>ที่รวมอยู่ในราคา ผู้โดยสารที่เกินจะมี<b>ค่าผู้โดยสารเพิ่มต่อคน</b>ตามที่แสดงในหน้าเรือ เรือหลายลำนับเด็กอายุมากกว่า 4 ปีเป็นผู้โดยสาร และจำนวนผู้โดยสารต้องไม่เกินจำนวนสูงสุดที่เรือรับได้ตามกฎหมาย',
+        'ราคาขึ้นอยู่กับ<b>ฤดูกาล</b>ของวันที่เดินทาง (เช่น Low, High, Peak) และเรือบางลำมี<b>ค่าบริการเพิ่มช่วงเทศกาล</b> เช่น ปีใหม่ ตรุษจีน สงกรานต์ และวันหยุดอื่นตามที่แสดงในหน้าเรือ',
+        'ราคาบน<b>เว็บไซต์ภาษาอังกฤษแสดงเป็นดอลลาร์สหรัฐโดยประมาณ</b> ราคาเงินบาทในใบยืนยันการจองคือราคาที่ต้องชำระ',
+        'ราคาบนเว็บไซต์เป็นราคาอ้างอิงและอาจเปลี่ยนแปลงได้ก่อนการยืนยันการจอง ราคาในใบยืนยันเป็นลายลักษณ์อักษรถือเป็นราคาสุดท้าย หากพบความผิดพลาดของราคาบนเว็บไซต์อย่างชัดแจ้ง เราจะแจ้งให้ทราบก่อนยืนยัน',
+      ])],
+
+      ['included', T('สิ่งที่รวมและไม่รวมในราคา', 'What is and is not included'), `<p>${T('สิ่งที่รวมในราคาแตกต่างกันตามเรือและโปรแกรม ดูรายละเอียดได้ในหน้าเรือแต่ละลำ (หัวข้อ "รวม / ไม่รวม") โดยทั่วไป<b>ไม่รวม</b>รายการต่อไปนี้ เว้นแต่ระบุไว้ในใบยืนยัน:',
+        'What is included differs by boat and program – see the "Included" section on each boat page. Unless your confirmation says otherwise, the following are generally <b>not included</b>:')}</p>` + ul(E ? [
+        '<b>National park and island entry fees</b> – paid on the day at the actual rate.',
+        '<b>Land transfers</b> and taxis to and from the marina.',
+        '<b>Food</b> on boats where it is not listed as included (meals can be pre-ordered at the price on the boat page); <b>lunch on half-day programs</b> on many boats.',
+        '<b>Longtail boats for landing on an island</b>, the island tractor on Racha Island, beach chairs at Coral Island and other activity fees on the islands.',
+        'Tour guide, crew gratuity, alcoholic drinks, water toys (slider, pool, fishing rods) and other personal expenses unless listed.',
+        '<b>Relocation fuel surcharge</b> when you ask to board or land at a different marina from the boat\'s home marina.',
+      ] : [
+        '<b>ค่าอุทยานแห่งชาติและค่าขึ้นเกาะ</b> ชำระตามจริงในวันเดินทาง',
+        '<b>รถรับส่ง</b>และค่าแท็กซี่ไป-กลับท่าเรือ',
+        '<b>อาหาร</b> สำหรับเรือที่ไม่ได้ระบุว่ารวม (สั่งล่วงหน้าได้ตามราคาในหน้าเรือ) และ<b>อาหารกลางวันสำหรับโปรแกรมครึ่งวัน</b>ของเรือหลายลำ',
+        '<b>ค่าเรือหางยาวสำหรับขึ้นเกาะ</b> ค่ารถอีแต๋นบนเกาะราชา ค่าเก้าอี้ชายหาดที่เกาะเฮ และค่ากิจกรรมอื่นบนเกาะ',
+        'ไกด์ ทิปลูกเรือ เครื่องดื่มแอลกอฮอล์ อุปกรณ์เล่นน้ำ (สไลเดอร์ สระลอยน้ำ คันเบ็ด) และค่าใช้จ่ายส่วนตัวอื่น เว้นแต่ระบุไว้',
+        '<b>ค่าน้ำมันย้ายท่า</b> หากคุณขอขึ้นหรือลงเรือที่ท่าอื่นนอกจากท่าประจำของเรือ',
+      ]) + `<p>${T('การนำอาหารและเครื่องดื่มขึ้นเรือ: เรือบางลำอนุญาตโดยไม่มีค่าใช้จ่าย บางลำมีค่าบริการ (รวมถึงการใช้เตาบาร์บีคิว) กรุณาสอบถามก่อนเดินทาง',
+        'Bringing your own food and drinks: some boats allow it free of charge, others charge a fee (including for using a BBQ grill). Please ask before your trip.')}</p>`],
+
+      ['payment', T('การชำระเงิน', 'Payment'), ul(E ? [
+        '<b>50% deposit</b> when the booking is confirmed; the <b>remaining 50%</b> at least <b>24 hours before departure</b>. For bookings made less than 24 hours before departure, the full amount is due on confirmation.',
+        'Payment is in <b>Thai baht</b> by bank transfer or card. Card payments carry a fee of <b>3.5% for Visa / MasterCard</b> and <b>4.76% for AMEX and UnionPay</b>, plus 7% VAT on the fee.',
+        'Please put your booking reference on the transfer and send us the slip. Bank charges and exchange differences for transfers from abroad are paid by the customer.',
+        'If the balance is not paid on time, we may treat the booking as cancelled by the customer, with the cancellation fees in section 7.',
+        'Extra services and extra guests added after confirmation are paid with the balance, or on the day where agreed.',
+      ] : [
+        '<b>ชำระมัดจำ 50%</b> เมื่อยืนยันการจอง และ<b>ส่วนที่เหลือ 50%</b> ก่อนออกเรือ<b>อย่างน้อย 24 ชั่วโมง</b> หากจองน้อยกว่า 24 ชั่วโมงก่อนออกเรือ ต้องชำระเต็มจำนวนเมื่อยืนยัน',
+        'ชำระเป็น<b>เงินบาท</b>ด้วยการโอนเงินหรือบัตร การชำระด้วยบัตรมีค่าธรรมเนียม <b>3.5% สำหรับ Visa / MasterCard</b> และ <b>4.76% สำหรับ AMEX และ UnionPay</b> บวก VAT 7% ของค่าธรรมเนียม',
+        'กรุณาระบุเลขอ้างอิงการจองเมื่อโอนเงิน และส่งสลิปให้เรา ค่าธรรมเนียมธนาคารและส่วนต่างอัตราแลกเปลี่ยนสำหรับการโอนจากต่างประเทศเป็นของลูกค้า',
+        'หากไม่ชำระส่วนที่เหลือตามกำหนด เราอาจถือว่าลูกค้ายกเลิกการจอง และคิดค่ายกเลิกตามข้อ 7',
+        'บริการเสริมและผู้โดยสารที่เพิ่มหลังยืนยันการจอง ชำระพร้อมยอดคงเหลือ หรือในวันเดินทางตามที่ตกลง',
+      ]) + `<dl class="legal-dl"><dt>${T('ธนาคาร', 'Bank')}</dt><dd>KASIKORN BANK · Lotus's Phuket</dd><dt>${T('เลขที่บัญชี', 'Account no.')}</dt><dd>213-1-65737-7</dd><dt>${T('ชื่อบัญชี', 'Account name')}</dt><dd>${COMPANY}</dd></dl>`
+        + `<p>${T('โปรดโอนเงินเข้าบัญชีบริษัทข้างต้นเท่านั้น เราจะไม่ขอให้โอนเข้าบัญชีบุคคล หากมีผู้แจ้งเลขบัญชีอื่นในนามบริษัท กรุณาโทรยืนยันกับเราที่ ' + SET.phone + ' ก่อน',
+          'Only pay into the company account above. We never ask for payment to a personal account; if anyone gives you different bank details in our name, call us on ' + SET.phone + ' first.')}</p>`],
+
+      ['changes', T('การเปลี่ยนแปลงการจองโดยลูกค้า', 'Changes by the customer'), ul(E ? [
+        'Ask for changes (date, program, number of guests, extras) as early as possible, in writing. Changes depend on the boat\'s availability and may change the price.',
+        'Adding guests is possible up to the boat\'s maximum, with the extra-guest fee. Fewer guests than booked does not reduce the charter price, which is per boat.',
+        'Moving to a different date is treated as a new booking for the new date, subject to availability; the deposit already paid is moved to it when we confirm the change in writing.',
+      ] : [
+        'แจ้งขอเปลี่ยนแปลง (วันที่ โปรแกรม จำนวนผู้โดยสาร บริการเสริม) ให้เร็วที่สุดเป็นลายลักษณ์อักษร การเปลี่ยนแปลงขึ้นอยู่กับคิวเรือและอาจทำให้ราคาเปลี่ยน',
+        'เพิ่มผู้โดยสารได้ไม่เกินจำนวนสูงสุดของเรือ โดยชำระค่าผู้โดยสารเพิ่ม การมาน้อยกว่าที่จองไม่ทำให้ราคาเช่าเรือลดลง เพราะเป็นราคาเหมาลำ',
+        'การเลื่อนไปวันอื่นถือเป็นการจองใหม่สำหรับวันนั้นตามคิวเรือว่าง และเงินมัดจำที่ชำระแล้วจะโอนไปใช้กับวันใหม่เมื่อเรายืนยันการเปลี่ยนแปลงเป็นลายลักษณ์อักษร',
+      ])],
+
+      ['cancellation', T('การยกเลิกโดยลูกค้า', 'Cancellation by the customer'), `<p>${T('แจ้งยกเลิกเป็นลายลักษณ์อักษรทาง LINE WhatsApp หรืออีเมล เวลาที่เราได้รับข้อความถือเป็นเวลายกเลิก ค่ายกเลิกคิดจากราคาเช่าเรือทั้งหมด:',
+        'Cancel in writing by LINE, WhatsApp or email; the time we receive your message is the cancellation time. Fees are a percentage of the total charter price:')}</p>`
+        + table(E ? ['Cancelled before departure', 'Cancellation fee'] : ['ยกเลิกก่อนออกเรือ', 'ค่ายกเลิก'], E ? [['48 hours or more', 'No fee'], ['Less than 48 hours', '30%'], ['Less than 24 hours', '50%'], ['Less than 12 hours, or no-show', '100% – the deposit is not refunded']] : [['48 ชั่วโมงขึ้นไป', 'ไม่มีค่ายกเลิก'], ['น้อยกว่า 48 ชั่วโมง', '30%'], ['น้อยกว่า 24 ชั่วโมง', '50%'], ['น้อยกว่า 12 ชั่วโมง หรือไม่มาตามนัด', '100% – ไม่คืนเงินมัดจำ']])
+        + ul(E ? [
+          'Amounts already paid above the cancellation fee are refunded to the account or card used, within 14 working days. Card and bank fees already charged are not refunded.',
+          'Extras ordered from third parties (cakes, flowers, DJ, decoration…) that have already been prepared may be charged at cost.',
+          'Arriving late does not extend the trip: the program ends at the time in your confirmation.',
+        ] : [
+          'เงินที่ชำระแล้วส่วนที่เกินค่ายกเลิก จะคืนเข้าบัญชีหรือบัตรที่ใช้ชำระภายใน 14 วันทำการ ค่าธรรมเนียมบัตรและธนาคารที่เกิดขึ้นแล้วไม่คืน',
+          'บริการเสริมที่สั่งจากผู้ให้บริการภายนอกและจัดเตรียมแล้ว (เค้ก ดอกไม้ ดีเจ ของตกแต่ง ฯลฯ) อาจคิดตามต้นทุนจริง',
+          'การมาสายไม่ทำให้เวลาทริปขยายออก โปรแกรมจะสิ้นสุดตามเวลาในใบยืนยันการจอง',
+        ])],
+
+      ['weather', T('สภาพอากาศ ความปลอดภัย และการยกเลิกโดยบริษัท', 'Weather, safety and cancellation by us'), ul(E ? [
+        'The company and the captain may <b>change, shorten or cancel the itinerary without notice</b> because of weather, sea conditions, national park closures, orders from authorities or any safety reason. The captain\'s decision on safety is final.',
+        'Changing the route or islands for these reasons is not a cancellation and is not refunded, as long as the trip goes ahead.',
+        'If the trip cannot go ahead because of weather, safety, a boat breakdown or an order from the authorities, we offer first <b>a new date</b> or <b>a comparable boat or route</b>. If none suits you, we refund the amount you paid for the trip, less third-party costs already incurred that cannot be recovered.',
+        'National parks can close some areas for a period (for example Maya Bay at times). Programs to a closed area are changed to an open route.',
+      ] : [
+        'บริษัทและกัปตันสงวนสิทธิ์<b>เปลี่ยน ย่น หรือยกเลิกเส้นทางโดยไม่ต้องแจ้งล่วงหน้า</b> ตามสภาพอากาศ คลื่นลม การปิดอุทยาน คำสั่งของหน่วยงานรัฐ หรือเหตุผลด้านความปลอดภัย การตัดสินใจของกัปตันเรื่องความปลอดภัยถือเป็นที่สุด',
+        'การเปลี่ยนเส้นทางหรือเกาะด้วยเหตุผลข้างต้นไม่ถือเป็นการยกเลิก และไม่มีการคืนเงิน หากทริปยังออกเดินทางได้',
+        'หากทริปออกเดินทางไม่ได้เพราะสภาพอากาศ ความปลอดภัย เรือขัดข้อง หรือคำสั่งหน่วยงานรัฐ เราจะเสนอ<b>วันใหม่</b> หรือ<b>เรือ / เส้นทางที่ใกล้เคียงกัน</b>ก่อน หากไม่สะดวกทั้งหมด เราคืนเงินค่าทริปที่ชำระแล้ว หักค่าใช้จ่ายของผู้ให้บริการภายนอกที่เกิดขึ้นแล้วและเรียกคืนไม่ได้',
+        'อุทยานอาจปิดบางพื้นที่เป็นช่วง ๆ (เช่น อ่าวมาหยาในบางช่วง) โปรแกรมที่ไปพื้นที่ที่ปิดจะเปลี่ยนเป็นเส้นทางที่เปิด',
+      ])],
+
+      ['day', T('วันเดินทาง', 'On the day'), ul(E ? [
+        'Arrive at the marina <b>15–20 minutes before departure</b>. We send the meeting point and the crew contact before the trip.',
+        'The boat returns at the time in your confirmation. Extra hours or an extra destination can be added on board only if the captain agrees and the schedule allows, at the rate on the boat page (some boats have a maximum time on the water).',
+        'Bring ID or passport if asked for the insurance list, swimwear, sun protection and any medication you need.',
+      ] : [
+        'มาถึงท่าเรือ<b>ก่อนเวลาออกเรือ 15–20 นาที</b> เราจะส่งจุดนัดพบและเบอร์ติดต่อลูกเรือให้ก่อนวันเดินทาง',
+        'เรือกลับตามเวลาในใบยืนยันการจอง การเพิ่มชั่วโมงหรือจุดหมายทำได้เมื่อกัปตันยินยอมและตารางเรืออนุญาต ตามอัตราในหน้าเรือ (เรือบางลำมีชั่วโมงใช้งานสูงสุด)',
+        'นำบัตรประชาชนหรือพาสปอร์ตมาหากได้รับแจ้งเพื่อทำรายชื่อประกันภัย ชุดว่ายน้ำ ครีมกันแดด และยาประจำตัว',
+      ])],
+
+      ['onboard', T('กฎบนเรือ', 'Rules on board'), ul(E ? [
+        '<b>No smoking</b> on board, for any reason – for cleanliness, safety and the comfort of everyone on board.',
+        '<b>No dogs or other pets</b> on board.',
+        'For safety and in line with maritime safety standards, the company may <b>decline service to pregnant guests</b>. Please tell us about a pregnancy when booking.',
+        'Follow the captain\'s and crew\'s safety instructions at all times, including <b>wearing a life jacket</b> when asked. Swimming, snorkelling and water activities are only allowed where and when the crew allows.',
+        'Children must be supervised by their parents or guardians at all times, on board and in the water.',
+        'Drink alcohol responsibly. Illegal drugs are not allowed. The captain may refuse boarding or end the trip early, without refund, if a guest\'s behaviour puts people or the boat at risk.',
+        'Respect national park rules: do not feed fish, touch or stand on coral, or take shells, sand or coral.',
+      ] : [
+        '<b>ห้ามสูบบุหรี่</b>บนเรือทุกกรณี เพื่อความสะอาด ความปลอดภัย และความสะดวกสบายของทุกคนบนเรือ',
+        '<b>ห้ามนำสุนัขหรือสัตว์เลี้ยงทุกชนิด</b>ขึ้นเรือ',
+        'เพื่อความปลอดภัยและตามมาตรฐานความปลอดภัยทางทะเล บริษัทอาจ<b>ปฏิเสธการให้บริการแก่ผู้โดยสารที่ตั้งครรภ์</b> กรุณาแจ้งให้ทราบตั้งแต่ตอนจอง',
+        'ปฏิบัติตามคำแนะนำด้านความปลอดภัยของกัปตันและลูกเรือตลอดเวลา รวมถึง<b>สวมเสื้อชูชีพ</b>เมื่อได้รับแจ้ง การว่ายน้ำ ดำน้ำตื้น และกิจกรรมทางน้ำทำได้เฉพาะจุดและเวลาที่ลูกเรืออนุญาต',
+        'เด็กต้องอยู่ในความดูแลของผู้ปกครองตลอดเวลา ทั้งบนเรือและในน้ำ',
+        'ดื่มเครื่องดื่มแอลกอฮอล์อย่างมีความรับผิดชอบ ห้ามสารเสพติดผิดกฎหมาย กัปตันอาจปฏิเสธการขึ้นเรือหรือยุติทริปก่อนเวลาโดยไม่คืนเงิน หากพฤติกรรมของผู้โดยสารเป็นอันตรายต่อผู้อื่นหรือต่อเรือ',
+        'ปฏิบัติตามกฎของอุทยานแห่งชาติ: ห้ามให้อาหารปลา ห้ามจับหรือเหยียบปะการัง และห้ามเก็บเปลือกหอย ทราย หรือปะการัง',
+      ])],
+
+      ['extras', T('บริการเสริม', 'Extra services'), `<p>${T('บริการเสริม เช่น ลูกโป่ง ช่อดอกไม้ เค้กวันเกิด ดีเจ บาร์เทนเดอร์ ชุดปิกนิก เครื่องดื่มแอลกอฮอล์ อาหารพิเศษ ไกด์ และรถตู้รับส่ง มีค่าใช้จ่ายเพิ่มเติม ต้องสั่ง<b>ล่วงหน้าอย่างน้อย 24 ชั่วโมงก่อนออกเรือ</b> และขึ้นอยู่กับความพร้อมของผู้ให้บริการ ของแถมตามโปรโมชั่นของเรือแต่ละลำ (เช่น สไลเดอร์ สระลอยน้ำ หรือแชมเปญในช่วง Low Season) เป็นไปตามเงื่อนไขของเรือและไม่สามารถแลกเป็นเงินสด',
+        'Extras such as balloons, flowers, birthday cakes, DJs, bartenders, picnic sets, alcohol, custom meals, guides and van transfers cost extra, must be ordered <b>at least 24 hours before departure</b> and depend on the provider\'s availability. Free gifts offered by some boats (e.g. a slider, a pool or champagne in low season) follow that boat\'s conditions and cannot be exchanged for cash.')}</p>`],
+
+      ['liability', T('ประกันภัยและความรับผิด', 'Insurance and liability'), ul(E ? [
+        'Every trip includes <b>passenger accident insurance</b> under the terms of the boat\'s policy. It covers accidents with personal injury directly related to the trip. <b>Loss of or damage to phones, cameras and other belongings is not covered.</b>',
+        'We are not liable for loss of or damage to personal belongings, for costs caused by guests arriving late, or for activities you book directly with other providers on the islands.',
+        'Guests are responsible for damage to the boat or its equipment caused by their own negligence or breaking the rules on board.',
+        'We are not liable for failure or delay caused by events beyond our reasonable control (force majeure), such as storms, natural disasters, epidemics, closures or orders by the authorities, strikes or war. In such cases section 8 applies.',
+        'Nothing in these terms limits liability that cannot be limited under Thai law, including for death or injury caused by our negligence.',
+      ] : [
+        'ทุกทริปมี<b>ประกันอุบัติเหตุผู้โดยสาร</b>ตามเงื่อนไขกรมธรรม์ของเรือ คุ้มครองอุบัติเหตุที่ทำให้บาดเจ็บซึ่งเกี่ยวข้องโดยตรงกับทริป <b>ไม่คุ้มครองการสูญหายหรือเสียหายของโทรศัพท์ กล้อง และทรัพย์สินส่วนตัว</b>',
+        'บริษัทไม่รับผิดชอบต่อการสูญหายหรือเสียหายของทรัพย์สินส่วนตัว ค่าใช้จ่ายที่เกิดจากการมาสายของผู้โดยสาร หรือกิจกรรมที่คุณจองกับผู้ให้บริการอื่นบนเกาะโดยตรง',
+        'ผู้โดยสารต้องรับผิดชอบความเสียหายต่อเรือหรืออุปกรณ์ที่เกิดจากความประมาทของตนหรือการฝ่าฝืนกฎบนเรือ',
+        'บริษัทไม่ต้องรับผิดในกรณีที่ไม่สามารถให้บริการหรือให้บริการล่าช้าจากเหตุสุดวิสัยที่อยู่นอกเหนือการควบคุม เช่น พายุ ภัยธรรมชาติ โรคระบาด การปิดหรือคำสั่งของหน่วยงานรัฐ การนัดหยุดงาน หรือสงคราม ในกรณีดังกล่าวให้ใช้ข้อ 8',
+        'ข้อกำหนดนี้ไม่จำกัดความรับผิดที่กฎหมายไทยไม่อนุญาตให้จำกัด รวมถึงความเสียหายต่อชีวิตหรือร่างกายที่เกิดจากความประมาทของเรา',
+      ])],
+
+      ['website', T('การใช้เว็บไซต์', 'Using this website'), ul(E ? [
+        'Boat details, photos, routes and times on the website come from the boats\' brochures and are for guidance. Boats may differ slightly from the photos, and route maps and times are approximate.',
+        'Texts, photos, logos and design on this website belong to us or our partners. Please do not copy them for commercial use without our permission.',
+        `How we handle your personal data is described in our ${pv}.`,
+      ] : [
+        'ข้อมูลเรือ รูปภาพ เส้นทาง และเวลาบนเว็บไซต์มาจากโบรชัวร์ของเรือและใช้เพื่อประกอบการตัดสินใจ เรือจริงอาจแตกต่างจากรูปเล็กน้อย และแผนที่เส้นทางกับเวลาเป็นค่าโดยประมาณ',
+        'ข้อความ รูปภาพ โลโก้ และการออกแบบบนเว็บไซต์เป็นของบริษัทหรือพันธมิตร ห้ามคัดลอกไปใช้เชิงพาณิชย์โดยไม่ได้รับอนุญาต',
+        `การจัดการข้อมูลส่วนบุคคลของคุณเป็นไปตาม${pv}`,
+      ])],
+
+      ['law', T('ข้อร้องเรียนและกฎหมายที่ใช้บังคับ', 'Complaints and governing law'), `<p>${T(`หากมีปัญหาระหว่างทริป กรุณาแจ้งลูกเรือหรือโทรหาเราทันที ${SET.phone} เพื่อให้เราแก้ไขได้ในวันนั้น ข้อร้องเรียนหลังทริปส่งได้ที่ ${mail} ภายใน 30 วัน เราจะตอบภายใน 7 วันทำการ ข้อกำหนดนี้อยู่ภายใต้กฎหมายแห่งราชอาณาจักรไทย ข้อพิพาทอยู่ในเขตอำนาจศาลไทย ทั้งนี้ไม่ตัดสิทธิของคุณตามกฎหมายคุ้มครองผู้บริโภค หากข้อกำหนดนี้แปลเป็นภาษาอื่น ให้ถือฉบับภาษาไทยเป็นหลัก`,
+        `If something is wrong during the trip, tell the crew or call us at once on ${SET.phone} so we can fix it on the day. Send complaints after the trip to ${mail} within 30 days; we reply within 7 working days. These terms are governed by the laws of the Kingdom of Thailand and disputes fall under the jurisdiction of the Thai courts, without affecting your rights under consumer protection law. If these terms are translated, the Thai version prevails.`)}</p>`],
+
+      ['update', T('การเปลี่ยนแปลงข้อกำหนด', 'Changes to these terms'), `<p>${T('เราอาจปรับปรุงข้อกำหนดนี้เป็นครั้งคราว ฉบับที่ใช้กับการจองของคุณคือฉบับที่แสดงในวันที่ยืนยันการจอง',
+        'We may update these terms from time to time. The version that applies to your booking is the one shown on the day your booking is confirmed.')}</p>`],
+
+      ['contact', T('ติดต่อเรา', 'Contact'), `<p>${COMPANY} · TAT ${SET.tat} · <a href="${MAP_URL}" target="_blank" rel="noopener">${T(ADDRESS_TH, ADDRESS_EN)}</a> · <a href="${TEL}">${SET.phone}</a> · ${mail}</p>`],
+    ],
+  };
+}
+{ const _ld2 = legalDocs; legalDocs = function () { const d = _ld2(); try { d.terms = fxTerms(); } catch (e) { console.warn('[terms]', e); } return d; }; }
+{ const _lf = fxLegalFix; fxLegalFix = function (kind) { _lf(kind); if (kind !== 'terms') return; const v = $('#view-legal'); v && v.querySelectorAll('section p.text-xs').forEach(p => { if (/ปรับปรุงล่าสุด|Last updated/.test(p.textContent)) p.textContent = `${L('ปรับปรุงล่าสุด', 'Last updated')}: ${TM_UPDATED[LANG === 'en' ? 1 : 0]}`; }); }; }
+{ const h = VH.hash || ''; if (h === '#/terms') { try { renderLegal('terms'); } catch (e) { } } }
+
 /* ---------- start ---------- */
 if (!FX_SSR) {
   addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
