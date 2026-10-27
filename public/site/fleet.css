@@ -629,3 +629,20 @@ section.bg-sand.border-t { background-image: none !important; }
 
 /* ---------- team band (every page): the band stays a soft glow, cards were already glass ---------- */
 section#team { background: transparent !important; background-image: none !important; border-color: transparent !important; }
+
+/* =====================================================================
+   Boat page photo bento: the rows scale with the screen instead of a fixed 250 + 250 px,
+   so on tablets / small laptops the photos keep a landscape shape instead of turning into tall strips
+   ===================================================================== */
+@media (min-width: 721px) {
+  .bento { grid-template-rows: repeat(2, clamp(150px, 17.4vw, 250px)); }
+}
+@media (min-width: 721px) and (max-width: 1100px) {
+  .bento { grid-template-columns: 2.4fr 1fr 1fr; gap: 8px; }
+  .bento-n3 { grid-template-columns: 2.4fr 1.3fr; }
+  .bt { border-radius: 18px !important; }
+}
+@media (max-width: 720px) {
+  .bento { grid-template-rows: clamp(230px, 60vw, 400px) 84px; }
+  .bento-n2, .bento-n1 { grid-template-rows: clamp(230px, 60vw, 400px); }
+}
