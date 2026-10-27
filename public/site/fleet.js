@@ -249,13 +249,13 @@ function fxCard(b, mode, i, list) {
       <div class="fx-why"><div><span>${FXI('star')}</span><div><b>${L('เรือแนะนำของเรา', 'One of our recommended boats')}</b> · ${L('ตรงกับวัน จำนวนคน และเส้นทางที่เลือก', 'fits your date, group and route')}</div></div>
         <div><span>${FXI('users')}</span><div><b>${FX.pax} ${t('guests')} ${fill < 75 ? L('นั่งสบาย', 'with room to spare') : L('พอดีลำ', 'a snug fit')}</b> · ${L('จุได้', 'takes')} ${b.pax} ${t('guests')}</div></div>
         <div><span>${FXI('waves')}</span><div><b>${b.fxDest.slice(0, 3).map(fxDL).join(' · ') || L('โปรแกรมรอบภูเก็ต', 'Around Phuket')}</b> · ${L('ออกจาก', 'from')} ${fxEsc(b.marinaP)}</div></div></div>` : ''}
-      <div class="fx-specs">${b.ft ? `<span>${FXI('move-horizontal')}${b.ft} ft</span>` : ''}${b.pax ? `<span>${FXI('users')}${b.pax} ${t('guests')}</span>` : ''}<span class="m">${FXI('anchor')}<span>${fxEsc(b.marinaP)}</span></span></div>
+      <div class="fx-specs">${[b.ft ? `<span>${b.ft} ft</span>` : '', b.pax ? `<span>${L('สูงสุด', 'up to')} ${b.pax} ${t('guests')}</span>` : '', `<span class="m">${fxEsc((pierOf(b) || {}).n || b.marinaP)}</span>`].filter(Boolean).join('<i aria-hidden="true">·</i>')}</div>
       ${(() => { const d = fxDrive(b); return d ? `<div class="fx-drive ${d.hi <= 30 ? 'near' : d.hi <= 50 ? 'mid' : 'far'}">${FXI('car')}<span>${L(`ขับรถจาก${fxStayL(FX.stay)} ≈ <b>${d.lo}–${d.hi} นาที</b>`, `<b>${d.lo}–${d.hi} min</b> drive from ${fxStayL(FX.stay)}`)}</span></div>` : ''; })()}
       ${FX.paxSet && !pick ? `<div class="fx-fit"><div class="t"><span>${L('กลุ่มคุณ', 'Your group')} <b>${FX.pax}</b> / ${b.pax} ${t('guests')}</span><span>${fill < 35 ? L('กว้างขวางมาก', 'very spacious') : fill < 75 ? L('นั่งสบาย', 'comfortable') : L('เต็มพอดี', 'snug')}</span></div><div class="fx-meter"><i style="width:${fill}%"></i></div></div>` : ''}
       ${pick && alts.length ? `<p class="fx-alt-h">${L('ทางเลือกใกล้เคียง', 'Similar options')}</p><div class="fx-alts">${alts.map(x => `<a class="fx-alt" href="#/boat/${x.slug}"><img src="${bimg(x.slug, 'hero')}" alt="" loading="lazy"><div><b>${fxEsc(niceTitle(x.title))}</b><small>${x.pax} ${t('guests')} · ${baht(fxPrice(x).total)}</small></div></a>`).join('')}</div>` : ''}
       ${!pick && tags.length ? `<div class="fx-tags">${tags.map(d => `<span class="fx-tag ${FX.dest.has(d) ? 'hit' : ''}">${fxDL(d)}</span>`).join('')}</div>` : ''}
       <div class="fx-price"><div class="min-w-0"><span class="lbl">${lbl}</span><span class="amt tnum">${pr.total ? baht(pr.total) : '—'} <span>${t('perTrip')}</span></span>${pr.extraPax ? `<span class="xtra">${L(`รวมค่าคนเกิน ${pr.extraPax} คนแล้ว`, `incl. ${pr.extraPax} extra guest${pr.extraPax > 1 ? 's' : ''}`)}</span>` : ''}</div>
-        <button class="fx-book" onclick="fxBook('${b.slug}')">${t('book')}</button></div>
+        <a class="fx-view" href="#/boat/${b.slug}" aria-label="${L('ดูรายละเอียด', 'View')} ${name}">${FXI('arrow-up-right')}</a></div>
     </div></article>`;
 }
 

@@ -467,3 +467,39 @@
   .rt-pa { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
 }
 @container rt (max-width: 440px) { .rt-pa { grid-template-columns: 1fr; } }
+
+/* =====================================================================
+   Boat card · clean & quiet: no book button (guests open the boat first), one spec line,
+   no divider, a soft arrow that fills on hover · the whole card opens the boat page
+   ===================================================================== */
+.fx-card { border-radius: 24px; box-shadow: 0 1px 0 #fff, 0 18px 44px -30px rgb(58 0 7 / .4), 0 0 0 1px rgb(35 20 22 / .06); }
+.fx-card:hover { transform: translateY(-3px); box-shadow: 0 30px 64px -34px rgb(58 0 7 / .5), 0 0 0 1px rgb(35 20 22 / .07); }
+.fx-more { display: none !important; }
+.fx-nm { right: 16px; bottom: 16px; }
+.fx-nm small { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+.fx-nm b { font-size: 22px; font-weight: 400; letter-spacing: -.005em; margin-top: 2px; }
+.fx-body { position: relative; padding: 16px 18px 18px; }
+.fx-specs { gap: 0; font-size: 12.5px; color: var(--fx-muted); letter-spacing: .01em; }
+.fx-specs i { font-style: normal; margin: 0 8px; color: rgb(35 20 22 / .25); }
+.fx-specs .m { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-price { border-top: 0; padding-top: 0; align-items: flex-end; }
+.fx-body > .fx-specs + .fx-price, .fx-body > * + .fx-price { margin-top: 18px; }
+.fx-price .lbl { font-size: 11px; letter-spacing: .02em; }
+.fx-price .lbl b { font-weight: 400; color: var(--fx-muted); }
+.fx-price .amt { font-size: 20px; font-weight: 400; letter-spacing: -.01em; margin-top: 3px; }
+.fx-price .amt span { font-size: 12px; }
+.fx-view { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--fx-ink); box-shadow: inset 0 0 0 1px rgb(35 20 22 / .14); transition: background .3s var(--fx-ease), color .3s, box-shadow .3s, transform .3s var(--fx-ease); }
+.fx-view svg { width: 17px; height: 17px; transition: transform .3s var(--fx-ease); }
+.fx-card:hover .fx-view { background: var(--fx-m); color: #fff; box-shadow: 0 10px 22px -10px rgb(112 0 14 / .7); }
+.fx-card:hover .fx-view svg { transform: rotate(45deg); }
+/* stretched link: tapping anywhere on the card body opens the boat (links/buttons inside stay on top) */
+.fx-view::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+.fx-body .fx-view::after { border-radius: 0 0 24px 24px; }
+.fx-body a:not(.fx-view), .fx-body button, .fx-body .fx-tags { position: relative; z-index: 1; }
+@container (max-width: 340px) {
+  .fx-body { padding: 14px 15px 15px; }
+  .fx-nm b { font-size: 19px; }
+  .fx-price .amt { font-size: 17.5px; }
+  .fx-view { width: 36px; height: 36px; }
+  .fx-specs { font-size: 11.5px; } .fx-specs i { margin: 0 6px; }
+}
