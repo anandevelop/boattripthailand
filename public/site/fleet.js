@@ -508,6 +508,209 @@ function pierTaxi(on) {
 if (!FX_SSR) addEventListener('keydown', e => { if (e.key === 'Escape') pierTaxi(false); });
 if ((VH.hash || '').startsWith('#/boat/')) { try { pierMount(decodeURIComponent(VH.hash.slice(7))); } catch (e) { } }
 
+/* =====================================================================
+   Boat page → "โปรแกรม & ราคา": trip route map for the program the guest picked
+   Islands are read from the program name in the price table ("Khai Nok + Naka Noi + Rang Yai"),
+   drawn pier → island → … → pier over water, with a timeline. Follows every program change
+   (cards, duration tabs, season, the booking-card select) because it hooks drawProgPrices.
+   Shares the MapLibre loader with the marina map (pierLib). Island pins are approximate.
+   ===================================================================== */
+// [name EN, name TH, highlight TH, highlight EN, [lat, lng], zone]
+const RT_ISL = {
+  khainok: ['Khai Nok', 'เกาะไข่นอก', 'น้ำใส ทรายขาว · ดำน้ำตื้น', 'Clear water, white sand · snorkelling', [7.8795, 98.5235]],
+  khainui: ['Khai Nui', 'เกาะไข่นุ้ย', 'แนวปะการังตื้น · ปลาเยอะ', 'Shallow reef · lots of fish', [7.8892, 98.5057]],
+  nakanoi: ['Naka Noi', 'เกาะนาคาน้อย', 'หาดเงียบ · ร้านริมหาด', 'Quiet beach · beach bar', [8.0262, 98.4578]],
+  rangyai: ['Rang Yai', 'เกาะรังใหญ่', 'หาดยาว · กิจกรรมทางน้ำ', 'Long beach · water sports', [7.9592, 98.4572]],
+  maiton: ['Maiton', 'เกาะไม้ท่อน', 'หาดทรายขาว · น้ำใส', 'White-sand beach · clear water', [7.7617, 98.4818]],
+  coral: ['Coral Island', 'เกาะเฮ', 'ดำน้ำดูปะการัง · หาดกล้วย', 'Coral snorkelling · Banana Beach', [7.7448, 98.3695], 's'],
+  rachayai: ['Racha Yai', 'เกาะราชาใหญ่', 'อ่าวปะตก · น้ำใสมาก', 'Patok Bay · very clear water', [7.6045, 98.3667], 's'],
+  rachanoi: ['Racha Noi', 'เกาะราชาน้อย', 'จุดดำน้ำ · ไกลจากฝั่ง', 'Dive spot · far offshore', [7.4985, 98.3185], 's'],
+  promthep: ['Promthep Cape', 'แหลมพรหมเทพ', 'ชมพระอาทิตย์ตกจากทะเล', 'Sunset from the sea', [7.7505, 98.3045], 's'],
+  panak: ['Panak', 'เกาะปันหยัก', 'ถ้ำทะลุ · ป่าโกงกาง', 'Sea caves · mangroves', [8.1785, 98.4932]],
+  hongpn: ['Hong (Phang Nga)', 'เกาะห้อง พังงา', 'ลากูนในถ้ำ · พายคายัค', 'Hidden lagoon · kayaking', [8.2302, 98.5032]],
+  jb: ['James Bond Island', 'เขาตะปู', 'เขาหินปูนกลางทะเล', 'Limestone tower in the sea', [8.2747, 98.5013]],
+  yaonoi: ['Koh Yao Noi', 'เกาะยาวน้อย', 'หมู่บ้านชาวประมง · หาดเงียบ', 'Fishing village · quiet beaches', [8.1215, 98.6115]],
+  yaoyai: ['Koh Yao Yai', 'เกาะยาวใหญ่', 'หาดยาว · วิวอ่าวพังงา', 'Long beaches · Phang Nga Bay views', [7.9985, 98.5755]],
+  hongkr: ['Hong Krabi', 'เกาะห้อง กระบี่', 'ลากูนปิด · น้ำเขียวใส', 'Enclosed lagoon · emerald water', [8.0784, 98.6769]],
+  phiphi: ['Phi Phi', 'เกาะพีพี', 'อ่าวมาหยา · ปิเละ · ต้นไทร', 'Maya Bay · Pileh · Tonsai', [7.7108, 98.7685]],
+  bamboo: ['Bamboo Island', 'เกาะไผ่', 'หาดขาวยาว · ดำน้ำตื้น', 'Long white beach · snorkelling', [7.8175, 98.7625]],
+  poda: ['Poda + Tup', 'เกาะปอดะ · ทะเลแหวก', 'สันทรายเชื่อมเกาะ · หาดขาว', 'Sandbar between islands · white beach', [7.9686, 98.8115]],
+  chicken: ['Chicken Island', 'เกาะไก่', 'หินรูปหัวไก่ · ดำน้ำตื้น', 'Chicken-head rock · snorkelling', [7.9505, 98.8093]],
+};
+// where each pier's boats leave the coast, and which side of Phuket it is on (w = west coast, s = south, e = east / Phang Nga Bay)
+const RT_PIER = {
+  'Royal Phuket Marina': { z: 'e', out: [[7.958, 98.405], [7.952, 98.432]] }, 'Boat Lagoon': { z: 'e', out: [[7.958, 98.405], [7.952, 98.432]] },
+  'Ao Po Grand Marina': { z: 'e', out: [[8.064, 98.462]] }, 'ONE°15 Marina Panwa': { z: 'e', out: [[7.802, 98.432]] }, 'Coco Pier Panwa': { z: 'e', out: [[7.798, 98.428]] },
+  'Chalong Pier': { z: 's', out: [[7.805, 98.372]] }, 'Nakalay Pier (Kalim)': { z: 'w', out: [[7.912, 98.28]] },
+};
+// round the island, never across it: west ↔ south (off Promthep) ↔ east (off Cape Panwa)
+const RT_LINK = { ws: [[7.86, 98.262], [7.745, 98.288]], se: [[7.765, 98.418], [7.79, 98.452]] };
+const RT_KN = { yacht: 20, power: 18, speed: 28, sail: 8, longtail: 12 };
+const RT = { key: '', map: null, styleOk: false, mk: [], boat: null, anim: 0, io: null, R: null, sat: false };
+
+function rtStops(raw) {
+  const s = String(raw || '').toLowerCase(), out = [], add = k => { if (!out.includes(k)) out.push(k); };
+  if (/khai nok/.test(s)) add('khainok'); if (/khai nui/.test(s)) add('khainui'); if (/\bkhai\b(?!\s*n[oa-z])/.test(s)) add('khainok');
+  if (/naka/.test(s)) add('nakanoi'); if (/rang/.test(s)) add('rangyai');
+  if (/racha noi/.test(s)) add('rachanoi'); if (/racha(?!\s*noi)/.test(s)) add('rachayai');
+  if (/coral/.test(s)) add('coral'); if (/maiton/.test(s)) add('maiton'); if (/promthep|phromthep|sunset/.test(s)) add('promthep');
+  if (/phang ?nga|james|\bjb\b|panak/.test(s)) { add('panak'); add('hongpn'); add('jb'); }
+  if (/hong krabi|krabi hong/.test(s) || (/\bhong\b/.test(s) && !/phang ?nga|jb/.test(s))) add('hongkr');
+  if (/yao ?noi/.test(s)) add('yaonoi'); if (/yao ?yai/.test(s)) add('yaoyai');
+  if (/phi ?phi|maya/.test(s)) add('phiphi'); if (/bamboo/.test(s)) add('bamboo');
+  if (/4 island|four island|krabi(?!\s*hong)/.test(s) && !/hong krabi/.test(s)) { add('poda'); add('chicken'); }
+  return out;
+}
+const rtZone = ll => ll.z || 'e';
+function rtLeg(a, za, b, zb) {   // straight over water, or round the island through the links
+  const ord = 'wse', i = ord.indexOf(za), j = ord.indexOf(zb), pts = [a];
+  if (i < j) { if (i === 0 && j >= 1) pts.push(...RT_LINK.ws); if (j === 2 && i <= 1) pts.push(...RT_LINK.se); }
+  if (i > j) { if (i === 2 && j <= 1) pts.push(...[...RT_LINK.se].reverse()); if (j === 0 && i >= 1) pts.push(...[...RT_LINK.ws].reverse()); }
+  pts.push(b); return pts;
+}
+function rtRoute(b, p) {
+  const pier = pierOf(b), cfg = pier && RT_PIER[pier.c]; if (!cfg) return null;
+  const st0 = rtStops(p.raw + ' ' + (p.tb.caption || '')); if (!st0.length) return null;
+  // the likely loop: nearest island first, then the nearest from there (the captain decides on the day)
+  const left = [...st0], st = []; let at = cfg.out[cfg.out.length - 1];
+  while (left.length) { left.sort((x, y) => fxKm(at, RT_ISL[x][4]) - fxKm(at, RT_ISL[y][4])); st.push(left.shift()); at = RT_ISL[st[st.length - 1]][4]; }
+  const pts = [{ ll: pier.ll, z: cfg.z }, ...cfg.out.map(ll => ({ ll, z: cfg.z, wp: 1 })), ...st.map(k => ({ ll: RT_ISL[k][4], z: RT_ISL[k][5] || 'e', k })), ...[...cfg.out].reverse().map(ll => ({ ll, z: cfg.z, wp: 1 })), { ll: pier.ll, z: cfg.z }];
+  const line = [pier.ll], legs = []; let acc = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    rtLeg(pts[i].ll, pts[i].z, pts[i + 1].ll, pts[i + 1].z).slice(1).forEach(q => { acc += fxKm(line[line.length - 1], q); line.push(q); });
+    if (!pts[i + 1].wp) { legs.push(acc); acc = 0; }
+  }
+  return { pier, st, line, legs };
+}
+const rtHm = m => { m = Math.round(m / 5) * 5; return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+const rtDur = m => { m = Math.max(5, Math.round(m / 5) * 5); const h = Math.floor(m / 60), r = m % 60; return h ? L(`${h} ชม.${r ? ' ' + r + ' นาที' : ''}`, `${h} h${r ? ' ' + r + ' min' : ''}`) : L(`${r} นาที`, `${r} min`); };
+const rtNm = k => LANG === 'en' ? RT_ISL[k][0] : RT_ISL[k][1];
+const RT_SHIP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.4 17.4 22 8l-10-4L2 8l2.6 9.4"/><path d="M12 4v14"/></svg>';
+
+/* the timeline + summary for one program (also rendered on the server, so the route is in the HTML) */
+function rtPlan(b, p, R) {
+  const sl = (bpSlots(b, p)[0] || '').match(/(\d{2}):(\d{2})(?:–(\d{2}):(\d{2}))?/);
+  const start = sl ? +sl[1] * 60 + +sl[2] : 9 * 60, end = sl && sl[3] ? +sl[3] * 60 + +sl[4] : 0;
+  const hrs = p.hrs || (end > start ? (end - start) / 60 : p.kind === 'half' ? 4 : p.kind === 'sunset' ? 3 : 8);
+  const kmh = (RT_KN[b.type] || 15) * 1.852, sail = R.legs.map(d => d / kmh * 60), sailT = sail.reduce((a, x) => a + x, 0);
+  const stay = Math.max(20, (hrs * 60 - sailT) / R.st.length);
+  let t = start; const steps = [{ pt: 1, tm: t, b: L('ออกจาก ', 'Leave ') + R.pier.n, p: L('มาถึงก่อน 15–20 นาที', 'Arrive 15–20 min early') }];
+  R.st.forEach((k, j) => { t += sail[j]; steps.push({ j, tm: t, b: rtNm(k), p: `${LANG === 'en' ? RT_ISL[k][3] : RT_ISL[k][2]} · ${L('อยู่', 'stay')} ≈ ${rtDur(stay)}`, leg: sail[j] }); t += stay; });
+  steps.push({ pt: 1, tm: start + hrs * 60, b: L('กลับถึงท่า', 'Back at the pier'), p: R.pier.n, leg: sail[sail.length - 1] });
+  return { hrs, start, sailT, km: R.legs.reduce((a, x) => a + x, 0), steps };
+}
+function rtUpdate(b, p) {
+  const box = $('#rtBox'); if (!box || !b || !p) return;
+  const key = b.slug + '|' + p.i + '|' + LANG; if (RT.key === key && box.dataset.k === key) return;
+  RT.key = key; box.dataset.k = key;
+  const R = rtRoute(b, p);
+  if (!R) { box.hidden = true; RT.R = null; return; }
+  box.hidden = false; RT.R = R;
+  const P = rtPlan(b, p, R);
+  $('#rtSum').innerHTML = `<span class="ic">${RT_SHIP}</span><div class="min-w-0"><b>${R.st.map(rtNm).join(' → ')}</b><span>${fxEsc(p.name)}${P.hrs ? ' · ' + L(`${P.hrs} ชม.`, `${P.hrs} h`) : ''} · ${L('ออก', 'leaves')} ${rtHm(P.start)}</span></div>
+    <div class="st"><div><b class="tabular-nums">${Math.round(P.km)} ${L('กม.', 'km')}</b><span>${L('ทั้งทริป', 'round trip')}</span></div><div><b class="tabular-nums">${rtDur(P.sailT)}</b><span>${L('ล่องเรือ', 'sailing')}</span></div></div>`;
+  $('#rtTl').innerHTML = P.steps.map(s => `<div class="rt-tp ${s.pt ? 'pt' : ''}" data-j="${s.pt ? -1 : s.j}" onmouseenter="rtHl(${s.pt ? -1 : s.j})" onmouseleave="rtHl(-1)">
+      ${s.leg ? `<span class="leg tabular-nums">${rtDur(s.leg)}</span>` : ''}
+      <div class="row"><span class="dot">${s.pt ? FXI('anchor') : s.j + 1}</span><span class="ln"></span></div>
+      <div class="tm tabular-nums">${rtHm(s.tm)}</div><b>${fxEsc(s.b)}</b><p>${fxEsc(s.p)}</p></div>`).join('');
+  if (window.lucide && !FX_SSR) lucide.createIcons();
+  if (RT.map) rtDraw(); else if (!FX_SSR && !RT.io) { RT.io = new IntersectionObserver(es => { if (es[0].isIntersecting) { RT.io.disconnect(); RT.io = null; rtInit(); } }, { rootMargin: '300px 0px' }); RT.io.observe($('#rtMap')); }
+}
+function rtInit() {
+  const el = $('#rtGl'); if (!el) return;
+  pierLib().then(() => {
+    if (!document.body.contains(el)) return;
+    RT.styleOk = false;
+    RT.map = new maplibregl.Map({ container: el, style: PR_STYLE, center: [98.5, 7.9], zoom: 9, attributionControl: { compact: true }, cooperativeGestures: true,
+      locale: L({ 'CooperativeGesturesHandler.WindowsHelpText': 'กด Ctrl ค้างไว้แล้วเลื่อนเพื่อซูม', 'CooperativeGesturesHandler.MacHelpText': 'กด ⌘ ค้างไว้แล้วเลื่อนเพื่อซูม', 'CooperativeGesturesHandler.MobileHelpText': 'ใช้สองนิ้วเพื่อเลื่อนแผนที่' }, {}) });
+    RT.map.on('error', () => { if (!RT.styleOk) rtFail(); });
+    RT.map.on('style.load', () => { RT.styleOk = true; const ph = $('#rtPh'); if (ph) ph.classList.add('off'); rtLines(); });
+    rtDraw();
+  }).catch(() => rtFail());
+}
+function rtFail() { const ph = $('#rtPh'); if (ph) { ph.classList.remove('off'); ph.textContent = L('โหลดแผนที่ไม่ได้ · ดูลำดับเกาะได้ด้านล่าง', 'Map unavailable · the stops are listed below'); } const m = $('#rtMap'); if (m) m.classList.add('fail'); }
+const rtGeo = line => ({ type: 'Feature', geometry: { type: 'LineString', coordinates: line.map(q => [q[1], q[0]]) } });
+function rtLines() {
+  if (!RT.map || !RT.styleOk || !RT.R) return;
+  try {
+    const d = rtGeo(RT.R.line), m = RT.map;
+    if (m.getSource('rt')) m.getSource('rt').setData(d);
+    else {
+      m.addSource('rt', { type: 'geojson', data: d });
+      m.addLayer({ id: 'rt-glow', type: 'line', source: 'rt', paint: { 'line-color': '#1f7a8c', 'line-width': 12, 'line-opacity': .16, 'line-blur': 5 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+      m.addLayer({ id: 'rt', type: 'line', source: 'rt', paint: { 'line-color': '#1f7a8c', 'line-width': 3, 'line-dasharray': [2, 1.6] }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+    }
+  } catch (e) { setTimeout(rtLines, 400); }
+}
+function rtDraw() {
+  const m = RT.map, R = RT.R; if (!m || !R) return;
+  RT.mk.forEach(x => x.remove()); RT.mk = [];
+  const pe = document.createElement('div'); pe.innerHTML = `<div class="rt-pier">${PR_ANCHOR}</div>`;
+  RT.mk.push(new maplibregl.Marker({ element: pe, anchor: 'bottom' }).setLngLat([R.pier.ll[1], R.pier.ll[0]]).addTo(m));
+  R.st.forEach((k, j) => {
+    const w = document.createElement('div'), el = document.createElement('div'); w.appendChild(el);
+    el.className = 'rt-stop pr-g'; el.dataset.j = j; el.innerHTML = `<i>${j + 1}</i>${fxEsc(rtNm(k))}`;
+    el.onmouseenter = () => rtHl(j); el.onmouseleave = () => rtHl(-1);
+    el.onclick = () => m.flyTo({ center: [RT_ISL[k][4][1], RT_ISL[k][4][0]], zoom: 13, duration: 1200 });
+    RT.mk.push(new maplibregl.Marker({ element: w, anchor: 'left', offset: [-13, 0] }).setLngLat([RT_ISL[k][4][1], RT_ISL[k][4][0]]).addTo(m));
+  });
+  rtLines(); rtFit(1100); rtSail();
+}
+function rtFit(dur = 900) {
+  const m = RT.map, R = RT.R; if (!m || !R) return;
+  const bb = new maplibregl.LngLatBounds(); R.line.forEach(q => bb.extend([q[1], q[0]]));
+  const small = ($('#rtMap') || {}).clientWidth < 600;
+  m.fitBounds(bb, { padding: small ? { top: 40, bottom: 110, left: 40, right: 120 } : { top: 50, bottom: 96, left: 60, right: 210 }, duration: dur, maxZoom: 12.5 });
+}
+/* a small boat sails the route on a loop (off for reduced motion) */
+function rtSail() {
+  cancelAnimationFrame(RT.anim); const m = RT.map, R = RT.R;
+  if (!m || !R || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!RT.boat || RT.boat._map !== m) { const e = document.createElement('div'); e.innerHTML = `<div class="rt-boat">${RT_SHIP}</div>`; RT.boat = new maplibregl.Marker({ element: e }).setLngLat([R.pier.ll[1], R.pier.ll[0]]).addTo(m); }
+  const Ln = R.line, seg = []; const tot = Ln.slice(1).reduce((a, q, i) => { const d = fxKm(Ln[i], q); seg.push(d); return a + d; }, 0);
+  const T = Math.max(9000, tot * 160), t0 = performance.now();
+  const step = now => {
+    if (!document.body.contains(m.getContainer())) return;
+    let d = ((now - t0) % T) / T * tot, i = 0; while (i < seg.length - 1 && d > seg[i]) { d -= seg[i]; i++; }
+    const f = seg[i] ? d / seg[i] : 0, a = Ln[i], c = Ln[i + 1];
+    RT.boat.setLngLat([a[1] + (c[1] - a[1]) * f, a[0] + (c[0] - a[0]) * f]);
+    RT.anim = requestAnimationFrame(step);
+  };
+  RT.anim = requestAnimationFrame(step);
+}
+function rtHl(j) {
+  $$('.rt-stop').forEach(e => e.classList.toggle('hl', +e.dataset.j === j));
+  $$('.rt-tp').forEach(e => e.classList.toggle('hl', j >= 0 && +e.dataset.j === j));
+}
+function rtSat(btn) { RT.sat = !RT.sat; btn.classList.toggle('on', RT.sat); if (RT.map) { RT.styleOk = false; RT.map.setStyle(RT.sat ? PR_SAT : PR_STYLE); } }
+function rtDrop() {
+  cancelAnimationFrame(RT.anim); if (RT.io) { RT.io.disconnect(); RT.io = null; }
+  if (RT.map) { try { RT.map.remove(); } catch (e) { } }
+  Object.assign(RT, { key: '', map: null, styleOk: false, mk: [], boat: null, R: null });
+}
+function rtMount() {
+  const list = $('#bpProgs'); if (!list || $('#rtBox')) return;
+  const box = document.createElement('div'); box.className = 'rt pr'; box.id = 'rtBox'; box.hidden = true;
+  box.innerHTML = `<div class="rt-h">${FXI('route')}<span>${L('เส้นทางของโปรแกรมนี้', 'Route of this program')}</span></div>
+    <div class="rt-map pr-mapbox" id="rtMap">
+      <div class="pr-gl" id="rtGl" role="region" aria-label="${L('แผนที่เส้นทางทริป', 'Trip route map')}"></div>
+      <div class="rt-ph" id="rtPh">${L('กำลังโหลดแผนที่…', 'Loading map…')}</div>
+      <div class="pr-ov pr-tr">
+        <button type="button" class="pr-mb pr-g" onclick="RT.map && RT.map.zoomIn()" aria-label="${L('ซูมเข้า', 'Zoom in')}">${FXI('plus')}</button>
+        <button type="button" class="pr-mb pr-g" onclick="RT.map && RT.map.zoomOut()" aria-label="${L('ซูมออก', 'Zoom out')}">${FXI('minus')}</button>
+        <button type="button" class="pr-mb pr-g" onclick="rtSat(this)" aria-label="${L('ภาพดาวเทียม', 'Satellite')}">${FXI('satellite')}</button>
+        <button type="button" class="pr-mb pr-g" onclick="rtFit(900)" aria-label="${L('ดูทั้งเส้นทาง', 'Whole route')}">${FXI('maximize-2')}</button>
+      </div>
+      <div class="rt-sum pr-g" id="rtSum"></div>
+    </div>
+    <div class="rt-tl" id="rtTl"></div>
+    <p class="rt-note">${FXI('info')}${L('เส้นทางและเวลาโดยประมาณ · กัปตันอาจสลับลำดับเกาะตามคลื่นลมในวันจริง', 'Approximate route and times · the captain may change the order for the weather on the day')}</p>`;
+  list.after(box);
+}
+{ const _dpp = drawProgPrices; drawProgPrices = function (b, keep) { _dpp(b, keep); try { const ps = bpProgs(b); rtUpdate(b, ps[detailProgram] || ps[0]); } catch (e) { console.warn('[route]', e); } }; }
+{ const _rd2 = renderDetail; renderDetail = function (slug) { rtDrop(); _rd2(slug); try { const b = bySlug(slug); if (!b) return; rtMount(); const ps = bpProgs(b); rtUpdate(b, ps[detailProgram] || ps[0]); } catch (e) { console.warn('[route]', e); } }; }
+if ((VH.hash || '').startsWith('#/boat/')) { try { const b = bySlug(decodeURIComponent(VH.hash.slice(7))); if (b) { rtMount(); const ps = bpProgs(b); rtUpdate(b, ps[detailProgram] || ps[0]); } } catch (e) { } }
+
 /* ---------- start ---------- */
 if (!FX_SSR) {
   addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });

@@ -402,3 +402,55 @@
 .pr-tcard .call { background: #eef3ee; color: #2f6b45; box-shadow: none; }
 .pr-tcard .rot { margin-top: 14px; font-size: 12px; color: var(--pr-mu); }
 @media (prefers-reduced-motion: reduce) { .pr-pin .ring { animation: none; } }
+
+/* =====================================================================
+   Boat page → programs: trip route map + timeline for the picked program
+   (reuses the marina map's .pr-* controls)
+   ===================================================================== */
+#rtBox.rt { container: rt / inline-size; margin-top: 18px; --pr-m: var(--bp-maroon, #70000e); --pr-ink: var(--bp-ink, #231416); --pr-mu: var(--bp-muted, #6b5e60);
+  --pr-gb: rgb(255 255 255 / .82); --pr-blur: blur(22px) saturate(185%); --pr-sh: 0 18px 50px -24px rgb(58 0 7 / .38), 0 2px 8px -4px rgb(35 20 22 / .08);
+  --pr-spec: inset 0 1px 0 rgb(255 255 255 / .95), inset 0 -1px 0 rgb(255 255 255 / .3), inset 0 0 0 1px rgb(255 255 255 / .42); --pr-ease: cubic-bezier(.2, .8, .2, 1); --rt-sea: #1f7a8c; }
+#rtBox[hidden] { display: none; }
+#rtBox svg { display: inline-block; flex: none; }
+.rt-h { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500; color: var(--pr-ink); }
+.rt-h svg { width: 15px; height: 15px; color: var(--rt-sea); }
+.rt .rt-map { position: relative; margin-top: 10px; height: 340px; border-radius: 24px; overflow: hidden; isolation: isolate; background: linear-gradient(160deg, #cfdde4, #e9e2d6); box-shadow: 0 40px 80px -46px rgb(58 0 7 / .6), 0 0 0 1px rgb(255 255 255 / .6); }
+.rt .rt-map.fail .pr-ov, .rt .rt-map.fail .rt-sum { display: none; }
+.rt-ph { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; text-align: center; padding: 24px; font-size: 12.5px; color: var(--pr-mu); transition: opacity .5s; }
+.rt-ph.off { opacity: 0; pointer-events: none; }
+.rt-sum { position: absolute; z-index: 5; left: 12px; bottom: 12px; max-width: calc(100% - 24px); display: flex; align-items: center; gap: 12px; padding: 9px 14px 9px 10px; border-radius: 18px; }
+.rt-sum .ic { width: 34px; height: 34px; border-radius: 12px; background: var(--rt-sea); color: #fff; display: grid; place-items: center; flex: none; }
+.rt-sum .ic svg { width: 17px; height: 17px; }
+.rt-sum b { display: block; font-size: 13px; font-weight: 500; line-height: 1.25; color: var(--pr-ink); }
+.rt-sum span { display: block; font-size: 11px; color: var(--pr-mu); }
+.rt-sum .st { display: flex; gap: 14px; padding-left: 14px; border-left: 1px solid rgb(35 20 22 / .1); white-space: nowrap; }
+.rt-sum .st b { font-size: 15px; }
+.rt-pier { width: 30px; height: 30px; border-radius: 11px 11px 11px 3px; transform: rotate(-45deg); background: var(--bp-maroon, #70000e); display: grid; place-items: center; box-shadow: 0 10px 22px -6px rgb(58 0 7 / .6); }
+.rt-pier svg { transform: rotate(45deg); width: 15px; height: 15px; color: #fff; }
+.rt-stop { display: flex; align-items: center; gap: 7px; padding: 4px 11px 4px 4px; border-radius: 99px; white-space: nowrap; font-size: 12px; font-weight: 500; color: var(--bp-ink, #231416); cursor: pointer; transition: transform .2s cubic-bezier(.2, .8, .2, 1), background .2s, color .2s;
+  background: rgb(255 255 255 / .86); -webkit-backdrop-filter: blur(22px) saturate(185%); backdrop-filter: blur(22px) saturate(185%); box-shadow: 0 10px 26px -12px rgb(58 0 7 / .4), inset 0 0 0 1px rgb(255 255 255 / .5); }
+.rt-stop i { font-style: normal; width: 22px; height: 22px; border-radius: 50%; background: #1f7a8c; color: #fff; display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+.rt-stop:hover, .rt-stop.hl { transform: scale(1.06); background: #231416; color: #fff; }
+.rt-boat { width: 28px; height: 28px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 6px 16px -4px rgb(0 0 0 / .4), 0 0 0 3px rgb(31 122 140 / .25); }
+.rt-boat svg { width: 15px; height: 15px; color: #1f7a8c; display: inline-block; }
+/* timeline */
+.rt-tl { display: flex; margin-top: 14px; overflow-x: auto; padding: 18px 2px 8px; scrollbar-width: thin; }
+.rt-tp { flex: 1 0 132px; position: relative; padding-right: 10px; }
+.rt-tp .row { display: flex; align-items: center; gap: 6px; }
+.rt-tp .dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 11px; font-weight: 600; color: #fff; background: var(--rt-sea); box-shadow: 0 0 0 3px #fff, 0 6px 14px -6px rgb(31 122 140 / .9); }
+.rt-tp.pt .dot { background: var(--pr-m); box-shadow: 0 0 0 3px #fff, 0 6px 14px -6px rgb(112 0 14 / .9); }
+.rt-tp .dot svg { width: 13px; height: 13px; }
+.rt-tp .ln { flex: 1; height: 2px; background: repeating-linear-gradient(90deg, var(--rt-sea) 0 6px, transparent 6px 11px); opacity: .45; }
+.rt-tp:last-child .ln { display: none; }
+.rt-tp .leg { position: absolute; top: -4px; right: calc(100% - 22px); transform: translate(50%, -100%); font-size: 10px; color: var(--pr-mu); white-space: nowrap; }
+.rt-tp:first-child .leg { display: none; }
+.rt-tp .tm { margin-top: 8px; font-size: 12px; font-weight: 500; color: var(--pr-ink); }
+.rt-tp b { display: block; font-size: 13px; font-weight: 500; line-height: 1.25; margin-top: 1px; color: var(--pr-ink); }
+.rt-tp p { margin: 2px 0 0; font-size: 11px; color: var(--pr-mu); line-height: 1.45; }
+.rt-tp.hl b { color: var(--rt-sea); }
+.rt-note { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 11px; color: var(--pr-mu); }
+.rt-note svg { width: 12px; height: 12px; }
+@container rt (max-width: 600px) {
+  .rt .rt-map { height: 300px; border-radius: 22px; }
+  .rt-sum .st { display: none; }
+}
