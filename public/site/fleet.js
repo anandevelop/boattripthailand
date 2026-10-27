@@ -721,6 +721,32 @@ function rtMount() {
 { const _rd2 = renderDetail; renderDetail = function (slug) { rtDrop(); _rd2(slug); try { const b = bySlug(slug); if (!b) return; rtMount(); const ps = bpProgs(b); rtUpdate(b, ps[detailProgram] || ps[0]); } catch (e) { console.warn('[route]', e); } }; }
 if ((VH.hash || '').startsWith('#/boat/')) { try { const b = bySlug(decodeURIComponent(VH.hash.slice(7))); if (b) { rtMount(); const ps = bpProgs(b); rtUpdate(b, ps[detailProgram] || ps[0]); } } catch (e) { } }
 
+/* =====================================================================
+   Images · pages that are not on screen (the SPA keeps every view in the HTML) must not download:
+   the server render parks their <img> sources in data-src, the browser puts them back when the view opens
+   ===================================================================== */
+const FX_VIEWS = '[id^="view-"]';
+function fxSsrDone() { fxPark(); }   // called by site-render.ts after the server render
+/* run right after anything draws into a hidden view: the browser only starts the download after the current task, so it never starts */
+function fxPark() {
+  document.querySelectorAll(FX_VIEWS).forEach(v => {
+    if (!/(^|\s)hidden(\s|$)/.test(v.getAttribute('class') || '')) return;
+    v.querySelectorAll('img[src]').forEach(im => { im.setAttribute('data-src', im.getAttribute('src')); im.removeAttribute('src'); if (im.getAttribute('srcset')) { im.setAttribute('data-srcset', im.getAttribute('srcset')); im.removeAttribute('srcset'); } });
+  });
+}
+function fxWake(root) {
+  (root || document).querySelectorAll('img[data-src]').forEach(im => { if (im.closest(FX_VIEWS + '.hidden')) return; im.src = im.dataset.src; im.removeAttribute('data-src'); if (im.dataset.srcset) { im.srcset = im.dataset.srcset; im.removeAttribute('data-srcset'); } });
+}
+if (!FX_SSR) {
+  { const _sv = showView; showView = function (name) { _sv(name); try { fxWake($('#view-' + name)); } catch (e) { } }; }
+  fxPark(); fxWake();
+  // every renderer that can draw into a view that is not on screen
+  ['renderAll', 'renderBoats', 'renderHero', 'renderCats', 'renderActs', 'renderRoutes', 'renderRecent', 'renderHomeBlog', 'renderTeam', 'renderTypeBand', 'renderSmartTeaser'].forEach(n => {
+    const f = globalThis[n]; if (typeof f !== 'function') return;
+    try { globalThis[n] = function () { const r = f.apply(this, arguments); fxPark(); return r; }; } catch (e) { }
+  });
+}
+
 /* ---------- start ---------- */
 if (!FX_SSR) {
   addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
@@ -728,5 +754,6 @@ if (!FX_SSR) {
   try { if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); } catch (e) { }
 }
 { const g = $('#boatGrid'); if (g) { g.className = 'fx-grid mt-6'; try { renderBoats(); } catch (e) { } } }
+if (!FX_SSR) fxPark();
 updateCompareUI();
 if ((VH.hash || '').startsWith('#/fleet')) { renderFleetPage(); if (typeof afterRoute === 'function') afterRoute(); }

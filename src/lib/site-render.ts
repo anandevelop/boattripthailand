@@ -167,7 +167,7 @@ function run(a: NonNullable<typeof assets>, url: URL, data: SiteData, page: Reco
   a.app.runInContext(ctx, { timeout: 5000 });
   a.fleet.runInContext(ctx, { timeout: 5000 });
   for (let round = 0; round < 5 && timers.length; round++) { const batch = timers.splice(0).sort((x, y) => x.ms - y.ms); for (const t of batch) { try { t.fn(); } catch (e) { console.error('[ssr timer]', e); } } }
-  vm.runInContext('typeof afterRoute === "function" && afterRoute(); typeof icons === "function" && icons();', ctx);
+  vm.runInContext('typeof afterRoute === "function" && afterRoute(); typeof icons === "function" && icons(); typeof fxSsrDone === "function" && fxSsrDone();', ctx);
   document.documentElement.setAttribute('lang', lang);
   const dataTag = document.getElementById('btt-data');
   if (dataTag) dataTag.textContent = dataJs;

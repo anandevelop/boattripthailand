@@ -18,6 +18,12 @@ const config = {
       { source: '/:path*', headers: securityHeaders },
       { source: '/admin/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }, { key: 'Cache-Control', value: 'no-store' }] },
       { source: '/boats/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, immutable' }] },
+      // site photos rarely change: a month in the browser, refreshed in the background after that
+      { source: '/img/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=604800' }] },
+      { source: '/brand/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=604800' }] },
+      // site scripts/styles carry ?v= but CSS edits do not change it: an hour, then refreshed in the background
+      { source: '/site/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=604800' }] },
+      { source: '/site/vendor/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
     ];
   },
 };
