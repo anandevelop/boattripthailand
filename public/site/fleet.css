@@ -684,10 +684,8 @@ body > footer svg.bi { color: #70000e !important; }
 body > footer .flex.gap-2.mt-4 a { color: #70000e !important; }
 body > footer .flex.gap-2.mt-4 a svg.bi { width: 17px !important; height: 17px !important; transition: color .25s, transform .25s; }
 body > footer .flex.gap-2.mt-4 a:hover svg.bi { color: #fff !important; transform: scale(1.06); }
-/* booking contact cards: the tile takes the brand colour, the mark is white */
+/* booking contact cards: every tile in the site's maroon (like the phone tile), white marks */
 .ct-card svg.bi { color: #fff !important; }
-.ct-card :has(> svg.bi-line) { background: linear-gradient(160deg, #22d46b, #06C755 60%, #04a647) !important; box-shadow: 0 10px 22px -10px rgb(6 199 85 / .7), inset 0 1px 0 rgb(255 255 255 / .3) !important; }
-.ct-card :has(> svg.bi-whatsapp) { background: linear-gradient(160deg, #3ee27e, #25D366 60%, #1aae52) !important; box-shadow: 0 10px 22px -10px rgb(37 211 102 / .7), inset 0 1px 0 rgb(255 255 255 / .3) !important; }
 body > footer .flex.gap-2.mt-4 a:hover:has(.bi-facebook) { background: #0866FF !important; }
 body > footer .flex.gap-2.mt-4 a:hover:has(.bi-instagram) { background: linear-gradient(45deg, #F58529, #DD2A7B 55%, #8134AF) !important; }
 body > footer .flex.gap-2.mt-4 a:hover:has(.bi-youtube) { background: #FF0000 !important; }
