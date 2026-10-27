@@ -787,3 +787,7 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
   .cx-main { flex-direction: row; align-items: center; }
   .cx-form { padding: 22px 16px; border-radius: 26px; }
 }
+
+/* booking form: privacy notice + marketing consent */
+.bf-note a { color: #70000e; text-decoration: underline; text-underline-offset: 2px; }
+.bf-check small { color: #8a7d7f; font-size: .92em; }

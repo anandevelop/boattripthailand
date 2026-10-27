@@ -331,6 +331,19 @@ function fxFormExtras(form) {
   ph.parentNode.insertBefore(wrap, ph); wrap.append(sel, ph);
   sel.onchange = () => { const rest = ph.value.replace(/^\+\d{1,4}\s*/, ''); ph.value = (sel.value ? sel.value + ' ' : '') + rest; ph.focus(); };
   // the reply language is the language the site is open in (the lead's lang field)
+  fxConsentText(form);
+}
+/* PDPA wording: the notice says what the details are used for (contract basis, no tick needed) and links the policy;
+   the optional box is a separate, specific consent for marketing — who, what, which channels, and that it can be withdrawn */
+TH_CACHE['f.notice2'] = 'เมื่อกด "ส่งคำขอจอง" ทีมขายจะใช้ชื่อ เบอร์ติดต่อ และรายละเอียดทริปนี้ เพื่อติดต่อกลับทาง WhatsApp / LINE / โทรศัพท์ เช็กคิวเรือ และเสนอราคาให้คุณ อ่านรายละเอียดใน<a href="#/privacy">นโยบายความเป็นส่วนตัว</a>';
+I18N.en['f.notice2'] = 'When you press "Send booking request", our sales team uses your name, contact details and trip details to reply by WhatsApp, LINE or phone, check availability and send you a quote. See our <a href="#/privacy">Privacy Policy</a>.';
+TH_CACHE['f.mkt2'] = 'ฉันยินยอมให้ Boat Trip Thailand ส่งข่าวสาร โปรโมชั่น และคิวเรือว่างช่วงพิเศษ ทาง LINE WhatsApp หรืออีเมล <small>(ไม่บังคับ · ถอนความยินยอมได้ทุกเมื่อ)</small>';
+I18N.en['f.mkt2'] = 'I agree that Boat Trip Thailand may send me news, offers and last-minute availability by LINE, WhatsApp or email <small>(optional · you can withdraw at any time)</small>';
+function fxConsentText(form) {
+  const sw = (el, k) => { if (!el) return; el.removeAttribute('data-i18n'); el.removeAttribute('data-th'); el.setAttribute('data-i18n-html', k); el.innerHTML = LANG === 'en' ? I18N.en[k] : TH_CACHE[k]; };
+  sw(form.querySelector('.bf-note[data-i18n="f.consent"]'), 'f.notice2');
+  sw(form.querySelector('.bf-check [data-i18n="f.marketing"]'), 'f.mkt2');
+  if (typeof realLinks === 'function') realLinks(form);
 }
 { const _bf = buildForm; buildForm = function (wrap) { const f = _bf(wrap); try { fxFormExtras(f); } catch (e) { } return f; }; }
 
