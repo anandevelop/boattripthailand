@@ -780,6 +780,200 @@ function fxBrandIcons(root) {
 }
 if (typeof lucide !== 'undefined' && lucide.createIcons && !lucide._fxBrand) { const _ci = lucide.createIcons; lucide.createIcons = function () { const r = _ci.apply(this, arguments); try { fxBrandIcons(); } catch (e) { } return r; }; lucide._fxBrand = 1; }
 
+/* =====================================================================
+   Privacy policy (PDPA) — written against what the system really collects:
+   booking form (customers + leads tables), attribution sent with a lead (btt_attr), IP / browser for spam
+   limits, the cookieless page counter (/api/t), browser storage, LINE alerts to sales, optional GA4 / Meta
+   (consent), Google Fonts / map tiles, email domain check. Replaces legalDocs().privacy from app.js.
+   ===================================================================== */
+const PV_UPDATED = ['27 ตุลาคม 2569', '27 October 2026'];
+function fxPrivacy() {
+  const E = LANG === 'en', T = (th, en) => E ? en : th, ul = a => `<ul>${a.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  const mail = `<a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>`;
+  const table = (head, rows) => `<div class="legal-table"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  return {
+    title: T('นโยบายความเป็นส่วนตัว', 'Privacy Policy'),
+    intro: T(`${COMPANY} ("บริษัท" หรือ "เรา") ให้ความสำคัญกับข้อมูลส่วนบุคคลของคุณ นโยบายนี้อธิบายว่าเราเก็บข้อมูลอะไร เก็บอย่างไร ใช้เพื่ออะไร ส่งต่อให้ใคร เก็บไว้นานแค่ไหน และคุณมีสิทธิอะไรบ้าง เมื่อคุณใช้เว็บไซต์ boattripthailand.com ส่งคำขอจอง หรือติดต่อเราทางโทรศัพท์ LINE WhatsApp หรืออีเมล ตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA)`,
+      `${COMPANY} ("we", "us") cares about your personal data. This policy explains what we collect, how, why, who we share it with, how long we keep it and what your rights are when you use boattripthailand.com, send a booking request or contact us by phone, LINE, WhatsApp or email, under Thailand's Personal Data Protection Act B.E. 2562 (PDPA).`),
+    secs: [
+      ['controller', T('ผู้ควบคุมข้อมูลส่วนบุคคล', 'Data controller'), `<p>${T(`${COMPANY} ใบอนุญาตประกอบธุรกิจนำเที่ยวเลขที่ ${SET.tat} ที่อยู่ ${ADDRESS_TH} เป็นผู้ควบคุมข้อมูลส่วนบุคคลตามนโยบายนี้ ติดต่อเรื่องข้อมูลส่วนบุคคลได้ที่ ${mail} หรือโทร ${SET.phone} (ทุกวัน 09:00–21:00 น.)`,
+        `${COMPANY}, TAT licence ${SET.tat}, ${ADDRESS_EN}, Thailand, is the data controller. For anything about your personal data contact ${mail} or call ${SET.phone} (daily 09:00–21:00 Thai time).`)}</p>`],
+
+      ['collect', T('ข้อมูลที่เราเก็บ', 'Data we collect'),
+        `<h3>${T('1. ข้อมูลที่คุณกรอกในฟอร์มขอใบเสนอราคา / จองเรือ', '1. What you enter in the quote / booking form')}</h3>` + ul(E ? [
+          '<b>Name</b> and <b>phone number or LINE ID</b> (required).',
+          '<b>Email</b> and <b>WhatsApp number</b> (optional).',
+          '<b>What you are interested in</b> – boat, program or activity, travel date, time slot, number of adults and children.',
+          '<b>Your message</b> – anything you write, e.g. a celebration, pick-up hotel or a food allergy.',
+          '<b>Your choice about offers</b> – whether you agreed to receive promotions, and when.',
+        ] : [
+          '<b>ชื่อ-นามสกุล</b> และ <b>เบอร์โทรหรือ LINE ID</b> (จำเป็น)',
+          '<b>อีเมล</b> และ <b>เบอร์ WhatsApp</b> (ไม่บังคับ)',
+          '<b>สิ่งที่คุณสนใจ</b> – เรือ โปรแกรมหรือกิจกรรม วันที่เดินทาง รอบเวลา จำนวนผู้ใหญ่และเด็ก',
+          '<b>ข้อความของคุณ</b> – สิ่งที่คุณเขียนมา เช่น ฉลองวันเกิด โรงแรมที่ให้ไปรับ หรืออาหารที่แพ้',
+          '<b>การเลือกรับข่าวสาร</b> – คุณยินยอมรับข่าวสารโปรโมชั่นหรือไม่ และยินยอมเมื่อใด',
+        ])
+        + `<h3>${T('2. ข้อมูลที่ได้ระหว่างดูแลการจองของคุณ', '2. What we receive while arranging your trip')}</h3>` + ul(E ? [
+          '<b>Conversations</b> with our team by phone, LINE, WhatsApp or email, and notes our team makes about your request.',
+          '<b>Passenger details for insurance</b> – names and, where the insurer or authorities require it, passport or ID numbers and nationality.',
+          '<b>Payment records</b> – bank transfer slips and references. We never ask for or keep full card numbers; card payments are handled by the bank or payment provider.',
+          '<b>Pick-up and service details</b> – hotel, flight or arrival time, and extra services you book.',
+        ] : [
+          '<b>บทสนทนา</b> กับทีมงานทางโทรศัพท์ LINE WhatsApp หรืออีเมล และบันทึกของทีมงานเกี่ยวกับคำขอของคุณ',
+          '<b>ข้อมูลผู้โดยสารเพื่อทำประกันภัย</b> – ชื่อ และเลขพาสปอร์ตหรือบัตรประชาชนและสัญชาติ เมื่อบริษัทประกันหรือหน่วยงานรัฐกำหนด',
+          '<b>หลักฐานการชำระเงิน</b> – สลิปโอนเงินและเลขอ้างอิง เราไม่ขอและไม่เก็บเลขบัตรเครดิตเต็ม การชำระด้วยบัตรดำเนินการโดยธนาคารหรือผู้ให้บริการชำระเงิน',
+          '<b>ข้อมูลการรับส่งและบริการเสริม</b> – โรงแรม เวลาเดินทางถึง และบริการเสริมที่คุณจอง',
+        ])
+        + `<h3>${T('3. ข้อมูลที่ระบบบันทึกพร้อมคำขอจองโดยอัตโนมัติ', '3. Recorded automatically with your request')}</h3>` + ul(E ? [
+          '<b>IP address and browser / device type</b> – to stop spam and repeated automated requests, and to protect the form.',
+          '<b>How you found us</b> – the referring website, landing page, campaign tags (utm_*), ad click IDs (gclid, fbclid), number of visits and pages viewed, and up to 8 boats you looked at. This is kept in your own browser (see section 4) and sent only together with a request you choose to send.',
+          '<b>Site language</b> you used, which is also the language our team replies in.',
+        ] : [
+          '<b>หมายเลข IP และประเภทเบราว์เซอร์ / อุปกรณ์</b> – เพื่อป้องกันสแปมและการส่งฟอร์มซ้ำ ๆ โดยโปรแกรมอัตโนมัติ',
+          '<b>ช่องทางที่คุณรู้จักเรา</b> – เว็บไซต์ที่ลิงก์มา หน้าแรกที่เข้า แท็กแคมเปญ (utm_*) รหัสคลิกโฆษณา (gclid, fbclid) จำนวนครั้งที่เข้าเว็บ จำนวนหน้าที่ดู และเรือที่ดูล่าสุดไม่เกิน 8 ลำ ข้อมูลนี้เก็บไว้ในเบราว์เซอร์ของคุณเอง (ดูข้อ 4) และถูกส่งมาพร้อมคำขอจองที่คุณกดส่งเท่านั้น',
+          '<b>ภาษาของเว็บไซต์</b> ที่คุณใช้ ซึ่งเป็นภาษาที่ทีมงานใช้ติดต่อกลับ',
+        ])
+        + `<h3>${T('4. ข้อมูลในเบราว์เซอร์และสถิติการเข้าชม', '4. Browser storage and visit statistics')}</h3>` + ul(E ? [
+          '<b>Saved in your browser only</b> – your cookie choices, favourite boats, recently viewed boats and the "how you found us" data above. We cannot read these unless you send a request. Details are on the <a href="#/cookies">Cookie Preferences</a> page.',
+          '<b>Visit statistics without cookies</b> – for each page view we count the page, the traffic source, the device type (mobile / desktop) and the language. No cookie, no visitor ID and no IP address is stored for these statistics.',
+          '<b>Google Analytics and Meta Pixel</b> – only if you accept analytics or marketing cookies. These services set their own cookies (_ga, _fbp, …).',
+        ] : [
+          '<b>เก็บในเบราว์เซอร์ของคุณเท่านั้น</b> – การตั้งค่าคุกกี้ เรือที่กดถูกใจ เรือที่ดูล่าสุด และข้อมูลช่องทางที่รู้จักเราตามข้อ 3 เราไม่สามารถอ่านข้อมูลเหล่านี้ได้ เว้นแต่คุณส่งคำขอจอง ดูรายละเอียดที่หน้า <a href="#/cookies">การตั้งค่าคุกกี้</a>',
+          '<b>สถิติการเข้าชมแบบไม่ใช้คุกกี้</b> – ต่อการเปิดหน้าหนึ่งครั้ง เรานับเพียงหน้าที่เปิด ช่องทางที่มา ประเภทอุปกรณ์ (มือถือ / คอมพิวเตอร์) และภาษา ไม่มีคุกกี้ ไม่มีรหัสผู้เข้าชม และไม่บันทึกหมายเลข IP',
+          '<b>Google Analytics และ Meta Pixel</b> – ทำงานเฉพาะเมื่อคุณยอมรับคุกกี้วิเคราะห์หรือคุกกี้การตลาด บริการเหล่านี้ตั้งคุกกี้ของตัวเอง (เช่น _ga, _fbp)',
+        ])],
+
+      ['sensitive', T('ข้อมูลอ่อนไหว', 'Sensitive data'), `<p>${T('เราไม่ขอข้อมูลอ่อนไหว เช่น ข้อมูลสุขภาพ ศาสนา หรือความเชื่อ แต่หากคุณแจ้งเองเพื่อให้เราดูแลทริปได้ถูกต้อง เช่น อาหารที่แพ้ อาการเมาเรือ การตั้งครรภ์ หรือความต้องการด้านการเคลื่อนไหว เราจะใช้ข้อมูลนั้นเพื่อจัดบริการและความปลอดภัยบนเรือเท่านั้น โดยถือว่าคุณให้ความยินยอมโดยชัดแจ้งเมื่อแจ้งข้อมูลนั้นมา และจะส่งต่อเฉพาะกัปตัน ลูกเรือ หรือผู้ให้บริการที่ต้องใช้ข้อมูลนั้น คุณขอให้ลบได้ทุกเมื่อ',
+        'We do not ask for sensitive data such as health, religion or beliefs. If you tell us something so we can look after you properly – a food allergy, seasickness, pregnancy or mobility needs – we use it only to arrange the service and keep you safe on board. You give your explicit consent by telling us, we share it only with the captain, crew or provider who needs it, and you can ask us to delete it at any time.')}</p>`],
+
+      ['use', T('วัตถุประสงค์และฐานทางกฎหมาย', 'Why we use your data and on what legal basis'), table(E ? ['Purpose', 'Data used', 'Legal basis'] : ['วัตถุประสงค์', 'ข้อมูลที่ใช้', 'ฐานทางกฎหมาย'], E ? [
+        ['Reply to your request, quote prices, check availability and arrange your charter', 'Form data, conversations, booking details', 'Contract (steps before and under a contract)'],
+        ['Send your request to our sales team immediately (LINE alert to the team)', 'Name, phone, boat, date, guests', 'Contract'],
+        ['Insure passengers and follow maritime, tourism and immigration rules', 'Passenger names, passport / ID numbers', 'Legal obligation'],
+        ['Keep accounting and tax records', 'Payment records, booking details', 'Legal obligation'],
+        ['Prioritise and follow up requests; know which channels and campaigns bring customers', 'Request details, how you found us, visits, boats viewed', 'Legitimate interest'],
+        ['Stop spam and abuse of the booking form', 'IP address, browser type, email domain, links in messages', 'Legitimate interest'],
+        ['Improve the website with visit statistics without cookies', 'Page, source, device type, language (no identity)', 'Legitimate interest'],
+        ['Google Analytics; measure ads with Meta (Pixel and server-side events)', 'Cookies; for Meta also email and phone in hashed form, IP, browser, ad click ID', 'Consent (cookie settings)'],
+        ['Send offers and promotions', 'Name, phone, email, LINE / WhatsApp', 'Consent – withdraw at any time'],
+      ] : [
+        ['ตอบคำขอ เสนอราคา เช็กคิว และจัดทริปเช่าเรือ', 'ข้อมูลในฟอร์ม บทสนทนา รายละเอียดการจอง', 'ฐานสัญญา (ก่อนและระหว่างทำสัญญา)'],
+        ['ส่งคำขอของคุณถึงทีมขายทันที (แจ้งเตือนผ่าน LINE ของทีม)', 'ชื่อ เบอร์โทร เรือ วันที่ จำนวนคน', 'ฐานสัญญา'],
+        ['ทำประกันภัยผู้โดยสาร และปฏิบัติตามกฎหมายการเดินเรือ การท่องเที่ยว และคนเข้าเมือง', 'ชื่อผู้โดยสาร เลขพาสปอร์ต / บัตรประชาชน', 'ฐานหน้าที่ตามกฎหมาย'],
+        ['จัดทำบัญชีและภาษี', 'หลักฐานการชำระเงิน รายละเอียดการจอง', 'ฐานหน้าที่ตามกฎหมาย'],
+        ['จัดลำดับและติดตามคำขอ และดูว่าช่องทาง / แคมเปญใดนำลูกค้ามา', 'รายละเอียดคำขอ ช่องทางที่รู้จักเรา จำนวนครั้งที่เข้าเว็บ เรือที่ดู', 'ฐานประโยชน์โดยชอบด้วยกฎหมาย'],
+        ['ป้องกันสแปมและการใช้ฟอร์มจองในทางที่ผิด', 'หมายเลข IP ประเภทเบราว์เซอร์ โดเมนอีเมล ลิงก์ในข้อความ', 'ฐานประโยชน์โดยชอบด้วยกฎหมาย'],
+        ['ปรับปรุงเว็บไซต์ด้วยสถิติการเข้าชมแบบไม่ใช้คุกกี้', 'หน้า ช่องทางที่มา ประเภทอุปกรณ์ ภาษา (ไม่ระบุตัวตน)', 'ฐานประโยชน์โดยชอบด้วยกฎหมาย'],
+        ['Google Analytics และวัดผลโฆษณากับ Meta (Pixel และการส่งข้อมูลจากเซิร์ฟเวอร์)', 'คุกกี้ และสำหรับ Meta: อีเมลและเบอร์โทรในรูปแบบเข้ารหัสทางเดียว (hash) IP เบราว์เซอร์ รหัสคลิกโฆษณา', 'ฐานความยินยอม (การตั้งค่าคุกกี้)'],
+        ['ส่งข่าวสารและโปรโมชั่น', 'ชื่อ เบอร์โทร อีเมล LINE / WhatsApp', 'ฐานความยินยอม ยกเลิกได้ทุกเมื่อ'],
+      ]) + `<p>${T('หากคุณไม่ให้ข้อมูลที่จำเป็น (ชื่อและช่องทางติดต่อ) เราจะไม่สามารถติดต่อกลับหรือจัดการจองให้ได้ เราไม่ใช้ข้อมูลของคุณตัดสินใจโดยอัตโนมัติที่มีผลทางกฎหมายต่อคุณ การจัดลำดับคำขอใช้เพื่อให้ทีมงานตอบได้เร็วขึ้นเท่านั้น',
+        'If you do not give the required details (a name and a way to reach you) we cannot reply or arrange a booking. We make no automated decisions with legal effect on you; request scoring only helps our team reply sooner.')}</p>`],
+
+      ['share', T('การเปิดเผยข้อมูล', 'Who we share data with'), `<p>${T('เราไม่ขายข้อมูลส่วนบุคคล เราส่งต่อเฉพาะข้อมูลที่จำเป็นให้แก่:', 'We never sell personal data. We share only what is needed with:')}</p>` + ul(E ? [
+        '<b>Boat owners, captains and crew</b> operating your charter, and <b>providers of extra services</b> you book (transfers, catering, DJ, guides).',
+        '<b>Insurance companies</b> covering passengers.',
+        '<b>Banks and payment providers</b>.',
+        '<b>Service providers that run our systems</b>, only on our instructions: server and database hosting; LINE (alerts to our sales team and LINE Official Account chats); WhatsApp / Meta when you chat with us there; email providers.',
+        '<b>Google and Meta</b> for analytics and ad measurement – <b>only with your consent</b>.',
+        '<b>Services that load parts of the page</b> and therefore see your IP address and browser: Google Fonts (typefaces) and CARTO / Esri (map tiles on boat pages).',
+        '<b>Authorities</b> such as the Marine Department, Tourism Department, police or courts when the law requires it.',
+      ] : [
+        '<b>เจ้าของเรือ กัปตัน และลูกเรือ</b> ที่ให้บริการทริปของคุณ และ <b>ผู้ให้บริการเสริม</b> ที่คุณจอง (รถรับส่ง อาหาร ดีเจ ไกด์)',
+        '<b>บริษัทประกันภัย</b> ที่คุ้มครองผู้โดยสาร',
+        '<b>ธนาคารและผู้ให้บริการชำระเงิน</b>',
+        '<b>ผู้ให้บริการระบบของเรา</b> ซึ่งทำงานตามคำสั่งของเราเท่านั้น: ผู้ให้บริการเซิร์ฟเวอร์และฐานข้อมูล, LINE (แจ้งเตือนทีมขายและแชท LINE Official Account), WhatsApp / Meta เมื่อคุณแชทกับเราผ่านช่องทางนั้น, ผู้ให้บริการอีเมล',
+        '<b>Google และ Meta</b> เพื่อการวิเคราะห์และวัดผลโฆษณา – <b>เฉพาะเมื่อคุณให้ความยินยอม</b>',
+        '<b>บริการที่โหลดส่วนประกอบของหน้าเว็บ</b> ซึ่งจะเห็นหมายเลข IP และเบราว์เซอร์ของคุณ: Google Fonts (ตัวอักษร) และ CARTO / Esri (ภาพแผนที่ในหน้าเรือ)',
+        '<b>หน่วยงานรัฐ</b> เช่น กรมเจ้าท่า กรมการท่องเที่ยว ตำรวจ หรือศาล เมื่อกฎหมายกำหนด',
+      ]) + `<p>${T('ระบบแปลภาษาอัตโนมัติของเว็บไซต์ใช้กับเนื้อหาบทความและข้อมูลเรือเท่านั้น ไม่มีการส่งข้อมูลส่วนบุคคลของลูกค้า', 'The automatic translation used on this website handles articles and boat information only; no customer data is sent to it.')}</p>`],
+
+      ['transfer', T('การส่งข้อมูลไปต่างประเทศ', 'International transfers'), `<p>${T('ผู้ให้บริการบางราย เช่น LINE, Meta (WhatsApp, Facebook), Google, CARTO และ Esri อาจเก็บหรือประมวลผลข้อมูลนอกประเทศไทย เราใช้ผู้ให้บริการที่มีมาตรฐานการคุ้มครองข้อมูลที่เหมาะสม และส่งข้อมูลตามเงื่อนไขของมาตรา 28 และ 29 แห่ง PDPA เช่น เพื่อปฏิบัติตามสัญญากับคุณ ด้วยความยินยอมของคุณ หรือภายใต้ข้อกำหนดคุ้มครองข้อมูลของผู้ให้บริการ',
+        'Some providers, such as LINE, Meta (WhatsApp, Facebook), Google, CARTO and Esri, may store or process data outside Thailand. We use providers with appropriate data protection standards and transfer data under sections 28 and 29 of the PDPA – to perform our contract with you, with your consent, or under the provider\'s data protection terms.')}</p>`],
+
+      ['retention', T('ระยะเวลาเก็บข้อมูล', 'How long we keep data'), table(E ? ['Data', 'How long'] : ['ข้อมูล', 'ระยะเวลา'], E ? [
+        ['Requests that did not become a booking', '2 years after our last contact with you'],
+        ['Bookings, payment and accounting records', '5 years after the trip (accounting and tax law)'],
+        ['Passenger passport / ID numbers', 'Until the insurance and legal needs of the trip end, then deleted'],
+        ['Consent to offers', 'Until you withdraw it'],
+        ['IP address and browser type sent with a request', 'Kept with that request, for the same period'],
+        ['Visit statistics without cookies', 'No personal data – kept as totals'],
+        ['Data in your browser', 'Until you clear it, or for the period shown on the Cookie Preferences page'],
+      ] : [
+        ['คำขอที่ไม่ได้เกิดการจอง', '2 ปีนับจากการติดต่อครั้งล่าสุด'],
+        ['ข้อมูลการจอง หลักฐานการชำระเงิน และเอกสารบัญชี', '5 ปีนับจากวันเดินทาง (ตามกฎหมายบัญชีและภาษี)'],
+        ['เลขพาสปอร์ต / บัตรประชาชนของผู้โดยสาร', 'จนสิ้นสุดความจำเป็นด้านประกันภัยและกฎหมายของทริปนั้น แล้วลบ'],
+        ['ความยินยอมรับข่าวสาร', 'จนกว่าคุณจะถอนความยินยอม'],
+        ['หมายเลข IP และประเภทเบราว์เซอร์ที่ส่งมาพร้อมคำขอ', 'เก็บร่วมกับคำขอนั้นตามระยะเวลาเดียวกัน'],
+        ['สถิติการเข้าชมแบบไม่ใช้คุกกี้', 'ไม่มีข้อมูลส่วนบุคคล เก็บเป็นยอดรวม'],
+        ['ข้อมูลในเบราว์เซอร์ของคุณ', 'จนกว่าคุณจะลบ หรือตามระยะเวลาในหน้าการตั้งค่าคุกกี้'],
+      ]) + `<p>${T('เมื่อพ้นระยะเวลา เราจะลบหรือทำให้ข้อมูลไม่สามารถระบุตัวตนได้ เว้นแต่ต้องเก็บไว้เพื่อการใช้สิทธิเรียกร้องตามกฎหมาย', 'After these periods we delete or anonymise the data, unless we need it to establish or defend legal claims.')}</p>`],
+
+      ['rights', T('สิทธิของคุณ', 'Your rights'), ul(E ? [
+        '<b>Access</b> your data and get a copy, and ask how we obtained it.',
+        '<b>Correct</b> data that is wrong or incomplete.',
+        '<b>Delete</b> or anonymise your data.',
+        '<b>Restrict</b> or <b>object</b> to processing, including processing based on legitimate interest and direct marketing.',
+        '<b>Data portability</b> – receive your data in a common format or have it sent to someone else.',
+        '<b>Withdraw consent</b> at any time – for offers, tell us or reply "stop"; for cookies, change the Cookie Preferences page. Withdrawing does not affect what was done before.',
+        '<b>Complain</b> to the Office of the Personal Data Protection Committee (PDPC).',
+      ] : [
+        '<b>ขอเข้าถึง</b>และขอรับสำเนาข้อมูล รวมถึงขอทราบว่าเราได้ข้อมูลมาอย่างไร',
+        '<b>ขอแก้ไข</b>ข้อมูลที่ไม่ถูกต้องหรือไม่ครบถ้วน',
+        '<b>ขอลบ</b>หรือทำให้ข้อมูลไม่สามารถระบุตัวตนได้',
+        '<b>ขอระงับ</b>หรือ<b>คัดค้าน</b>การใช้ข้อมูล รวมถึงการใช้ตามฐานประโยชน์โดยชอบด้วยกฎหมายและการตลาดแบบตรง',
+        '<b>ขอรับหรือขอให้โอนข้อมูล</b>ในรูปแบบที่ใช้กันทั่วไป',
+        '<b>ถอนความยินยอม</b>ได้ทุกเมื่อ – สำหรับข่าวสาร แจ้งเราหรือตอบกลับว่า "ยกเลิก" สำหรับคุกกี้ เปลี่ยนได้ที่หน้าการตั้งค่าคุกกี้ การถอนความยินยอมไม่กระทบสิ่งที่ทำไปก่อนหน้า',
+        '<b>ร้องเรียน</b>ต่อสำนักงานคณะกรรมการคุ้มครองข้อมูลส่วนบุคคล (สคส.)',
+      ]) + `<p>${T(`ส่งคำขอได้ที่ ${mail} หรือทาง LINE / โทรศัพท์ เราอาจขอข้อมูลเพื่อยืนยันตัวตนก่อนดำเนินการ และจะตอบภายใน 30 วันโดยไม่มีค่าใช้จ่าย หากเราปฏิเสธคำขอตามที่กฎหมายอนุญาต เราจะแจ้งเหตุผลให้ทราบ`,
+        `Send requests to ${mail}, or via LINE or phone. We may ask you to confirm your identity first, and we reply within 30 days free of charge. If the law lets us refuse a request, we will tell you why.`)}</p>`],
+
+      ['security', T('ความปลอดภัยของข้อมูล', 'Security'), ul(E ? [
+        'All connections to the website are encrypted (HTTPS).',
+        'Only staff who need it can see customer data. Passwords are stored hashed, administrator accounts must use two-step verification, and sign-ins and changes to data are logged.',
+        'The booking form is protected against spam and automated attacks (rate limits, link and email checks).',
+        'We choose providers with recognised security standards.',
+      ] : [
+        'การเชื่อมต่อกับเว็บไซต์ทั้งหมดเข้ารหัสด้วย HTTPS',
+        'เฉพาะพนักงานที่จำเป็นเท่านั้นที่เข้าถึงข้อมูลลูกค้าได้ รหัสผ่านถูกเก็บแบบเข้ารหัสทางเดียว บัญชีผู้ดูแลระบบต้องยืนยันตัวตนสองขั้นตอน และมีการบันทึกการเข้าระบบและการแก้ไขข้อมูล',
+        'ฟอร์มจองมีระบบป้องกันสแปมและการโจมตีอัตโนมัติ (จำกัดจำนวนครั้ง ตรวจลิงก์และอีเมล)',
+        'เราเลือกผู้ให้บริการที่มีมาตรฐานความปลอดภัยเป็นที่ยอมรับ',
+      ]) + `<p>${T('หากเกิดเหตุละเมิดข้อมูลส่วนบุคคล เราจะแจ้ง สคส. ภายใน 72 ชั่วโมงนับจากทราบเหตุ และแจ้งคุณโดยไม่ชักช้าหากมีความเสี่ยงสูงต่อสิทธิของคุณ ตามที่กฎหมายกำหนด',
+        'If a personal data breach happens, we notify the PDPC within 72 hours of becoming aware of it, and tell you without delay if it is likely to put your rights at high risk, as the law requires.')}</p>`],
+
+      ['children', T('ข้อมูลของผู้เยาว์', 'Children'), `<p>${T('การส่งคำขอจองต้องทำโดยผู้ที่บรรลุนิติภาวะ (อายุ 20 ปีขึ้นไป) ข้อมูลของเด็กที่ร่วมทริปจะได้รับจากผู้ปกครอง และใช้เพื่อการทำประกันภัยและความปลอดภัยบนเรือเท่านั้น',
+        'Booking requests must be made by adults (20 or older under Thai law). Details of children on board come from their parent or guardian and are used only for insurance and safety.')}</p>`],
+
+      ['cookies', T('คุกกี้และข้อมูลในเบราว์เซอร์', 'Cookies and browser storage'), `<p>${T('รายการคุกกี้และข้อมูลที่เว็บไซต์เก็บในเบราว์เซอร์ พร้อมระยะเวลา อยู่ที่หน้า <a href="#/cookies">การตั้งค่าคุกกี้</a> ซึ่งคุณเลือกเปิดหรือปิดคุกกี้วิเคราะห์และคุกกี้การตลาดได้ทุกเมื่อ',
+        'The full list of cookies and browser storage, with how long each is kept, is on the <a href="#/cookies">Cookie Preferences</a> page, where you can switch analytics and marketing cookies on or off at any time.')}</p>`],
+
+      ['changes', T('การเปลี่ยนแปลงนโยบาย', 'Changes to this policy'), `<p>${T('เราอาจปรับปรุงนโยบายนี้เมื่อระบบหรือกฎหมายเปลี่ยน ฉบับล่าสุดจะแสดงในหน้านี้พร้อมวันที่ปรับปรุง หากเปลี่ยนแปลงสาระสำคัญ เราจะแจ้งบนเว็บไซต์ และขอความยินยอมใหม่เมื่อกฎหมายกำหนด',
+        'We may update this policy when our systems or the law change. The latest version is always on this page with its date. For important changes we will tell you on the website and ask for consent again where the law requires.')}</p>`],
+    ],
+  };
+}
+{ const _ld = legalDocs; legalDocs = function () { const d = _ld(); try { d.privacy = fxPrivacy(); } catch (e) { console.warn('[privacy]', e); } return d; }; }
+/* cookies page: the real list of what the site stores; the updated date on both pages */
+const FX_STORE_ROWS = () => [
+  ['btt.cookies', L('จำเป็น', 'Necessary'), L('การเลือกคุกกี้ของคุณ', 'Your cookie choices'), L('จนกว่าคุณจะลบ', 'Until you clear it')],
+  ['btt_admin', L('จำเป็น', 'Necessary'), L('การเข้าสู่ระบบของพนักงาน (เฉพาะทีมงาน)', 'Staff sign-in (team only)'), L('จนออกจากระบบ / หมดอายุ', 'Until sign-out / expiry')],
+  ['btt_src · btt_v', L('จำเป็น', 'Necessary'), L('ช่องทางที่มาของการเข้าชมครั้งนี้ สำหรับสถิติแบบไม่ใช้คุกกี้', 'Traffic source of this visit, for cookieless statistics'), L('จนปิดเบราว์เซอร์', 'Until the browser closes')],
+  ['btt.fav · btt.recent', L('การใช้งาน', 'Functional'), L('เรือที่กดถูกใจ และเรือที่ดูล่าสุด', 'Favourite and recently viewed boats'), L('จนกว่าคุณจะลบ', 'Until you clear it')],
+  ['btt_attr', L('การใช้งาน', 'Functional'), L('ช่องทางที่รู้จักเรา จำนวนครั้งที่เข้า และเรือที่ดู ส่งมาพร้อมคำขอจองเท่านั้น', 'How you found us, visits and boats viewed – sent only with a booking request'), L('จนกว่าคุณจะลบ', 'Until you clear it')],
+  ['_ga · _ga_*', L('วิเคราะห์', 'Analytics'), 'Google Analytics', L('สูงสุด 2 ปี', 'Up to 2 years')],
+  ['_fbp · _gcl_au', L('การตลาด', 'Marketing'), 'Meta Pixel · Google Ads', L('3 เดือน', '3 months')],
+];
+function fxLegalFix(kind) {
+  const v = $('#view-legal'); if (!v) return;
+  if (kind === 'privacy' || kind === 'cookies') v.querySelectorAll('section p.text-xs').forEach(p => { if (/ปรับปรุงล่าสุด|Last updated/.test(p.textContent)) p.textContent = `${L('ปรับปรุงล่าสุด', 'Last updated')}: ${PV_UPDATED[LANG === 'en' ? 1 : 0]}`; });
+  if (kind === 'cookies') {
+    const tb = v.querySelector('.legal-table table'); if (!tb) return;
+    tb.querySelector('thead').innerHTML = `<tr><th>${L('ชื่อ', 'Name')}</th><th>${L('ประเภท', 'Type')}</th><th>${L('ใช้ทำอะไร', 'What it does')}</th><th>${L('ระยะเวลา', 'Duration')}</th></tr>`;
+    tb.querySelector('tbody').innerHTML = FX_STORE_ROWS().map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+  }
+}
+{ const _rl = renderLegal; renderLegal = function (kind) { _rl(kind); try { fxLegalFix(kind); } catch (e) { } }; }
+{ const h = VH.hash || ''; const m = h.match(/^#\/(privacy|terms|cookies)$/); if (m) { try { renderLegal(m[1]); } catch (e) { } } }
+
 /* ---------- start ---------- */
 if (!FX_SSR) {
   addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
