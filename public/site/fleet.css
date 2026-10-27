@@ -697,3 +697,5 @@ body > footer .flex.gap-2.mt-4 a:hover:has(.bi-instagram) { background: linear-g
 body > footer .flex.gap-2.mt-4 a:hover:has(.bi-youtube) { background: #FF0000 !important; }
 body > footer .flex.gap-2.mt-4 a:hover:has(.bi-tiktok) { background: #000 !important; }
 body > footer .flex.gap-2.mt-4 a:hover:has(.bi-line) { background: #06C755 !important; }
+/* team cards: smaller phone number */
+#team .tm-tel { font-size: 17px !important; font-weight: 400 !important; letter-spacing: .01em; }
