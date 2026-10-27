@@ -590,10 +590,10 @@ function rtUpdate(b, p) {
   const key = b.slug + '|' + p.i + '|' + LANG; if (RT.key === key && box.dataset.k === key) return;
   RT.key = key; box.dataset.k = key;
   const R = rtRoute(b, p);
-  if (!R) { box.hidden = true; RT.R = null; return; }
-  box.hidden = false; RT.R = R;
+  if (!R) { rtHide(box, true); RT.R = null; rtMarina(false); return; }
+  rtHide(box, false); RT.R = R; rtMarina(true, R.pier);
   const P = rtPlan(b, p, R);
-  $('#rtSum').innerHTML = `<span class="ic">${RT_SHIP}</span><div class="min-w-0"><b>${R.st.map(rtNm).join(' → ')}</b><span>${fxEsc(p.name)}${P.hrs ? ' · ' + L(`${P.hrs} ชม.`, `${P.hrs} h`) : ''} · ${L('ออก', 'leaves')} ${rtHm(P.start)}</span></div>
+  $('#rtSum').innerHTML = `<span class="ic">${RT_SHIP}</span><div class="min-w-0"><b>${R.st.map(rtNm).join(' → ')}</b><span>${fxEsc(p.name)}${P.hrs && !/\d\s*(ชม|ชั่วโมง|hrs?|hours?|h)\b/i.test(p.name) ? ' · ' + L(`${P.hrs} ชม.`, `${P.hrs} h`) : ''} · ${L('ออก', 'leaves')} ${rtHm(P.start)}</span></div>
     <div class="st"><div><b class="tabular-nums">${Math.round(P.km)} ${L('กม.', 'km')}</b><span>${L('ทั้งทริป', 'round trip')}</span></div><div><b class="tabular-nums">${rtDur(P.sailT)}</b><span>${L('ล่องเรือ', 'sailing')}</span></div></div>`;
   $('#rtTl').innerHTML = P.steps.map(s => `<div class="rt-tp ${s.pt ? 'pt' : ''}" data-j="${s.pt ? -1 : s.j}" onmouseenter="rtHl(${s.pt ? -1 : s.j})" onmouseleave="rtHl(-1)">
       ${s.leg ? `<span class="leg tabular-nums">${rtDur(s.leg)}</span>` : ''}
@@ -601,6 +601,28 @@ function rtUpdate(b, p) {
       <div class="tm tabular-nums">${rtHm(s.tm)}</div><b>${fxEsc(s.b)}</b><p>${fxEsc(s.p)}</p></div>`).join('');
   if (window.lucide && !FX_SSR) lucide.createIcons();
   if (RT.map) rtDraw(); else if (!FX_SSR && !RT.io) { RT.io = new IntersectionObserver(es => { if (es[0].isIntersecting) { RT.io.disconnect(); RT.io = null; rtInit(); } }, { rootMargin: '300px 0px' }); RT.io.observe($('#rtMap')); }
+}
+/* the route map also carries the pier: name, address, copy, navigate, taxi card. The separate marina section then hides */
+const rtHide = (el, on) => { if (el) on ? el.setAttribute('hidden', '') : el.removeAttribute('hidden'); };   // attribute, so the server render keeps it too
+function rtMarina(on, pier) {
+  const sec = $('#marinaSec'), bar = $('#rtPier');
+  rtHide(sec, !!on);
+  const a = $('#secnav a[href="#marinaSec"]'); if (a) a.setAttribute('onclick', on ? 'event.preventDefault();rtGoPier()' : "event.preventDefault();secGo('marinaSec')");
+  if (!bar) return;
+  rtHide(bar, !on); if (!on) return;
+  PR.p = pier;
+  const ll = pier.ll.map(x => x.toFixed(5)).join(', ');
+  bar.innerHTML = `<button type="button" class="rt-pin" onclick="rtGoPier(true)" aria-label="${L('ดูท่าเรือบนแผนที่', 'Show the marina on the map')}">${PR_ANCHOR}</button>
+    <div class="rt-pi"><small>${L('ท่าเรือ · จุดขึ้นเรือ', 'Marina · where you board')}</small><b>${fxEsc(pier.n)}</b><p>${fxEsc(L(`${pier.th} · ${pier.adTh}`, pier.adEn))}</p>
+      <button type="button" class="pr-chip" onclick="pierCopy()" title="${L('คัดลอกพิกัด + ลิงก์นำทาง', 'Copy location + directions link')}">${FXI('copy')}<span class="tabular-nums">${pier.ok ? ll : L('คัดลอกลิงก์แผนที่', 'Copy map link')}</span></button></div>
+    <div class="rt-pa"><a class="pr-btn pr-p" href="${PR_IOS ? prApple(pier) : prGoogle(pier)}" target="_blank" rel="noopener">${FXI('navigation')}<span>${prNavText()}</span></a>
+      <button type="button" class="pr-btn pr-s" onclick="pierTaxi(true)">${FXI('smartphone')}<span>${L('บัตรให้คนขับแท็กซี่', 'Card for your taxi driver')}</span></button></div>`;
+}
+/* the "Marina" tab and the pier pin: scroll to the route and fly into the pier in 3D */
+function rtGoPier(stay) {
+  if (!stay) secGo('rtBox');
+  const go = () => { const m = RT.map, R = RT.R; if (!m || !R) return; m.flyTo({ center: [R.pier.ll[1], R.pier.ll[0]], zoom: 15, pitch: 55, bearing: -18, duration: 1800, essential: true }); };
+  if (RT.map) setTimeout(go, stay ? 0 : 500); else RT.pending = go;
 }
 function rtInit() {
   const el = $('#rtGl'); if (!el) return;
@@ -610,7 +632,7 @@ function rtInit() {
     RT.map = new maplibregl.Map({ container: el, style: PR_STYLE, center: [98.5, 7.9], zoom: 9, attributionControl: { compact: true }, cooperativeGestures: true,
       locale: L({ 'CooperativeGesturesHandler.WindowsHelpText': 'กด Ctrl ค้างไว้แล้วเลื่อนเพื่อซูม', 'CooperativeGesturesHandler.MacHelpText': 'กด ⌘ ค้างไว้แล้วเลื่อนเพื่อซูม', 'CooperativeGesturesHandler.MobileHelpText': 'ใช้สองนิ้วเพื่อเลื่อนแผนที่' }, {}) });
     RT.map.on('error', () => { if (!RT.styleOk) rtFail(); });
-    RT.map.on('style.load', () => { RT.styleOk = true; const ph = $('#rtPh'); if (ph) ph.classList.add('off'); rtLines(); });
+    RT.map.on('style.load', () => { RT.styleOk = true; const ph = $('#rtPh'); if (ph) ph.classList.add('off'); rtLines(); if (RT.pending) { const g = RT.pending; RT.pending = null; setTimeout(g, 1200); } });
     rtDraw();
   }).catch(() => rtFail());
 }
@@ -631,13 +653,14 @@ function rtLines() {
 function rtDraw() {
   const m = RT.map, R = RT.R; if (!m || !R) return;
   RT.mk.forEach(x => x.remove()); RT.mk = [];
-  const pe = document.createElement('div'); pe.innerHTML = `<div class="rt-pier">${PR_ANCHOR}</div>`;
+  const pe = document.createElement('div'); pe.innerHTML = `<div class="rt-pier" role="button" title="${fxEsc(R.pier.n)}">${PR_ANCHOR}</div>`; pe.style.zIndex = 4; pe.style.cursor = 'pointer'; pe.onclick = () => rtGoPier(true);
   RT.mk.push(new maplibregl.Marker({ element: pe, anchor: 'bottom' }).setLngLat([R.pier.ll[1], R.pier.ll[0]]).addTo(m));
   R.st.forEach((k, j) => {
     const w = document.createElement('div'), el = document.createElement('div'); w.appendChild(el);
     el.className = 'rt-stop pr-g'; el.dataset.j = j; el.innerHTML = `<i>${j + 1}</i>${fxEsc(rtNm(k))}`;
     el.onmouseenter = () => rtHl(j); el.onmouseleave = () => rtHl(-1);
     el.onclick = () => m.flyTo({ center: [RT_ISL[k][4][1], RT_ISL[k][4][0]], zoom: 13, duration: 1200 });
+    w.style.zIndex = 3;
     RT.mk.push(new maplibregl.Marker({ element: w, anchor: 'left', offset: [-13, 0] }).setLngLat([RT_ISL[k][4][1], RT_ISL[k][4][0]]).addTo(m));
   });
   rtLines(); rtFit(1100); rtSail();
@@ -646,13 +669,13 @@ function rtFit(dur = 900) {
   const m = RT.map, R = RT.R; if (!m || !R) return;
   const bb = new maplibregl.LngLatBounds(); R.line.forEach(q => bb.extend([q[1], q[0]]));
   const small = ($('#rtMap') || {}).clientWidth < 600;
-  m.fitBounds(bb, { padding: small ? { top: 40, bottom: 110, left: 40, right: 120 } : { top: 50, bottom: 96, left: 60, right: 210 }, duration: dur, maxZoom: 12.5 });
+  m.fitBounds(bb, { pitch: 0, bearing: 0, padding: small ? { top: 40, bottom: 110, left: 40, right: 120 } : { top: 50, bottom: 96, left: 60, right: 210 }, duration: dur, maxZoom: 12.5 });
 }
 /* a small boat sails the route on a loop (off for reduced motion) */
 function rtSail() {
   cancelAnimationFrame(RT.anim); const m = RT.map, R = RT.R;
   if (!m || !R || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  if (!RT.boat || RT.boat._map !== m) { const e = document.createElement('div'); e.innerHTML = `<div class="rt-boat">${RT_SHIP}</div>`; RT.boat = new maplibregl.Marker({ element: e }).setLngLat([R.pier.ll[1], R.pier.ll[0]]).addTo(m); }
+  if (!RT.boat || RT.boat._map !== m) { const e = document.createElement('div'); e.innerHTML = `<div class="rt-boat">${RT_SHIP}</div>`; e.style.zIndex = 1; RT.boat = new maplibregl.Marker({ element: e }).setLngLat([R.pier.ll[1], R.pier.ll[0]]).addTo(m); }
   const Ln = R.line, seg = []; const tot = Ln.slice(1).reduce((a, q, i) => { const d = fxKm(Ln[i], q); seg.push(d); return a + d; }, 0);
   const T = Math.max(9000, tot * 160), t0 = performance.now();
   const step = now => {
@@ -672,11 +695,11 @@ function rtSat(btn) { RT.sat = !RT.sat; btn.classList.toggle('on', RT.sat); if (
 function rtDrop() {
   cancelAnimationFrame(RT.anim); if (RT.io) { RT.io.disconnect(); RT.io = null; }
   if (RT.map) { try { RT.map.remove(); } catch (e) { } }
-  Object.assign(RT, { key: '', map: null, styleOk: false, mk: [], boat: null, R: null });
+  Object.assign(RT, { key: '', map: null, styleOk: false, mk: [], boat: null, R: null, pending: null });
 }
 function rtMount() {
   const list = $('#bpProgs'); if (!list || $('#rtBox')) return;
-  const box = document.createElement('div'); box.className = 'rt pr'; box.id = 'rtBox'; box.hidden = true;
+  const box = document.createElement('div'); box.className = 'rt pr'; box.id = 'rtBox'; box.setAttribute('hidden', '');
   box.innerHTML = `<div class="rt-h">${FXI('route')}<span>${L('เส้นทางของโปรแกรมนี้', 'Route of this program')}</span></div>
     <div class="rt-map pr-mapbox" id="rtMap">
       <div class="pr-gl" id="rtGl" role="region" aria-label="${L('แผนที่เส้นทางทริป', 'Trip route map')}"></div>
@@ -689,6 +712,7 @@ function rtMount() {
       </div>
       <div class="rt-sum pr-g" id="rtSum"></div>
     </div>
+    <div class="rt-pbar" id="rtPier" hidden></div>
     <div class="rt-tl" id="rtTl"></div>
     <p class="rt-note">${FXI('info')}${L('เส้นทางและเวลาโดยประมาณ · กัปตันอาจสลับลำดับเกาะตามคลื่นลมในวันจริง', 'Approximate route and times · the captain may change the order for the weather on the day')}</p>`;
   list.after(box);

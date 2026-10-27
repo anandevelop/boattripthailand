@@ -451,3 +451,19 @@
   .rt .rt-map { height: 300px; border-radius: 22px; }
   .rt-sum .st { display: none; }
 }
+/* pier bar under the route map (replaces the separate marina section when a route is shown) */
+#rtBox .rt-pbar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; margin-top: 12px; padding: 12px 14px; border-radius: 20px; background: rgb(255 255 255 / .62); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .8), 0 14px 34px -26px rgb(58 0 7 / .5); }
+#rtBox .rt-pbar[hidden] { display: none; }
+.rt-pin { width: 40px; height: 40px; border-radius: 14px 14px 14px 4px; transform: rotate(-45deg); background: var(--pr-m); display: grid; place-items: center; box-shadow: 0 10px 22px -8px rgb(58 0 7 / .7); transition: transform .2s; }
+.rt-pin:hover { transform: rotate(-45deg) scale(1.06); }
+.rt-pin svg { transform: rotate(45deg); width: 18px; height: 18px; color: #fff; }
+.rt-pi small { display: block; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--pr-m); }
+.rt-pi b { display: block; font-size: 15px; font-weight: 500; color: var(--pr-ink); line-height: 1.3; }
+.rt-pi p { margin: 1px 0 6px; font-size: 12px; color: var(--pr-mu); }
+.rt-pa { display: flex; gap: 8px; }
+.rt-pa .pr-btn { height: 40px; }
+@container rt (max-width: 760px) {
+  #rtBox .rt-pbar { grid-template-columns: auto minmax(0, 1fr); }
+  .rt-pa { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+}
+@container rt (max-width: 440px) { .rt-pa { grid-template-columns: 1fr; } }
