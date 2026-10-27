@@ -425,8 +425,8 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       }
     }
     if (a === 'analytics' && b0 === 'pagespeed' && method === 'GET') { await need(me, 'seo'); const q = new URL(req.url).searchParams; return json(await pageSpeed(q.get('strategy') === 'desktop' ? 'desktop' : 'mobile', q.get('refresh') === '1')); }
-    if (a === 'analytics' && b0 === 'google' && method === 'GET') { await need(me, 'seo'); const q = new URL(req.url).searchParams, d = Number(q.get('days')); return json(await googleData([7, 28, 90].includes(d) ? d : 28, q.get('refresh') === '1')); }
-    if (a === 'analytics' && method === 'GET') { await need(me, 'seo'); const d = Number(new URL(req.url).searchParams.get('days')); return json(await analyticsData([7, 28, 90].includes(d) ? d : 28)); }
+    if (a === 'analytics' && b0 === 'google' && method === 'GET') { await need(me, 'seo'); const q = new URL(req.url).searchParams, d = Number(q.get('days')); return json(await googleData([1, 7, 28, 90].includes(d) ? d : 1, q.get('refresh') === '1')); }
+    if (a === 'analytics' && method === 'GET') { await need(me, 'seo'); const d = Number(new URL(req.url).searchParams.get('days')); return json(await analyticsData([1, 7, 28, 90].includes(d) ? d : 1)); }
     if (a === 'leads' && !b0 && method === 'GET') { await need(me, 'leads'); return json(await leadsFor(me)); }
     if (a === 'audit' && !b0 && method === 'GET') { await need(me, 'audit'); return json({ audit: await auditList() }); }
     if (a === 'audit' && b0 === 'verify') { await need(me, 'audit'); const r = await verifyAuditChain(); await audit(actor(me), { action: 'update', entity: 'auth', ref: 'audit', label: `ตรวจสอบสายบันทึก ${r.total} รายการ · ${r.bad.length ? 'พบ ' + r.bad.length + ' รายการไม่ตรง' : 'ไม่พบการแก้ไขย้อนหลัง'}` }); return json(r); }

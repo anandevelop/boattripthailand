@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { trafficDaily } from '@/db/schema';
 import { rateLimit } from '@/lib/ratelimit';
+import { hourlyHit } from '@/lib/traffic-hourly';
 
 export const runtime = 'nodejs';
 
@@ -33,5 +34,6 @@ export async function POST(req: Request) {
     await db.insert(trafficDaily).values({ day, path, source, device, lang, views: 1, sessions: first })
       .onConflictDoUpdate({ target: [trafficDaily.day, trafficDaily.path, trafficDaily.source, trafficDaily.device, trafficDaily.lang], set: { views: sql`${trafficDaily.views} + 1`, sessions: sql`${trafficDaily.sessions} + ${first}` } });
   } catch (e) { console.error('[track]', e); }
+  try { await hourlyHit(!!first); } catch (e) { console.error('[track hourly]', e); }   // the 24-hour view
   return ok;
 }

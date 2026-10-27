@@ -2,11 +2,13 @@ import 'server-only';
 import { and, desc, gte, like, lt, not, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { trafficDaily as t } from '@/db/schema';
+import { hourlySeries } from './traffic-hourly';
 
 /** Thailand date `n` days ago (0 = today) */
 const thDay = (n: number) => new Date(Date.now() + 7 * 3600_000 - n * 864e5).toISOString().slice(0, 10);
 
-/** Website traffic for /admin → วิเคราะห์เว็บไซต์: current period vs the one before, from the first-party counter. */
+/** Website traffic for /admin → วิเคราะห์เว็บไซต์: current period vs the one before, from the first-party counter.
+ *  days = 1 is the 24-hour view: the chart and totals are per hour (last 24 h vs the 24 h before), the breakdowns are today's. */
 export async function analyticsData(days: number) {
   const from = thDay(days - 1), prevFrom = thDay(days * 2 - 1), tomorrow = thDay(-1);
   const pages = not(like(t.path, '404:%')), cur = and(gte(t.day, from), lt(t.day, tomorrow), pages);
@@ -25,5 +27,6 @@ export async function analyticsData(days: number) {
   // one value per day, oldest first: previous period then current period
   const map = new Map(daily.map(d => [d.day, d]));
   const series = Array.from({ length: days * 2 }, (_, i) => { const d = map.get(thDay(days * 2 - 1 - i)); return { views: d?.views ?? 0, sessions: d?.sessions ?? 0 }; });
-  return { days, since: first[0]?.day ?? null, prev: series.slice(0, days), cur: series.slice(days), byPath, bySource, byDevice, byLang, notFound, byBoat };
+  const hourly = days === 1 ? await hourlySeries().catch(e => { console.error('[analytics hourly]', e); return null; }) : null;
+  return { days, since: first[0]?.day ?? null, prev: hourly?.prev ?? series.slice(0, days), cur: hourly?.cur ?? series.slice(days), hourly: !!hourly, byPath, bySource, byDevice, byLang, notFound, byBoat };
 }

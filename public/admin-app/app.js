@@ -1849,7 +1849,7 @@ PAGES.find(p => p[0] === 'activities')[3] = vActivities;
    ANALYTICS – Google Analytics 4 (Data API) + Search Console (Search Analytics API)
    Mockup: numbers are generated sample data; real system calls the APIs server-side.
    ===================================================================== */
-const GA = { tab: 'overview', days: 28, cmp: true, gaOn: false, gscOn: false, prop: '', site: 'sc-domain:boattripthailand.com', qLang: '' };
+const GA = { tab: 'overview', days: 1, cmp: true, gaOn: false, gscOn: false, prop: '', site: 'sc-domain:boattripthailand.com', qLang: '' };
 let _ars = 7341; const arnd = () => { _ars = (_ars * 16807) % 2147483647; return (_ars - 1) / 2147483646; };
 /* 180 days of daily series (oldest → today) */
 const SER = (() => { const out = { users: [], sessions: [], conv: [], clicks: [], impr: [], pos: [] };
@@ -1865,14 +1865,17 @@ const kpi = (l, v, d, sub) => `<div class="card p-4"><p class="text-[12px] text-
 
 /* single-axis line chart with optional previous-period line and hover tooltip */
 let CH = 0;
-function lineChart(cur, prev, { h = 180, fmt = nf, label = '', invert = false, end } = {}) {
+function lineChart(cur, prev, { h = 180, fmt = nf, label = '', invert = false, end, labels } = {}) {
+  if (cur.length < 2) { cur = [cur[0] ?? 0, cur[0] ?? 0]; if (prev) prev = [prev[0] ?? 0, prev[0] ?? 0]; labels = undefined; }   // a single point (24 h without hourly data) → flat line, not NaN
   const id = 'ch' + (++CH), W = 800, n = cur.length, all = cur.concat(GA.cmp && prev ? prev : []);
   let lo = Math.min(...all), hi = Math.max(...all); if (invert) [lo, hi] = [lo - 1, hi + 1]; else { lo = 0; hi = hi * 1.1 || 1; }   // all-zero data (no visitors yet) → flat line instead of NaN
   const x = i => i / (n - 1) * W, y = v => invert ? (v - lo) / (hi - lo) * (h - 24) + 8 : h - 20 - (v - lo) / (hi - lo) * (h - 32);
   const path = a => a.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
   const ticks = [0, .5, 1].map(f => invert ? lo + (hi - lo) * f : lo + (hi - lo) * f);
   const dates = cur.map((_, i) => addDays(end || TODAY, i - n + 1));   // `end`: last day of the series (Search Console lags ~3 days)
-  CHD[id] = { cur, prev, fmt, label, dates, n };
+  // `labels`: hour keys "YYYY-MM-DDTHH" for the 24-hour range → "14:00" on the axis, "27 ต.ค. 14:00" in the tooltip
+  const ax = i => labels ? labels[i].slice(11) + ':00' : fmtD(iso(dates[i])), tip = i => labels ? fmtD(labels[i].slice(0, 10)) + ' ' + labels[i].slice(11) + ':00' : fmtD(iso(dates[i]));
+  CHD[id] = { cur, prev, fmt, label, dates, n, tip };
   return `<div class="relative" id="${id}"><svg viewBox="0 0 ${W} ${h}" preserveAspectRatio="none" class="w-full block" style="height:${h}px" onmousemove="chHover(event,'${id}')" onmouseleave="chLeave('${id}')">
       ${ticks.map(t => `<line x1="0" x2="${W}" y1="${y(t)}" y2="${y(t)}" stroke="#f1eaea" stroke-width="1" vector-effect="non-scaling-stroke"/>`).join('')}
       ${GA.cmp && prev ? `<path d="${path(prev)}" fill="none" stroke="#c9bcbd" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>` : ''}
@@ -1880,16 +1883,16 @@ function lineChart(cur, prev, { h = 180, fmt = nf, label = '', invert = false, e
       <path d="${path(cur)}" fill="none" stroke="#70000e" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
       <line class="ch-x" x1="0" x2="0" y1="0" y2="${h - 20}" stroke="#231416" stroke-width="1" opacity="0" vector-effect="non-scaling-stroke"/></svg>
     <div class="absolute left-0 top-0 text-[10px] text-muted tnum">${fmt(invert ? lo : hi)}</div>
-    <div class="flex justify-between text-[10.5px] text-muted mt-1 tnum"><span>${fmtD(iso(dates[0]))}</span><span>${fmtD(iso(dates[Math.floor(n / 2)]))}</span><span>${fmtD(iso(dates[n - 1]))}</span></div>
+    <div class="flex justify-between text-[10.5px] text-muted mt-1 tnum"><span>${ax(0)}</span><span>${ax(Math.floor(n / 2))}</span><span>${ax(n - 1)}</span></div>
     <div class="ch-tip hidden absolute z-10 pointer-events-none bg-ink text-white text-[11.5px] rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-lg"></div></div>`;
 }
 const CHD = {};
 function chHover(e, id) { const d = CHD[id], box = $('#' + id), r = box.getBoundingClientRect(), f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), i = Math.round(f * (d.n - 1));
   const ln = box.querySelector('.ch-x'), X = i / (d.n - 1) * 800; ln.setAttribute('x1', X); ln.setAttribute('x2', X); ln.setAttribute('opacity', .25);
-  const t = box.querySelector('.ch-tip'); t.classList.remove('hidden'); t.innerHTML = `${fmtD(iso(d.dates[i]))} · <b class="font-medium">${d.fmt(d.cur[i])}</b> ${d.label}${GA.cmp && d.prev ? `<span class="opacity-60"> · ก่อนหน้า ${d.fmt(d.prev[i])}</span>` : ''}`;
+  const t = box.querySelector('.ch-tip'); t.classList.remove('hidden'); t.innerHTML = `${d.tip(i)} · <b class="font-medium">${d.fmt(d.cur[i])}</b> ${d.label}${GA.cmp && d.prev ? `<span class="opacity-60"> · ก่อนหน้า ${d.fmt(d.prev[i])}</span>` : ''}`;
   t.style.left = Math.min(r.width - t.offsetWidth, Math.max(0, f * r.width - t.offsetWidth / 2)) + 'px'; t.style.top = '-6px'; }
 function chLeave(id) { const b = $('#' + id); b.querySelector('.ch-tip').classList.add('hidden'); b.querySelector('.ch-x').setAttribute('opacity', 0); }
-const legend = () => GA.cmp ? `<div class="flex items-center gap-4 text-[11px] text-muted"><span class="flex items-center gap-1.5"><i class="inline-block w-4 h-0.5 bg-maroon"></i>${GA.days} วันล่าสุด</span><span class="flex items-center gap-1.5"><i class="inline-block w-4 border-t border-dashed border-[#b8aaac]"></i>${GA.days} วันก่อนหน้า</span></div>` : '';
+const legend = () => GA.cmp ? `<div class="flex items-center gap-4 text-[11px] text-muted"><span class="flex items-center gap-1.5"><i class="inline-block w-4 h-0.5 bg-maroon"></i>${GA.days === 1 ? '24 ชม.' : GA.days + ' วัน'}ล่าสุด</span><span class="flex items-center gap-1.5"><i class="inline-block w-4 border-t border-dashed border-[#b8aaac]"></i>${GA.days === 1 ? '24 ชม.' : GA.days + ' วัน'}ก่อนหน้า</span></div>` : '';
 const bars = (rows, { fmt = nf, total } = {}) => { const mx = Math.max(...rows.map(r => r[1])), t = total || sum(rows.map(r => r[1]));
   return `<ul class="grid gap-2.5">${rows.map(([l, v, sub]) => `<li><div class="flex justify-between gap-3 text-[12.5px]"><span class="truncate">${l}${sub ? ` <span class="text-muted">${sub}</span>` : ''}</span><span class="tnum shrink-0">${fmt(v)} <span class="text-muted">${(v / t * 100).toFixed(0)}%</span></span></div><div class="mt-1 h-1.5 rounded-full bg-sand overflow-hidden"><div class="h-full rounded-full bg-maroon" style="width:${v / mx * 100}%"></div></div></li>`).join('')}</ul>`; };
 
@@ -1963,7 +1966,7 @@ function vAnalytics() {
   "rowLimit": 1000
 }`)}</pre></div></div>
         <p class="text-[11px] text-muted mt-3">ต้องตั้ง Key event ใน GA4 ให้ตรงกับปุ่มบนเว็บ: booking_submit, whatsapp_click, line_click, phone_click · ระบบจะส่ง event เหล่านี้หลังลูกค้ายอมรับคุกกี้ (PDPA)</p></div></div>`;
-  $('#view').innerHTML = `${head('วิเคราะห์เว็บไซต์', 'ข้อมูลจาก Google Analytics 4, Google Search Console และ Meta Pixel', `<div class="flex p-0.5 rounded-full bg-white ring-1 ring-line">${[7, 28, 90].map(d => `<button class="h-8 px-3 rounded-full text-[12px] ${GA.days === d ? 'bg-ink text-white' : 'text-muted'}" onclick="GA.days=${d};vAnalytics()">${d} วัน</button>`).join('')}</div><label class="flex items-center gap-2 text-[12px] text-muted"><span class="tgl"><input type="checkbox" ${GA.cmp ? 'checked' : ''} onchange="GA.cmp=this.checked;vAnalytics()"/><span></span></span>เทียบช่วงก่อนหน้า</label><button class="btn btn-o" onclick="toast('ส่งออกรายงาน (จำลอง)')"><i data-lucide="download" class="w-3.5 h-3.5"></i>ส่งออก</button>`)}
+  $('#view').innerHTML = `${head('วิเคราะห์เว็บไซต์', 'ข้อมูลจาก Google Analytics 4, Google Search Console และ Meta Pixel', `<div class="flex p-0.5 rounded-full bg-white ring-1 ring-line">${[1, 7, 28, 90].map(d => `<button class="h-8 px-3 rounded-full text-[12px] ${GA.days === d ? 'bg-ink text-white' : 'text-muted'}" onclick="GA.days=${d};vAnalytics()">${d === 1 ? '24 ชม.' : d + ' วัน'}</button>`).join('')}</div><label class="flex items-center gap-2 text-[12px] text-muted"><span class="tgl"><input type="checkbox" ${GA.cmp ? 'checked' : ''} onchange="GA.cmp=this.checked;vAnalytics()"/><span></span></span>เทียบช่วงก่อนหน้า</label><button class="btn btn-o" onclick="toast('ส่งออกรายงาน (จำลอง)')"><i data-lucide="download" class="w-3.5 h-3.5"></i>ส่งออก</button>`)}
     <div class="rounded-xl bg-[#fff8e6] text-[#7a4a00] text-[12px] px-4 py-2.5 mb-4 flex items-start gap-2"><i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>ตัวเลขทั้งหมดในหน้านี้เป็นข้อมูลตัวอย่าง เพื่อให้เห็นหน้าตารายงาน · เมื่อเชื่อม API ในระบบจริงจะแสดงข้อมูลจริงของเว็บ</div>
     <div class="grid md:grid-cols-3 gap-3 mb-4">${conn(GA.gaOn, 'Google Analytics 4', GA.prop || 'Property', 'chart-line')}${conn(GA.gscOn, 'Google Search Console', GA.site, 'search')}${conn(MP.on, 'Meta Pixel + Conversions API', MP.id || 'Pixel', 'megaphone').replace(`GA.tab='api'`, `GA.tab='meta'`)}</div>
     <div class="flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${GA.tab === k ? 'on' : ''}" onclick="GA.tab='${k}';vAnalytics()"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>
@@ -4104,7 +4107,7 @@ function anBody() {
   const empty = !S && !views;
   return `${empty ? `<div class="rounded-xl bg-sand px-4 py-3 mb-4 text-[12.5px]">ยังไม่มีผู้เข้าชมในช่วงนี้ · ระบบเริ่มนับเมื่อหน้าเว็บเวอร์ชันนี้ขึ้น production แล้ว ตัวเลขจะเริ่มขึ้นภายในไม่กี่นาทีหลังมีคนเข้าเว็บ</div>` : ''}
     <div class="grid grid-cols-2 xl:grid-cols-5 gap-3">${kpi('เซสชัน', nf(S), dl(S, PS), 'นับเองแบบไม่ใช้คุกกี้')}${kpi('เพจวิว', nf(views), dl(views, pviews), S ? (views / S).toFixed(1) + ' หน้า / เซสชัน' : '')}${kpi('ลีด / คำขอจอง', nf(L.length), dl(L.length, PL.length), 'จากระบบลีด')}${kpi('อัตราแปลงเป็นลีด', S ? cr.toFixed(1) + '%' : '—', dl(cr, pcr), 'ลีด ÷ เซสชัน')}${kpi('ปิดการขายได้', nf(won), dl(won, pwon), L.length ? pct(won, L.length) + ' ของลีด' : '')}</div>
-    <div class="card p-5 mt-4"><div class="flex items-center justify-between mb-3"><p class="font-medium">เซสชันรายวัน</p><span class="text-[11.5px] text-muted">${GA.cmp ? 'เส้นประ = ช่วงก่อนหน้า' : ''}</span></div>${lineChart(cur, prev, { label: 'เซสชัน' })}</div>
+    <div class="card p-5 mt-4"><div class="flex items-center justify-between mb-3"><p class="font-medium">เซสชันรายวัน</p><span class="text-[11.5px] text-muted">${GA.cmp ? 'เส้นประ = ช่วงก่อนหน้า' : ''}</span></div>${lineChart(cur, prev, { label: 'เซสชัน', labels: D.cur[0]?.h ? D.cur.map(x => x.h) : undefined })}</div>
     <div class="grid xl:grid-cols-2 gap-4 mt-4 items-start">
       <div class="card overflow-hidden"><div class="p-4 border-b border-line"><p class="font-medium">แหล่งที่มา → ลีด → ปิดการขาย</p><p class="text-[11.5px] text-muted mt-0.5">ช่องทางไหนพาคนเข้าเว็บแล้วกลายเป็นลูกค้า</p></div>
         <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>แหล่งที่มา</th><th class="text-right">เซสชัน</th><th class="text-right">ลีด</th><th class="text-right">อัตราแปลง</th><th class="text-right">ปิดได้</th></tr></thead><tbody>
@@ -4195,7 +4198,7 @@ function ggGa(G) {
   const cr = o => o.sessions ? o.keyEvents / o.sessions : 0;
   const DEV = { mobile: 'มือถือ', desktop: 'คอมพิวเตอร์', tablet: 'แท็บเล็ต' }, EV = { booking_submit: 'ฟอร์มขอใบเสนอราคา', whatsapp_click: 'WhatsApp', line_click: 'LINE', phone_click: 'โทร' };
   return `<div class="grid grid-cols-2 xl:grid-cols-4 gap-3">${kpi('ผู้ใช้งาน', nf(T.cur.users), delta(T.cur.users, T.prev.users))}${kpi('เซสชัน', nf(t), delta(t, T.prev.sessions))}${kpi('เวลาใช้งานเฉลี่ย', ggDur(T.cur.avgDur), delta(T.cur.avgDur, T.prev.avgDur), 'นาที:วินาที ต่อเซสชัน')}${kpi('อัตราแปลง', ggPct(cr(T.cur), 2), delta(cr(T.cur), cr(T.prev)), nf(T.cur.keyEvents) + ' key events')}</div>
-    <div class="card p-5 mt-4"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">เซสชันต่อวัน</p>${legend()}</div>${lineChart(cur, prev, { label: 'เซสชัน', h: 200 })}</div>
+    <div class="card p-5 mt-4"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">เซสชันต่อวัน</p>${legend()}</div>${lineChart(cur, prev, { label: 'เซสชัน', h: 200, labels: G.cur[0]?.h ? G.cur.map(x => x.h) : undefined })}</div>
     <div class="grid xl:grid-cols-3 gap-4 mt-4 items-start">
       <div class="card xl:col-span-2 overflow-hidden"><p class="font-medium px-5 pt-4 pb-2">หน้าที่มีคนดูมากที่สุด</p><div class="overflow-x-auto"><table class="tbl min-w-[560px]"><thead><tr><th>หน้า</th><th class="text-right">การดู</th><th class="text-right">เวลาเฉลี่ย (วิ)</th><th class="text-right">Key events</th></tr></thead><tbody>
         ${G.pages.map(p => `<tr><td><p class="truncate max-w-[300px]">${esc(anPageName(p.path))}</p><p class="text-[11px] text-muted truncate max-w-[300px]">${esc(p.path)}</p></td><td class="text-right tnum">${nf(p.views)}</td><td class="text-right tnum">${Math.round(p.eng)}</td><td class="text-right tnum">${nf(p.keyEvents)}</td></tr>`).join('') || '<tr><td colspan="4" class="text-muted">ยังไม่มีข้อมูลในช่วงนี้</td></tr>'}</tbody></table></div></div>
@@ -4210,8 +4213,8 @@ function ggGsc(S) {
   const opp = S.queries.filter(q => q.position > 4 && q.position <= 20 && q.impressions >= 30).sort((a, b) => b.impressions - a.impressions).slice(0, 4);
   return `<div class="grid grid-cols-2 xl:grid-cols-4 gap-3">${kpi('คลิก', nf(T.cur.clicks), delta(T.cur.clicks, T.prev.clicks))}${kpi('การแสดงผล', nf(T.cur.impressions), delta(T.cur.impressions, T.prev.impressions))}${kpi('CTR เฉลี่ย', ggPct(T.cur.ctr, 2), delta(T.cur.ctr, T.prev.ctr))}${kpi('อันดับเฉลี่ย', T.cur.position ? T.cur.position.toFixed(1) : '—', delta(T.cur.position, T.prev.position, true), 'ยิ่งน้อยยิ่งดี')}</div>
     <div class="grid xl:grid-cols-2 gap-4 mt-4 items-start">
-      <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">คลิกต่อวัน</p>${legend()}</div>${lineChart(ck, pk, { label: 'คลิก', end: ggEnd(S) })}</div>
-      <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">อันดับเฉลี่ยต่อวัน <span class="text-[11px] text-muted font-normal">(บนสุด = อันดับดีกว่า)</span></p>${legend()}</div>${lineChart(ggPos(S.cur), ggPos(S.prev), { label: '', fmt: v => (+v).toFixed(1), invert: true, end: ggEnd(S) })}</div></div>
+      <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">คลิกต่อวัน</p>${legend()}</div>${lineChart(ck, pk, { label: 'คลิก', end: ggEnd(S), labels: S.cur[0]?.h ? S.cur.map(x => x.h) : undefined })}</div>
+      <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="font-medium">อันดับเฉลี่ยต่อวัน <span class="text-[11px] text-muted font-normal">(บนสุด = อันดับดีกว่า)</span></p>${legend()}</div>${lineChart(ggPos(S.cur), ggPos(S.prev), { label: '', fmt: v => (+v).toFixed(1), invert: true, end: ggEnd(S), labels: S.cur[0]?.h ? S.cur.map(x => x.h) : undefined })}</div></div>
     <div class="grid xl:grid-cols-3 gap-4 mt-4 items-start">
       <div class="card xl:col-span-2 overflow-hidden"><div class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 pb-2"><p class="font-medium">คำค้นหาที่พาคนมาเว็บ</p><div class="flex p-0.5 rounded-full bg-sand">${[['', 'ทั้งหมด'], ['th', 'TH'], ['en', 'EN']].map(([k, l]) => `<button class="h-7 px-3 rounded-full text-[12px] ${GA.qLang === k ? 'bg-white shadow-sm' : 'text-muted'}" onclick="GA.qLang='${k}';vAnalytics()">${l}</button>`).join('')}</div></div>
         <div class="overflow-x-auto"><table class="tbl min-w-[620px]"><thead><tr><th>คำค้นหา</th><th class="text-right">คลิก</th><th class="text-right">การแสดงผล</th><th class="text-right">CTR</th><th class="text-right">อันดับ</th></tr></thead><tbody>
@@ -4244,6 +4247,11 @@ function ggBody() {
   if (note) { const msg = { site: 'แท็บนี้เป็นข้อมูลจริง: ผู้เข้าชมนับจากเว็บไซต์เอง ลีดและการปิดการขายมาจากระบบลีด' }[GA.tab];
     if (msg) note.lastChild.textContent = msg; else note.remove(); }
   if (['ga', 'gsc', 'api'].includes(GA.tab)) { const f = $('#view .fade'); if (f) f.innerHTML = ggBody(); }
+  if (GA.days === 1) {   // 24-hour range: the charts are hourly
+    $$('#view .card p.font-medium').forEach(p => { const n = p.firstChild; if (n && n.nodeType === 3) n.textContent = n.textContent.replace(/(ต่อวัน|รายวัน)/, 'รายชั่วโมง'); });
+    const S = GG.d[1]?.gsc;
+    if (GA.tab === 'gsc' && S?.hourly && S.lagHours) { const c = $('#view .fade .grid.xl\\:grid-cols-2'); c?.insertAdjacentHTML('beforebegin', `<p class="text-[11.5px] text-muted mt-3">Search Console มีข้อมูลรายชั่วโมงช้ากว่าจริงประมาณ ${S.lagHours} ชม. · กราฟแสดง 24 ชม. ล่าสุดที่ Google มีข้อมูล</p>`); }
+  }
   icons();
 }; PAGES.find(p => p[0] === 'analytics')[3] = vAnalytics; }
 
