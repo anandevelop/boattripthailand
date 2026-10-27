@@ -80,7 +80,7 @@ export async function postBody(id: number) {
 /* ---------------- route validation (real 404s) ---------------- */
 export async function routeExists(pathname: string) {
   const p = pathname.replace(/^\/en(?=\/|$)/, '').replace(/\/+$/, '') || '/';
-  if (['/', '/yacht-charter', '/blog', '/destinations', '/about-us', '/privacy-policy', '/terms-and-conditions', '/cookie-preferences'].includes(p)) return true;
+  if (['/', '/yacht-charter', '/blog', '/destinations', '/about-us', '/privacy-policy', '/terms-and-conditions', '/cookie-preferences', '/contact'].includes(p)) return true;
   const d = await siteData();
   if (p.startsWith('/yacht-charter/')) return d.FLEET.some(b => (b as { slug: string }).slug === p.slice(15));
   if (p.startsWith('/destinations/')) return DESTINATIONS.some(x => x.slug === p.slice(14));

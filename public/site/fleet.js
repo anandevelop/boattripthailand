@@ -1159,6 +1159,98 @@ function fxTerms() {
 { const _lf = fxLegalFix; fxLegalFix = function (kind) { _lf(kind); if (kind !== 'terms') return; const v = $('#view-legal'); v && v.querySelectorAll('section p.text-xs').forEach(p => { if (/ปรับปรุงล่าสุด|Last updated/.test(p.textContent)) p.textContent = `${L('ปรับปรุงล่าสุด', 'Last updated')}: ${TM_UPDATED[LANG === 'en' ? 1 : 0]}`; }); }; }
 { const h = VH.hash || ''; if (h === '#/terms') { try { renderLegal('terms'); } catch (e) { } } }
 
+/* =====================================================================
+   Contact page  /contact  (#/contact) — channels, quote form, office, piers. The sales team band follows
+   on every page. Added from fleet.js: the route, the view container and the nav links ("ติดต่อเรา" was #team).
+   Server: site-render.ts routeExists() knows /contact so it answers 200, not 404.
+   ===================================================================== */
+PAGE_MAP['/contact'] = '#/contact'; HASH_MAP['/contact'] = '/contact';
+function ctView() {
+  let v = document.getElementById('view-contact');
+  if (!v) { v = document.createElement('div'); v.id = 'view-contact'; v.className = 'hidden'; const nf = document.getElementById('view-nf'); nf.parentNode.insertBefore(v, nf); }
+  return v;
+}
+const ctOpen = () => { const h = +new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: 'numeric', hourCycle: 'h23' }).format(new Date()); return h >= 9 && h < 21; };
+function ctCopy(txt, btn) { (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { toast(L('คัดลอกแล้ว', 'Copied')); }, () => toast(txt)); }
+function renderContact() {
+  const v = ctView(), E = LANG === 'en';
+  const lineId = SET.line || '@boattripthailand', phone = SET.phone, mail = SET.email;
+  const ch = [
+    ['phone-call', L('โทรหาเรา', 'Call us'), phone, TEL, L('โทรเลย', 'Call now'), phone, L('ตอบทันทีในเวลาทำการ', 'Instant answer during opening hours')],
+    ['message-circle', 'LINE Official', lineId, SET.lineUrl, L('เพิ่มเพื่อน', 'Add friend'), lineId, L('ช่องทางที่ลูกค้าไทยใช้มากที่สุด', 'Most used by Thai guests')],
+    ['message-circle', 'WhatsApp', phone, WA_URL, L('แชทเลย', 'Chat now'), phone, L('สะดวกสำหรับลูกค้าต่างชาติ', 'Easiest for international guests')],
+    ['mail', L('อีเมล', 'Email'), mail, 'mailto:' + mail, L('ส่งอีเมล', 'Send email'), mail, L('สำหรับเอกสาร ใบเสนอราคา และบริษัท', 'For documents, quotes and companies')],
+  ];
+  const piers = (typeof PIERS !== 'undefined' ? PIERS : []);
+  const open = FX_SSR ? null : ctOpen();
+  v.innerHTML = `
+  <section class="cx-page max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-6">
+    <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-1.5"><a href="#/" class="hover:text-maroon">${t('home')}</a>${FXI('chevron-right')}<span class="text-ink" aria-current="page">${L('ติดต่อเรา', 'Contact')}</span></nav>
+    <div class="cx-hero">
+      <div>
+        <p class="cx-eye">${FXI('anchor')}<span>${L('ติดต่อเรา', 'Contact us')}</span></p>
+        <h1>${L('คุยกับทีมเราได้ทุกวัน', 'Talk to our team, every day')}</h1>
+        <p class="cx-sub">${L('บอกวันที่ จำนวนคน และที่อยากไป ทีมงานจะเช็กคิวเรือและส่งใบเสนอราคาให้ภายใน 30 นาทีในเวลาทำการ ยังไม่ต้องชำระเงิน', 'Tell us your date, group size and where you want to go. We check the boats and send a quote within 30 minutes during opening hours — no payment needed yet.')}</p>
+        <div class="cx-meta">
+          <span class="cx-open ${open === null ? '' : open ? 'on' : 'off'}" id="ctOpen">${open === null ? FXI('clock') + L('ทุกวัน 09:00–21:00 น.', 'Daily 09:00–21:00') : open ? `<i></i>${L('เปิดอยู่ตอนนี้ · ถึง 21:00 น.', 'Open now · until 21:00')}` : `<i></i>${L('ปิดแล้ว · เปิดอีกครั้ง 09:00 น.', 'Closed · opens at 09:00')}`}</span>
+          <span>${FXI('languages')}${L('ไทย · English', 'Thai · English')}</span>
+          <span>${FXI('badge-check')}TAT ${fxEsc(SET.tat)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cx-grid">${ch.map(([ic, h, val, href, act, copy, note]) => `
+      <div class="cx-ch">
+        <a class="cx-main" href="${href}" ${/^https?:/.test(href) ? 'target="_blank" rel="noopener"' : ''}>
+          <span class="cx-ic">${FXI(ic)}</span>
+          <span class="cx-tx"><small>${h}</small><b class="tabular-nums">${fxEsc(val)}</b><em>${note}</em></span>
+        </a>
+        <div class="cx-act"><a href="${href}" ${/^https?:/.test(href) ? 'target="_blank" rel="noopener"' : ''} class="cx-go">${act}${FXI('arrow-up-right')}</a><button type="button" class="cx-cp" onclick="ctCopy('${copy.replace(/'/g, '')}')" aria-label="${L('คัดลอก', 'Copy')} ${h}">${FXI('copy')}</button></div>
+      </div>`).join('')}
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-16 cx-two">
+    <div class="cx-form">
+      <p class="cx-eye">${FXI('send')}<span>${L('ขอใบเสนอราคา', 'Request a quote')}</span></p>
+      <h2>${L('ส่งรายละเอียดทริปของคุณ', 'Tell us about your trip')}</h2>
+      <p class="cx-sub2">${L('กรอกเท่าที่รู้ก็พอ ทีมงานจะติดต่อกลับทาง WhatsApp LINE หรือโทรศัพท์', 'Fill in what you know — we reply by WhatsApp, LINE or phone.')}</p>
+      <div id="ctFormWrap"></div>
+    </div>
+    <aside class="cx-side">
+      <div class="cx-card">
+        <h3>${FXI('building-2')}${L('สำนักงาน', 'Office')}</h3>
+        <p class="cx-co">${fxEsc(SET.company)}</p>
+        <p class="cx-ad">${fxEsc(L(ADDRESS_TH, ADDRESS_EN))}</p>
+        <dl class="cx-dl"><dt>${L('เวลาทำการ', 'Opening hours')}</dt><dd>${L('ทุกวัน 09:00–21:00 น. (เวลาไทย)', 'Daily 09:00–21:00 (Thai time)')}</dd><dt>${L('ใบอนุญาต', 'Licence')}</dt><dd>TAT ${fxEsc(SET.tat)}</dd></dl>
+        <a class="cx-map" href="${MAP_URL}" target="_blank" rel="noopener">${FXI('map-pin')}${L('เปิดใน Google Maps', 'Open in Google Maps')}</a>
+        <p class="cx-note">${L('สำนักงานไม่ใช่จุดขึ้นเรือ เรือออกจากท่าตามที่ระบุในหน้าเรือแต่ละลำ', 'The office is not where you board — each boat leaves from the marina shown on its page.')}</p>
+      </div>
+      ${piers.length ? `<div class="cx-card">
+        <h3>${FXI('anchor')}${L('ท่าเรือที่ออกเรือ', 'Marinas we depart from')}</h3>
+        <ul class="cx-piers">${piers.map(p => `<li><span><b>${fxEsc(p.n)}</b><small>${fxEsc(L(p.th, p.adEn))}</small></span><a href="${prGoogle(p)}" target="_blank" rel="noopener" aria-label="${L('นำทางไป', 'Directions to')} ${fxEsc(p.n)}">${FXI('navigation')}</a></li>`).join('')}</ul>
+      </div>` : ''}
+      <div class="cx-card cx-tips">
+        <h3>${FXI('lightbulb')}${L('ได้คำตอบเร็วขึ้น', 'Get an answer faster')}</h3>
+        <ul>${(E ? ['Travel date (or a range)', 'Number of adults and children', 'Half day, full day or sunset', 'Where you are staying', 'Budget or the boat you like'] : ['วันที่เดินทาง (หรือช่วงวันที่)', 'จำนวนผู้ใหญ่และเด็ก', 'ครึ่งวัน เต็มวัน หรือชมพระอาทิตย์ตก', 'ที่พักของคุณ', 'งบประมาณ หรือเรือที่สนใจ']).map(x => `<li>${FXI('check')}${x}</li>`).join('')}</ul>
+      </div>
+    </aside>
+  </section>`;
+  try { buildForm($('#ctFormWrap')); } catch (e) { }
+  document.title = L('ติดต่อเรา – Boat Trip Thailand | เช่าเรือยอชต์ภูเก็ต', 'Contact – Boat Trip Thailand | Yacht Charter Phuket');
+  const desc = L(`ติดต่อ Boat Trip Thailand ทางโทรศัพท์ ${phone} LINE ${lineId} WhatsApp หรืออีเมล ทุกวัน 09:00–21:00 น. ขอใบเสนอราคาเช่าเรือยอชต์ คาตามารัน สปีดโบ๊ท ภูเก็ต ตอบภายใน 30 นาที`, `Contact Boat Trip Thailand by phone ${phone}, LINE ${lineId}, WhatsApp or email, daily 09:00–21:00. Request a quote for yacht, catamaran and speedboat charters in Phuket — reply within 30 minutes.`);
+  setMeta('description', desc); setMeta('og:title', document.title, 'property'); setMeta('og:description', desc, 'property'); setMeta('og:url', SITE + '/contact', 'property');
+  const c = document.getElementById('canonical'); if (c) c.href = SITE + (LANG === 'en' ? '/en' : '') + '/contact';
+  icons();
+}
+{ const _sv2 = showView; showView = function (name) { _sv2(name); const v = document.getElementById('view-contact'); if (v) v.classList.toggle('hidden', name !== 'contact'); if (name === 'contact') $('#floatCta')?.classList.add('!hidden'); }; }
+{ const _r0 = route0; route0 = function (keepScroll) { if ((VH.hash || '') === '#/contact') { ctView(); showView('contact'); renderContact(); if (!keepScroll) scrollTo(0, 0); return; } return _r0(keepScroll); }; }
+/* nav + mobile menu: "ติดต่อเรา" opens the page (it used to jump to the team band) */
+function ctLinks() { document.querySelectorAll('a[data-i18n="nav.contact"], a:has(> [data-i18n="nav.contact"])').forEach(a => a.setAttribute('href', hashToPath('#/contact'))); }
+ctLinks();
+{ const _ar = afterRoute; afterRoute = function () { _ar(); try { ctLinks(); const a = document.querySelector('#navLinks a[data-i18n="nav.contact"]'); if (a) a.classList.toggle('is-active', VHASH === '#/contact'); } catch (e) { } }; }
+if (pathToHash(location.pathname, location.search, location.hash) === '#/contact') { VHASH = '#/contact'; try { route(true); } catch (e) { } }
+
 /* ---------- start ---------- */
 if (!FX_SSR) {
   addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
