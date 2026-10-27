@@ -503,3 +503,46 @@
   .fx-view { width: 36px; height: 36px; }
   .fx-specs { font-size: 11.5px; } .fx-specs i { margin: 0 6px; }
 }
+
+/* =====================================================================
+   Footer · Liquid Glass: a floating light glass panel (same width as the nav) over a soft
+   maroon / sea glow, ink text, maroon accents, glass contact icons and social buttons.
+   CSS only — site/shell.html stays as it is.
+   ===================================================================== */
+body > footer.bg-maroon-900 { --ft-m: #70000e; --ft-ink: #231416; --ft-mu: #6b5e60; --ft-line: rgb(35 20 22 / .08);
+  position: relative; isolation: isolate; max-width: 80rem; margin: 56px auto 18px; border-radius: 34px; overflow: hidden;
+  background: rgb(255 255 255 / .58) !important; color: var(--ft-ink) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(185%); backdrop-filter: blur(26px) saturate(185%);
+  box-shadow: 0 30px 80px -40px rgb(58 0 7 / .45), 0 2px 10px -6px rgb(35 20 22 / .1), inset 0 1px 0 rgb(255 255 255 / .95), inset 0 0 0 1px rgb(255 255 255 / .55); }
+@media (max-width: 1360px) { body > footer.bg-maroon-900 { margin-left: 16px; margin-right: 16px; } }
+/* the glow behind the glass */
+body > footer.bg-maroon-900::before { content: ''; position: absolute; inset: -40%; z-index: -1; pointer-events: none;
+  background: radial-gradient(38% 46% at 12% 18%, rgb(112 0 14 / .16), transparent 70%), radial-gradient(36% 44% at 88% 80%, rgb(31 122 140 / .16), transparent 70%), radial-gradient(30% 40% at 60% 10%, rgb(255 214 170 / .22), transparent 70%); filter: blur(10px); }
+body > footer.bg-maroon-900 svg { display: inline-block; }
+body > footer.bg-maroon-900 > div:first-child { padding-top: 44px; padding-bottom: 30px; }
+/* text */
+body > footer.bg-maroon-900 .text-white, body > footer.bg-maroon-900 .text-white\/90 { color: var(--ft-ink) !important; }
+body > footer.bg-maroon-900 p.font-medium.mb-4 { color: var(--ft-m) !important; font-size: 11px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 14px; }
+body > footer.bg-maroon-900 .uppercase.tracking-\[\.3em\] { color: var(--ft-m) !important; }
+body > footer.bg-maroon-900 [data-i18n="foot.about"] { color: var(--ft-mu); max-width: 34ch; }
+body > footer.bg-maroon-900 [data-set="tat"], body > footer.bg-maroon-900 p.text-xs.mt-4 { color: var(--ft-mu) !important; }
+body > footer.bg-maroon-900 ul a, body > footer.bg-maroon-900 ul span { color: var(--ft-ink); transition: color .2s; }
+body > footer.bg-maroon-900 ul.space-y-2 a { color: var(--ft-mu); }
+body > footer.bg-maroon-900 ul a:hover, body > footer.bg-maroon-900 .hover\:text-sun:hover { color: var(--ft-m) !important; }
+/* contact rows: icon in a small glass tile */
+body > footer.bg-maroon-900 ul.space-y-3 li { align-items: center; gap: 10px; }
+body > footer.bg-maroon-900 ul.space-y-3 li > svg, body > footer.bg-maroon-900 ul.space-y-3 li > i { box-sizing: content-box; width: 14px !important; height: 14px !important; padding: 8px; border-radius: 11px; color: var(--ft-m) !important;
+  background: rgb(255 255 255 / .75); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .9), 0 6px 16px -10px rgb(58 0 7 / .5); }
+body > footer.bg-maroon-900 ul.space-y-3 li:last-child span { color: var(--ft-mu); font-size: 12.5px; }
+/* social buttons */
+body > footer.bg-maroon-900 .flex.gap-2.mt-4 a { background: rgb(255 255 255 / .7) !important; color: var(--ft-ink) !important; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .9), 0 8px 18px -12px rgb(58 0 7 / .55); transition: background .25s, color .25s, transform .25s; }
+body > footer.bg-maroon-900 .flex.gap-2.mt-4 a:hover { background: var(--ft-m) !important; color: #fff !important; transform: translateY(-2px); }
+/* bottom bar */
+body > footer.bg-maroon-900 > .border-t { border-color: var(--ft-line) !important; background: rgb(255 255 255 / .35); }
+body > footer.bg-maroon-900 > .border-t, body > footer.bg-maroon-900 > .border-t p, body > footer.bg-maroon-900 > .border-t a { color: var(--ft-mu) !important; }
+body > footer.bg-maroon-900 > .border-t a:hover { color: var(--ft-m) !important; }
+@media (max-width: 640px) {
+  body > footer.bg-maroon-900 { margin: 40px 12px 90px; border-radius: 28px; }
+  body > footer.bg-maroon-900 > div:first-child { padding-top: 32px; grid-template-columns: 1fr 1fr; row-gap: 28px; }
+  body > footer.bg-maroon-900 > div:first-child > div:first-child, body > footer.bg-maroon-900 > div:first-child > div:last-child { grid-column: 1 / -1; }
+}
