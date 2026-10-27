@@ -258,9 +258,6 @@
 
 /* booking form: country code + contact language (added by fleet.js to every booking form) */
 .bf-tel { display: grid; grid-template-columns: 112px 1fr; gap: 8px; }
-.bf-langs { display: flex; flex-wrap: wrap; gap: 6px; }
-.bf-langs button { height: 38px; padding: 0 14px; border-radius: 99px; font-size: 13.5px; background: #fff; box-shadow: inset 0 0 0 1px rgb(35 20 22 / .14); transition: background .2s, color .2s; }
-.bf-langs button[aria-pressed="true"] { background: #70000e; color: #fff; box-shadow: none; }
 
 /* the same boat card everywhere (home "featured boats", destination pages…): tighter when the column is narrow */
 .fx-card { container-type: inline-size; }

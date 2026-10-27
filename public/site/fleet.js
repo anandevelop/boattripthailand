@@ -320,9 +320,8 @@ function fxBook(slug) {
   if (extra && f.note && !f.note.value) f.note.value = extra;
 }
 
-/* ---------- booking form for guests from many countries: country code + reply language ---------- */
+/* ---------- booking form for guests from many countries: country code (reply language = site language) ---------- */
 const FX_CC = [['+66', '🇹🇭 +66'], ['+86', '🇨🇳 +86'], ['+7', '🇷🇺 +7'], ['+91', '🇮🇳 +91'], ['+82', '🇰🇷 +82'], ['+81', '🇯🇵 +81'], ['+65', '🇸🇬 +65'], ['+60', '🇲🇾 +60'], ['+971', '🇦🇪 +971'], ['+44', '🇬🇧 +44'], ['+61', '🇦🇺 +61'], ['+49', '🇩🇪 +49'], ['+33', '🇫🇷 +33'], ['+1', '🇺🇸 +1']];
-const FX_LANGS = [['th', 'ไทย'], ['en', 'English'], ['zh', '中文'], ['ru', 'Русский']];
 function fxFormExtras(form) {
   if (!form || form._fx || !form.phone) return; form._fx = true;
   const ph = form.phone, wrap = document.createElement('div'), sel = document.createElement('select');
@@ -331,20 +330,7 @@ function fxFormExtras(form) {
   sel.value = LANG === 'th' ? '+66' : '';
   ph.parentNode.insertBefore(wrap, ph); wrap.append(sel, ph);
   sel.onchange = () => { const rest = ph.value.replace(/^\+\d{1,4}\s*/, ''); ph.value = (sel.value ? sel.value + ' ' : '') + rest; ph.focus(); };
-  const note = form.note; if (!note) return;
-  form._cl = LANG;
-  const box = document.createElement('div'); box.className = 'bf-fld bf-wide';
-  box.innerHTML = `<span>${L('ให้ติดต่อกลับเป็นภาษา', 'Reply to me in')}</span><div class="bf-langs">${FX_LANGS.map(([v, l]) => `<button type="button" data-l="${v}" aria-pressed="${v === LANG}">${l}</button>`).join('')}</div>`;
-  box.querySelectorAll('button').forEach(b => b.onclick = () => { form._cl = b.dataset.l; box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); });
-  (note.closest('label') || note).before(box);
-  // the lead API stores th/en only: another reply language travels in the message, added just for the send
-  const btn = form.querySelector('button[type=submit]');
-  if (btn) btn.addEventListener('click', () => {
-    if (form._cl === LANG) return;
-    const orig = note.value, tag = `[${L('ให้ติดต่อกลับเป็นภาษา', 'Reply in')}: ${FX_LANGS.find(x => x[0] === form._cl)[1]}]`;
-    note.value = (orig ? orig + '\n' : '') + tag;
-    setTimeout(() => { if (note.value.endsWith(tag)) note.value = orig; }, 0);
-  });
+  // the reply language is the language the site is open in (the lead's lang field)
 }
 { const _bf = buildForm; buildForm = function (wrap) { const f = _bf(wrap); try { fxFormExtras(f); } catch (e) { } return f; }; }
 
