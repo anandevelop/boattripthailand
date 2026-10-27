@@ -546,3 +546,86 @@ body > footer.bg-maroon-900 > .border-t a:hover { color: var(--ft-m) !important;
   body > footer.bg-maroon-900 > div:first-child { padding-top: 32px; grid-template-columns: 1fr 1fr; row-gap: 28px; }
   body > footer.bg-maroon-900 > div:first-child > div:first-child, body > footer.bg-maroon-900 > div:first-child > div:last-child { grid-column: 1 / -1; }
 }
+
+/* =====================================================================
+   Liquid Glass sweep · every page of the public site
+   One soft ambient background behind the whole site; flat white/sand bands become transparent and the
+   blocks on them become glass panels. CSS only, scoped by view, nothing in app.js / shell.html changes.
+   ===================================================================== */
+:root { --lg-bg: rgb(255 255 255 / .6); --lg-bg2: rgb(255 255 255 / .74); --lg-blur: blur(22px) saturate(185%);
+  --lg-sh: 0 18px 50px -30px rgb(58 0 7 / .4), 0 2px 8px -6px rgb(35 20 22 / .08);
+  --lg-spec: inset 0 1px 0 rgb(255 255 255 / .95), inset 0 0 0 1px rgb(255 255 255 / .5); --lg-line: rgb(35 20 22 / .07); }
+body { background: radial-gradient(1100px 700px at 0% -5%, rgb(255 255 255 / .95), transparent 60%), radial-gradient(900px 600px at 100% 20%, rgb(112 0 14 / .05), transparent 65%),
+  radial-gradient(900px 700px at 0% 70%, rgb(31 122 140 / .06), transparent 65%), linear-gradient(180deg, #eef1f3 0%, #f5f0ee 45%, #f3eeec 100%); background-repeat: no-repeat; min-height: 100vh; }
+/* bands that used to be flat colour */
+#view-home > section#boats, #view-home > section#seoGuide, #view-home > section#faq, #view-home > section#booking,
+#view-about > section, #view-legal > section.bg-sand, #view-blog section.bg-sand, body > main section.bg-sand.border-t, section.bg-sand.border-t { background: transparent !important; border-color: transparent !important; }
+section.bg-sand.border-t { background-image: none !important; }
+/* the glass recipe, shared */
+#seoGuide #guide-types > div, #seoGuide #guide-prices > div, #seoGuide #guide-routes > ul, #seoGuide #guide-how li,
+#view-about section ul > li.bg-white, #view-about section ol > li.bg-sand, #view-about section .ring-1.bg-white,
+#view-dest dl > div.bg-sand, #view-dest .mt-5.bg-sand, #view-dest ul.divide-y, #view-dest aside#destForm,
+#view-legal aside > div, #view-legal .legal, #view-legal .bg-sand.p-6, #view-blog aside .rounded-\[18px\].ring-1, #homeBlog a.group, #view-nf > section {
+  background: var(--lg-bg) !important; -webkit-backdrop-filter: var(--lg-blur); backdrop-filter: var(--lg-blur);
+  box-shadow: var(--lg-sh), var(--lg-spec) !important; border: 0 !important; --tw-ring-shadow: 0 0 #0000; }
+
+/* ---------- home ---------- */
+#typeBand { max-width: 80rem; margin: 0 auto; border-radius: 34px; box-shadow: 0 40px 90px -50px rgb(11 26 36 / .8); }
+@media (max-width: 1360px) { #typeBand { margin: 0 16px; } }
+#typeBand ul > li { padding: 22px 12px 18px; border-radius: 24px; background: rgb(255 255 255 / .1); -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .35), inset 0 0 0 1px rgb(255 255 255 / .14); transition: background .3s, transform .3s; }
+#typeBand ul > li:hover { background: rgb(255 255 255 / .18); transform: translateY(-3px); }
+#typeBand ul { gap: 14px !important; }
+#promo > div { border-radius: 34px; background: radial-gradient(120% 140% at 0% 0%, #8a1a26, #5a0010 55%, #3a0007) !important; box-shadow: 0 40px 90px -50px rgb(58 0 7 / .9), inset 0 1px 0 rgb(255 255 255 / .18); }
+#promo > div .img-fallback { border-radius: 0 34px 34px 0; }
+@media (max-width: 767px) { #promo > div .img-fallback { border-radius: 0 0 34px 34px; } }
+#categories .cbar { background: var(--lg-bg2) !important; -webkit-backdrop-filter: var(--lg-blur); backdrop-filter: var(--lg-blur); box-shadow: var(--lg-sh), var(--lg-spec) !important; border-radius: 24px !important; }
+.act-card, .rt-card { border-radius: 22px !important; }
+#seoGuide #guide-types > div { gap: 0 !important; overflow: hidden; border-radius: 22px !important; }
+#seoGuide #guide-types > div > * { background: transparent !important; box-shadow: inset 0 0 0 .5px var(--lg-line); }
+#seoGuide #guide-prices > div, #seoGuide #guide-routes > ul { border-radius: 22px !important; overflow: hidden; }
+#seoGuide table thead, #seoGuide table thead tr { background: rgb(255 255 255 / .45) !important; }
+#seoGuide table td, #seoGuide table th { border-color: var(--lg-line) !important; }
+#seoGuide #guide-routes > ul > li { border-color: var(--lg-line) !important; }
+#seoGuide #guide-routes > ul > li:hover, #seoGuide #guide-routes > ul a:hover { background: rgb(255 255 255 / .5); }
+#seoGuide #guide-how li { border-radius: 20px !important; }
+#homeBlog a.group { padding: 10px 10px 16px; border-radius: 26px; transition: transform .3s cubic-bezier(.2, .8, .2, 1), box-shadow .3s; }
+#homeBlog a.group > :not(div) { padding: 0 8px; }
+#homeBlog a.group:hover { transform: translateY(-3px); }
+#homeBlog a.group > div:first-child { border-radius: 18px !important; }
+
+/* ---------- about ---------- */
+#view-about > section.border-y > div { max-width: 80rem; border-radius: 28px; background: var(--lg-bg); -webkit-backdrop-filter: var(--lg-blur); backdrop-filter: var(--lg-blur); box-shadow: var(--lg-sh), var(--lg-spec); padding: 26px 32px !important; }
+@media (max-width: 1360px) { #view-about > section.border-y > div { margin: 0 16px; } }
+#view-about section ul > li.bg-white { border-radius: 22px !important; }
+#view-about section ul.gap-3 > li.bg-white { background: var(--lg-bg2) !important; border-radius: 16px !important; }
+#view-about section ol > li.bg-sand { border-radius: 22px !important; }
+#view-about .bg-maroon.rounded-\[24px\] { border-radius: 30px !important; background: radial-gradient(120% 140% at 0% 0%, #8a1a26, #5a0010 55%, #3a0007) !important; box-shadow: 0 40px 90px -50px rgb(58 0 7 / .9), inset 0 1px 0 rgb(255 255 255 / .18); }
+#view-about section .ring-1.bg-white.rounded-\[24px\] { border-radius: 30px !important; }
+
+/* ---------- destination ---------- */
+#view-dest > section.bg-ink:first-child { max-width: 80rem; margin: 8px auto 0; border-radius: 34px; box-shadow: 0 40px 90px -50px rgb(11 26 36 / .8); }
+@media (max-width: 1360px) { #view-dest > section.bg-ink:first-child { margin: 8px 16px 0; } }
+#view-dest dl > div.bg-sand { border-radius: 20px; }
+#view-dest ul.divide-y { border-radius: 24px; padding: 4px 22px; }
+#view-dest ul.divide-y > li { border-color: var(--lg-line) !important; }
+#view-dest .mt-5.bg-sand { border-radius: 24px; }
+#view-dest .mt-5.bg-sand details { border-color: var(--lg-line) !important; }
+#view-dest aside#destForm { border-radius: 30px !important; }
+
+/* ---------- legal ---------- */
+#view-legal aside > div { padding: 18px 16px; border-radius: 24px; }
+#view-legal .legal { padding: 30px 34px; border-radius: 30px; }
+#view-legal .bg-sand.p-6 { border-radius: 24px !important; }
+@media (max-width: 640px) { #view-legal .legal { padding: 22px 18px; border-radius: 24px; } }
+
+/* ---------- blog post ---------- */
+#view-blog aside .rounded-\[18px\].ring-1 { border-radius: 24px !important; }
+#view-blog .mt-12.rounded-\[22px\] { border-radius: 30px !important; box-shadow: 0 40px 90px -50px rgb(58 0 7 / .9), inset 0 1px 0 rgb(255 255 255 / .18); }
+
+/* ---------- 404 ---------- */
+#view-nf > section { max-width: 560px; margin: 64px auto; padding: 56px 28px !important; border-radius: 34px; }
+@media (max-width: 600px) { #view-nf > section { margin: 40px 16px; } }
+
+/* ---------- team band (every page): the band stays a soft glow, cards were already glass ---------- */
+section#team { background: transparent !important; background-image: none !important; border-color: transparent !important; }

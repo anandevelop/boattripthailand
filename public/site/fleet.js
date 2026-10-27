@@ -726,7 +726,9 @@ if ((VH.hash || '').startsWith('#/boat/')) { try { const b = bySlug(decodeURICom
    the server render parks their <img> sources in data-src, the browser puts them back when the view opens
    ===================================================================== */
 const FX_VIEWS = '[id^="view-"]';
-function fxSsrDone() { fxPark(); }   // called by site-render.ts after the server render
+function fxSsrDone() { fxFixImgs(); fxPark(); }
+/* the author logo on articles was a placeholder (data:…LOGON_B64) that never got filled in */
+function fxFixImgs(root) { (root || document).querySelectorAll('img[src*="LOGON_B64"]').forEach(im => im.setAttribute('src', (typeof SET !== 'undefined' && SET.logo) || '/brand/logo.png')); }   // called by site-render.ts after the server render
 /* run right after anything draws into a hidden view: the browser only starts the download after the current task, so it never starts */
 function fxPark() {
   document.querySelectorAll(FX_VIEWS).forEach(v => {
@@ -739,7 +741,8 @@ function fxWake(root) {
 }
 if (!FX_SSR) {
   { const _sv = showView; showView = function (name) { _sv(name); try { fxWake($('#view-' + name)); } catch (e) { } }; }
-  fxPark(); fxWake();
+  fxFixImgs(); fxPark(); fxWake();
+  { const _rp = typeof renderPost === 'function' ? renderPost : null; if (_rp) renderPost = function () { const r = _rp.apply(this, arguments); fxFixImgs(); return r; }; }
   // every renderer that can draw into a view that is not on screen
   ['renderAll', 'renderBoats', 'renderHero', 'renderCats', 'renderActs', 'renderRoutes', 'renderRecent', 'renderHomeBlog', 'renderTeam', 'renderTypeBand', 'renderSmartTeaser'].forEach(n => {
     const f = globalThis[n]; if (typeof f !== 'function') return;
@@ -756,4 +759,6 @@ if (!FX_SSR) {
 { const g = $('#boatGrid'); if (g) { g.className = 'fx-grid mt-6'; try { renderBoats(); } catch (e) { } } }
 if (!FX_SSR) fxPark();
 updateCompareUI();
+{ const _rd = renderDest; renderDest = function (slug) { _rd(slug); try { $$('#view-dest .grid.lg\\:grid-cols-4').forEach(g => { if (g.querySelector('.fx-card')) g.className = 'fx-grid mt-6'; }); fxPark(); } catch (e) { } }; }
+if ((VH.hash || '').startsWith('#/dest/')) { try { renderDest(decodeURIComponent(VH.hash.slice(7))); fxFixImgs(); } catch (e) { } }
 if ((VH.hash || '').startsWith('#/fleet')) { renderFleetPage(); if (typeof afterRoute === 'function') afterRoute(); }
