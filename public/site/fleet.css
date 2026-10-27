@@ -683,8 +683,11 @@ section#team .tm-card b, section#team [class*="phone"] { font-weight: 400; }
    Brand icons: brand colour where the icon sits on a light tile; white on maroon buttons
    ===================================================================== */
 svg.bi { display: inline-block; flex: none; }
-body > footer ul.space-y-3 li > svg.bi-line { color: #06C755 !important; }
-body > footer ul.space-y-3 li > svg.bi-whatsapp { color: #25D366 !important; }
+/* footer: one colour for every mark (maroon, like the other contact icons); the brand colour only on hover */
+body > footer svg.bi { color: #70000e !important; }
+body > footer .flex.gap-2.mt-4 a { color: #70000e !important; }
+body > footer .flex.gap-2.mt-4 a svg.bi { width: 17px !important; height: 17px !important; transition: color .25s, transform .25s; }
+body > footer .flex.gap-2.mt-4 a:hover svg.bi { color: #fff !important; transform: scale(1.06); }
 /* booking contact cards: the tile takes the brand colour, the mark is white */
 .ct-card svg.bi { color: #fff !important; }
 .ct-card :has(> svg.bi-line) { background: linear-gradient(160deg, #22d46b, #06C755 60%, #04a647) !important; box-shadow: 0 10px 22px -10px rgb(6 199 85 / .7), inset 0 1px 0 rgb(255 255 255 / .3) !important; }
