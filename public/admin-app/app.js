@@ -1507,11 +1507,12 @@ const ogOf = b => b.og ??= { mode: 'card', pos: 'center', src: '', price: true, 
 const usd = n => '$' + Math.round((n || 0) / 33.42).toLocaleString();
 /* 1200×630 preview; the real site renders the same layout server-side (Next.js /og route) */
 function ogHtml(b, k = 'th', round = '') {
-  const o = ogOf(b), photo = o.mode === 'upload' && o.src ? o.src : THUMBS[b.slug], pos = { top: 'center top', center: 'center', bottom: 'center bottom' }[o.pos];
+  const hero = b.imgs?.[0] || THUMBS[b.slug];   // the boat's cover = its first photo (THUMBS prefers the '-a' shot for list thumbnails)
+  const o = ogOf(b), photo = o.mode === 'upload' && o.src ? o.src : hero, pos = { top: 'center top', center: 'center', bottom: 'center bottom' }[o.pos];
   const base = `<div class="og ${round}" style="container-type:inline-size">`;
   if (o.mode !== 'card') return base + `<img src="${photo}" style="object-position:${pos}"/></div>`;
   const logo = $('#side img')?.src || '';
-  return base + `<img src="${THUMBS[b.slug]}" style="object-position:${pos}"/><div class="og-shade"></div>
+  return base + `<img src="${hero}" style="object-position:${pos}"/><div class="og-shade"></div>
     <div class="og-top"><img src="${logo}"/><span>BOAT TRIP <i>THAILAND</i></span></div>
     <div class="og-bot"><p class="og-k">${k === 'th' ? 'เช่าเรือส่วนตัว · ภูเก็ต' : 'Private charter · Phuket'}</p><p class="og-n">${esc(b.name)}</p>
       <div class="og-row">${o.price && b.from_ ? `<span class="og-p">${k === 'th' ? 'เริ่ม ' + baht(b.from_) : 'From ' + usd(b.from_)}</span>` : ''}${o.pax && b.pax ? `<span class="og-x">${b.pax} ${k === 'th' ? 'คน' : 'guests'}</span>` : ''}<span class="og-x">${TYPE_TH && k === 'th' ? TYPE_TH[b.type] || '' : ({ yacht: 'Yacht', sail: 'Sailing catamaran', power: 'Power catamaran', speed: 'Speedboat', longtail: 'Longtail' })[b.type] || ''}</span></div></div></div>`;
