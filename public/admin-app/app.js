@@ -2339,7 +2339,7 @@ function brandBody() {
     ${brandSec('type', 'ชื่อ & สโลแกน', 'แสดงที่โลโก้ แท็บเบราว์เซอร์ และผลค้นหา Google', `<div class="grid gap-4">${bi('ชื่อเว็บไซต์', C.name)}${bi('สโลแกน (ใต้โลโก้ / ในผลค้นหา)', C.tagline)}</div>`)}
     ${brandSec('image', 'โลโก้ & ไอคอน', 'PNG / SVG พื้นใส · เปลี่ยนแล้วกดบันทึกด้านบน', `<div class="grid sm:grid-cols-2 gap-3">
       ${brandTile('logo', 'โลโก้ · พื้นสว่าง', 'Navbar และเอกสาร · สูงอย่างน้อย 120px', 'light')}
-      ${brandTile('logoDark', 'โลโก้ · พื้นเข้ม', 'Footer · ใช้เวอร์ชันสีขาวถ้ามี', 'dark')}
+      ${brandTile('logoDark', 'โลโก้ · พื้นเข้ม', 'ใช้บนพื้นหลังสีเข้ม · ใช้เวอร์ชันสีขาวถ้ามี', 'dark')}
       ${brandTile('favicon', 'ไอคอนเว็บ (Favicon)', 'จัตุรัส 512×512 · ระบบสร้าง .ico และ Apple touch icon ให้', 'icon')}
       ${brandTile('ogDefault', 'รูปแชร์เริ่มต้น (OG)', '1200×630 · ใช้เมื่อหน้านั้นไม่มีรูปแชร์ของตัวเอง', 'cover')}</div>`)}
     ${brandSec('palette', 'สีหลักของแบรนด์', 'ใช้กับปุ่ม ลิงก์ และไฮไลต์บนเว็บ', `<div class="flex flex-wrap items-center gap-3">
@@ -2362,15 +2362,26 @@ function brandBody() {
   return `<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">${left}${right}</div>`;
 }
 function footerPreview() {
-  const C = SITECFG, soc = C.social.filter(s => s.on);
-  return `<div id="cfgFoot" class="rounded-2xl p-6 text-[#f2e7e8]" style="background:#3a0007">
-    <div class="flex items-center gap-2.5 mb-5"><img src="${C.logoDark}" class="w-9 h-9 object-contain"/><div class="leading-none"><p class="text-[13px] tracking-wide text-white">${esc(C.name.en).toUpperCase()}</p><p class="text-[10px] opacity-60 mt-1">${esc(C.tagline.th)}</p></div></div>
-    <ul class="grid gap-3 text-[14px]"><li class="flex gap-3"><i data-lucide="phone" class="w-4 h-4 mt-0.5 shrink-0"></i>${esc(C.phone)}</li><li class="flex gap-3"><i data-lucide="mail" class="w-4 h-4 mt-0.5 shrink-0"></i>${esc(C.email)}</li>
-      ${C.address.th ? `<li class="flex gap-3"><i data-lucide="map-pin" class="w-4 h-4 mt-0.5 shrink-0"></i>${esc(C.address.th)}</li>` : ''}
-      <li class="flex gap-3"><i data-lucide="anchor" class="w-4 h-4 mt-0.5 shrink-0"></i>${C.marinas.map(esc).join(' · ')}</li>
-      ${C.hours.th ? `<li class="flex gap-3"><i data-lucide="clock" class="w-4 h-4 mt-0.5 shrink-0"></i>${esc(C.hours.th)}</li>` : ''}</ul>
-    <div class="flex flex-wrap gap-2 mt-5">${soc.map(s => `<span class="w-10 h-10 rounded-full bg-white/10 grid place-items-center ${s.url ? '' : 'opacity-40'}" title="${s.l}${s.url ? '' : ' (ยังไม่มีลิงก์)'}">${socIco(s.icon)}</span>`).join('')}</div>
-    <p class="text-[11px] opacity-50 mt-5 pt-4 border-t border-white/10">${esc(C.copyright.th)} · ${esc(C.company)} · TAT ${esc(C.tat)}</p></div>`;
+  /* same look as the public footer (public/site glass footer, tablet layout): light glass, 4 blocks, legal bar */
+  const C = SITECFG, soc = C.social.filter(s => s.on), M = '#70000e', MUTED = '#6b5e60';
+  const H = l => `<p style="color:${M};font-size:10.5px;letter-spacing:.18em;font-weight:500" class="mb-3">${l}</p>`;
+  const tile = ic => `<span class="shrink-0 grid place-items-center" style="width:28px;height:28px;border-radius:10px;background:rgb(255 255 255 / .75);color:${M};box-shadow:inset 0 0 0 1px rgb(255 255 255 / .9), 0 6px 16px -10px rgb(58 0 7 / .5)">${ic === 'line' ? socIco('line', 'w-3.5 h-3.5') : `<i data-lucide="${ic}" class="w-3.5 h-3.5"></i>`}</span>`;
+  const row = (ic, t) => t ? `<li class="flex items-center gap-2.5"><span>${tile(ic)}</span><span class="min-w-0" style="color:#231416">${t}</span></li>` : '';
+  const links = arr => `<ul class="grid gap-1.5" style="color:${MUTED};font-size:12.5px">${arr.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  return `<div id="cfgFoot" class="overflow-hidden" style="border-radius:26px;background:rgb(255 255 255 / .58);color:#231416;box-shadow:0 30px 80px -40px rgb(58 0 7 / .45), 0 2px 10px -6px rgb(35 20 22 / .1), inset 0 1px 0 rgb(255 255 255 / .95), inset 0 0 0 1px rgb(255 255 255 / .55), 0 0 0 1px rgb(35 20 22 / .05);-webkit-backdrop-filter:blur(26px) saturate(1.85);backdrop-filter:blur(26px) saturate(1.85)">
+    <div class="grid sm:grid-cols-2 p-6" style="column-gap:24px;row-gap:24px">
+      <div class="min-w-0"><div class="flex items-center gap-2.5"><img src="${C.logo}" alt="" class="w-11 h-11 object-contain"/><div class="leading-tight"><p class="font-medium tracking-wide" style="font-size:15px">${esc((C.name.en || 'Boat Trip Thailand').toUpperCase().replace(/\s*THAILAND$/, ''))}</p><p style="font-size:8.5px;letter-spacing:.35em" class="font-medium">THAILAND</p></div></div>
+        <p class="uppercase mt-4" style="color:${M};font-size:10px;letter-spacing:.3em">Sea by Soul</p>
+        <p class="mt-1.5 leading-relaxed" style="color:${MUTED};font-size:12px">ผู้ให้บริการเช่าเรือยอชต์ คาตามารัน และสปีดโบ๊ท พร้อมทัวร์และกิจกรรมครบวงจรในภูเก็ต กระบี่ และพังงา</p>
+        <p class="mt-3" style="color:${MUTED};font-size:11px">TAT License ${esc(C.tat || '')}</p></div>
+      <div class="grid grid-cols-2 gap-4 min-w-0"><div>${H('บริการ')}${links(['เช่าเรือยอชต์ส่วนตัว', 'เรือคาตามารัน', 'สปีดโบ๊ท', 'ทัวร์ & กิจกรรม', 'ที่พัก & สปา'])}</div>
+        <div>${H('ข้อมูล')}${links(['เกี่ยวกับเรา', 'มารีน่า & จุดขึ้นเรือ', 'คำถามที่พบบ่อย', 'เงื่อนไขการจอง & ยกเลิก', 'นโยบายความเป็นส่วนตัว'])}</div></div>
+      <div class="sm:col-span-2 min-w-0">${H('ติดต่อเรา')}<ul class="grid sm:grid-cols-2" style="font-size:12.5px;column-gap:16px;row-gap:10px">
+        ${row('phone', esc(C.phone))}${row('mail', esc(C.email))}${row('line', C.line ? 'LINE ' + esc(C.line) : '')}${row('map-pin', esc(C.address.th || ''))}
+        ${C.marinas.length ? `<li class="flex items-center gap-2.5 sm:col-span-2"><span>${tile('anchor')}</span><span style="color:${MUTED}">${C.marinas.map(esc).join(' · ')}</span></li>` : ''}</ul>
+        <div class="flex flex-wrap gap-2 mt-4">${soc.map(s => `<span class="w-9 h-9 rounded-full grid place-items-center ${s.url ? '' : 'opacity-40'}" title="${s.l}${s.url ? '' : ' (ยังไม่มีลิงก์)'}" style="background:rgb(255 255 255 / .7);color:${M};box-shadow:inset 0 0 0 1px rgb(255 255 255 / .9), 0 8px 18px -12px rgb(58 0 7 / .55)">${socIco(s.icon)}</span>`).join('')}</div></div>
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-2" style="padding:12px 24px;border-top:1px solid rgb(35 20 22 / .08);color:${MUTED};font-size:10.5px"><p>© ${new Date().getFullYear()} ${esc(C.company || '')} All rights reserved.</p><p class="flex flex-wrap gap-x-3"><span>นโยบายความเป็นส่วนตัว</span><span>ข้อกำหนดและเงื่อนไข</span><span>การตั้งค่าคุกกี้</span></p></div></div>`;
 }
 function cfgPreview() { const el = $('#cfgFoot'); if (el) { el.outerHTML = footerPreview(); icons(); } }
 const _vSettingsOld = vSettings;
