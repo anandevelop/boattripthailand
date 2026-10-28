@@ -2314,6 +2314,53 @@ function imgSlot(k, l, hint, { bg = '#fff', ratio = 'aspect-[3/1]', fit = 'objec
   return `<div><p class="lbl">${l}</p><div class="flex items-center gap-3"><div class="w-40 ${ratio} rounded-xl ring-1 ring-line grid place-items-center overflow-hidden shrink-0" style="background:${bg}"><img src="${SITECFG[k]}" class="${fit.includes('cover') ? fit : fit}" style="${fit.includes('cover') ? '' : `height:${ratio.includes('square') ? 56 : 40}px;width:auto;max-width:85%`}"/></div>
     <div class="grid gap-1.5"><div class="flex flex-wrap gap-1.5"><label class="btn btn-o !h-8 cursor-pointer"><i data-lucide="upload" class="w-3.5 h-3.5"></i>อัปโหลด<input type="file" accept="image/*,.svg,.ico" class="hidden" onchange="readFiles(this.files,s=>{SITECFG.${k}=s[0];vSettings()})"/></label><button class="btn btn-o !h-8" onclick="mediaPicker(s=>{SITECFG.${k}=s[0];vSettings()},{title:'เลือกจากคลังสื่อ'})"><i data-lucide="images" class="w-3.5 h-3.5"></i>คลังสื่อ</button></div><p class="text-[11px] text-muted">${hint}</p></div></div></div>`;
 }
+/* ---------- ตั้งค่า → แบรนด์ & โลโก้ (Liquid Glass layout: settings left, one live preview right) ---------- */
+function brandTile(k, l, hint, kind) {
+  const src = SITECFG[k] || '';
+  const bg = kind === 'dark' ? 'background:#3a0007' : kind === 'cover' ? 'background:#e9e4e3' : kind === 'icon' ? 'background:repeating-conic-gradient(rgb(35 20 22 / .05) 0 25%, transparent 0 50%) 0 0/14px 14px, rgb(255 255 255 / .7)' : 'background:#fff';
+  const img = !src ? `<span class="text-[11px] text-muted">ยังไม่มีรูป</span>` : kind === 'cover' ? `<img src="${src}" alt="" style="width:100%;height:100%;object-fit:cover"/>` : `<img src="${src}" alt="" style="height:${kind === 'icon' ? 56 : 46}px;width:auto;max-width:80%;object-fit:contain${kind === 'icon' ? ';filter:drop-shadow(0 6px 10px rgb(58 0 7 / .18))' : ''}"/>`;
+  return `<div class="min-w-0 rounded-2xl p-2.5" style="background:rgb(255 255 255 / .5);box-shadow:inset 0 0 0 1px rgb(35 20 22 / .07), inset 0 1px 0 #fff">
+    <div class="rounded-xl overflow-hidden grid place-items-center" style="height:118px;${bg};box-shadow:inset 0 0 0 1px rgb(35 20 22 / .06)">${img}</div>
+    <div class="px-1 pt-2.5"><p class="text-[13px] font-medium">${l}</p><p class="text-[11px] text-muted mt-0.5" style="min-height:2.6em">${hint}</p>
+      <div class="flex gap-1.5 mt-2"><label class="btn btn-o !h-8 !text-[12px] flex-1 justify-center cursor-pointer"><i data-lucide="upload" class="w-3.5 h-3.5"></i>อัปโหลด<input type="file" accept="image/*,.svg,.ico" class="hidden" onchange="readFiles(this.files,s=>{SITECFG.${k}=s[0];vSettings()})"/></label><button class="btn btn-o !h-8 !text-[12px] flex-1 justify-center" onclick="mediaPicker(s=>{SITECFG.${k}=s[0];vSettings()},{title:'เลือกจากคลังสื่อ'})"><i data-lucide="images" class="w-3.5 h-3.5"></i>คลังสื่อ</button></div></div></div>`;
+}
+const brandSec = (icon, title, sub, inner) => `<div class="card p-5 min-w-0"><div class="flex items-start gap-3 mb-4"><span class="w-9 h-9 rounded-xl grid place-items-center shrink-0" style="background:rgb(112 0 14 / .08);color:#70000e"><i data-lucide="${icon}" class="w-4 h-4"></i></span><div><p class="font-medium">${title}</p><p class="text-[11.5px] text-muted">${sub}</p></div></div>${inner}</div>`;
+function brandColor(v) {
+  if (!/^#[0-9a-f]{6}$/i.test(v)) return;
+  SITECFG.color = v;
+  $$('[data-bc]').forEach(e => { e.style[e.dataset.bc] = v; });
+  const a = $('#bcPick'), b = $('#bcHex'); if (a && a.value !== v) a.value = v; if (b && document.activeElement !== b) b.value = v;
+}
+function brandBody() {
+  const C = SITECFG, host = (typeof SITE === 'string' && SITE) || 'boattripthailand.com';
+  const SW = ['#70000e', '#8a1c2b', '#0f3d5e', '#1d6b57', '#b4501a', '#231416'];
+  const name = esc(C.name.th || C.name.en || 'Boat Trip Thailand'), nameEn = esc(C.name.en || 'Boat Trip Thailand');
+  const left = `<div class="grid gap-4 min-w-0">
+    ${brandSec('type', 'ชื่อ & สโลแกน', 'แสดงที่โลโก้ แท็บเบราว์เซอร์ และผลค้นหา Google', `<div class="grid gap-4">${bi('ชื่อเว็บไซต์', C.name)}${bi('สโลแกน (ใต้โลโก้ / ในผลค้นหา)', C.tagline)}</div>`)}
+    ${brandSec('image', 'โลโก้ & ไอคอน', 'PNG / SVG พื้นใส · เปลี่ยนแล้วกดบันทึกด้านบน', `<div class="grid sm:grid-cols-2 gap-3">
+      ${brandTile('logo', 'โลโก้ · พื้นสว่าง', 'Navbar และเอกสาร · สูงอย่างน้อย 120px', 'light')}
+      ${brandTile('logoDark', 'โลโก้ · พื้นเข้ม', 'Footer · ใช้เวอร์ชันสีขาวถ้ามี', 'dark')}
+      ${brandTile('favicon', 'ไอคอนเว็บ (Favicon)', 'จัตุรัส 512×512 · ระบบสร้าง .ico และ Apple touch icon ให้', 'icon')}
+      ${brandTile('ogDefault', 'รูปแชร์เริ่มต้น (OG)', '1200×630 · ใช้เมื่อหน้านั้นไม่มีรูปแชร์ของตัวเอง', 'cover')}</div>`)}
+    ${brandSec('palette', 'สีหลักของแบรนด์', 'ใช้กับปุ่ม ลิงก์ และไฮไลต์บนเว็บ', `<div class="flex flex-wrap items-center gap-3">
+      <label class="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 cursor-pointer" style="box-shadow:inset 0 0 0 1px rgb(35 20 22 / .12), 0 6px 14px -8px rgb(58 0 7 / .5)"><span class="absolute inset-0" data-bc="background" style="background:${C.color}"></span><input id="bcPick" type="color" value="${C.color}" class="absolute inset-0 opacity-0 cursor-pointer" oninput="brandColor(this.value)"/></label>
+      <input id="bcHex" class="inp font-mono" style="width:120px" value="${esc(C.color)}" oninput="brandColor(this.value.trim())"/>
+      <div class="flex gap-1.5">${SW.map(c => `<button class="w-7 h-7 rounded-full" title="${c}" style="background:${c};box-shadow:inset 0 0 0 2px rgb(255 255 255 / .7), 0 0 0 1px rgb(35 20 22 / .12)" onclick="brandColor('${c}')"></button>`).join('')}</div></div>
+      <div class="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-line"><span class="h-9 px-4 rounded-full text-white text-[12.5px] grid place-items-center" data-bc="background" style="background:${C.color}">จองเลย</span><span class="h-9 px-4 rounded-full text-[12.5px] grid place-items-center" data-bc="color" style="color:${C.color};box-shadow:inset 0 0 0 1px currentColor">ดูเรือทั้งหมด</span><span class="text-[12.5px] underline underline-offset-2" data-bc="color" style="color:${C.color}">ลิงก์ในบทความ</span></div>`)}
+  </div>`;
+  const right = `<div class="min-w-0 xl:sticky xl:top-20"><div class="card p-5 grid gap-5">
+    <div class="flex items-center justify-between"><p class="font-medium">ตัวอย่างบนเว็บ</p><span class="text-[11px] text-muted">อัปเดตทันทีที่เปลี่ยน · ยังไม่บันทึก</span></div>
+    <div><p class="lbl">แท็บเบราว์เซอร์ & Navbar</p><div class="rounded-2xl overflow-hidden" style="box-shadow:0 0 0 1px rgb(35 20 22 / .08), 0 14px 30px -22px rgb(58 0 7 / .45)">
+      <div class="px-2.5 pt-2 flex items-end gap-2" style="background:#e4e1e1"><span class="flex gap-1.5 pb-3 pl-1">${['#ff5f57', '#febc2e', '#28c840'].map(c => `<span class="w-2.5 h-2.5 rounded-full" style="background:${c}"></span>`).join('')}</span>
+        <div class="bg-white rounded-t-lg px-3 h-8 flex items-center gap-2 text-[12px] min-w-0" style="width:210px"><img src="${C.favicon}" alt="" class="w-4 h-4 object-contain shrink-0"/><span class="truncate">${name}</span><span class="ml-auto text-muted">×</span></div></div>
+      <div class="bg-white px-3 h-8 flex items-center text-[11px] text-muted border-b border-line"><i data-lucide="lock" class="w-3 h-3 mr-1.5"></i>${esc(host)}</div>
+      <div class="bg-white px-4 h-14 flex items-center gap-2.5"><img src="${C.logo}" alt="" class="w-8 h-8 object-contain"/><div class="leading-none"><p class="text-[12.5px] tracking-wide">${nameEn.toUpperCase().replace(' THAILAND', '')}</p><p class="text-[8.5px] text-muted mt-1" style="letter-spacing:.3em">THAILAND</p></div><span class="ml-auto h-8 px-4 rounded-full text-white text-[12px] grid place-items-center" data-bc="background" style="background:${C.color}">จองเลย</span></div></div></div>
+    <div><p class="lbl">เมื่อแชร์ลิงก์ (LINE / Facebook)</p><div class="rounded-2xl overflow-hidden bg-white flex items-stretch" style="box-shadow:0 0 0 1px rgb(35 20 22 / .08)"><div class="shrink-0" style="width:42%;aspect-ratio:1.91/1;background:#e9e4e3">${C.ogDefault ? `<img src="${C.ogDefault}" alt="" style="width:100%;height:100%;object-fit:cover"/>` : ''}</div>
+      <div class="px-4 py-3 min-w-0 flex flex-col justify-center"><p class="text-[10.5px] text-muted uppercase tracking-wide truncate">${esc(host)}</p><p class="text-[13.5px] font-medium mt-0.5" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${nameEn} · ${esc(C.tagline.en || C.tagline.th || '')}</p><p class="text-[11.5px] text-muted mt-0.5 truncate">${esc(C.tagline.th || '')}</p></div></div></div>
+    <div><p class="lbl">Footer</p>${footerPreview()}</div>
+  </div></div>`;
+  return `<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">${left}${right}</div>`;
+}
 function footerPreview() {
   const C = SITECFG, soc = C.social.filter(s => s.on);
   return `<div id="cfgFoot" class="rounded-2xl p-6 text-[#f2e7e8]" style="background:#3a0007">
@@ -2334,16 +2381,7 @@ vSettings = function () {
   REG = []; const C = SITECFG, t = C.tab;
   if (t === 'booking' || t === 'lang') grabOld();
   let body = '';
-  if (t === 'brand') body = `<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start"><div class="card p-5 grid gap-5">
-      ${bi('ชื่อเว็บไซต์', C.name)}${bi('สโลแกน (ใต้โลโก้ / ในผลค้นหา)', C.tagline)}
-      ${imgSlot('logo', 'โลโก้ (พื้นสว่าง · Navbar)', 'PNG/SVG พื้นใส · สูงอย่างน้อย 120px')}
-      ${imgSlot('logoDark', 'โลโก้ (พื้นเข้ม · Footer)', 'ใช้เวอร์ชันสีขาวถ้ามี', { bg: '#3a0007' })}
-      <div class="grid sm:grid-cols-2 gap-4">${imgSlot('favicon', 'ไอคอนเว็บ (Favicon)', 'สี่เหลี่ยมจัตุรัส 512×512 · ระบบสร้าง .ico และ Apple touch icon ให้', { ratio: 'aspect-square !w-20', fit: 'object-contain' })}
-        <div><p class="lbl">ตัวอย่างบนแท็บเบราว์เซอร์</p><div class="rounded-t-xl bg-[#dee1e6] px-2 pt-2"><div class="bg-white rounded-t-lg px-3 h-9 flex items-center gap-2 text-[12px] max-w-[220px]"><img src="${C.favicon}" class="w-4 h-4 object-contain"/><span class="truncate">${esc(C.name.th)}</span><span class="ml-auto text-muted">×</span></div></div></div></div>
-      ${imgSlot('ogDefault', 'รูปแชร์เริ่มต้น (OG)', 'ใช้เมื่อหน้านั้นไม่มีรูปแชร์ของตัวเอง · 1200×630', { ratio: 'aspect-[1.91/1]', fit: 'object-cover !max-w-full !max-h-full w-full h-full' })}
-      <label><span class="lbl">สีหลักของแบรนด์</span><div class="flex items-center gap-2"><input type="color" value="${C.color}" class="w-10 h-10 rounded-lg ring-1 ring-line p-0.5" oninput="SITECFG.color=this.value;this.nextElementSibling.value=this.value"/><input class="inp font-mono !w-32" value="${C.color}" oninput="SITECFG.color=this.value"/><span class="text-[11px] text-muted">ใช้กับปุ่ม ลิงก์ และไฮไลต์บนเว็บ</span></div></label></div>
-    <div class="grid gap-4 xl:sticky xl:top-20"><div class="card p-5"><p class="font-medium mb-3">ตัวอย่าง Navbar</p><div class="rounded-xl ring-1 ring-line px-4 h-14 flex items-center gap-2.5 bg-white"><img src="${C.logo}" class="w-8 h-8 object-contain"/><div class="leading-none"><p class="text-[12.5px] tracking-wide">${esc(C.name.en).toUpperCase().replace(' THAILAND', '')}</p><p class="text-[8.5px] tracking-[.3em] text-muted mt-1">THAILAND</p></div><span class="ml-auto h-8 px-4 rounded-full text-white text-[12px] grid place-items-center" style="background:${C.color}">จองเลย</span></div></div>
-      <div class="card p-5"><p class="font-medium mb-3">ตัวอย่าง Footer</p>${footerPreview()}</div></div></div>`;
+  if (t === 'brand') body = brandBody();
   if (t === 'contact') body = `<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start"><div class="card p-5 grid gap-4">
       <div class="grid sm:grid-cols-2 gap-3">${cfgIn('phone', 'เบอร์โทรหลัก', '+66…', 'tel')}${cfgIn('email', 'อีเมลรับการจอง', '', 'email')}${cfgIn('wa', 'WhatsApp', '+66…', 'tel')}${cfgIn('line', 'LINE Official Account', '@…')}</div>
       ${cfgIn('lineUrl', 'ลิงก์ LINE (เพิ่มเพื่อน)', 'https://line.me/R/ti/p/@…', 'url', true)}
