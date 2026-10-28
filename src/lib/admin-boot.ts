@@ -14,6 +14,7 @@ import { marketingConfig } from './marketing';
 import { surchargeWarning, surchargeWarnings } from './surcharge';
 import { appUrl } from './leads';
 
+import { lineSaved, loadLineCfg } from './line-config';
 /* ---------- vocabulary shared with the admin UI (mockup) ---------- */
 export const ROLE_TO_CLIENT = { SUPER_ADMIN: 'super', ADMIN: 'admin', SALES: 'sales' } as const;
 export const ROLE_FROM_CLIENT: Record<string, User['role']> = { super: 'SUPER_ADMIN', admin: 'ADMIN', sales: 'SALES' };
@@ -108,7 +109,8 @@ export async function systemStatus() {
   const [g] = await db.select().from(settings).where(eq(settings.key, 'line.groupId'));
   const has = (k: string) => !!process.env[k];
   return [
-    ['LINE OA (Messaging API)', has('LINE_CHANNEL_ACCESS_TOKEN') && has('LINE_CHANNEL_SECRET'), `Webhook URL: ${appUrl()}/api/line/webhook`],
+  await loadLineCfg(); const ls = lineSaved();
+    ['LINE OA (Messaging API)', (has('LINE_CHANNEL_ACCESS_TOKEN') || !!ls.token) && (has('LINE_CHANNEL_SECRET') || !!ls.secret), `Webhook URL: ${appUrl()}/api/line/webhook`],
     ['กลุ่ม LINE ทีมขาย', !!(process.env.LINE_GROUP_ID || g), process.env.LINE_GROUP_ID || (g?.value as string) || 'เชิญบอท LINE OA เข้ากลุ่มทีมขาย ระบบจะจำกลุ่มให้อัตโนมัติ'],
     ['Meta Pixel (หน้าเว็บ)', has('NEXT_PUBLIC_META_PIXEL_ID'), 'NEXT_PUBLIC_META_PIXEL_ID'],
     ['Meta Conversions API', has('META_PIXEL_ID') && has('META_CAPI_TOKEN'), 'ส่ง Lead / QualifiedLead / Converted จากเซิร์ฟเวอร์'],

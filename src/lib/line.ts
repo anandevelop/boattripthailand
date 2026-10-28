@@ -1,17 +1,20 @@
 import 'server-only';
 import { hmacBase64, safeEqual } from './crypto';
+import { lineSaved, loadLineCfg } from './line-config';
 
 const API = 'https://api.line.me/v2/bot';
-const token = () => process.env.LINE_CHANNEL_ACCESS_TOKEN;
+/* .env first, then the keys saved in /admin → ตั้งค่า → LINE & แจ้งเตือน (src/lib/line-config.ts) */
+const token = () => process.env.LINE_CHANNEL_ACCESS_TOKEN || lineSaved().token;
 export const lineEnabled = () => !!token();
 
 export function verifyLineSignature(rawBody: string, signature: string | null) {
-  const secret = process.env.LINE_CHANNEL_SECRET;
+  const secret = process.env.LINE_CHANNEL_SECRET || lineSaved().secret;
   if (!secret || !signature) return false;
   return safeEqual(hmacBase64(secret, rawBody), signature);
 }
 
 async function call(path: string, body: unknown) {
+  await loadLineCfg();
   if (!token()) return { ok: false, skipped: true };
   const r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` }, body: JSON.stringify(body) });
   if (!r.ok) console.error('[LINE]', path, r.status, await r.text().catch(() => ''));

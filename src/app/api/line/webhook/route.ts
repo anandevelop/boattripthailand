@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { leadActivities, leads, settings, users } from '@/db/schema';
 import { audit } from '@/lib/audit';
 import { replyLine, text, verifyLineSignature } from '@/lib/line';
+import { loadLineCfg } from '@/lib/line-config';
 import { setLeadStatus } from '@/lib/leads';
 
 export const runtime = 'nodejs';
@@ -12,6 +13,7 @@ type Ev = { type: string; replyToken?: string; source: { type: string; userId?: 
 
 export async function POST(req: Request) {
   const raw = await req.text();
+  await loadLineCfg();
   if (!verifyLineSignature(raw, req.headers.get('x-line-signature'))) return NextResponse.json({ ok: false }, { status: 401 });
   const { events = [] } = JSON.parse(raw) as { events: Ev[] };
   for (const ev of events) {

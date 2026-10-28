@@ -4133,7 +4133,7 @@ function vSystem() {
       ${kpi('gauge', 'เวลาโหลดหน้าแรก (TTFB)', `<span style="color:${tone}">${ms == null ? (last ? 'ล่ม' : '—') : ms.toLocaleString() + ' <span class="text-[13px]">ms</span>'}</span>`, last ? `เฉลี่ย 1 ชม. ${w.avgHour ?? '—'} ms · ออนไลน์ ${w.upDay ?? '—'}% ใน 24 ชม. · วัดจากเซิร์ฟเวอร์` : 'รอการวัดครั้งแรก (ทุก 1 นาที)', sysSpark(w.spark))}
       ${kpi('database', 'ฐานข้อมูล', sysSize(d.db.bytes), `สำรองล่าสุด ${ago} · ${esc(d.db.version)} · รูปภาพ ${sysSize(d.media.bytes)} (${d.media.files.toLocaleString()} ไฟล์)`)}
       <div class="card p-4 min-w-0"><p class="text-[11px] text-muted flex items-center gap-1.5"><i data-lucide="plug" class="w-3.5 h-3.5"></i>การเชื่อมต่อ</p><ul class="grid gap-1.5 mt-2 text-[12.5px]">
-        ${yes(ch.line, 'LINE OA', ch.line ? '' : 'ตั้ง LINE_CHANNEL_ACCESS_TOKEN ใน .env')}${yes(ch.group, 'กลุ่ม LINE ทีมขาย (รับแจ้งเตือน)', ch.group ? '' : 'เชิญบอท LINE OA เข้ากลุ่มทีมขาย')}${yes(d.cron.secret, 'Cron ภายนอก', d.cron.secret ? 'ตั้ง CRON_SECRET แล้ว' : 'ไม่บังคับ · ระบบรันงานเองทุกนาที')}</ul></div>
+        ${yes(ch.line, 'LINE OA', ch.line ? '' : 'ตั้งค่า › LINE & แจ้งเตือน')}${yes(ch.group, 'กลุ่ม LINE ทีมขาย (รับแจ้งเตือน)', ch.group ? '' : 'เชิญบอท LINE OA เข้ากลุ่มทีมขาย')}${yes(d.cron.secret, 'Cron ภายนอก', d.cron.secret ? 'ตั้ง CRON_SECRET แล้ว' : 'ไม่บังคับ · ระบบรันงานเองทุกนาที')}</ul></div>
     </div>
     <div class="card mb-4 min-w-0"><div class="p-4 pb-3 flex flex-wrap items-center justify-between gap-2"><div><p class="font-medium">งานอัตโนมัติ (Cron)</p><p class="text-[11.5px] text-muted">เวลาไทย · ถ้าเซิร์ฟเวอร์ปิดอยู่ตอนถึงเวลา งานรายวันจะรันทันทีเมื่อเปิดกลับมา</p></div>${d.cron.jobsOff ? sysPill('ปิดงานอัตโนมัติอยู่ (DISABLE_JOBS)', '#fbecec', '#a3222c') : ''}</div>
       <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>งาน</th><th>รอบ</th><th>รันล่าสุด</th><th>สถานะ</th><th></th></tr></thead><tbody>${d.jobs.map(jobRow).join('')}</tbody></table></div>
@@ -4149,7 +4149,7 @@ function vSystem() {
           ${!d.can.restore ? '<p>• กู้คืนได้เฉพาะ Super Admin</p>' : ''}</div></div>
       <div class="card p-4 min-w-0"><p class="font-medium flex items-center gap-1.5"><i data-lucide="bell-ring" class="w-4 h-4"></i>แจ้งเตือนเมื่อมีปัญหา</p>
         <div class="grid gap-3 mt-3">${AL.map(([k, l, sub]) => `<label class="flex items-start justify-between gap-3"><span class="min-w-0"><span class="block">${l}</span><span class="block text-[11px] text-muted">${sub}</span></span><span class="tgl shrink-0"><input type="checkbox" ${A[k] ? 'checked' : ''} ${isRO() ? 'disabled' : ''} onchange="SYS.alerts.${k}=this.checked;vSystem()"/><span></span></span></label>`).join('')}</div>
-        <div class="rounded-xl ${ch.group ? 'bg-sand' : ''} p-3 mt-4 text-[12px]" style="${ch.group ? '' : 'background:#fff6e5;color:#9a5b00'}">${ch.group ? '<i data-lucide="circle-check" class="w-3.5 h-3.5 inline -mt-0.5" style="color:#1e7a46"></i> ส่งเข้ากลุ่ม LINE ทีมขาย' : 'ยังส่งไม่ได้ · ' + (ch.line ? 'เชิญบอท LINE OA เข้ากลุ่มทีมขายก่อน' : 'ต้องเชื่อม LINE OA ก่อน (LINE_CHANNEL_ACCESS_TOKEN)')}</div>
+        <div class="rounded-xl ${ch.group ? 'bg-sand' : ''} p-3 mt-4 text-[12px]" style="${ch.group ? '' : 'background:#fff6e5;color:#9a5b00'}">${ch.group ? '<i data-lucide="circle-check" class="w-3.5 h-3.5 inline -mt-0.5" style="color:#1e7a46"></i> ส่งเข้ากลุ่ม LINE ทีมขาย' : 'ยังส่งไม่ได้ · ' + (ch.line ? 'เชิญบอท LINE OA เข้ากลุ่มทีมขายก่อน' : 'ต้องเชื่อม LINE ก่อน ที่แท็บ LINE & แจ้งเตือน')}</div>
         <div class="flex flex-wrap justify-end gap-2 mt-3"><button class="btn btn-o !h-9" ${!ch.group || SYS.busy.test ? 'disabled' : ''} onclick="sysTest()"><i data-lucide="send" class="w-3.5 h-3.5"></i>ส่งทดสอบ</button><button class="btn btn-p !h-9" ${!dirty || SYS.busy.alerts || isRO() ? 'disabled' : ''} onclick="sysAlerts()"><i data-lucide="check" class="w-3.5 h-3.5"></i>บันทึก</button></div>
         <p class="text-[11px] text-muted mt-3">อีเมล / SMS ต้องใช้บริการส่งภายนอก (เช่น SMTP, SMS gateway) ซึ่งยังไม่ได้ตั้ง จึงแจ้งผ่าน LINE แทน · ถ้าเซิร์ฟเวอร์ดับทั้งเครื่อง ระบบในเครื่องแจ้งเองไม่ได้ แนะนำใช้บริการวัดเว็บภายนอกแบบฟรี (เช่น UptimeRobot) เรียก <span class="font-mono">/api/health</span> ร่วมด้วย</p>
         ${d.alerts.at ? `<p class="text-[11px] text-muted mt-1">แก้ล่าสุด ${sysTs(d.alerts.at)} โดย ${esc(d.alerts.by || '')}</p>` : ''}</div>
@@ -4282,6 +4282,81 @@ function mTick() {
   for (const src of [...MSNAP.keys()]) if (!live.has(src)) {
     const m = MOBJ.get(src); MSNAP.delete(src); MOBJ.delete(src);
     api('DELETE', 'media?url=' + encodeURIComponent(src)).then(() => { AUDIT_DIRTY = true; }).catch(e => { fail(e); if (m && !MEDIA.includes(m)) { MEDIA.push(m); MSNAP.set(src, mKey(m)); MOBJ.set(src, m); if (CUR === 'media') vMedia(); } });
+
+/* ---------- ตั้งค่า → LINE & แจ้งเตือน: LINE Messaging API keys (encrypted on the server; .env still wins), webhook, sales group, quota ---------- */
+const LN = { st: null, loading: false, test: null, busy: {}, err: '' };
+const lnOn = () => CUR === 'settings' && SITECFG.tab === 'notify' && !!$('#lnHost');
+function lnLoad(refresh) {
+  if (LN.loading) return; LN.loading = true;
+  api('GET', 'line' + (refresh ? '?refresh=1' : '')).then(r => { LN.st = r.status; LN.err = ''; }).catch(e => { LN.err = e.message; fail(e); })
+    .finally(() => { LN.loading = false; if (lnOn()) lnRender(); });
+}
+function lnBusy(k, p) { LN.busy[k] = true; lnRender(); return p.finally(() => { LN.busy[k] = false; if (lnOn()) lnRender(); }); }
+const lnPill = (ok, yes, no) => `<span class="pill" style="background:${ok ? '#eaf6ef' : '#fff6e5'};color:${ok ? '#1e7a46' : '#9a5b00'}">${ok ? yes : no}</span>`;
+function lnRender() {
+  const host = $('#lnHost'); if (!host) return;
+  const S = LN.st;
+  if (!S) { host.innerHTML = `<div class="card p-10 text-center text-muted">${LN.err ? esc(LN.err) : 'กำลังโหลด…'}</div>`; if (!LN.err) lnLoad(); return; }
+  const ro = isRO(), envS = S.secret.src === 'env', envT = S.token.src === 'env', bot = S.bot && !S.bot.error ? S.bot : null;
+  const connected = !!bot && !!S.secret.src;
+  const T = LN.test, step = x => `<li class="flex items-start gap-2 text-[12.5px]"><i data-lucide="${x.ok ? 'circle-check' : 'circle-x'}" class="w-4 h-4 shrink-0 mt-0.5" style="color:${x.ok ? '#1e7a46' : '#a3222c'}"></i><span><b class="font-medium">${esc(x.step)}</b> · <span class="${x.ok ? 'text-muted' : ''}" style="${x.ok ? '' : 'color:#a3222c'}">${esc(x.msg)}</span></span></li>`;
+  const ph = (f, env, envName) => env ? `ตั้งใน .env บนเซิร์ฟเวอร์ (${envName}) · ใช้ค่านั้นก่อน` : f.src ? `บันทึกแล้ว ••••${esc(f.tail)} · วางค่าใหม่เพื่อเปลี่ยน` : '';
+  const ep = S.endpoint, q = S.quota, pct = q && q.limit ? Math.min(100, Math.round((q.used || 0) / q.limit * 100)) : null;
+  const ic = (n, c = '#70000e') => `<span class="w-9 h-9 rounded-xl grid place-items-center shrink-0" style="background:rgb(112 0 14 / .08);color:${c}"><i data-lucide="${n}" class="w-4 h-4"></i></span>`;
+  const sec = (icon, title, sub, inner, right = '') => `<div class="card p-5 min-w-0"><div class="flex items-start gap-3 mb-4">${ic(icon)}<div class="flex-1 min-w-0"><p class="font-medium">${title}</p>${sub ? `<p class="text-[11.5px] text-muted">${sub}</p>` : ''}</div>${right}</div>${inner}</div>`;
+  const left = `<div class="grid gap-4 min-w-0">
+    <div class="card p-5 min-w-0"><div class="flex items-center gap-3">
+      ${bot?.pic ? `<img src="${esc(bot.pic)}" alt="" class="w-12 h-12 rounded-full object-cover shrink-0" style="box-shadow:0 0 0 2px #fff, 0 6px 14px -8px rgb(58 0 7 / .5)"/>` : `<span class="w-12 h-12 rounded-full grid place-items-center shrink-0" style="background:#06c755;color:#fff">${socIco('line', 'w-6 h-6')}</span>`}
+      <div class="flex-1 min-w-0"><p class="font-medium truncate">${bot ? esc(bot.name || '') : 'LINE Messaging API'}</p><p class="text-[11.5px] text-muted truncate">${bot ? esc(bot.basicId || '') + ' · บอท LINE OA ของร้าน' : S.bot?.error ? esc(S.bot.error) : 'ยังไม่ได้เชื่อม · ใส่ Channel secret และ Channel access token ด้านล่าง'}</p></div>
+      ${lnPill(connected, 'เชื่อมแล้ว', 'ยังไม่เชื่อม')}<button class="btn btn-g !h-8 !px-2" title="ตรวจสถานะใหม่" onclick="lnLoad(true)" ${LN.loading ? 'disabled' : ''}><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div></div>
+    ${sec('key-round', 'กุญแจ Channel', 'จาก LINE Developers Console · เก็บแบบเข้ารหัสบนเซิร์ฟเวอร์ ไม่ส่งกลับมาที่เบราว์เซอร์อีก', `<div class="grid gap-4">
+      <label class="grid gap-1.5"><span class="lbl !mb-0">Channel secret <span class="text-muted font-normal">(แท็บ Basic settings)</span></span><input id="lnSecret" type="password" autocomplete="off" spellcheck="false" class="inp font-mono" ${envS || ro ? 'disabled' : ''} placeholder="${ph(S.secret, envS, 'LINE_CHANNEL_SECRET') || 'ตัวอักษร 32 ตัว'}"/></label>
+      <label class="grid gap-1.5"><span class="lbl !mb-0">Channel access token (long-lived) <span class="text-muted font-normal">(แท็บ Messaging API › Issue)</span></span><textarea id="lnToken" rows="3" autocomplete="off" spellcheck="false" class="inp font-mono !text-[12px]" style="-webkit-text-security:disc" ${envT || ro ? 'disabled' : ''} placeholder="${ph(S.token, envT, 'LINE_CHANNEL_ACCESS_TOKEN') || 'วาง token ทั้งหมด'}"></textarea></label>
+      ${T ? `<ul class="grid gap-1.5 rounded-xl bg-sand p-3">${T.map(step).join('')}</ul>` : ''}
+      <div class="flex flex-wrap items-center gap-2">${(S.secret.src === 'saved' || S.token.src === 'saved') && !ro ? `<button class="btn btn-g !h-9 text-muted" onclick="lnRemove()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบที่บันทึกไว้</button>` : ''}
+        <span class="ml-auto"></span><button class="btn btn-o !h-9" ${LN.busy.test ? 'disabled' : ''} onclick="lnTest()"><i data-lucide="zap" class="w-3.5 h-3.5"></i>${LN.busy.test ? 'กำลังทดสอบ…' : 'ทดสอบการเชื่อมต่อ'}</button>${envS && envT ? '' : `<button class="btn btn-p !h-9" ${LN.busy.save || ro ? 'disabled' : ''} onclick="lnSave()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${LN.busy.save ? 'กำลังบันทึก…' : 'บันทึก'}</button>`}</div></div>`)}
+    ${sec('webhook', 'Webhook', 'ให้ LINE ส่งข้อความ ปุ่ม “รับเรื่อง” และการเชิญเข้ากลุ่มมาที่เว็บ', `<div class="flex items-center gap-2 rounded-xl bg-sand px-3 h-10 min-w-0"><span class="font-mono text-[12px] truncate flex-1">${esc(S.webhook)}</span><button class="text-muted hover:text-maroon shrink-0" title="คัดลอก" onclick="navigator.clipboard?.writeText(${esc(JSON.stringify(S.webhook))}).then(()=>toast('คัดลอก Webhook URL แล้ว'))"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button></div>
+      <div class="flex flex-wrap items-center gap-2 mt-3 text-[12px]">${!S.https ? `<span style="color:#9a5b00">APP_URL ยังไม่ใช่ https โดเมนจริง · LINE ส่งเข้า localhost ไม่ได้ ตั้งเมื่อขึ้นเซิร์ฟเวอร์จริง</span>` : ep ? `${lnPill(ep.match, 'URL ตรงกับ LINE', ep.url ? 'URL ใน LINE ไม่ตรง' : 'ยังไม่ได้ตั้งใน LINE')} ${lnPill(ep.active, 'เปิด Use webhook แล้ว', 'ยังไม่เปิด Use webhook')}` : '<span class="text-muted">เชื่อม Token ก่อนจึงตรวจได้</span>'}
+        <span class="ml-auto"></span>${bot && S.https && !(ep?.match) && !ro ? `<button class="btn btn-o !h-8 !text-[12px]" ${LN.busy.wh ? 'disabled' : ''} onclick="lnWebhook()"><i data-lucide="link" class="w-3.5 h-3.5"></i>ตั้ง Webhook ให้อัตโนมัติ</button>` : ''}</div>
+      ${ep && ep.match && !ep.active ? '<p class="text-[11.5px] text-muted mt-2">เปิดสวิตช์ “Use webhook” เองใน LINE Developers › Messaging API (LINE ไม่ให้เปิดผ่านระบบ)</p>' : ''}`)}
+  </div>`;
+  const right = `<div class="grid gap-4 min-w-0">
+    ${sec('users', 'กลุ่ม LINE ทีมขาย', 'รับลีดใหม่ ลีดที่ยังไม่มีคนตอบ และแจ้งเตือนระบบ', `${S.group.id ? `<div class="flex items-center gap-3 rounded-xl bg-sand px-3 py-2.5"><i data-lucide="circle-check" class="w-4 h-4 shrink-0" style="color:#1e7a46"></i><div class="min-w-0 flex-1"><p class="truncate">${esc(S.group.name || 'กลุ่มทีมขาย')}</p><p class="text-[11px] text-muted font-mono">${esc(S.group.id)}${S.group.src === 'env' ? ' · ตั้งใน .env' : ''}</p></div></div>`
+      : `<ol class="grid gap-1.5 text-[12.5px] list-decimal pl-5"><li>LINE OA Manager › ตั้งค่า › ตอบกลับ → เปิด “อนุญาตให้บอทเข้าร่วมกลุ่ม”</li><li>เชิญบอทเข้ากลุ่ม LINE ของทีมขาย</li><li>บอทตอบในกลุ่มว่า “เชื่อมแล้ว” และระบบจะจำกลุ่มให้เอง</li></ol>`}
+      <div class="flex justify-end mt-3"><button class="btn btn-o !h-9" ${!S.group.id || !bot || LN.busy.push ? 'disabled' : ''} onclick="lnPush()"><i data-lucide="send" class="w-3.5 h-3.5"></i>${LN.busy.push ? 'กำลังส่ง…' : 'ส่งข้อความทดสอบเข้ากลุ่ม'}</button></div>`)}
+    ${sec('gauge', 'โควตาข้อความเดือนนี้', 'นับเฉพาะข้อความที่ระบบส่งเอง (push) · การตอบกลับในแชตไม่นับ', q ? `<div class="flex items-end justify-between"><p class="text-2xl tnum">${(q.used ?? 0).toLocaleString()}<span class="text-[13px] text-muted"> / ${q.limit == null ? 'ไม่จำกัด' : q.limit.toLocaleString()}</span></p>${pct != null ? `<span class="text-[12px] ${pct >= 80 ? '' : 'text-muted'}" style="${pct >= 80 ? 'color:#a3222c' : ''}">${pct}%</span>` : ''}</div>
+      ${pct != null ? `<div class="h-2 rounded-full mt-2 overflow-hidden" style="background:rgb(35 20 22 / .08)"><div class="h-full rounded-full" style="width:${pct}%;background:${pct >= 80 ? '#a3222c' : '#70000e'}"></div></div>` : ''}
+      <p class="text-[11px] text-muted mt-3">แพ็กเกจฟรี: เมื่อครบโควตา LINE จะหยุดส่งจนถึงเดือนถัดไป ไม่ตัดเงินเอง · มีค่าใช้จ่ายเฉพาะเมื่ออัปเกรดแพ็กเกจเองใน LINE OA Manager</p>` : '<p class="text-[12px] text-muted">เชื่อม Token ก่อนจึงดูโควตาได้</p>')}
+    <div class="card p-5 min-w-0"><p class="font-medium">วิธีเชื่อม (ฟรี)</p><ol class="grid gap-2 mt-3 text-[12.5px] list-decimal pl-5">
+      <li>เปิด <a class="text-maroon" href="https://developers.line.biz/console/" target="_blank" rel="noopener">developers.line.biz/console</a> → เลือก Provider → channel แบบ Messaging API ของ LINE OA ร้าน</li>
+      <li>แท็บ Basic settings → คัดลอก <b class="font-medium">Channel secret</b></li><li>แท็บ Messaging API → Channel access token (long-lived) → Issue → คัดลอก</li>
+      <li>วางทั้งสองช่อง → บันทึก → ทดสอบการเชื่อมต่อ</li><li>กด “ตั้ง Webhook ให้อัตโนมัติ” แล้วเปิด <b class="font-medium">Use webhook</b> ใน LINE Developers</li><li>เชิญบอทเข้ากลุ่มทีมขาย → ส่งข้อความทดสอบ</li></ol>
+      <p class="text-[11px] text-muted mt-4">ตั้งผ่าน .env ได้ด้วย LINE_CHANNEL_SECRET · LINE_CHANNEL_ACCESS_TOKEN · LINE_GROUP_ID — ค่าใน .env ใช้ก่อนค่าที่บันทึกในหน้านี้${S.savedAt ? ` · บันทึกล่าสุด ${new Date(S.savedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })} โดย ${esc(S.savedBy || '')}` : ''}</p></div>
+  </div>`;
+  host.innerHTML = `<div class="gap-4 items-start" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))">${left}${right}</div>`;
+  icons();
+}
+function lnSave() {
+  const s = $('#lnSecret'), t = $('#lnToken'), body = {};
+  if (s && !s.disabled && s.value.trim()) body.secret = s.value.trim();
+  if (t && !t.disabled && t.value.trim()) body.token = t.value.trim();
+  if (!Object.keys(body).length) return toastErr('วาง Channel secret หรือ Channel access token ก่อน');
+  lnBusy('save', api('PUT', 'line/config', body).then(r => { LN.st = r.status; AUDIT_DIRTY = true; toast('บันทึกแล้ว · กำลังทดสอบ…'); setTimeout(lnTest, 50); }).catch(fail));
+}
+function lnRemove() {
+  if (!confirm('ลบกุญแจ LINE ที่บันทึกไว้? (ลีดใหม่และการแจ้งเตือนจะไม่ส่งเข้า LINE จนกว่าจะใส่ใหม่)')) return;
+  lnBusy('save', api('PUT', 'line/config', { secret: null, token: null }).then(r => { LN.st = r.status; LN.test = null; AUDIT_DIRTY = true; toast('ลบกุญแจ LINE แล้ว'); }).catch(fail));
+}
+function lnTest() { LN.test = null; lnBusy('test', api('POST', 'line/test').then(r => { LN.test = r.steps; LN.st = r.status; toast(r.steps.every(x => x.ok) ? 'เชื่อม LINE ครบแล้ว' : 'ยังเชื่อมไม่ครบ · ดูรายละเอียด'); }).catch(fail)); }
+function lnWebhook() { lnBusy('wh', api('POST', 'line/webhook').then(r => { LN.st = r.status; AUDIT_DIRTY = true; toast('ตั้ง Webhook ใน LINE แล้ว · อย่าลืมเปิด Use webhook'); }).catch(fail)); }
+function lnPush() { lnBusy('push', api('POST', 'line/push').then(() => toast('ส่งข้อความทดสอบเข้ากลุ่มแล้ว')).catch(fail)); }
+{ const t = CFG_TABS.find(x => x[0] === 'notify'); if (t) t[1] = 'LINE & แจ้งเตือน'; }
+{ const _vs = vSettings; vSettings = function () {
+  _vs(); if (SITECFG.tab !== 'notify') return;
+  const f = $('#view .fade'); if (!f) return;
+  f.innerHTML = '<div id="lnHost"></div>'; lnRender();
+  $('#view button[onclick="cfgSave()"]')?.classList.add('hidden');   // this tab saves through its own buttons
+}; PAGES.find(p => p[0] === 'settings')[3] = vSettings; }
   }
 }
 setInterval(mTick, 3000);
