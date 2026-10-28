@@ -4043,9 +4043,103 @@ function seoCards(P) {
   icons();
 }; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
 
+/* ---------- ระบบ & สำรองข้อมูล: server status, scheduled jobs, backup files, alerts (src/lib/system.ts) ---------- */
+const SYS = { d: null, loading: false, busy: {}, err: '', alerts: null, t: 0 };
+const sysSize = n => n == null ? '—' : n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : n < 1073741824 ? `${(n / 1048576).toFixed(1)} MB` : `${(n / 1073741824).toFixed(2)} GB`;
+const sysDur = s => { const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d ? `${d} วัน ${h} ชม.` : h ? `${h} ชม. ${m} นาที` : `${m} นาที`; };
+const sysTs = s => new Date(s).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+const SYS_SRC = { auto: ['อัตโนมัติ', '#eef2ff', '#3b4bb5'], manual: ['สำรองเอง', '#eaf6ef', '#1e7a46'], 'pre-restore': ['ก่อนกู้คืน', '#fff6e5', '#9a5b00'], upload: ['อัปโหลด', '#f1f0f0', '#5d5557'] };
+const sysPill = (l, bg, fg) => `<span class="pill" style="background:${bg};color:${fg}">${l}</span>`;
+function sysLoad(quiet) {
+  if (SYS.loading) return; SYS.loading = true;
+  api('GET', 'system').then(d => { SYS.d = d; SYS.err = ''; if (!SYS.alerts) SYS.alerts = { ...d.alerts.on }; })
+    .catch(e => { SYS.err = e.message; if (!quiet) fail(e); })
+    .finally(() => { SYS.loading = false; if (CUR === 'system') vSystem(); });
+}
+function sysSpark(v) {
+  if (!v || v.length < 2) return '';
+  const W = 120, H = 28, ok = v.filter(x => x >= 0), max = Math.max(1000, ...ok), step = W / (v.length - 1);
+  const pts = v.map((x, i) => `${(i * step).toFixed(1)},${x < 0 ? H : (H - 2 - (x / max) * (H - 4)).toFixed(1)}`).join(' ');
+  const y1 = (H - 2 - (1000 / max) * (H - 4)).toFixed(1);
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block;overflow:visible" aria-hidden="true"><line x1="0" x2="${W}" y1="${y1}" y2="${y1}" stroke="#a3222c" stroke-width="1" stroke-dasharray="2 3" opacity=".35"/><polyline points="${pts}" fill="none" stroke="#70000e" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>${v.map((x, i) => x < 0 ? `<circle cx="${(i * step).toFixed(1)}" cy="${H}" r="2" fill="#a3222c"/>` : '').join('')}</svg>`;
+}
+function vSystem() {
+  const d = SYS.d;
+  const acts = `<button class="btn btn-o" onclick="sysLoad()" ${SYS.loading ? 'disabled' : ''}><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>โหลดใหม่</button><button class="btn btn-p" ${SYS.busy.backup || isRO() ? 'disabled' : ''} onclick="sysBackup()"><i data-lucide="database-backup" class="w-3.5 h-3.5"></i>${SYS.busy.backup ? 'กำลังสำรอง…' : 'สำรองตอนนี้'}</button>`;
+  if (!d) { $('#view').innerHTML = head('ระบบ & สำรองข้อมูล', 'สถานะเว็บ งานอัตโนมัติ และไฟล์สำรอง', acts) + `<div class="card p-10 text-center text-muted">${SYS.err ? esc(SYS.err) : 'กำลังโหลด…'}</div>`; icons(); if (!SYS.err) sysLoad(); return; }
+  const w = d.web, last = w.last, ms = last?.ok ? last.ms : null;
+  const tone = ms == null ? '#a3222c' : ms < 600 ? '#1e7a46' : ms < 1000 ? '#9a5b00' : '#a3222c';
+  const lastB = d.backups[0], ago = lastB ? relTs(lastB.at) : 'ยังไม่มี';
+  const yes = (on, l, sub) => `<li class="flex items-start gap-2"><i data-lucide="${on ? 'circle-check' : 'circle-alert'}" class="w-4 h-4 shrink-0 mt-0.5" style="color:${on ? '#1e7a46' : '#9a5b00'}"></i><span class="min-w-0"><span>${l}</span>${sub ? `<span class="block text-[11px] text-muted">${sub}</span>` : ''}</span></li>`;
+  const kpi = (icon, l, big, sub, extra = '') => `<div class="card p-4 min-w-0"><p class="text-[11px] text-muted flex items-center gap-1.5"><i data-lucide="${icon}" class="w-3.5 h-3.5"></i>${l}</p><div class="flex items-end justify-between gap-2 mt-1"><p class="text-2xl tnum">${big}</p>${extra}</div><p class="text-[11.5px] text-muted mt-1">${sub}</p></div>`;
+  const jobRow = j => { const L = j.last, st = j.running ? sysPill('กำลังรัน', '#eef2ff', '#3b4bb5') : !L ? sysPill('ยังไม่เคยรัน', '#f1f0f0', '#5d5557') : L.ok ? sysPill('สำเร็จ', '#eaf6ef', '#1e7a46') : sysPill('ล้มเหลว', '#fbecec', '#a3222c');
+    return `<tr><td style="min-width:240px"><p>${esc(j.name)}</p>${L ? `<p class="text-[11px] ${L.ok ? 'text-muted' : ''}" style="word-break:break-all;${L.ok ? '' : 'color:#a3222c'}">${esc(L.msg)}</p>` : ''}</td><td class="whitespace-nowrap text-muted">${esc(j.every)}</td>
+      <td class="whitespace-nowrap">${L ? `<p>${relTs(L.at)}</p><p class="text-[11px] text-muted">${sysTs(L.at)} · ${L.ms < 1000 ? L.ms + ' ms' : (L.ms / 1000).toFixed(1) + ' วิ'}${L.by ? ' · ' + esc(L.by) : ''}</p>` : '<span class="text-muted">—</span>'}</td><td>${st}</td>
+      <td class="text-right"><button class="btn btn-o !h-8 !text-[12px]" ${SYS.busy['j:' + j.id] || j.running || isRO() ? 'disabled' : ''} onclick="sysRun('${j.id}')"><i data-lucide="play" class="w-3 h-3"></i>${SYS.busy['j:' + j.id] ? 'กำลังรัน…' : 'รันตอนนี้'}</button></td></tr>`; };
+  const bRow = b => { const s = SYS_SRC[b.src] || SYS_SRC.upload;
+    return `<li class="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5 border-b border-line last:border-0 min-w-0"><i data-lucide="archive" class="w-4 h-4 text-muted shrink-0"></i>
+      <div class="flex-1 min-w-[180px]"><p class="tnum">${sysTs(b.at)} <span class="text-muted text-[11px]">· ${relTs(b.at)}</span></p><p class="text-[11px] text-muted truncate">${sysSize(b.size)}${b.rows != null ? ` · ${b.rows.toLocaleString()} แถว` : ''}${b.by ? ` · ${esc(b.by)}` : ''}</p></div>
+      ${sysPill(s[0], s[1], s[2])}
+      <div class="flex gap-1.5 ml-auto">${d.can.download ? `<a class="btn btn-g !h-8 !px-2" title="ดาวน์โหลด" aria-label="ดาวน์โหลด" href="/api/admin/system/backup/${encodeURIComponent(b.file)}" download><i data-lucide="download" class="w-4 h-4"></i></a>` : ''}${d.can.restore ? `<button class="btn btn-o !h-8 !text-[12px]" ${SYS.busy.restore || isRO() ? 'disabled' : ''} onclick="sysRestore('${b.file}')"><i data-lucide="rotate-ccw" class="w-3 h-3"></i>กู้คืน</button>` : ''}</div></li>`; };
+  const A = SYS.alerts || d.alerts.on, ch = d.channel;
+  const AL = [['down', 'เว็บล่มเกิน 2 นาที', 'หน้าแรกเปิดไม่ได้ 2 ครั้งติดกัน (วัดทุกนาที) · แจ้งอีกครั้งเมื่อกลับมา'], ['ttfb', 'TTFB เกิน 1 วินาที ติดต่อกัน 15 นาที', 'หน้าแรกตอบช้าทุกครั้งตลอด 15 นาที'], ['cron', 'งานอัตโนมัติล้มเหลว', 'เช่น ตรวจสายบันทึกกิจกรรมไม่ผ่าน ล้างเซสชันไม่ได้'], ['backup', 'สำรองข้อมูลล้มเหลว', 'สำรองรายวันตอน 03:00 ไม่สำเร็จ']];
+  const dirty = Object.keys(A).some(k => A[k] !== d.alerts.on[k]);
+  $('#view').innerHTML = `${head('ระบบ & สำรองข้อมูล', 'สถานะเว็บ งานอัตโนมัติ และไฟล์สำรอง', acts)}
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+      ${kpi('server', 'เซิร์ฟเวอร์ทำงานต่อเนื่อง', sysDur(d.uptime.sec), `เริ่ม ${sysTs(d.uptime.since)} · Node ${esc(d.uptime.node)} · RAM ${d.uptime.memMb} MB`)}
+      ${kpi('gauge', 'เวลาโหลดหน้าแรก (TTFB)', `<span style="color:${tone}">${ms == null ? (last ? 'ล่ม' : '—') : ms.toLocaleString() + ' <span class="text-[13px]">ms</span>'}</span>`, last ? `เฉลี่ย 1 ชม. ${w.avgHour ?? '—'} ms · ออนไลน์ ${w.upDay ?? '—'}% ใน 24 ชม. · วัดจากเซิร์ฟเวอร์` : 'รอการวัดครั้งแรก (ทุก 1 นาที)', sysSpark(w.spark))}
+      ${kpi('database', 'ฐานข้อมูล', sysSize(d.db.bytes), `สำรองล่าสุด ${ago} · ${esc(d.db.version)} · รูปภาพ ${sysSize(d.media.bytes)} (${d.media.files.toLocaleString()} ไฟล์)`)}
+      <div class="card p-4 min-w-0"><p class="text-[11px] text-muted flex items-center gap-1.5"><i data-lucide="plug" class="w-3.5 h-3.5"></i>การเชื่อมต่อ</p><ul class="grid gap-1.5 mt-2 text-[12.5px]">
+        ${yes(ch.line, 'LINE OA', ch.line ? '' : 'ตั้ง LINE_CHANNEL_ACCESS_TOKEN ใน .env')}${yes(ch.group, 'กลุ่ม LINE ทีมขาย (รับแจ้งเตือน)', ch.group ? '' : 'เชิญบอท LINE OA เข้ากลุ่มทีมขาย')}${yes(d.cron.secret, 'Cron ภายนอก', d.cron.secret ? 'ตั้ง CRON_SECRET แล้ว' : 'ไม่บังคับ · ระบบรันงานเองทุกนาที')}</ul></div>
+    </div>
+    <div class="card mb-4 min-w-0"><div class="p-4 pb-3 flex flex-wrap items-center justify-between gap-2"><div><p class="font-medium">งานอัตโนมัติ (Cron)</p><p class="text-[11.5px] text-muted">เวลาไทย · ถ้าเซิร์ฟเวอร์ปิดอยู่ตอนถึงเวลา งานรายวันจะรันทันทีเมื่อเปิดกลับมา</p></div>${d.cron.jobsOff ? sysPill('ปิดงานอัตโนมัติอยู่ (DISABLE_JOBS)', '#fbecec', '#a3222c') : ''}</div>
+      <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>งาน</th><th>รอบ</th><th>รันล่าสุด</th><th>สถานะ</th><th></th></tr></thead><tbody>${d.jobs.map(jobRow).join('')}</tbody></table></div>
+      <p class="text-[11px] text-muted px-4 py-3 border-t border-line">เรียกจากภายนอกได้ด้วย <span class="font-mono">/api/cron?key=CRON_SECRET</span> (รันงานที่ถึงเวลา) หรือ <span class="font-mono">&amp;job=backup</span> (รันงานเดียว) · ตั้ง CRON_SECRET (ยาว 16 ตัวขึ้นไป) ใน .env ก่อน${d.cron.secret ? ' · <span style="color:#1e7a46">ตั้งแล้ว</span>' : ' · <span>ยังไม่ได้ตั้ง (ปิดอยู่)</span>'}</p></div>
+    <div class="gap-4 items-start" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))">
+      <div class="card p-4 min-w-0"><div class="flex flex-wrap items-center justify-between gap-2"><div><p class="font-medium">ไฟล์สำรอง</p><p class="text-[11.5px] text-muted">${d.backups.length} ไฟล์ · รวม ${sysSize(d.backupBytes)} · เก็บ ${d.keepDays} วัน</p></div>
+        <div class="flex flex-wrap gap-2">${d.can.download ? `<a class="btn btn-o !h-9" href="/api/admin/system/export" download><i data-lucide="hard-drive-download" class="w-3.5 h-3.5"></i>ดาวน์โหลดข้อมูลทั้งหมด</a>` : ''}${d.can.restore && !isRO() ? `<label class="btn btn-o !h-9 cursor-pointer"><i data-lucide="upload" class="w-3.5 h-3.5"></i>${SYS.busy.upload ? 'กำลังอัปโหลด…' : 'กู้คืนจากไฟล์'}<input type="file" accept=".gz,.json,application/gzip,application/json" class="hidden" onchange="sysUpload(this.files)"/></label>` : ''}</div></div>
+        <ul class="mt-2" style="max-height:440px;overflow-y:auto">${d.backups.map(bRow).join('') || '<li class="py-8 text-center text-muted">ยังไม่มีไฟล์สำรอง · กด “สำรองตอนนี้”</li>'}</ul>
+        <div class="rounded-xl bg-sand p-3 mt-3 text-[11.5px] text-muted grid gap-1">
+          <p>• เก็บไฟล์ ${d.keepDays} วัน (อย่างน้อย 3 ไฟล์ล่าสุดเสมอ) · ไฟล์อยู่บนเซิร์ฟเวอร์เครื่องเดียวกับเว็บ ควรดาวน์โหลดเก็บไว้นอกเซิร์ฟเวอร์เป็นประจำ</p>
+          <p>• สำรองเฉพาะข้อมูล (เรือ ราคา บทความ ลีด ลูกค้า ตั้งค่า สถิติ) <b class="font-medium">ไม่รวมไฟล์รูป</b> ในคลังสื่อ — รูปอยู่ในโฟลเดอร์ uploads ต้องสำรองแยก</p>
+          <p>• ไม่รวมบัญชีผู้ใช้ รหัสผ่าน และบันทึกกิจกรรม · กู้คืนแล้วทีมยังเข้าระบบได้ตามเดิม และระบบสำรองข้อมูลปัจจุบันไว้ให้ก่อนทุกครั้ง</p>
+          ${!d.can.restore ? '<p>• กู้คืนได้เฉพาะ Super Admin</p>' : ''}</div></div>
+      <div class="card p-4 min-w-0"><p class="font-medium flex items-center gap-1.5"><i data-lucide="bell-ring" class="w-4 h-4"></i>แจ้งเตือนเมื่อมีปัญหา</p>
+        <div class="grid gap-3 mt-3">${AL.map(([k, l, sub]) => `<label class="flex items-start justify-between gap-3"><span class="min-w-0"><span class="block">${l}</span><span class="block text-[11px] text-muted">${sub}</span></span><span class="tgl shrink-0"><input type="checkbox" ${A[k] ? 'checked' : ''} ${isRO() ? 'disabled' : ''} onchange="SYS.alerts.${k}=this.checked;vSystem()"/><span></span></span></label>`).join('')}</div>
+        <div class="rounded-xl ${ch.group ? 'bg-sand' : ''} p-3 mt-4 text-[12px]" style="${ch.group ? '' : 'background:#fff6e5;color:#9a5b00'}">${ch.group ? '<i data-lucide="circle-check" class="w-3.5 h-3.5 inline -mt-0.5" style="color:#1e7a46"></i> ส่งเข้ากลุ่ม LINE ทีมขาย' : 'ยังส่งไม่ได้ · ' + (ch.line ? 'เชิญบอท LINE OA เข้ากลุ่มทีมขายก่อน' : 'ต้องเชื่อม LINE OA ก่อน (LINE_CHANNEL_ACCESS_TOKEN)')}</div>
+        <div class="flex flex-wrap justify-end gap-2 mt-3"><button class="btn btn-o !h-9" ${!ch.group || SYS.busy.test ? 'disabled' : ''} onclick="sysTest()"><i data-lucide="send" class="w-3.5 h-3.5"></i>ส่งทดสอบ</button><button class="btn btn-p !h-9" ${!dirty || SYS.busy.alerts || isRO() ? 'disabled' : ''} onclick="sysAlerts()"><i data-lucide="check" class="w-3.5 h-3.5"></i>บันทึก</button></div>
+        <p class="text-[11px] text-muted mt-3">อีเมล / SMS ต้องใช้บริการส่งภายนอก (เช่น SMTP, SMS gateway) ซึ่งยังไม่ได้ตั้ง จึงแจ้งผ่าน LINE แทน · ถ้าเซิร์ฟเวอร์ดับทั้งเครื่อง ระบบในเครื่องแจ้งเองไม่ได้ แนะนำใช้บริการวัดเว็บภายนอกแบบฟรี (เช่น UptimeRobot) เรียก <span class="font-mono">/api/health</span> ร่วมด้วย</p>
+        ${d.alerts.at ? `<p class="text-[11px] text-muted mt-1">แก้ล่าสุด ${sysTs(d.alerts.at)} โดย ${esc(d.alerts.by || '')}</p>` : ''}</div>
+    </div>`;
+  icons();
+  clearTimeout(SYS.t); SYS.t = setTimeout(() => { if (CUR === 'system' && !document.hidden) sysLoad(true); }, 60_000);
+}
+function sysBusy(k, p) { SYS.busy[k] = true; vSystem(); return p.finally(() => { SYS.busy[k] = false; if (CUR === 'system') vSystem(); }); }
+function sysBackup() { sysBusy('backup', api('POST', 'system/backup').then(r => { SYS.d = { ...r.status, can: SYS.d.can }; AUDIT_DIRTY = true; toast('สำรองข้อมูลแล้ว · ' + r.file); }).catch(fail)); }
+function sysRun(id) { sysBusy('j:' + id, api('POST', 'system/run', { job: id }).then(r => { SYS.d = { ...r.status, can: SYS.d.can }; AUDIT_DIRTY = true; r.result.ok ? toast('สำเร็จ · ' + r.result.msg) : toastErr('ล้มเหลว · ' + r.result.msg); }).catch(fail)); }
+function sysAlerts() { sysBusy('alerts', api('PUT', 'system/alerts', { on: SYS.alerts }).then(r => { SYS.d = { ...r.status, can: SYS.d.can }; SYS.alerts = { ...r.status.alerts.on }; AUDIT_DIRTY = true; toast('บันทึกการแจ้งเตือนแล้ว'); }).catch(fail)); }
+function sysTest() { sysBusy('test', api('POST', 'system/alerts/test').then(() => toast('ส่งข้อความทดสอบเข้ากลุ่ม LINE แล้ว')).catch(fail)); }
+function sysRestore(file, note) {
+  const b = SYS.d.backups.find(x => x.file === file);
+  const v = prompt(`${note ? note + '\n\n' : ''}กู้คืนข้อมูลจากไฟล์ ${b ? sysTs(b.at) : file}?\n\nข้อมูลเรือ ราคา บทความ ลีด ลูกค้า และตั้งค่า จะถูกแทนที่ด้วยข้อมูลในไฟล์นี้ (ระบบสำรองข้อมูลปัจจุบันไว้ให้ก่อน)\nบัญชีผู้ใช้และบันทึกกิจกรรมไม่เปลี่ยน\n\nพิมพ์คำว่า กู้คืน เพื่อยืนยัน`);
+  if (v == null) return;
+  if (v.trim() !== 'กู้คืน') return toastErr('ยกเลิก · ต้องพิมพ์คำว่า กู้คืน');
+  toast('กำลังกู้คืน…');
+  sysBusy('restore', api('POST', 'system/restore', { file, confirm: 'กู้คืน' }).then(r => { toast(`กู้คืนแล้ว ${r.rows.toLocaleString()} แถว · กำลังโหลดหลังบ้านใหม่`); setTimeout(() => location.reload(), 1200); }).catch(fail));
+}
+function sysUpload(files) {
+  const f = files?.[0]; if (!f) return;
+  if (f.size > 300 * 1048576) return toastErr('ไฟล์ใหญ่เกิน 300 MB');
+  sysBusy('upload', fetch('/api/admin/system/upload', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/octet-stream' }, body: f })
+    .then(async r => { const j = await r.json().catch(() => ({})); if (r.status === 401) { location.href = '/admin/login'; throw new Error('login'); } if (!r.ok) throw new Error(j.error || 'อัปโหลดไม่สำเร็จ'); return j; })
+    .then(r => { SYS.d = { ...r.status, can: SYS.d.can }; AUDIT_DIRTY = true; vSystem(); setTimeout(() => sysRestore(r.file, `อัปโหลดแล้ว: ${r.rows.toLocaleString()} แถว · สำรองเมื่อ ${sysTs(r.from)}`), 50); }).catch(fail));
+}
+PAGES.push(['system', 'ระบบ & สำรองข้อมูล', 'server', vSystem]);
+PAGE_PERM.system = 'settings';
+
 /* ---------- sidebar groups: แดชบอร์ด · งานขาย · สินค้า & ราคา · เว็บไซต์ · การตลาด · ทีม & ระบบ ---------- */
 { const G = [[null, ['dashboard']], ['งานขาย', ['bookings', 'calendar', 'customers']], ['สินค้า & ราคา', ['boats', 'seasons', 'activities']],
-    ['เว็บไซต์', ['content', 'articles', 'media']], ['การตลาด', ['seo', 'analytics', 'audiences']], ['ทีม & ระบบ', ['team', 'audit', 'settings']]];
+    ['เว็บไซต์', ['content', 'articles', 'media']], ['การตลาด', ['seo', 'analytics', 'audiences']], ['ทีม & ระบบ', ['team', 'audit', 'settings', 'system']]];
   const pg = PAGES.filter(p => p[0] !== '—'), byK = new Map(pg.map(p => [p[0], p])), used = new Set(), out = [];
   for (const [h, ks] of G) { const items = ks.map(k => byK.get(k)).filter(Boolean); if (!items.length) continue; if (h) out.push(['—', h]); items.forEach(p => { out.push(p); used.add(p); }); }
   out.push(...pg.filter(p => !used.has(p)));   // a page added later and not grouped yet: at the end, under ทีม & ระบบ
