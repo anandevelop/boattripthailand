@@ -10,6 +10,7 @@ import { audit } from './audit';
 import { randomToken, sha256 } from './crypto';
 import { can, MFA_ROLES, type Perm } from './perms';
 import { clientInfo } from './request';
+import { rateLimit } from './ratelimit';
 
 export const SESSION_COOKIE = 'btt_admin';
 const SESSION_HOURS = 12;
@@ -39,6 +40,8 @@ export type LoginResult = { ok: true; mfa: 'verify' | 'setup' | null } | { ok: f
 export async function loginWithPassword(email: string, password: string): Promise<LoginResult> {
   const info = await clientInfo();
   const generic = { ok: false as const, error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' };
+  // security: per-IP cap on top of the per-account lock (password spraying across many accounts)
+  if (!rateLimit('login:' + (info.ip || '?'), 20, 15 * 60_000)) return { ok: false, error: 'ลองเข้าระบบบ่อยเกินไป กรุณารอ 15 นาทีแล้วลองใหม่' };
   const [u] = await db.select().from(users).where(eq(users.email, email.trim().toLowerCase())).limit(1);
   if (!u || !u.active) {
     await bcrypt.compare(password, (dummyHash ??= bcrypt.hashSync('timing-equaliser', 12))); // equalise timing
@@ -96,6 +99,12 @@ export async function pendingMfaUser() {
 export async function completeMfa(code: string) {
   const s = await rawSession();
   if (!s || s.mfaVerified) return { ok: false, error: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' };
+  // security: 6 tries per account per 15 min, then the half-signed-in session is dropped (stops guessing the 6-digit code)
+  if (!rateLimit('mfa:' + s.user.id, 6, 15 * 60_000)) {
+    await db.delete(sessions).where(eq(sessions.id, s.id));
+    await audit({ id: s.user.id, role: s.user.role }, { action: 'locked', entity: 'auth', ref: s.user.email, label: 'ใส่รหัส 2FA ผิดหลายครั้ง · ต้องเข้าระบบใหม่', ...(await clientInfo()) });
+    return { ok: false, error: 'ใส่รหัสผิดหลายครั้ง กรุณารอ 15 นาทีแล้วเข้าสู่ระบบใหม่' };
+  }
   const secret = s.user.totpSecret;
   if (!secret || !verifyTotp(code, secret)) {
     await audit({ id: s.user.id, role: s.user.role }, { action: 'login_fail', entity: 'auth', ref: s.user.email, label: 'รหัส 2FA ไม่ถูกต้อง', ...(await clientInfo()) });

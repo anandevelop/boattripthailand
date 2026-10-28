@@ -6,7 +6,8 @@ import { currentUser } from '@/lib/auth';
 import { CONTACT_LABEL, LEAD_STATUSES, OPEN_STATUSES, SOURCE_LABEL, STATUS_LABEL, type LeadStatus } from '@/lib/lead-meta';
 import { can } from '@/lib/perms';
 
-const csv = (rows: unknown[][]) => '﻿' + rows.map(r => r.map(x => `"${String(x ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+const cell = (x: unknown) => { const s = String(x ?? ''); return /^[=@\t\r]|^[+\-](?![\d\s().-]*$)/.test(s) ? "'" + s : s; };   // security: no spreadsheet formulas from customer input (phone numbers like +66… stay as they are)
+const csv = (rows: unknown[][]) => '﻿' + rows.map(r => r.map(x => `"${cell(x).replace(/"/g, '""')}"`).join(',')).join('\r\n');
 
 export async function GET(req: Request) {
   const u = await currentUser();

@@ -4,7 +4,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { boats, posts, seasonCalendars, settings } from '@/db/schema';
 import { DESTINATIONS } from './destinations';
@@ -73,7 +73,7 @@ export async function siteDataBundle() {
 }
 
 export async function postBody(id: number) {
-  const [p] = await db.select({ blocks: posts.blocks, seoT: posts.seoTitle, seoD: posts.seoDesc }).from(posts).where(eq(posts.id, id));
+  const [p] = await db.select({ blocks: posts.blocks, seoT: posts.seoTitle, seoD: posts.seoDesc }).from(posts).where(and(eq(posts.id, id), eq(posts.published, true)));   // security: drafts / trashed articles stay private
   return p ?? null;
 }
 

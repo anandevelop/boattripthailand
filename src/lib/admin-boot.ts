@@ -64,14 +64,16 @@ function actText(a: Act, names: Map<string, string>) {
   }
 }
 export function leadToClient(l: Lead, acts: Act[], names: Map<string, string>, surcharge: string | null = null) {
+/** security: free-text lead labels the admin prints as-is (rows saved before the form stripped markup) */
+const P = (s: string | null | undefined) => (s ?? '').replace(/[<>"'`\\]/g, '');
   return {
     surcharge,
-    id: l.ref, dbId: l.id, boat: l.boatSlug ?? l.item ?? '', item: l.item ?? '', prog: l.program ?? '', date: l.tripDate ?? '', guests: l.adults + l.children, adults: l.adults, children: l.children,
+    id: l.ref, dbId: l.id, boat: P(l.boatSlug ?? l.item), item: P(l.item), prog: P(l.program), date: l.tripDate ?? '', guests: l.adults + l.children, adults: l.adults, children: l.children,
     status: STATUS_C[l.status], cust: l.customerId, sales: l.assignedToId ?? '', channel: CONTACT_C[l.contactVia] ?? l.contactVia, contact: CONTACT_C[l.contactVia] ?? l.contactVia,
-    src: l.source, campaign: l.campaign ?? '', landing: l.landingPage ? (l.landingPage.split('?')[0] || '/') : '—', clickId: l.gclid ? 'gclid' : l.fbclid ? 'fbclid' : '', viewed: l.boatsViewed.length ? l.boatsViewed : l.boatSlug ? [l.boatSlug] : [],
-    pages: l.pagesViewed ?? 0, returning: (l.visits ?? 1) > 1, device: l.device === 'mobile' ? 'มือถือ' : l.device === 'desktop' ? 'คอมพิวเตอร์' : (l.device ?? '—'), lang: l.lang,
+    src: P(l.source), campaign: P(l.campaign), landing: l.landingPage ? (P(l.landingPage.split('?')[0]) || '/') : '—', clickId: l.gclid ? 'gclid' : l.fbclid ? 'fbclid' : '', viewed: (l.boatsViewed.length ? l.boatsViewed : l.boatSlug ? [l.boatSlug] : []).map(P),
+    pages: l.pagesViewed ?? 0, returning: (l.visits ?? 1) > 1, device: l.device === 'mobile' ? 'มือถือ' : l.device === 'desktop' ? 'คอมพิวเตอร์' : (P(l.device) || '—'), lang: l.lang,
     created: isoDate(l.createdAt), createdAt: l.createdAt.toISOString(), reply: l.firstReplyAt ? Math.max(0, Math.round((+l.firstReplyAt - +l.createdAt) / 60000)) : null,
-    next: l.nextFollowUp ?? '', lost: l.lostReason ?? '', slot: l.slot ?? '', pickup: '', note: l.internalNote ?? '', message: l.message ?? '', score: l.score, scoreReasons: l.scoreReasons ?? [],
+    next: l.nextFollowUp ?? '', lost: l.lostReason ?? '', slot: P(l.slot), pickup: '', note: l.internalNote ?? '', message: l.message ?? '', score: l.score, scoreReasons: l.scoreReasons ?? [],
     acts: acts.filter(a => a.type !== 'created').sort((a, b) => +a.createdAt - +b.createdAt).map(a => ({ ts: a.createdAt.toISOString(), uid: a.userId ?? '—', t: actText(a, names) })),
   };
 }

@@ -35,6 +35,10 @@ export async function POST(req: Request) {
   const b = p.data;
   // silently accept bots so they don't retry, but don't create anything
   if (b.website || (b.t !== undefined && b.t < 2500)) return NextResponse.json({ ok: true });
+  // security: these are shown as plain labels in the admin — strip markup characters (names / messages are escaped where shown)
+  const plain = <T extends string | null | undefined>(v: T) => (typeof v === 'string' ? v.replace(/[<>"'`\\]/g, '').trim() : v) as T;
+  b.item = plain(b.item); b.program = plain(b.program); b.slot = plain(b.slot);
+  if (b.context) { const c = b.context as Record<string, unknown>; for (const k of Object.keys(c)) if (typeof c[k] === 'string') c[k] = plain(c[k] as string); if (b.context.boats_viewed) b.context.boats_viewed = b.context.boats_viewed.map(x => plain(x)); }
   const c = b.context ?? {};
   const ctx = { ...c, source: sourceKey(c.source, c.medium, c.gclid, c.fbclid) } as NonNullable<Parameters<typeof createLead>[0]['ctx']>;
   try {
