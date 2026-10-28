@@ -2357,31 +2357,19 @@ function brandBody() {
       <div class="bg-white px-4 h-14 flex items-center gap-2.5"><img src="${C.logo}" alt="" class="w-8 h-8 object-contain"/><div class="leading-none"><p class="text-[12.5px] tracking-wide">${nameEn.toUpperCase().replace(' THAILAND', '')}</p><p class="text-[8.5px] text-muted mt-1" style="letter-spacing:.3em">THAILAND</p></div><span class="ml-auto h-8 px-4 rounded-full text-white text-[12px] grid place-items-center" data-bc="background" style="background:${C.color}">จองเลย</span></div></div></div>
     <div><p class="lbl">เมื่อแชร์ลิงก์ (LINE / Facebook)</p><div class="rounded-2xl overflow-hidden bg-white flex items-stretch" style="box-shadow:0 0 0 1px rgb(35 20 22 / .08)"><div class="shrink-0" style="width:42%;aspect-ratio:1.91/1;background:#e9e4e3">${C.ogDefault ? `<img src="${C.ogDefault}" alt="" style="width:100%;height:100%;object-fit:cover"/>` : ''}</div>
       <div class="px-4 py-3 min-w-0 flex flex-col justify-center"><p class="text-[10.5px] text-muted uppercase tracking-wide truncate">${esc(host)}</p><p class="text-[13.5px] font-medium mt-0.5" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${nameEn} · ${esc(C.tagline.en || C.tagline.th || '')}</p><p class="text-[11.5px] text-muted mt-0.5 truncate">${esc(C.tagline.th || '')}</p></div></div></div>
-    <div><p class="lbl">Footer</p>${footerPreview()}</div>
+    <div><p class="lbl">Footer · ติดต่อเรา</p>${footerPreview()}</div>
   </div></div>`;
   return `<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">${left}${right}</div>`;
 }
 function footerPreview() {
-  /* same look as the public footer (public/site glass footer, tablet layout): light glass, 4 blocks, legal bar */
+  /* the ติดต่อเรา block of the public footer: light glass, icon tiles, social buttons */
   const C = SITECFG, soc = C.social.filter(s => s.on), M = '#70000e', MUTED = '#6b5e60';
-  const H = l => `<p style="color:${M};font-size:10.5px;letter-spacing:.18em;font-weight:500" class="mb-3">${l}</p>`;
-  const tile = ic => `<span class="shrink-0 grid place-items-center" style="width:28px;height:28px;border-radius:10px;background:rgb(255 255 255 / .75);color:${M};box-shadow:inset 0 0 0 1px rgb(255 255 255 / .9), 0 6px 16px -10px rgb(58 0 7 / .5)">${ic === 'line' ? socIco('line', 'w-3.5 h-3.5') : `<i data-lucide="${ic}" class="w-3.5 h-3.5"></i>`}</span>`;
-  const row = (ic, t) => t ? `<li class="flex items-center gap-2.5"><span>${tile(ic)}</span><span class="min-w-0" style="color:#231416">${t}</span></li>` : '';
-  const links = arr => `<ul class="grid gap-1.5" style="color:${MUTED};font-size:12.5px">${arr.map(x => `<li>${x}</li>`).join('')}</ul>`;
-  return `<div id="cfgFoot" class="overflow-hidden" style="border-radius:26px;background:rgb(255 255 255 / .58);color:#231416;box-shadow:0 30px 80px -40px rgb(58 0 7 / .45), 0 2px 10px -6px rgb(35 20 22 / .1), inset 0 1px 0 rgb(255 255 255 / .95), inset 0 0 0 1px rgb(255 255 255 / .55), 0 0 0 1px rgb(35 20 22 / .05);-webkit-backdrop-filter:blur(26px) saturate(1.85);backdrop-filter:blur(26px) saturate(1.85)">
-    <div class="grid sm:grid-cols-2 p-6" style="column-gap:24px;row-gap:24px">
-      <div class="min-w-0"><div class="flex items-center gap-2.5"><img src="${C.logo}" alt="" class="w-11 h-11 object-contain"/><div class="leading-tight"><p class="font-medium tracking-wide" style="font-size:15px">${esc((C.name.en || 'Boat Trip Thailand').toUpperCase().replace(/\s*THAILAND$/, ''))}</p><p style="font-size:8.5px;letter-spacing:.35em" class="font-medium">THAILAND</p></div></div>
-        <p class="uppercase mt-4" style="color:${M};font-size:10px;letter-spacing:.3em">Sea by Soul</p>
-        <p class="mt-1.5 leading-relaxed" style="color:${MUTED};font-size:12px">ผู้ให้บริการเช่าเรือยอชต์ คาตามารัน และสปีดโบ๊ท พร้อมทัวร์และกิจกรรมครบวงจรในภูเก็ต กระบี่ และพังงา</p>
-        <p class="mt-3" style="color:${MUTED};font-size:11px">TAT License ${esc(C.tat || '')}</p></div>
-      <div class="grid grid-cols-2 gap-4 min-w-0"><div>${H('บริการ')}${links(['เช่าเรือยอชต์ส่วนตัว', 'เรือคาตามารัน', 'สปีดโบ๊ท', 'ทัวร์ & กิจกรรม', 'ที่พัก & สปา'])}</div>
-        <div>${H('ข้อมูล')}${links(['เกี่ยวกับเรา', 'มารีน่า & จุดขึ้นเรือ', 'คำถามที่พบบ่อย', 'เงื่อนไขการจอง & ยกเลิก', 'นโยบายความเป็นส่วนตัว'])}</div></div>
-      <div class="sm:col-span-2 min-w-0">${H('ติดต่อเรา')}<ul class="grid sm:grid-cols-2" style="font-size:12.5px;column-gap:16px;row-gap:10px">
-        ${row('phone', esc(C.phone))}${row('mail', esc(C.email))}${row('line', C.line ? 'LINE ' + esc(C.line) : '')}${row('map-pin', esc(C.address.th || ''))}
-        ${C.marinas.length ? `<li class="flex items-center gap-2.5 sm:col-span-2"><span>${tile('anchor')}</span><span style="color:${MUTED}">${C.marinas.map(esc).join(' · ')}</span></li>` : ''}</ul>
-        <div class="flex flex-wrap gap-2 mt-4">${soc.map(s => `<span class="w-9 h-9 rounded-full grid place-items-center ${s.url ? '' : 'opacity-40'}" title="${s.l}${s.url ? '' : ' (ยังไม่มีลิงก์)'}" style="background:rgb(255 255 255 / .7);color:${M};box-shadow:inset 0 0 0 1px rgb(255 255 255 / .9), 0 8px 18px -12px rgb(58 0 7 / .55)">${socIco(s.icon)}</span>`).join('')}</div></div>
-    </div>
-    <div class="flex flex-wrap items-center justify-between gap-2" style="padding:12px 24px;border-top:1px solid rgb(35 20 22 / .08);color:${MUTED};font-size:10.5px"><p>© ${new Date().getFullYear()} ${esc(C.company || '')} All rights reserved.</p><p class="flex flex-wrap gap-x-3"><span>นโยบายความเป็นส่วนตัว</span><span>ข้อกำหนดและเงื่อนไข</span><span>การตั้งค่าคุกกี้</span></p></div></div>`;
+  const tile = ic => `<span class="shrink-0 grid place-items-center" style="width:32px;height:32px;border-radius:11px;background:rgb(255 255 255 / .75);color:${M};box-shadow:inset 0 0 0 1px rgb(255 255 255 / .9), 0 6px 16px -10px rgb(58 0 7 / .5)">${ic === 'line' ? socIco('line', 'w-4 h-4') : `<i data-lucide="${ic}" class="w-4 h-4"></i>`}</span>`;
+  const row = (ic, t, muted) => t ? `<li class="flex items-center gap-3">${tile(ic)}<span class="min-w-0" style="color:${muted ? MUTED : '#231416'}">${t}</span></li>` : '';
+  return `<div id="cfgFoot" style="border-radius:26px;padding:24px 26px;background:rgb(255 255 255 / .58);color:#231416;box-shadow:0 30px 80px -40px rgb(58 0 7 / .45), 0 2px 10px -6px rgb(35 20 22 / .1), inset 0 1px 0 rgb(255 255 255 / .95), inset 0 0 0 1px rgb(255 255 255 / .55), 0 0 0 1px rgb(35 20 22 / .05);-webkit-backdrop-filter:blur(26px) saturate(1.85);backdrop-filter:blur(26px) saturate(1.85)">
+    <p style="color:${M};font-size:11px;letter-spacing:.18em;font-weight:500;margin-bottom:14px">ติดต่อเรา</p>
+    <ul class="grid" style="font-size:13.5px;row-gap:12px">${row('phone', esc(C.phone))}${row('mail', esc(C.email))}${row('line', C.line ? 'LINE ' + esc(C.line) : '')}${row('map-pin', esc(C.address.th || ''))}${row('anchor', C.marinas.map(esc).join(' · '), true)}</ul>
+    <div class="flex flex-wrap gap-2" style="margin-top:16px">${soc.map(s => `<span class="w-10 h-10 rounded-full grid place-items-center ${s.url ? '' : 'opacity-40'}" title="${s.l}${s.url ? '' : ' (ยังไม่มีลิงก์)'}" style="background:rgb(255 255 255 / .7);color:${M};box-shadow:inset 0 0 0 1px rgb(255 255 255 / .9), 0 8px 18px -12px rgb(58 0 7 / .55)">${socIco(s.icon)}</span>`).join('')}</div></div>`;
 }
 function cfgPreview() { const el = $('#cfgFoot'); if (el) { el.outerHTML = footerPreview(); icons(); } }
 const _vSettingsOld = vSettings;
