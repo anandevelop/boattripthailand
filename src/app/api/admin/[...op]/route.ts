@@ -15,6 +15,7 @@ import { cleanSeo, SEO_KEY } from '@/lib/seo';
 import { analyticsData } from '@/lib/analytics';
 import { googleData } from '@/lib/google';
 import { pageSpeed } from '@/lib/pagespeed';
+import { cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
 import { deleteDraft, listDrafts, QuotaError, saveDraft, translate, usage as trUsage } from '@/lib/translate';
 import { audienceFile, cleanMarketing, conversionStatus, MKT_KEY } from '@/lib/marketing';
 
@@ -500,6 +501,15 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       if (JSON.stringify(v).length > 1_500_000) throw new HttpError(400, 'ข้อมูลกิจกรรมใหญ่เกินไป');
       await db.insert(settings).values({ key: ACTS_KEY, value: v }).onConflictDoUpdate({ target: settings.key, set: { value: v } });
       clearSiteCache();
+    }
+    if (a === 'settings' && b0 === 'keywords' && method === 'GET') { await need(me, 'seo'); return json(await kwStore()); }
+    if (a === 'settings' && b0 === 'keywords' && method === 'PUT') {
+      // ศูนย์ SEO → คีย์เวิร์ด: rankings from a Search Console export (Queries.csv)
+      await need(me, 'seo');
+      const rows = cleanKwRows(body.rows); if (!rows.length) throw new HttpError(400, 'ไม่พบคีย์เวิร์ดในไฟล์');
+      const file = str(body.file, 120), v = await kwImport(rows, file, me.name);
+      await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo-keywords', label: 'นำเข้าอันดับคีย์เวิร์ด', changes: [{ f: 'คีย์เวิร์ด', from: v.prev ? `${v.prev.rows.length} คำ` : null, to: `${rows.length} คำ${file ? ` (${file})` : ''}` }] });
+      return json(v);
       const changes = arr(body.changes).slice(0, 30).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { f: str(o.f, 120), from: str(o.from, 300), to: str(o.to, 300) }; });
       if (changes.length) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'activities', label: str(body.label, 200) || 'แก้ไขกิจกรรม & ทัวร์', changes });
       return json({ acts: v });

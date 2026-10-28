@@ -4532,6 +4532,84 @@ seoKw = function () {
     ${rows.length > 30 ? `<button class="btn btn-o !h-8 mt-3" onclick="KWV.all=!KWV.all;vSeo()">${KWV.all ? 'แสดงน้อยลง' : `แสดงทั้งหมด ${rows.length} รายการ`}</button>` : ''}`;
 };
 
+/* ---------- ศูนย์ SEO → คีย์เวิร์ด: summary cards + one rankings table ----------
+   Source: the Search Console API when it is connected (28 days, compared with the 28 days before),
+   otherwise the last Queries.csv imported from Search Console (compared with the import before it). */
+const KWI = { d: null, loading: false, f: '', q: '', sort: 'imp', dir: -1, page: 0 };
+function kwiLoad() {
+  if (KWI.loading || KWI.d || !can('seo')) return; KWI.loading = true;
+  api('GET', 'settings/keywords').then(d => { KWI.d = d; }).catch(() => { KWI.d = { cur: null, prev: null }; })
+    .finally(() => { KWI.loading = false; if (CUR === 'seo' && SEOV.tab === 'keywords') vSeo(); });
+}
+/** Search Console "Queries.csv" (any export language): query, clicks, impressions, CTR, position */
+function kwParseCsv(text) {
+  const rows = [], lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
+  const split = l => { const out = []; let cur = '', q = false; for (let i = 0; i < l.length; i++) { const c = l[i]; if (q) { if (c === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; } else if (c === '"') q = true; else if (c === ',') { out.push(cur); cur = ''; } else cur += c; } out.push(cur); return out.map(s => s.trim()); };
+  const h = split(lines[0] || '').map(s => s.toLowerCase());
+  const col = (re, d) => { const i = h.findIndex(x => re.test(x)); return i >= 0 ? i : d; };
+  const iq = col(/quer|คำค้น|search/, 0), ic = col(/click|คลิก/, 1), ii = col(/impr|การแสดงผล/, 2), it = col(/ctr/, 3), ip = col(/posi|ตำแหน่ง|อันดับ/, 4);
+  if (h.length < 4 || !/[a-zก-๙]/i.test(h[iq] || '')) return { rows, bad: true };
+  const n = s => Number(String(s || '').replace(/[%\s]/g, '').replace(/,(?=\d{3}\b)/g, '').replace(',', '.')) || 0;
+  for (const l of lines.slice(1)) { const c = split(l); if (!c[iq]) continue;
+    const ctr = n(c[it]); rows.push({ q: c[iq], clicks: Math.round(n(c[ic])), imp: Math.round(n(c[ii])), ctr: /%/.test(c[it] || '') || ctr > 1 ? ctr / 100 : ctr, pos: n(c[ip]) }); }
+  return { rows, bad: !rows.length };
+}
+function kwImportFile(files) {
+  const f = files?.[0]; if (!f) return;
+  if (/\.zip$/i.test(f.name)) return toast('แตกไฟล์ .zip ก่อน แล้วเลือกไฟล์ Queries.csv (หรือ “คำค้นหา.csv”)');
+  f.text().then(t => {
+    const r = kwParseCsv(t); if (r.bad) return toastErr('อ่านไฟล์ไม่ได้ · ใช้ไฟล์ Queries.csv จาก Search Console → ผลการค้นหา → ส่งออก');
+    toast(`กำลังนำเข้า ${r.rows.length} คีย์เวิร์ด…`);
+    api('PUT', 'settings/keywords', { rows: r.rows, file: f.name }).then(d => { KWI.d = d; KWI.page = 0; AUDIT_DIRTY = true; vSeo(); toast(`นำเข้าแล้ว ${d.cur.rows.length} คีย์เวิร์ด${d.prev ? ' · เทียบกับครั้งก่อนให้แล้ว' : ''}`); }).catch(fail);
+  });
+}
+function kwData() {
+  const S = typeof ggGet === 'function' ? ggGet(28, () => { if (CUR === 'seo' && SEOV.tab === 'keywords') vSeo(); })?.gsc : null;
+  if (ggOk(S) && Object.keys(S.qpos || {}).length) {
+    const rows = Object.entries(S.qpos).map(([q, [pos, imp, clicks]]) => ({ q, pos, imp, clicks, ctr: imp ? clicks / imp : 0, prev: S.qprev[q] ?? null }));
+    return { rows, src: `Search Console · ${fmtD(S.range.startDate)} – ${fmtD(S.range.endDate)}`, cmp: 'เทียบ 28 วันก่อน', api: true };
+  }
+  kwiLoad(); const D = KWI.d;
+  if (!D?.cur) return { rows: [], src: KWI.loading || !D ? 'กำลังโหลด…' : '', cmp: '', none: !!D };
+  const pm = new Map((D.prev?.rows || []).map(r => [r.q.toLowerCase(), r.pos]));
+  return { rows: D.cur.rows.map(r => ({ ...r, prev: D.prev ? pm.get(r.q.toLowerCase()) ?? null : undefined })), src: `นำเข้าจาก Search Console · ${esc(D.cur.file || 'CSV')} · ${fmtD(iso(new Date(D.cur.at)))}`, cmp: D.prev ? `เทียบไฟล์ ${fmtD(iso(new Date(D.prev.at)))}` : 'นำเข้าครั้งแรก' };
+}
+seoKw = function () {
+  const K = kwData(), R = K.rows, top3 = R.filter(r => r.pos && r.pos <= 3.5).length, p1 = R.filter(r => r.pos && r.pos <= 10.5).length, p2 = R.filter(r => r.pos > 10.5 && r.pos <= 20.5).length;
+  // the page that targets the query: a page whose main keyword is the query, or a tracked keyword's page
+  const tgt = {}; seoPages().forEach(p => p.kw && LANGS.forEach(([k]) => { const w = (p.kw[k] || '').trim().toLowerCase(); if (w && p.url[k]) tgt[w] ??= p.url[k]; }));
+  KW.forEach(w => { if (w.url) tgt[w.q.toLowerCase()] ??= w.url; });
+  const card = (l, v, s, ic, f) => `<button class="card p-5 text-left grid gap-1 ${KWI.f === f && f ? 'ring-2 ring-maroon' : ''}" onclick="KWI.f=KWI.f==='${f}'?'':'${f}';KWI.page=0;vSeo()"><span class="flex items-start justify-between gap-2"><span class="text-[12.5px] text-muted">${l}</span><span class="w-9 h-9 rounded-full bg-white grid place-items-center shrink-0" style="margin:-4px -4px 0 0;box-shadow:0 4px 14px -8px rgb(58 0 7/.45)"><i data-lucide="${ic}" class="w-4 h-4"></i></span></span><span class="text-[24px] font-medium tnum leading-tight mt-2">${nf(v)}</span><span class="text-[12px] text-muted">${s}</span></button>`;
+  const cards = `<div data-kwcards class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">${card('คีย์เวิร์ดที่ติดตาม', R.length, K.api ? 'จาก Search Console 28 วัน' : 'นำเข้าจาก Search Console', 'search', '')}${card('ติด Top 3', top3, R.length ? `${Math.round(top3 / R.length * 100)}% ของทั้งหมด` : '&nbsp;', 'trending-up', 'top3')}${card('ติดหน้าแรก', p1, 'อันดับ 1–10', 'chart-column', 'p1')}${card('อันดับ 11–20', p2, 'ดันขึ้นหน้าแรกได้', 'sparkles', 'p2')}</div>`;
+  let L = R.filter(r => KWI.f === 'top3' ? r.pos <= 3.5 : KWI.f === 'p1' ? r.pos <= 10.5 : KWI.f === 'p2' ? r.pos > 10.5 && r.pos <= 20.5 : true).filter(r => !KWI.q || r.q.toLowerCase().includes(KWI.q.toLowerCase()));
+  const sk = KWI.sort, chg = r => r.prev == null ? null : r.prev - r.pos;
+  L.sort((a, b) => KWI.dir * ((sk === 'q' ? a.q.localeCompare(b.q, 'th') : sk === 'chg' ? (chg(a) ?? -999) - (chg(b) ?? -999) : (a[sk] || 0) - (b[sk] || 0))) || b.imp - a.imp);
+  const per = 50, pages = Math.max(1, Math.ceil(L.length / per)); KWI.page = Math.min(KWI.page, pages - 1); const view = L.slice(KWI.page * per, KWI.page * per + per);
+  const th = (k, l, cls = '') => `<th class="${cls} cursor-pointer select-none whitespace-nowrap" onclick="KWI.dir=KWI.sort==='${k}'?-KWI.dir:${k === 'q' || k === 'pos' ? 1 : -1};KWI.sort='${k}';vSeo()">${l}${KWI.sort === k ? (KWI.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`;
+  const posB = p => !p ? '—' : `<span class="lang-b ${p <= 3.5 ? 'ok' : p <= 10.5 ? 'ok' : p <= 20.5 ? 'mid' : ''} tnum">${p.toFixed(1)}</span>`;
+  const chB = r => { if (r.prev === undefined) return '<span class="text-muted">—</span>'; if (r.prev === null) return '<span class="lang-b">ใหม่</span>'; const d = Math.round((r.prev - r.pos) * 10) / 10;
+    return d > 0 ? `<span class="text-[#1e7a46] inline-flex items-center gap-0.5 tnum"><i data-lucide="trending-up" class="w-3.5 h-3.5"></i>${d}</span>` : d < 0 ? `<span class="text-[#a3222c] inline-flex items-center gap-0.5 tnum"><i data-lucide="trending-down" class="w-3.5 h-3.5"></i>${-d}</span>` : '<span class="text-muted">0</span>'; };
+  const empty = K.none ? 'ยังไม่มีข้อมูล · กด “นำเข้า CSV” แล้วเลือกไฟล์ Queries.csv จาก Search Console' : K.src === 'กำลังโหลด…' ? 'กำลังโหลด…' : 'ไม่พบคีย์เวิร์ดที่ตรงเงื่อนไข';
+  return `${cards}<div class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 pb-3"><div><p class="font-medium">อันดับคีย์เวิร์ด${KWI.f ? ` <span class="text-muted font-normal text-[12.5px]">· ${{ top3: 'ติด Top 3', p1: 'ติดหน้าแรก', p2: 'อันดับ 11–20' }[KWI.f]} <button class="text-maroon" onclick="KWI.f='';vSeo()">ดูทั้งหมด</button></span>` : ''}</p>${K.src && K.src !== 'กำลังโหลด…' ? `<p class="text-[11.5px] text-muted mt-0.5">${K.src}${K.cmp ? ' · ' + K.cmp : ''}</p>` : ''}</div>
+      <div class="flex flex-wrap items-center gap-2">${R.length ? `<input class="inp !h-9" style="width:200px" placeholder="ค้นหาคีย์เวิร์ด…" value="${esc(KWI.q)}" onkeydown="if(event.key==='Enter'){KWI.q=this.value;KWI.page=0;vSeo()}"/>` : ''}
+        <label class="btn btn-o cursor-pointer" title="Search Console → ผลการค้นหา → ส่งออก → ดาวน์โหลด CSV · แตกไฟล์แล้วเลือก Queries.csv"><i data-lucide="upload" class="w-3.5 h-3.5"></i>นำเข้า CSV<input type="file" accept=".csv,text/csv" class="hidden" onchange="kwImportFile(this.files);this.value=''"/></label></div></div>
+    <div class="overflow-x-auto"><table class="tbl min-w-[860px]"><thead><tr>${th('q', 'คีย์เวิร์ด')}${th('pos', 'อันดับ', 'text-center')}${th('chg', 'เทียบครั้งก่อน', 'text-center')}${th('imp', 'แสดงผล', 'text-right')}${th('clicks', 'คลิก', 'text-right')}${th('ctr', 'CTR', 'text-right')}<th>URL</th></tr></thead><tbody>
+    ${view.map(r => { const u = tgt[r.q.toLowerCase()]; return `<tr><td><span class="lang-b mr-1.5">${ggTh(r.q) ? 'TH' : 'EN'}</span>${esc(r.q)}</td><td class="text-center">${posB(r.pos)}</td><td class="text-center">${chB(r)}</td><td class="text-right tnum">${nf(r.imp)}</td><td class="text-right tnum">${nf(r.clicks)}</td><td class="text-right tnum">${(r.ctr * 100).toFixed(1)}%</td>
+      <td class="text-muted truncate max-w-[260px]">${u ? `<a class="hover:text-maroon" href="https://${SITE}${esc(u)}" target="_blank" rel="noopener">${esc(decodeURI(u))}</a>` : '—'}</td></tr>`; }).join('') || `<tr><td colspan="7" class="text-center text-muted py-14">${empty}</td></tr>`}
+    </tbody></table></div>
+    ${pages > 1 ? `<div class="flex items-center justify-between px-5 py-3 border-t border-line text-[12px] text-muted"><span>${L.length} คีย์เวิร์ด</span><div class="flex items-center gap-1"><button class="btn btn-g !h-8 !px-2" ${KWI.page ? '' : 'disabled'} onclick="KWI.page--;vSeo()"><i data-lucide="chevron-left" class="w-4 h-4"></i></button><span class="tnum">${KWI.page + 1} / ${pages}</span><button class="btn btn-g !h-8 !px-2" ${KWI.page < pages - 1 ? '' : 'disabled'} onclick="KWI.page++;vSeo()"><i data-lucide="chevron-right" class="w-4 h-4"></i></button></div></div>` : ''}`;
+};
+/* the cards sit between the tabs and the table card, and the table runs edge to edge (like Meta ทุกหน้า) */
+{ const _vk = vSeo; vSeo = function () {
+  _vk();
+  const gsc = typeof GG !== 'undefined' && GG.st?.gsc?.on, sub = $('#view h2 + p');
+  if (sub && !gsc && KWI.d?.cur) sub.textContent = `ข้อมูลจาก Google Search Console · นำเข้าล่าสุด ${fmtD(iso(new Date(KWI.d.cur.at)))} (${nf(KWI.d.cur.rows.length)} คีย์เวิร์ด)`;
+  if (SEOV.tab !== 'keywords') return;
+  const c = $('#seoBody [data-kwcards]'), b = $('#seoBody'); if (c) $('#view .tabbar')?.insertAdjacentElement('afterend', c);
+  if (b) { b.classList.remove('p-4', 'sm:p-5'); b.classList.add('p-0'); }
+  icons();
+}; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
+
 /* ---------- วิเคราะห์เว็บไซต์ → Meta: สถานะจริงจากเซิร์ฟเวอร์ + event ที่ระบบส่งจริง (conversion_events) ---------- */
 const MS = { d: null, at: 0, loading: false };
 function msLoad() {
