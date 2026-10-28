@@ -4871,6 +4871,157 @@ seoSitemap = function () {
   icons();
 }; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
 
+/* =====================================================================
+   ศูนย์ SEO → ลิงก์ภายใน: broken links and links through a redirect (fixed in one click), and suggestions —
+   boat names, other articles' main keywords and "เช่าเรือยอชต์ / yacht charter" found in the text of an
+   article that does not link there yet. "ใส่ลิงก์" wraps the first mention in the paragraph with a link;
+   the article then saves itself. Skipped suggestions are remembered with the SEO settings.
+   ===================================================================== */
+const LNK = { page: 0, per: 30, q: '' };
+const lnkSkip = () => (SSET.lnkSkip ??= []);
+/* the html-bearing fields of one block: [get, set] pairs */
+function lnkFields(b) {
+  const F = [];
+  if (typeof b.html === 'string' && ['p', 'h', 'quote'].includes(b.t)) F.push([() => b.html, v => { b.html = v; }]);
+  if (b.t === 'faq') (b.items || []).forEach(x => F.push([() => x.a || '', v => { x.a = v; }]));
+  if (b.t === 'cols') (b.cols || []).filter(c => c.k !== 'img').forEach(c => F.push([() => c.html || '', v => { c.html = v; }]));
+  return F;
+}
+const lnkArts = () => ART.filter(a => a.status === 'published').flatMap(a => LANGS.filter(([k]) => ['orig', 'ok'].includes(a.tr[k])).map(([k]) => [a, k]));
+const lnkUrl = (k, p) => (k === 'en' ? '/en' : '') + p;
+function lnkSave(a, k) { a.body[k] = blocksHtml(blocksOf(a, k)); try { artTick(true); } catch (e) { } AUDIT_DIRTY = true; }
+/** every internal link in published articles, with its status */
+function lnkScan() {
+  const out = [];
+  for (const [a, k] of lnkArts()) blocksOf(a, k).forEach((b, bi) => {
+    const hs = [];
+    lnkFields(b).forEach(([g]) => hsHrefs(g()).forEach(h => hs.push(h)));
+    if (b.t === 'boat' && b.slug) hs.push('/yacht-charter/' + b.slug);
+    if (b.t === 'btn' && /^(\/|https?:)/.test(b.href || '')) hs.push(b.href);
+    hs.forEach(h => { const st = hsLink(h); if (st) out.push({ a, k, bi, h, st, card: b.t === 'boat' }); });
+  });
+  return out;
+}
+const lnkTarget = h => { const p = h.replace(/^https?:\/\/(?:www\.)?boattripthailand\.com/i, '').split(/[?#]/)[0].replace(/\/+$/, ''); let d = p; try { d = decodeURI(p); } catch (e) { } const r = REDIR.find(x => x.from === d || x.from === p); return r ? (r.to || '') : ''; };
+/* follow redirects (A → B → C) to the final URL */
+const lnkFinal = h => { let t = lnkTarget(h), n = 0; while (t && n++ < 5) { const nx = lnkTarget(t); if (!nx) break; t = nx; } return t; };
+function lnkFixRedirect(id, k, h) {
+  const a = artById(id), to = lnkFinal(h); if (!a || !to) return toast('ไม่พบปลายทางของ redirect');
+  let n = 0; const esc2 = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), re = new RegExp(`href\\s*=\\s*(["'])${esc2(h)}\\1`, 'g');
+  blocksOf(a, k).forEach(b => { lnkFields(b).forEach(([g, s]) => { const v = g(), nv = v.replace(re, () => { n++; return `href="${to}"`; }); if (nv !== v) s(nv); }); if (b.t === 'btn' && b.href === h) { b.href = to; n++; } });
+  if (!n) return toast('ไม่พบลิงก์นี้ในบทความแล้ว');
+  lnkSave(a, k); vSeo(); toast(`แก้ ${n} ลิงก์ให้ชี้ไป ${to} โดยตรงแล้ว`);
+}
+function lnkFixAllRedirects() {
+  const L = lnkScan().filter(x => x.st === 'redirect' && lnkFinal(x.h)); if (!L.length) return;
+  const seen = new Set(); L.forEach(x => { const key = x.a.id + '|' + x.k + '|' + x.h; if (seen.has(key)) return; seen.add(key);
+    const to = lnkFinal(x.h), re = new RegExp(`href\\s*=\\s*(["'])${x.h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\1`, 'g');
+    blocksOf(x.a, x.k).forEach(b => { lnkFields(b).forEach(([g, s]) => { const v = g(), nv = v.replace(re, `href="${to}"`); if (nv !== v) s(nv); }); if (b.t === 'btn' && b.href === x.h) b.href = to; });
+    x.a.body[x.k] = blocksHtml(blocksOf(x.a, x.k)); });
+  try { artTick(true); } catch (e) { } AUDIT_DIRTY = true; vSeo(); toast(`แก้ลิงก์ที่ผ่าน redirect แล้ว ${L.length} ลิงก์`);
+}
+/* where a phrase can be linked: outside tags and outside existing links; EN on word boundaries */
+function lnkFind(html, term, k) {
+  const parts = String(html || '').split(/(<[^>]+>)/); let inA = 0, off = 0;
+  const re = k === 'en' ? new RegExp(`(^|[^\\p{L}\\p{N}])(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(?=$|[^\\p{L}\\p{N}])`, 'iu') : null;
+  for (const s of parts) {
+    if (s.startsWith('<')) { if (/^<a[\s>]/i.test(s)) inA++; else if (/^<\/a>/i.test(s)) inA = Math.max(0, inA - 1); }
+    else if (!inA) { let i = -1, len = term.length; if (re) { const m = s.match(re); if (m) { i = m.index + m[1].length; len = m[2].length; } } else i = s.indexOf(term); if (i >= 0) return { at: off + i, len }; }
+    off += s.length;
+  }
+  return null;
+}
+/** suggested links: [{ a, k, bi, fi, text, url, key, kind }] */
+function lnkSuggest() {
+  const T = { th: [], en: [] };
+  FLEET.filter(b => b.active).forEach(b => { const n = String(b.name || '').trim(), short = n.replace(/\s*(ft|feet|m)\.?$/i, '').trim();   // "Leopard 90 ft" → "Leopard 90" (keeps the number: a bare "Silver" would match the word)
+    LANGS.forEach(([k]) => { const url = lnkUrl(k, '/yacht-charter/' + b.slug); if (n.length >= 5) T[k].push({ term: n, url, kind: 'เรือ', name: n }); if (short !== n && /\d/.test(short) && short.length >= 6) T[k].push({ term: short, url, kind: 'เรือ', name: n }); }); });
+  ART.filter(a => a.status === 'published').forEach(a => LANGS.forEach(([k]) => { const w = String(a.kw?.[k] || '').trim(); if (thLen(w) >= 4 && a.slug[k]) T[k].push({ term: w, url: lnkUrl(k, '/blog/' + a.slug[k]), kind: 'บทความ', name: a.title[k] || a.title.th, id: a.id }); }));
+  T.th.push({ term: 'เช่าเรือยอชต์ภูเก็ต', url: '/yacht-charter', kind: 'หน้าเรือทั้งหมด', name: 'เรือทั้งหมด' }, { term: 'เช่าเรือยอชต์', url: '/yacht-charter', kind: 'หน้าเรือทั้งหมด', name: 'เรือทั้งหมด' });
+  T.en.push({ term: 'Phuket yacht charter', url: '/en/yacht-charter', kind: 'หน้าเรือทั้งหมด', name: 'All boats' }, { term: 'yacht charter', url: '/en/yacht-charter', kind: 'หน้าเรือทั้งหมด', name: 'All boats' });
+  LANGS.forEach(([k]) => T[k].sort((x, y) => y.term.length - x.term.length));
+  const skip = new Set(lnkSkip()), out = [];
+  for (const [a, k] of lnkArts()) {
+    const B = blocksOf(a, k), have = new Set();
+    B.forEach(b => { lnkFields(b).forEach(([g]) => hsHrefs(g()).forEach(h => have.add(h.replace(/^https?:\/\/(?:www\.)?boattripthailand\.com/i, '').replace(/\/+$/, '')))); if (b.t === 'boat') have.add(lnkUrl(k, '/yacht-charter/' + b.slug)); });
+    const own = lnkUrl(k, '/blog/' + (a.slug[k] || '')); let n = 0;
+    // quick test on the article's plain text before looking inside each paragraph
+    const plain = B.filter(b => b.t === 'p' || b.t === 'quote').map(b => txtOf(b.html)).join(' ').toLowerCase();
+    const usedUrl = new Set();
+    for (const t of T[k]) {
+      if (n >= 5) break;
+      if (t.url === own || t.id === a.id || have.has(t.url) || usedUrl.has(t.url)) continue;
+      if (!plain.includes(t.low ??= t.term.toLowerCase())) continue;
+      const key = `${a.id}|${k}|${t.url}`; if (skip.has(key)) continue;
+      let hit = null;
+      for (let bi = 0; bi < B.length && !hit; bi++) { if (B[bi].t !== 'p' && B[bi].t !== 'quote') continue; const F = lnkFields(B[bi]); for (let fi = 0; fi < F.length && !hit; fi++) { const f = lnkFind(F[fi][0](), t.term, k); if (f) hit = { bi, fi, text: F[fi][0]().slice(f.at, f.at + f.len), at: f.at }; } }
+      if (hit) { out.push({ a, k, ...hit, url: t.url, key, kind: t.kind, name: t.name }); usedUrl.add(t.url); n++; }
+    }
+  }
+  return out;
+}
+function lnkApply(key) {
+  const s = (LNK.sugg || []).find(x => x.key === key); if (!s) return;
+  if (!lnkInsert(s)) return toast('ข้อความนี้เปลี่ยนไปแล้ว · สแกนใหม่อีกครั้ง');
+  lnkSave(s.a, s.k); vSeo(); toast(`ใส่ลิงก์ “${s.text}” → ${s.url} แล้ว`);
+}
+function lnkInsert(s) {
+  const F = lnkFields(blocksOf(s.a, s.k)[s.bi] || {})[s.fi]; if (!F) return false;
+  const html = F[0](), f = lnkFind(html, s.text, s.k); if (!f) return false;
+  F[1](html.slice(0, f.at) + `<a href="${s.url}">${html.slice(f.at, f.at + f.len)}</a>` + html.slice(f.at + f.len));
+  return true;
+}
+function lnkSkipOne(key) { const L = lnkSkip(); if (!L.includes(key)) L.push(key); if (L.length > 600) L.splice(0, L.length - 600); try { seoTick(); } catch (e) { } vSeo(); }
+function lnkApplyAll() {
+  const L = LNK.sugg || []; if (!L.length) return;
+  openModal(`<div class="p-5 grid gap-2"><p class="font-medium">ใส่ลิงก์ทั้งหมด ${nf(L.length)} รายการ?</p><p class="text-[12.5px] text-muted">ใส่ลิงก์ที่คำแรกที่เจอในย่อหน้าของแต่ละบทความ · บทความบันทึกเองและขึ้นเว็บภายในไม่กี่นาที · แก้หรือลบลิงก์ได้ในหน้าแก้ไขบทความ</p>
+    <div class="flex justify-end gap-2 mt-3"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" onclick="closeModal();lnkApplyAllGo()">ใส่ลิงก์</button></div></div>`);
+}
+function lnkApplyAllGo() {
+  const done = new Set(); let n = 0;
+  for (const s of LNK.sugg || []) if (lnkInsert(s)) { n++; done.add(s.a.id + '|' + s.k); }
+  done.forEach(x => { const [id, k] = x.split('|'); const a = artById(+id); if (a) a.body[k] = blocksHtml(blocksOf(a, k)); });
+  try { artTick(true); } catch (e) { } AUDIT_DIRTY = true; vSeo(); toast(`ใส่ลิงก์แล้ว ${n} รายการ ใน ${done.size} บทความ`);
+}
+function seoLinksTab() {
+  const S = lnkScan(), broken = S.filter(x => x.st === 'broken'), redir = S.filter(x => x.st === 'redirect'), hidden = S.filter(x => x.st === 'hidden');
+  const inb = new Map(); S.forEach(x => { if (x.st !== 'ok') return; const q = x.h.replace(/^https?:\/\/(?:www\.)?boattripthailand\.com/i, '').replace(/^\/en(?=\/)/, '').split(/[?#]/)[0].replace(/\/+$/, ''); if (q.startsWith('/blog/')) { let s = q.slice(6); try { s = decodeURIComponent(s); } catch (e) { } const t = ART.find(a => a.slug.th === s || a.slug.en === s); if (t && t !== x.a) inb.set(t.id, 1); } });
+  const orphans = ART.filter(a => a.status === 'published' && !inb.has(a.id)).length;
+  const sugg = LNK.sugg = lnkSuggest().filter(s => !LNK.q || (s.a.title[s.k] + ' ' + s.text + ' ' + s.url).toLowerCase().includes(LNK.q.toLowerCase()));
+  const card = (l, v, s, ic, col) => `<div class="card p-5 grid gap-1"><span class="flex items-start justify-between gap-2"><span class="text-[12.5px] text-muted">${l}</span><span class="w-9 h-9 rounded-full bg-white grid place-items-center shrink-0" style="margin:-4px -4px 0 0;box-shadow:0 4px 14px -8px rgb(58 0 7/.45);color:${col || 'inherit'}"><i data-lucide="${ic}" class="w-4 h-4"></i></span></span><span class="text-[24px] font-medium tnum leading-tight mt-2" style="color:${col || 'inherit'}">${nf(v)}</span><span class="text-[12px] text-muted">${s}</span></div>`;
+  const cards = `<div data-kwcards class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">${card('ลิงก์ภายในทั้งหมด', S.length, `ใน ${nf(new Set(S.map(x => x.a.id)).size)} บทความ`, 'link', '')}${card('ลิงก์เสีย', broken.length, 'ชี้ไปหน้าที่ไม่มี · ผู้อ่านเจอ 404', 'unlink', broken.length ? '#a3222c' : '')}${card('ผ่าน redirect', redir.length + hidden.length, `${hidden.length ? hidden.length + ' ลิงก์ไปหน้าที่ซ่อน · ' : ''}ควรชี้ไป URL ใหม่ตรงๆ`, 'route', redir.length ? '#9a5b00' : '')}${card('บทความไม่มีลิงก์ชี้มา', orphans, 'Google หาเจอยาก', 'unlink-2', '')}</div>`;
+  const nm = x => esc(x.a.title[x.k] || x.a.title.th || x.a.title.en || 'บทความไม่มีชื่อ');
+  const mono = h => `<span class="font-mono text-[12.5px] break-all" style="color:#a3222c">${esc((() => { try { return decodeURI(h); } catch (e) { return h; } })())}</span>`;
+  const bad = [...broken.map(x => ({ ...x, why: x.card ? 'การ์ดเรือ · เรือถูกลบแล้ว' : 'หน้าไม่มีอยู่' })), ...hidden.map(x => ({ ...x, why: 'หน้านี้ซ่อนอยู่ / ยังไม่เผยแพร่' }))];
+  const box1 = bad.length ? `<div class="card overflow-hidden mb-4"><p class="font-medium px-5 pt-4 pb-3">ลิงก์ภายในเสีย ${nf(bad.length)} ลิงก์ <span class="text-muted font-normal">(ชี้ไปหน้าที่ไม่มี · ผู้อ่านจะเจอหน้า 404)</span></p>
+    <div class="overflow-x-auto"><table class="tbl min-w-[760px]"><thead><tr><th>ในบทความ</th><th>ลิงก์ที่เสีย</th><th>สาเหตุ</th><th></th></tr></thead><tbody>
+    ${bad.map(x => `<tr><td><span class="lang-b mr-1.5">${x.k.toUpperCase()}</span>${nm(x)}</td><td>${mono(x.h)}</td><td class="text-muted text-[12px]">${x.why}</td><td class="text-right"><button class="btn btn-o !h-8" onclick="AE.lang='${x.k}';go('articles/${x.a.id}')">แก้บทความ</button></td></tr>`).join('')}</tbody></table></div></div>` : '';
+  const box2 = redir.length ? `<div class="card overflow-hidden mb-4"><div class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 pb-3"><p class="font-medium">ลิงก์ที่ผ่าน redirect ${nf(redir.length)} ลิงก์ <span class="text-muted font-normal">(ลิงก์ URL เก่าจาก WordPress · ช้าลงหนึ่งจังหวะ)</span></p><button class="btn btn-p !h-8" onclick="lnkFixAllRedirects()"><i data-lucide="wand-sparkles" class="w-3.5 h-3.5"></i>แก้ทั้งหมด</button></div>
+    <div class="overflow-x-auto"><table class="tbl min-w-[760px]"><thead><tr><th>ในบทความ</th><th>ลิงก์เดิม</th><th>ไปที่</th><th></th></tr></thead><tbody>
+    ${redir.slice(0, 100).map(x => `<tr><td><span class="lang-b mr-1.5">${x.k.toUpperCase()}</span>${nm(x)}</td><td class="font-mono text-[12px] text-muted break-all">${esc(x.h)}</td><td class="font-mono text-[12px] break-all">${esc(lnkFinal(x.h) || '410 (ลบแล้ว)')}</td><td class="text-right whitespace-nowrap">${lnkFinal(x.h) ? `<button class="btn btn-o !h-8" onclick='lnkFixRedirect(${x.a.id},"${x.k}",${esc(JSON.stringify(x.h))})'>แก้ให้</button>` : `<button class="btn btn-o !h-8" onclick="AE.lang='${x.k}';go('articles/${x.a.id}')">แก้บทความ</button>`}</td></tr>`).join('')}</tbody></table></div></div>` : '';
+  const pages = Math.max(1, Math.ceil(sugg.length / LNK.per)); LNK.page = Math.min(LNK.page, pages - 1); const view = sugg.slice(LNK.page * LNK.per, LNK.page * LNK.per + LNK.per);
+  const box3 = `<div class="card overflow-hidden"><div class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 pb-3"><div><p class="font-medium">คำแนะนำลิงก์ภายใน <span class="text-muted font-normal">(จับคู่จากชื่อเรือ คีย์เวิร์ดหลักของบทความ และหน้าเรือทั้งหมด)</span></p><p class="text-[11.5px] text-muted mt-0.5">ใส่ลิงก์ที่คำแรกที่เจอในย่อหน้า · บทความละไม่เกิน 5 ลิงก์ · ไม่แนะนำหน้าที่บทความลิงก์อยู่แล้ว</p></div>
+      <div class="flex flex-wrap items-center gap-2"><input class="inp !h-9" style="width:200px" placeholder="ค้นหาบทความ / คำ…" value="${esc(LNK.q)}" onkeydown="if(event.key==='Enter'){LNK.q=this.value;LNK.page=0;vSeo()}"/>${sugg.length ? `<button class="btn btn-p !h-9" onclick="lnkApplyAll()"><i data-lucide="link" class="w-3.5 h-3.5"></i>ใส่ทั้งหมด ${nf(sugg.length)}</button>` : ''}</div></div>
+    <div class="overflow-x-auto"><table class="tbl min-w-[900px]"><thead><tr><th>ในบทความ</th><th>ข้อความลิงก์</th><th>ลิงก์ไปที่</th><th></th></tr></thead><tbody>
+    ${view.map(s => `<tr><td><span class="lang-b mr-1.5">${s.k.toUpperCase()}</span>${nm(s)}</td><td><mark style="background:#fff3b8;color:inherit;padding:1px 4px;border-radius:4px">${esc(s.text)}</mark></td><td><p class="text-[12.5px] truncate max-w-[300px]">${esc(s.name || '')}</p><p class="text-[11px] text-muted font-mono truncate max-w-[300px]">${esc((() => { try { return decodeURI(s.url); } catch (e) { return s.url; } })())}</p></td>
+      <td class="text-right whitespace-nowrap"><button class="btn btn-p !h-8" onclick="lnkApply('${s.key}')">ใส่ลิงก์</button> <button class="btn btn-g !h-8 text-muted" onclick="lnkSkipOne('${s.key}')">ข้าม</button></td></tr>`).join('') || '<tr><td colspan="4" class="text-center text-muted py-12">ไม่มีคำแนะนำเพิ่ม · บทความลิงก์ถึงกันครบแล้ว</td></tr>'}</tbody></table></div>
+    ${pages > 1 ? `<div class="flex items-center justify-between px-5 py-3 border-t border-line text-[12px] text-muted"><span>${nf(sugg.length)} คำแนะนำ${lnkSkip().length ? ` · ข้ามไว้ ${nf(lnkSkip().length)} <button class="text-maroon" onclick="SSET.lnkSkip=[];try{seoTick()}catch(e){};vSeo()">แสดงอีกครั้ง</button>` : ''}</span><div class="flex items-center gap-1"><button class="btn btn-g !h-8 !px-2" ${LNK.page ? '' : 'disabled'} onclick="LNK.page--;vSeo()"><i data-lucide="chevron-left" class="w-4 h-4"></i></button><span class="tnum">${LNK.page + 1} / ${pages}</span><button class="btn btn-g !h-8 !px-2" ${LNK.page < pages - 1 ? '' : 'disabled'} onclick="LNK.page++;vSeo()"><i data-lucide="chevron-right" class="w-4 h-4"></i></button></div></div>` : ''}</div>`;
+  return cards + box1 + box2 + box3;
+}
+{ const _vl = vSeo; vSeo = function () {
+  const on = SEOV.tab === 'links'; if (on) SEOV.tab = 'schema';
+  try { _vl(); } finally { if (on) SEOV.tab = 'links'; }
+  const bar = $('#view .tabbar'); if (!bar) return;
+  if (on) bar.querySelector('.tab.on')?.classList.remove('on');
+  const sm = [...bar.querySelectorAll('.tab')].find(t => (t.getAttribute('onclick') || '').includes("'sitemap'"));
+  (sm || bar.lastElementChild).insertAdjacentHTML('afterend', `<button class="tab ${on ? 'on' : ''}" onclick="SEOV.tab='links';vSeo()">ลิงก์ภายใน</button>`);
+  // order: ภาพรวม · Meta ทุกหน้า · คีย์เวิร์ด · ตรวจสุขภาพ · Sitemap & Index · ลิงก์ภายใน · Schema · Redirect & 404 · ตั้งค่า
+  const ORDER = ['overview', 'pages', 'keywords', 'health', 'sitemap', 'links', 'schema', 'redirects', 'settings'], key = t => (t.getAttribute('onclick') || '').match(/SEOV\.tab='(\w+)'/)?.[1];
+  [...bar.querySelectorAll('.tab')].sort((x, y) => (ORDER.indexOf(key(x)) + 1 || 99) - (ORDER.indexOf(key(y)) + 1 || 99)).forEach(t => bar.appendChild(t));
+  if (on) { const b = $('#seoBody'); if (b) { b.classList.remove('p-4', 'sm:p-5'); b.classList.add('p-0'); b.innerHTML = seoLinksTab(); const c = b.querySelector('[data-kwcards]'); if (c) bar.insertAdjacentElement('afterend', c); const w = b.parentElement; if (w?.classList.contains('card')) w.classList.remove('card'); } }
+  icons();
+}; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
+
 /* ---------- วิเคราะห์เว็บไซต์ → Meta: สถานะจริงจากเซิร์ฟเวอร์ + event ที่ระบบส่งจริง (conversion_events) ---------- */
 const MS = { d: null, at: 0, loading: false };
 function msLoad() {
