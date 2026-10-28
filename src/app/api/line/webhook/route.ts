@@ -5,6 +5,7 @@ import { leadActivities, leads, settings, users } from '@/db/schema';
 import { audit } from '@/lib/audit';
 import { replyLine, text, verifyLineSignature } from '@/lib/line';
 import { loadLineCfg } from '@/lib/line-config';
+import { rateLimit } from '@/lib/ratelimit';
 import { setLeadStatus } from '@/lib/leads';
 
 export const runtime = 'nodejs';
@@ -37,6 +38,7 @@ async function handle(ev: Ev) {
   if (ev.type === 'message' && ev.message?.type === 'text' && lineUserId) {
     const m = ev.message.text?.trim().match(/^(?:link|เชื่อม)\s*(\d{6})$/i);
     if (m) {
+      if (!rateLimit('line-link:' + lineUserId, 5, 60 * 60_000)) return reply('ลองหลายครั้งเกินไป กรุณารอ 1 ชั่วโมง');   // security: no guessing codes
       const [u] = await db.select().from(users).where(and(eq(users.lineLinkCode, m[1]), eq(users.active, true)));
       if (!u) return reply('รหัสไม่ถูกต้องหรือหมดอายุ · สร้างรหัสใหม่ได้ที่เมนูโปรไฟล์ (กดชื่อตัวเองมุมซ้ายล่าง) ในระบบหลังบ้าน');
       await db.update(users).set({ lineUserId: null }).where(eq(users.lineUserId, lineUserId));
