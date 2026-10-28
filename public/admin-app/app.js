@@ -4049,12 +4049,14 @@ const sysSize = n => n == null ? '—' : n < 1024 ? `${n} B` : n < 1048576 ? `${
 const sysDur = s => { const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d ? `${d} วัน ${h} ชม.` : h ? `${h} ชม. ${m} นาที` : `${m} นาที`; };
 const sysTs = s => new Date(s).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' });
 const SYS_SRC = { auto: ['อัตโนมัติ', '#eef2ff', '#3b4bb5'], manual: ['สำรองเอง', '#eaf6ef', '#1e7a46'], 'pre-restore': ['ก่อนกู้คืน', '#fff6e5', '#9a5b00'], upload: ['อัปโหลด', '#f1f0f0', '#5d5557'] };
+const sysOn = () => CUR === 'settings' && SITECFG.tab === 'system' && !!$('#sysHost');
+const sysHead = acts => `<div class="flex flex-wrap items-end justify-between gap-2 mb-3"><div><p class="font-medium">สถานะเซิร์ฟเวอร์ & สำรองข้อมูล</p><p class="text-[11.5px] text-muted">สถานะเว็บ งานอัตโนมัติ และไฟล์สำรอง</p></div><div class="flex flex-wrap gap-2">${acts}</div></div>`;
 const sysPill = (l, bg, fg) => `<span class="pill" style="background:${bg};color:${fg}">${l}</span>`;
 function sysLoad(quiet) {
   if (SYS.loading) return; SYS.loading = true;
   api('GET', 'system').then(d => { SYS.d = d; SYS.err = ''; if (!SYS.alerts) SYS.alerts = { ...d.alerts.on }; })
     .catch(e => { SYS.err = e.message; if (!quiet) fail(e); })
-    .finally(() => { SYS.loading = false; if (CUR === 'system') vSystem(); });
+    .finally(() => { SYS.loading = false; if (sysOn()) vSystem(); });
 }
 function sysSpark(v) {
   if (!v || v.length < 2) return '';
@@ -4064,9 +4066,10 @@ function sysSpark(v) {
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block;overflow:visible" aria-hidden="true"><line x1="0" x2="${W}" y1="${y1}" y2="${y1}" stroke="#a3222c" stroke-width="1" stroke-dasharray="2 3" opacity=".35"/><polyline points="${pts}" fill="none" stroke="#70000e" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>${v.map((x, i) => x < 0 ? `<circle cx="${(i * step).toFixed(1)}" cy="${H}" r="2" fill="#a3222c"/>` : '').join('')}</svg>`;
 }
 function vSystem() {
+  const host = $('#sysHost'); if (!host) return;
   const d = SYS.d;
   const acts = `<button class="btn btn-o" onclick="sysLoad()" ${SYS.loading ? 'disabled' : ''}><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>โหลดใหม่</button><button class="btn btn-p" ${SYS.busy.backup || isRO() ? 'disabled' : ''} onclick="sysBackup()"><i data-lucide="database-backup" class="w-3.5 h-3.5"></i>${SYS.busy.backup ? 'กำลังสำรอง…' : 'สำรองตอนนี้'}</button>`;
-  if (!d) { $('#view').innerHTML = head('ระบบ & สำรองข้อมูล', 'สถานะเว็บ งานอัตโนมัติ และไฟล์สำรอง', acts) + `<div class="card p-10 text-center text-muted">${SYS.err ? esc(SYS.err) : 'กำลังโหลด…'}</div>`; icons(); if (!SYS.err) sysLoad(); return; }
+  if (!d) { host.innerHTML = sysHead(acts) + `<div class="card p-10 text-center text-muted">${SYS.err ? esc(SYS.err) : 'กำลังโหลด…'}</div>`; icons(); if (!SYS.err) sysLoad(); return; }
   const w = d.web, last = w.last, ms = last?.ok ? last.ms : null;
   const tone = ms == null ? '#a3222c' : ms < 600 ? '#1e7a46' : ms < 1000 ? '#9a5b00' : '#a3222c';
   const lastB = d.backups[0], ago = lastB ? relTs(lastB.at) : 'ยังไม่มี';
@@ -4084,7 +4087,7 @@ function vSystem() {
   const A = SYS.alerts || d.alerts.on, ch = d.channel;
   const AL = [['down', 'เว็บล่มเกิน 2 นาที', 'หน้าแรกเปิดไม่ได้ 2 ครั้งติดกัน (วัดทุกนาที) · แจ้งอีกครั้งเมื่อกลับมา'], ['ttfb', 'TTFB เกิน 1 วินาที ติดต่อกัน 15 นาที', 'หน้าแรกตอบช้าทุกครั้งตลอด 15 นาที'], ['cron', 'งานอัตโนมัติล้มเหลว', 'เช่น ตรวจสายบันทึกกิจกรรมไม่ผ่าน ล้างเซสชันไม่ได้'], ['backup', 'สำรองข้อมูลล้มเหลว', 'สำรองรายวันตอน 03:00 ไม่สำเร็จ']];
   const dirty = Object.keys(A).some(k => A[k] !== d.alerts.on[k]);
-  $('#view').innerHTML = `${head('ระบบ & สำรองข้อมูล', 'สถานะเว็บ งานอัตโนมัติ และไฟล์สำรอง', acts)}
+  host.innerHTML = `${sysHead(acts)}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
       ${kpi('server', 'เซิร์ฟเวอร์ทำงานต่อเนื่อง', sysDur(d.uptime.sec), `เริ่ม ${sysTs(d.uptime.since)} · Node ${esc(d.uptime.node)} · RAM ${d.uptime.memMb} MB`)}
       ${kpi('gauge', 'เวลาโหลดหน้าแรก (TTFB)', `<span style="color:${tone}">${ms == null ? (last ? 'ล่ม' : '—') : ms.toLocaleString() + ' <span class="text-[13px]">ms</span>'}</span>`, last ? `เฉลี่ย 1 ชม. ${w.avgHour ?? '—'} ms · ออนไลน์ ${w.upDay ?? '—'}% ใน 24 ชม. · วัดจากเซิร์ฟเวอร์` : 'รอการวัดครั้งแรก (ทุก 1 นาที)', sysSpark(w.spark))}
@@ -4112,9 +4115,9 @@ function vSystem() {
         ${d.alerts.at ? `<p class="text-[11px] text-muted mt-1">แก้ล่าสุด ${sysTs(d.alerts.at)} โดย ${esc(d.alerts.by || '')}</p>` : ''}</div>
     </div>`;
   icons();
-  clearTimeout(SYS.t); SYS.t = setTimeout(() => { if (CUR === 'system' && !document.hidden) sysLoad(true); }, 60_000);
+  clearTimeout(SYS.t); SYS.t = setTimeout(() => { if (sysOn() && !document.hidden) sysLoad(true); }, 60_000);
 }
-function sysBusy(k, p) { SYS.busy[k] = true; vSystem(); return p.finally(() => { SYS.busy[k] = false; if (CUR === 'system') vSystem(); }); }
+function sysBusy(k, p) { SYS.busy[k] = true; vSystem(); return p.finally(() => { SYS.busy[k] = false; if (sysOn()) vSystem(); }); }
 function sysBackup() { sysBusy('backup', api('POST', 'system/backup').then(r => { SYS.d = { ...r.status, can: SYS.d.can }; AUDIT_DIRTY = true; toast('สำรองข้อมูลแล้ว · ' + r.file); }).catch(fail)); }
 function sysRun(id) { sysBusy('j:' + id, api('POST', 'system/run', { job: id }).then(r => { SYS.d = { ...r.status, can: SYS.d.can }; AUDIT_DIRTY = true; r.result.ok ? toast('สำเร็จ · ' + r.result.msg) : toastErr('ล้มเหลว · ' + r.result.msg); }).catch(fail)); }
 function sysAlerts() { sysBusy('alerts', api('PUT', 'system/alerts', { on: SYS.alerts }).then(r => { SYS.d = { ...r.status, can: SYS.d.can }; SYS.alerts = { ...r.status.alerts.on }; AUDIT_DIRTY = true; toast('บันทึกการแจ้งเตือนแล้ว'); }).catch(fail)); }
@@ -4134,7 +4137,26 @@ function sysUpload(files) {
     .then(async r => { const j = await r.json().catch(() => ({})); if (r.status === 401) { location.href = '/admin/login'; throw new Error('login'); } if (!r.ok) throw new Error(j.error || 'อัปโหลดไม่สำเร็จ'); return j; })
     .then(r => { SYS.d = { ...r.status, can: SYS.d.can }; AUDIT_DIRTY = true; vSystem(); setTimeout(() => sysRestore(r.file, `อัปโหลดแล้ว: ${r.rows.toLocaleString()} แถว · สำรองเมื่อ ${sysTs(r.from)}`), 50); }).catch(fail));
 }
-PAGES.push(['system', 'ระบบ & สำรองข้อมูล', 'server', vSystem]);
+/* lives in ตั้งค่า → ระบบ & สำรองข้อมูล; #/system still opens it */
+PAGES.push(['system', 'ระบบ & สำรองข้อมูล', 'server', () => { SITECFG.tab = 'system'; history.replaceState(null, '', '#/settings'); route(); }]);
+{ const t = CFG_TABS.find(x => x[0] === 'system'); if (t) t[1] = 'ระบบ & สำรองข้อมูล'; }
+{ const _vs = vSettings; vSettings = function () {
+  _vs(); if (SITECFG.tab !== 'system') return;
+  const f = $('#view .fade'); if (!f) return;
+  [...f.querySelectorAll('.card')].filter(c => /ข้อมูลระบบ/.test(c.querySelector('p')?.textContent || '')).forEach(c => c.remove());   // placeholder card → the real status below
+  f.insertAdjacentHTML('beforeend', '<div id="sysHost" class="mt-5"></div>'); vSystem();
+}; PAGES.find(p => p[0] === 'settings')[3] = vSettings; }
+/* ---------- merged menus: ฤดูกาลราคา → tab of เรือ & ราคา · ระบบ & สำรองข้อมูล → tab of ตั้งค่า ---------- */
+const NAV_MERGED = { seasons: 'boats', system: 'settings' };
+const boatTabs = cur => `<div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${[['boats', 'เรือทั้งหมด', 'sailboat'], ['seasons', 'ฤดูกาลราคา', 'calendar-range']].filter(([k]) => canPage(k)).map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${cur === k ? 'on' : ''}" onclick="go('${k}')"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>`;
+const addBoatTabs = k => { const h = $('#view > div'); if (h && !$('#view > .tabbar')) { h.insertAdjacentHTML('afterend', boatTabs(k)); icons(); } };
+{ const _b = vBoats; vBoats = function () { _b(); addBoatTabs('boats'); }; PAGES.find(p => p[0] === 'boats')[3] = vBoats; }
+{ const _s = vSeasons; vSeasons = function () { _s(); addBoatTabs('seasons'); }; PAGES.find(p => p[0] === 'seasons')[3] = vSeasons; }
+{ const _r = route; route = function () {
+  _r();
+  for (const [k, parent] of Object.entries(NAV_MERGED)) { $$(`#nav a[href="#/${k}"]`).forEach(a => a.remove()); if (CUR === k) $(`#nav a[href="#/${parent}"]`)?.classList.add('on'); }
+  if (CUR === 'seasons') $('#pageTitle').textContent = 'เรือ & ราคา';
+}; }
 PAGE_PERM.system = 'settings';
 
 /* ---------- sidebar groups: แดชบอร์ด · งานขาย · สินค้า & ราคา · เว็บไซต์ · การตลาด · ทีม & ระบบ ---------- */
