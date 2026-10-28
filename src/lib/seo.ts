@@ -15,7 +15,8 @@ export type SeoConfig = {
   pages: Record<string, { t: Bi; d: Bi }>;
   sx: Record<string, PageSx>;
   robots: { txt: string; ai: Record<string, boolean>; llms: boolean };
-  smap: { hreflang: boolean };
+  /** sitemap.xml: hreflang alternates, and which sections / image entries it lists */
+  smap: { hreflang: boolean; pages: boolean; boats: boolean; blog: boolean; images: boolean };
   sset: Record<string, unknown>;
 };
 
@@ -24,7 +25,7 @@ export const AI_BOTS = ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended
 // every page indexable until staff switch one off (matches the site before the SEO centre went live)
 export const SEO_DEFAULT: SeoConfig = {
   pages: {}, sx: {},
-  robots: { txt: ROBOTS_DEFAULT, ai: Object.fromEntries(AI_BOTS.map(b => [b, true])), llms: true }, smap: { hreflang: true }, sset: {},
+  robots: { txt: ROBOTS_DEFAULT, ai: Object.fromEntries(AI_BOTS.map(b => [b, true])), llms: true }, smap: { hreflang: true, pages: true, boats: true, blog: true, images: true }, sset: {},
 };
 
 const s = (v: unknown, max: number) => (typeof v === 'string' ? v : '').trim().slice(0, max);
@@ -42,7 +43,8 @@ export function cleanSeo(v: unknown): SeoConfig {
   }
   const r = (c.robots ?? {}) as Record<string, unknown>, ai = (r.ai ?? {}) as Record<string, unknown>;
   out.robots = { txt: s(r.txt, 5000) || ROBOTS_DEFAULT, ai: Object.fromEntries(AI_BOTS.map(b => [b, ai[b] !== false])), llms: r.llms !== false };
-  out.smap = { hreflang: (c.smap ?? {}).hreflang !== false };
+  const sm = (c.smap ?? {}) as Record<string, unknown>;
+  out.smap = { hreflang: sm.hreflang !== false, pages: sm.pages !== false, boats: sm.boats !== false, blog: sm.blog !== false, images: sm.images !== false };
   out.sset = c.sset && typeof c.sset === 'object' && JSON.stringify(c.sset).length < 20_000 ? JSON.parse(JSON.stringify(c.sset)) : {};
   return out;
 }

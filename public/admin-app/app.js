@@ -4204,7 +4204,7 @@ if (BOOT.seo) { const c = BOOT.seo;
   Object.entries(c.sx || {}).forEach(([id, x]) => { SX[id] = { index: x.index !== false, follow: x.follow !== false, canon: x.canon || '', ogT: x.ogT || tr(), schema: '' }; });
   Object.entries(c.pages || {}).forEach(([id, p]) => { const k = id.slice(2); if (STATIC_SEO[k]) STATIC_SEO[k] = { t: p.t, d: p.d }; });
   Object.assign(ROBOTS, { txt: c.robots.txt, ai: { ...c.robots.ai }, llms: c.robots.llms });
-  SMAP.hreflang = c.smap.hreflang;
+  Object.assign(SMAP, c.smap);
   const merge = (a, b) => { for (const [k, v] of Object.entries(b || {})) a[k] = v && typeof v === 'object' && !Array.isArray(v) && a[k] && typeof a[k] === 'object' ? merge(a[k], v) : v; return a; };
   merge(SSET, c.sset);
 }
@@ -4212,7 +4212,7 @@ const seoVal = () => ({
   pages: Object.fromEntries(Object.entries(STATIC_SEO).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(STATIC_DEF[k])).map(([k, v]) => ['s-' + k, v])),
   sx: Object.fromEntries(Object.entries(SX).map(([id, x]) => [id, { index: x.index !== false, follow: x.follow !== false, canon: (x.canon || '').trim(), ogT: x.ogT || tr() }])
     .filter(([, x]) => !x.index || !x.follow || x.canon || x.ogT.th || x.ogT.en)),   // pages left at the default are not stored
-  robots: { txt: ROBOTS.txt, ai: ROBOTS.ai, llms: ROBOTS.llms }, smap: { hreflang: SMAP.hreflang }, sset: SSET,
+  robots: { txt: ROBOTS.txt, ai: ROBOTS.ai, llms: ROBOTS.llms }, smap: { hreflang: SMAP.hreflang, pages: SMAP.pages !== false, boats: SMAP.boats !== false, blog: SMAP.blog !== false, images: SMAP.images !== false }, sset: SSET,
 });
 let SEOSNAP = BOOT.seo ? JSON.stringify(seoVal()) : null, SEOFLY = false;
 function seoTick() {
@@ -4806,6 +4806,70 @@ function seoHealthOpen(k) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `seo-health-${iso(TODAY)}.csv`; a.click();
   toast(`ดาวน์โหลดรายงาน ${rows.length - 1} รายการแล้ว`);
 }; }
+
+/* ---------- ศูนย์ SEO → Sitemap & Index: live sitemap counts, real section switches, sending to Google / Bing,
+   robots.txt, AI crawlers and llms.txt (saved with the SEO settings) ---------- */
+const SMX = { d: null, loading: false, busy: '' };
+function smxLoad(force) {
+  if (SMX.loading || (SMX.d && !force) || !can('seo')) return; SMX.loading = true;
+  api('GET', 'seo/sitemap').then(d => { SMX.d = d; }).catch(e => { SMX.d = { error: e.message }; })
+    .finally(() => { SMX.loading = false; if (CUR === 'seo' && SEOV.tab === 'sitemap') vSeo(); });
+}
+/* the sitemap follows the SEO settings: save first, then count again */
+function smxSet(k, v) { SMAP[k] = v; try { seoTick(); } catch (e) { } setTimeout(() => smxLoad(true), 2000); vSeo(); }
+function smxSubmit(to) {
+  if (SMX.busy) return; SMX.busy = to; vSeo();
+  api('POST', 'seo/submit', { to }).then(r => { if (SMX.d && !SMX.d.error) SMX.d.log = r.log; AUDIT_DIRTY = true; (r.ok ? toast : toastErr)(r.msg); })
+    .catch(fail).finally(() => { SMX.busy = ''; vSeo(); });
+}
+function smxRobotsSave() { const v = $('#rbT')?.value ?? ROBOTS.txt; ROBOTS.txt = v; try { seoTick(); } catch (e) { } toast('บันทึก robots.txt แล้ว · มีผลภายใน 5 นาที'); }
+function smxList(kind) {
+  const P = seoPages(), items = kind === 'noindex' ? P.filter(p => !p.hidden && !p.draft && !sx(p.id).index) : [...ART.filter(a => a.status !== 'published').map(a => ({ name: a.title.th || a.title.en || 'บทความไม่มีชื่อ', sub: 'บทความ · ' + (ART_ST[a.status]?.[0] || a.status), go: `closeDrawer();go('articles/${a.id}')` })),
+    ...FLEET.filter(b => !b.active).map(b => ({ name: b.name, sub: 'เรือ · ซ่อนอยู่', go: `closeDrawer();boatEdit('${b.slug}')` }))];
+  const L = kind === 'noindex' ? items.map(p => ({ name: p.name, sub: ST[p.type] + ' · ' + (p.url.th || p.url.en), go: `closeDrawer();seoEdit('${p.id}')`, id: p.id })) : items;
+  openDrawer(`<div class="h-16 px-5 flex items-center justify-between border-b border-line shrink-0"><div><p class="text-[11px] text-muted">Sitemap & Index · ${L.length} รายการ</p><p class="font-medium">${kind === 'noindex' ? 'หน้าที่ตั้ง noindex' : 'ยังไม่เผยแพร่'}</p></div><button class="btn btn-g !px-2" onclick="closeDrawer()"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+    <p class="px-5 py-3 border-b border-line text-[12.5px] text-muted">${kind === 'noindex' ? 'หน้าเหล่านี้ไม่อยู่ใน sitemap และบอก Google ว่าไม่ต้องเก็บ · เปิดให้เก็บได้จากปุ่มด้านขวา' : 'บทความฉบับร่าง รอตรวจ ตั้งเวลา และเรือที่ซ่อน จะเข้า sitemap เองเมื่อเผยแพร่'}</p>
+    <div class="flex-1 overflow-y-auto">${L.map(it => `<div class="flex items-center gap-3 px-5 py-3 border-b border-line"><button class="min-w-0 flex-1 text-left" onclick="${it.go}"><span class="block text-[13px] truncate">${esc(it.name)}</span><span class="block text-[11.5px] text-muted truncate">${esc(it.sub)}</span></button>${it.id ? `<button class="btn btn-o !h-8 shrink-0" onclick="sx('${it.id}').index=true;try{seoTick()}catch(e){};smxLoad(true);smxList('noindex');vSeo();toast('เปิดให้ Google เก็บแล้ว')">เปิดให้เก็บ</button>` : ''}</div>`).join('') || '<p class="px-5 py-10 text-center text-muted">ไม่มีรายการ</p>'}</div>`);
+}
+seoSitemap = function () {
+  smxLoad(); const D = SMX.d && !SMX.d.error ? SMX.d : null, err = SMX.d?.error;
+  const unpub = ART.filter(a => a.status !== 'published').length + FLEET.filter(b => !b.active).length;
+  const noix = seoPages().filter(p => !p.hidden && !p.draft && !sx(p.id).index).length;
+  const L = D?.log || {}, last = [L.google, L.bing].filter(x => x?.ok).sort((a, b) => b.at.localeCompare(a.at))[0];
+  const ago = s => { const m = Math.round((Date.now() - new Date(s)) / 60000); return m < 1 ? 'เมื่อสักครู่' : m < 60 ? m + ' นาทีที่แล้ว' : m < 1440 ? Math.round(m / 60) + ' ชม.ที่แล้ว' : fmtD(iso(new Date(s))); };
+  const card = (l, v, s, ic, on) => `<${on ? `button onclick="${on}"` : 'div'} class="card p-5 text-left grid gap-1"><span class="flex items-start justify-between gap-2"><span class="text-[12.5px] text-muted">${l}</span><span class="w-9 h-9 rounded-full bg-white grid place-items-center shrink-0" style="margin:-4px -4px 0 0;box-shadow:0 4px 14px -8px rgb(58 0 7/.45)"><i data-lucide="${ic}" class="w-4 h-4"></i></span></span><span class="text-[24px] font-medium tnum leading-tight mt-2">${v}</span><span class="text-[12px] text-muted">${s}</span></${on ? 'button' : 'div'}>`;
+  const cards = `<div data-kwcards class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">${card('URL ใน Sitemap', D ? nf(D.total) : '…', 'หน้าที่เปิดให้ Google เก็บ', 'check', '')}${card('ยังไม่เผยแพร่', nf(unpub), 'ร่าง / รอตรวจ / ตั้งเวลา / เรือที่ซ่อน', 'clock', "smxList('draft')")}${card('noindex', nf(noix), 'หน้าที่ตั้งไม่ให้ Google เก็บ', 'ban', "smxList('noindex')")}${card('ส่ง Sitemap', last ? ago(last.at) : '—', last ? (last === L.google ? 'Google' : 'Bing / IndexNow') + (L.google?.ok && L.bing?.ok ? ' · ส่งครบทั้งสองที่' : '') : 'ยังไม่เคยส่ง', 'globe', '')}</div>`;
+  const row = (k, f, l, c) => `<div class="flex items-center gap-3 border-t border-line" style="padding:14px 20px"><i data-lucide="file-code-2" class="w-5 h-5 text-muted shrink-0"></i><div class="flex-1 min-w-0"><p class="truncate">${f}</p><p class="text-[11.5px] text-muted">${l} · ${c}</p></div><a class="text-[12px] text-muted hover:text-maroon whitespace-nowrap" href="/sitemap.xml" target="_blank" rel="noopener">ดู XML</a><span class="tgl"><input type="checkbox" ${SMAP[k] !== false ? 'checked' : ''} onchange="smxSet('${k}',this.checked)"/><span></span></span></div>`;
+  const cnt = (n, u = 'URL') => D ? `${nf(n)} ${u}` : '…';
+  const sent = x => x ? `<span class="block text-[10.5px] ${x.ok ? 'text-muted' : 'text-[#a3222c]'}">${x.ok ? 'ส่งล่าสุด ' + ago(x.at) : 'ไม่สำเร็จ'}</span>` : '';
+  const gscOn = typeof GG !== 'undefined' && GG.st?.gsc?.on;
+  const host = D ? D.url.replace(/^https?:\/\//, '') : SITE + '/sitemap.xml';
+  return `${cards}<div class="grid xl:grid-cols-2 gap-4 items-start">
+    <div class="card overflow-hidden"><div class="flex flex-wrap items-start justify-between gap-3 px-5 pt-4 pb-3"><div class="min-w-0"><p class="font-medium">Sitemap</p><p class="text-[11.5px] text-muted mt-0.5 break-all">${esc(host)} · อัปเดตอัตโนมัติเมื่อแก้เนื้อหา</p></div>
+        <div class="flex gap-2 shrink-0"><button class="btn btn-o !h-9 text-left" ${SMX.busy ? 'disabled' : ''} onclick="smxSubmit('bing')" title="ส่งทุก URL ให้ Bing, Yandex, Naver ผ่าน IndexNow · ไม่ต้องมีบัญชี"><span>${SMX.busy === 'bing' ? 'กำลังส่ง…' : 'IndexNow (Bing)'}${sent(L.bing)}</span></button>
+          <button class="btn btn-o !h-9 text-left" ${SMX.busy ? 'disabled' : ''} onclick="${gscOn ? "smxSubmit('google')" : "toast('เชื่อม Search Console ก่อน (วิเคราะห์เว็บไซต์ → เชื่อมต่อ API) หรือส่งเองที่ search.google.com/search-console → Sitemaps')"}"><span>${SMX.busy === 'google' ? 'กำลังส่ง…' : 'ส่งให้ Google'}${sent(L.google)}</span></button></div></div>
+      ${err ? `<p class="px-5 py-3 border-t border-line text-[12px] text-[#a3222c]">นับ URL ไม่สำเร็จ: ${esc(err)}</p>` : ''}
+      ${row('pages', 'หน้าหลัก & จุดหมาย', 'หน้าแรก เรือทั้งหมด บทความ เกี่ยวกับเรา ติดต่อ เกาะ', cnt(D?.pages))}${row('boats', 'หน้าเรือ', 'เรือที่แสดงบนเว็บทุกลำ', cnt(D?.boats))}${row('blog', 'บทความ', 'บทความที่เผยแพร่ ทั้งไทยและอังกฤษ', cnt(D?.blog))}${row('images', 'รูปภาพ', 'รูปเรือ + รูปปกบทความ (Google Images)', cnt(D?.images, 'รูป'))}
+      <label class="flex items-center gap-3 border-t border-line" style="padding:14px 20px"><i data-lucide="languages" class="w-5 h-5 text-muted shrink-0"></i><span class="flex-1"><span class="block">hreflang th / en</span><span class="block text-[11.5px] text-muted">บอก Google ว่าหน้าไทยและอังกฤษเป็นคู่กัน</span></span><span class="tgl"><input type="checkbox" ${SMAP.hreflang ? 'checked' : ''} onchange="smxSet('hreflang',this.checked)"/><span></span></span></label>
+      <p class="px-5 py-3 border-t border-line text-[11.5px] text-muted">หน้าที่ซ่อน, noindex และบทความฉบับร่าง จะไม่อยู่ใน sitemap · ปิดหมวดไหน URL หมวดนั้นจะหายจาก sitemap.xml (หน้ายังเปิดได้ตามปกติ)</p></div>
+    <div class="grid gap-4">
+      <div class="card p-5"><div class="flex items-center justify-between"><p class="font-medium">robots.txt</p><button class="btn btn-g !h-8" onclick="smxRobotsSave()">บันทึก</button></div>
+        <textarea id="rbT" rows="9" class="inp mt-3 font-mono !text-[12.5px] leading-relaxed">${esc(ROBOTS.txt)}</textarea>
+        <div class="flex items-center justify-between mt-2 text-[11.5px] text-muted"><span>ระบบเติมบรรทัด Sitemap และบล็อก AI ที่ปิดไว้ให้เอง</span><a class="hover:text-maroon inline-flex items-center gap-1" href="/robots.txt" target="_blank" rel="noopener">ดู /robots.txt<i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i></a></div></div>
+      <div class="card p-5"><p class="font-medium flex items-center gap-2"><i data-lucide="bot" class="w-4 h-4 text-maroon"></i>AI crawlers</p><p class="text-[11.5px] text-muted mt-0.5">อนุญาตให้ AI อ่านเว็บ ช่วยให้ ChatGPT, Claude, Perplexity แนะนำเรือและบทความของเราได้</p>
+        <div class="mt-3 grid gap-1">${Object.keys(ROBOTS.ai).map(b => `<label class="flex items-center justify-between gap-3 py-1.5"><span class="font-mono text-[13px]">${b}</span><span class="tgl"><input type="checkbox" ${ROBOTS.ai[b] ? 'checked' : ''} onchange="ROBOTS.ai['${b}']=this.checked;try{seoTick()}catch(e){}"/><span></span></span></label>`).join('')}
+        <label class="flex items-center justify-between gap-3 pt-3 mt-2 border-t border-line"><span>สร้างไฟล์ /llms.txt <span class="block text-[11.5px] text-muted">สรุปเว็บ เรือ และบทความหลักให้ AI อ่านง่าย · <a class="hover:text-maroon" href="/llms.txt" target="_blank" rel="noopener" onclick="event.stopPropagation()">ดูไฟล์</a></span></span><span class="tgl"><input type="checkbox" ${ROBOTS.llms ? 'checked' : ''} onchange="ROBOTS.llms=this.checked;try{seoTick()}catch(e){}"/><span></span></span></label></div></div>
+    </div></div>`;
+};
+/* tab label + cards above the content, like the other SEO tabs */
+{ const _vm = vSeo; vSeo = function () {
+  _vm();
+  const t = [...$$('#view .tabbar .tab')].find(x => (x.getAttribute('onclick') || '').includes("'sitemap'")); if (t) t.textContent = 'Sitemap & Index';
+  if (SEOV.tab === 'sitemap') { const c = $('#seoBody [data-kwcards]'), body = $('#seoBody'); if (c) $('#view .tabbar')?.insertAdjacentElement('afterend', c);
+    // the boxes are cards of their own: no card around them
+    if (body) { body.classList.remove('p-4', 'sm:p-5'); body.classList.add('p-0'); const w = body.parentElement; if (w?.classList.contains('card')) w.classList.remove('card'); } }
+  icons();
+}; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
 
 /* ---------- วิเคราะห์เว็บไซต์ → Meta: สถานะจริงจากเซิร์ฟเวอร์ + event ที่ระบบส่งจริง (conversion_events) ---------- */
 const MS = { d: null, at: 0, loading: false };

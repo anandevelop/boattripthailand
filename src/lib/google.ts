@@ -27,18 +27,19 @@ function serviceAccount(): SA | null {
 
 // read-only analytics + Search Console, and Cloud Translation (admin auto-translate, capped in src/lib/translate.ts)
 const SCOPES = 'https://www.googleapis.com/auth/analytics.readonly https://www.googleapis.com/auth/webmasters.readonly';
-let token: { v: string; exp: number } | null = null;
-async function accessToken() {
+const tokens = new Map<string, { v: string; exp: number }>();
+async function accessToken(scope = SCOPES) {
+  const token = tokens.get(scope);
   if (token && token.exp > Date.now() + 60_000) return token.v;
   const sa = serviceAccount(); if (!sa) throw new GoogleError('no_key', 'ยังไม่ได้ใส่กุญแจ service account');
   const now = Math.floor(Date.now() / 1000), b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
-  const unsigned = b64({ alg: 'RS256', typ: 'JWT' }) + '.' + b64({ iss: sa.client_email, scope: SCOPES, aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 });
+  const unsigned = b64({ alg: 'RS256', typ: 'JWT' }) + '.' + b64({ iss: sa.client_email, scope, aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 });
   const jwt = unsigned + '.' + createSign('RSA-SHA256').update(unsigned).sign(sa.private_key, 'base64url');
   const r = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: jwt }) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok || !j.access_token) throw new GoogleError('auth', `Google ไม่รับกุญแจ service account (${j.error_description || j.error || r.status})`);
-  token = { v: j.access_token, exp: Date.now() + (j.expires_in ?? 3600) * 1000 };
-  return token.v;
+  tokens.set(scope, { v: j.access_token, exp: Date.now() + (j.expires_in ?? 3600) * 1000 });
+  return j.access_token as string;
 }
 
 export class GoogleError extends Error { constructor(public code: string, msg: string) { super(msg); } }
@@ -199,4 +200,15 @@ export async function googleData(days: number, refresh = false) {
   if (days === 1) for (const k of ['ga:1', 'gsc:1']) { const c = cache.get(k); if (c && Date.now() - c.at > 10 * 60_000) cache.delete(k); }
   const [ga, sc] = await Promise.all([s.ga.on ? cached('ga:' + days, () => days === 1 ? ga4h() : ga4(days)) : null, s.gsc.on ? cached('gsc:' + days, () => days === 1 ? gsch() : gsc(days)) : null]);
   return { days, status: s, ga, gsc: sc, at: new Date().toISOString() };
+}
+
+/** /admin → ศูนย์ SEO → Sitemap & Index → ส่งให้ Google: submit the sitemap through the Search Console API.
+ *  Needs the write scope (webmasters) and the service account added as an Owner / Full user of the property. */
+export async function gscSubmitSitemap(feed: string) {
+  const site = process.env.GSC_SITE_URL; if (!site) throw new GoogleError('no_gsc', 'ยังไม่ได้ใส่ GSC_SITE_URL');
+  const t = await accessToken('https://www.googleapis.com/auth/webmasters');
+  const r = await fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site)}/sitemaps/${encodeURIComponent(feed)}`, { method: 'PUT', headers: { authorization: `Bearer ${t}` } });
+  if (r.ok) return true;
+  const j = await r.json().catch(() => ({})) as { error?: { message?: string } };
+  throw new GoogleError(r.status === 403 ? 'perm' : 'api', r.status === 403 ? 'Search Console ไม่ให้สิทธิ์ส่ง sitemap · เพิ่มอีเมล service account เป็นผู้ใช้แบบ “เต็ม (Full)” หรือเจ้าของ' : `ส่งไม่สำเร็จ (${j.error?.message || r.status})`);
 }

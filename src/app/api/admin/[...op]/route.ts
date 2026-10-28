@@ -16,6 +16,7 @@ import { analyticsData } from '@/lib/analytics';
 import { googleData } from '@/lib/google';
 import { pageSpeed } from '@/lib/pagespeed';
 import { cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
+import { sitemapStats, submitSitemap } from '@/lib/sitemap-tools';
 import { deleteDraft, listDrafts, QuotaError, saveDraft, translate, usage as trUsage } from '@/lib/translate';
 import { audienceFile, cleanMarketing, conversionStatus, MKT_KEY } from '@/lib/marketing';
 
@@ -501,6 +502,14 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       if (JSON.stringify(v).length > 1_500_000) throw new HttpError(400, 'ข้อมูลกิจกรรมใหญ่เกินไป');
       await db.insert(settings).values({ key: ACTS_KEY, value: v }).onConflictDoUpdate({ target: settings.key, set: { value: v } });
       clearSiteCache();
+    }
+    if (a === 'seo' && b0 === 'sitemap' && method === 'GET') { await need(me, 'seo'); return json(await sitemapStats()); }
+    if (a === 'seo' && b0 === 'submit' && method === 'POST') {
+      // ศูนย์ SEO → Sitemap & Index: send the sitemap to Google (Search Console API) or Bing (IndexNow)
+      await need(me, 'seo');
+      const to = body.to === 'google' ? 'google' : 'bing', r = await submitSitemap(to);
+      await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo-submit', label: to === 'google' ? 'ส่ง sitemap ให้ Google' : 'ส่ง URL ให้ Bing (IndexNow)', changes: [{ f: 'ผล', from: null, to: r.msg.slice(0, 280) }] });
+      return json(r);
     }
     if (a === 'settings' && b0 === 'keywords' && method === 'GET') { await need(me, 'seo'); return json(await kwStore()); }
     if (a === 'settings' && b0 === 'keywords' && method === 'PUT') {
