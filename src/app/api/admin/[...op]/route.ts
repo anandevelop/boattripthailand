@@ -15,7 +15,7 @@ import { cleanSeo, SEO_KEY } from '@/lib/seo';
 import { analyticsData } from '@/lib/analytics';
 import { googleData } from '@/lib/google';
 import { pageSpeed } from '@/lib/pagespeed';
-import { cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
+import { aiSave, aiStore, cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
 import { sitemapStats, submitSitemap } from '@/lib/sitemap-tools';
 import { deleteDraft, listDrafts, QuotaError, saveDraft, translate, usage as trUsage } from '@/lib/translate';
 import { audienceFile, cleanMarketing, conversionStatus, MKT_KEY } from '@/lib/marketing';
@@ -510,6 +510,14 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       const to = body.to === 'google' ? 'google' : 'bing', r = await submitSitemap(to);
       await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo-submit', label: to === 'google' ? 'ส่ง sitemap ให้ Google' : 'ส่ง URL ให้ Bing (IndexNow)', changes: [{ f: 'ผล', from: null, to: r.msg.slice(0, 280) }] });
       return json(r);
+    }
+    if (a === 'settings' && b0 === 'aisearch' && method === 'GET') { await need(me, 'seo'); return json(await aiStore()); }
+    if (a === 'settings' && b0 === 'aisearch' && method === 'PUT') {
+      // ศูนย์ SEO → AI Search: tracked questions and the results staff record by hand
+      await need(me, 'seo');
+      const v = await aiSave(body.value), note = str(body.note, 200);
+      if (note) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo-ai', label: 'AI Search', changes: [{ f: 'AI Search', from: null, to: note }] });
+      return json(v);
     }
     if (a === 'settings' && b0 === 'keywords' && method === 'GET') { await need(me, 'seo'); return json(await kwStore()); }
     if (a === 'settings' && b0 === 'keywords' && method === 'PUT') {

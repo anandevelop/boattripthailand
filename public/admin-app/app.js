@@ -5022,6 +5022,108 @@ function seoLinksTab() {
   icons();
 }; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
 
+/* =====================================================================
+   ศูนย์ SEO → AI Search: the questions customers ask AI (Google AI Overview, ChatGPT, Perplexity) and whether
+   the answer cites us. Checked by hand — each cell opens the question in that AI — so there is no API cost.
+   Stored in settings (seo.ai) through /api/admin/settings/aisearch.
+   ===================================================================== */
+const AIS = { d: null, loading: false, q: '' };
+const AI_ENG = [['g', 'Google AI Overview', q => 'https://www.google.com/search?q=' + encodeURIComponent(q)], ['c', 'ChatGPT', q => 'https://chatgpt.com/?q=' + encodeURIComponent(q)], ['p', 'Perplexity', q => 'https://www.perplexity.ai/search?q=' + encodeURIComponent(q)]];
+const AI_RES = { cited: ['อ้างอิงเรา', '#1e7a46', '#e8f5ec'], mention: ['กล่าวถึง', '#9a5b00', '#fff4e0'], no: ['ไม่เจอเรา', '#6b5e60', '#f3eeee'] };
+const AI_FREQ = { weekly: ['สัปดาห์ละครั้ง (วันจันทร์)', 7, 4], biweekly: ['ทุก 2 สัปดาห์', 14, 2], monthly: ['เดือนละครั้ง', 30, 1] };
+function aisLoad() {
+  if (AIS.loading || AIS.d || !can('seo')) return; AIS.loading = true;
+  api('GET', 'settings/aisearch').then(d => { AIS.d = d; }).catch(() => { AIS.d = { cfg: { freq: 'weekly', n: 30 }, qs: [] }; })
+    .finally(() => { AIS.loading = false; if (CUR === 'seo' && SEOV.tab === 'ai') vSeo(); });
+}
+function aisSave(note) { api('PUT', 'settings/aisearch', { value: AIS.d, note: note || '' }).then(d => { AIS.d = d; AUDIT_DIRTY = !!note || AUDIT_DIRTY; if (CUR === 'seo' && SEOV.tab === 'ai') vSeo(); }).catch(fail); }
+const aisDue = q => { const days = AI_FREQ[AIS.d.cfg.freq][1], last = AI_ENG.map(([e]) => q.checks[e]?.at).filter(Boolean).sort().pop(); return !last || (Date.now() - new Date(last)) / 864e5 >= days; };
+/* questions worth asking: the keywords people really search (imported from Search Console), then articles' main keywords */
+function aisIdeas() {
+  const have = new Set((AIS.d?.qs || []).map(q => q.q.toLowerCase())), out = [], add = (q, lang, why) => { q = String(q || '').trim(); if (q && !have.has(q.toLowerCase()) && !out.some(x => x.q.toLowerCase() === q.toLowerCase())) out.push({ q, lang, why }); };
+  [['เช่าเรือยอชต์ภูเก็ต ที่ไหนดี', 'th'], ['บริษัทเช่าเรือยอชต์ส่วนตัว ภูเก็ต แนะนำ', 'th'], ['เช่าเรือไปเกาะพีพีแบบส่วนตัว ราคาเท่าไหร่', 'th'], ['best yacht charter company in Phuket', 'en'], ['private boat to Phi Phi from Phuket — which company?', 'en'], ['catamaran charter Phuket recommendation', 'en']].forEach(([q, l]) => add(q, l, 'คำถามเลือกบริษัท'));
+  (KWI.d?.cur?.rows || []).slice().sort((a, b) => b.imp - a.imp).slice(0, 40).forEach(r => add(r.q, ggTh(r.q) ? 'th' : 'en', `คนค้นใน Google ${nf(r.imp)} ครั้ง`));
+  ART.filter(a => a.status === 'published').forEach(a => LANGS.forEach(([k]) => { if (a.kw?.[k]) add(a.kw[k], k, 'คีย์เวิร์ดของบทความ'); }));
+  return out.slice(0, 80);
+}
+function aisAdd() {
+  const I = aisIdeas();
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">เพิ่มคำถามที่ติดตาม</p><p class="text-[12px] text-muted mt-1">พิมพ์คำถามที่ลูกค้าน่าจะถาม AI หรือเลือกจากคีย์เวิร์ดที่มีอยู่</p>
+      <div class="flex gap-2 mt-3"><input id="aisNew" class="inp flex-1" placeholder="เช่น เช่าเรือยอชต์ภูเก็ต ที่ไหนดี" onkeydown="if(event.key==='Enter')aisAddGo()"/><button class="btn btn-p" onclick="aisAddGo()">เพิ่ม</button></div></div>
+    ${I.length ? `<div class="px-5 pt-3 pb-1 flex items-center justify-between text-[12px]"><span class="text-muted">แนะนำ ${I.length} คำถาม</span><label class="flex items-center gap-2"><input type="checkbox" onchange="$$('#aisIdeas input').forEach(i=>i.checked=this.checked)"/>เลือกทั้งหมด</label></div>
+    <div id="aisIdeas" class="overflow-y-auto divide-y" style="max-height:46vh;border-color:rgb(35 20 22/.06)">${I.map((x, i) => `<label class="flex items-center gap-3 px-5 py-2.5 cursor-pointer" style="border-color:rgb(35 20 22/.06)"><input type="checkbox" value="${i}"/><span class="lang-b">${x.lang.toUpperCase()}</span><span class="flex-1 min-w-0 truncate text-[13px]">${esc(x.q)}</span><span class="text-[11px] text-muted whitespace-nowrap">${esc(x.why)}</span></label>`).join('')}</div>` : ''}
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ปิด</button>${I.length ? `<button class="btn btn-p" onclick="aisAddGo()">เพิ่มที่เลือก</button>` : ''}</div>`);
+  AIS.ideas = I; $('#modalBox').style.maxWidth = '680px'; setTimeout(() => $('#aisNew')?.focus(), 50);
+}
+function aisAddGo() {
+  const t = $('#aisNew')?.value.trim(), pick = [...$$('#aisIdeas input:checked')].map(i => AIS.ideas[+i.value]);
+  const add = [...(t ? [{ q: t, lang: ggTh(t) ? 'th' : 'en' }] : []), ...pick].filter(x => !AIS.d.qs.some(q => q.q.toLowerCase() === x.q.toLowerCase()));
+  if (!add.length) return toast('ไม่มีคำถามใหม่');
+  add.forEach(x => AIS.d.qs.push({ id: Math.random().toString(36).slice(2, 10), q: x.q, lang: x.lang, at: iso(TODAY), checks: {} }));
+  closeModal(); aisSave(`เพิ่มคำถาม ${add.length} ข้อ`); toast(`เพิ่ม ${add.length} คำถามแล้ว`);
+}
+/* record what each AI answered for one question */
+function aisRecord(id) {
+  const Q = AIS.d.qs, q = id ? Q.find(x => x.id === id) : null;
+  const seg = e => { const c = q?.checks[e]; return `<div class="flex flex-wrap gap-1" data-e="${e}">${[...Object.entries(AI_RES), ['', ['ไม่ได้ตรวจ']]].map(([r, [l]]) => `<button type="button" class="h-8 px-3 rounded-full text-[12px] ring-1 ring-line ${(c?.r || '') === r ? 'bg-ink text-white' : 'bg-white'}" data-r="${r}" onclick="this.parentElement.querySelectorAll('button').forEach(b=>{b.classList.remove('bg-ink','text-white');b.classList.add('bg-white')});this.classList.add('bg-ink','text-white');this.classList.remove('bg-white')">${l}</button>`).join('')}</div>`; };
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">บันทึกผลการตรวจ</p><p class="text-[12px] text-muted mt-1">ถาม AI แต่ละตัว แล้วดูว่าคำตอบลิงก์ไปเว็บเรา (อ้างอิง) แค่พูดชื่อเรา (กล่าวถึง) หรือไม่มีเราเลย</p></div>
+    <div class="p-5 grid gap-4">
+      <label class="grid gap-1.5"><span class="lbl !mb-0">คำถาม</span>${q ? `<p class="text-[13.5px]">${esc(q.q)}</p>` : `<select id="aisQ" class="inp">${Q.map(x => `<option value="${x.id}">${esc(x.q)}</option>`).join('')}</select>`}</label>
+      ${AI_ENG.map(([e, l, u]) => `<div class="grid gap-2"><div class="flex items-center justify-between"><span class="text-[13px] font-medium">${l}</span><a class="text-[12px] text-maroon inline-flex items-center gap-1" target="_blank" rel="noopener" href="${u(q?.q || '')}" ${q ? '' : `onclick="this.href=(${u.toString()})(AIS.d.qs.find(x=>x.id===$('#aisQ').value).q)"`}>ถาม ${l.split(' ')[0]}<i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i></a></div>${seg(e)}
+        <input class="inp !h-9" data-u="${e}" placeholder="ลิงก์ที่ AI อ้างอิง (ถ้ามี)" value="${esc(q?.checks[e]?.url || '')}"/></div>`).join('')}
+    </div>
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" onclick="aisRecordGo(${q ? `'${q.id}'` : `$('#aisQ').value`})">บันทึก</button></div>`);
+  $('#modalBox').style.maxWidth = '560px'; icons();
+}
+function aisRecordGo(id) {
+  const q = AIS.d.qs.find(x => x.id === id); if (!q) return; let n = 0;
+  AI_ENG.forEach(([e]) => { const r = $(`#modalBox [data-e="${e}"] .bg-ink`)?.dataset.r || '', url = $(`#modalBox [data-u="${e}"]`)?.value.trim() || '';
+    if (!r) return; const old = q.checks[e]; n++;
+    q.checks[e] = { r, at: iso(TODAY), url: /^https?:\/\//.test(url) ? url : '', hist: [...(old?.hist || []), ...(old ? [[old.at, old.r]] : [])].slice(-8) }; });
+  closeModal(); if (!n) return toast('ยังไม่ได้เลือกผลของระบบไหนเลย');
+  aisSave(`บันทึกผล “${q.q.slice(0, 60)}” ${n} ระบบ`); toast('บันทึกผลแล้ว');
+}
+function aisDel(id) { const i = AIS.d.qs.findIndex(x => x.id === id); if (i < 0 || !confirm('เลิกติดตามคำถามนี้?')) return; AIS.d.qs.splice(i, 1); aisSave('เลิกติดตามคำถาม 1 ข้อ'); }
+function seoAiTab() {
+  aisLoad(); try { kwiLoad(); } catch (e) { } const D = AIS.d;
+  if (!D) return '<div class="card p-10 text-center text-muted">กำลังโหลด…</div>';
+  const Q = D.qs, latest = Q.flatMap(q => AI_ENG.map(([e]) => q.checks[e]).filter(Boolean));
+  const citedQ = Q.filter(q => AI_ENG.some(([e]) => q.checks[e]?.r === 'cited')).length, checkedQ = Q.filter(q => AI_ENG.some(([e]) => q.checks[e])).length;
+  const rate = latest.length ? Math.round(latest.filter(c => c.r === 'cited').length / latest.length * 100) : null;
+  const blocked = Object.entries(ROBOTS.ai || {}).filter(([, v]) => !v).map(([k]) => k);
+  const card = (l, v, s, ic, col) => `<div class="card p-5 grid gap-1"><span class="flex items-start justify-between gap-2"><span class="text-[12.5px] text-muted">${l}</span><span class="w-9 h-9 rounded-full bg-white grid place-items-center shrink-0" style="margin:-4px -4px 0 0;box-shadow:0 4px 14px -8px rgb(58 0 7/.45)"><i data-lucide="${ic}" class="w-4 h-4"></i></span></span><span class="text-[24px] font-medium tnum leading-tight mt-2" style="color:${col || 'inherit'}">${v}</span><span class="text-[12px] text-muted">${s}</span></div>`;
+  const cards = `<div data-kwcards class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">${card('คำถามที่ AI อ้างอิงเรา', nf(citedQ), `จาก ${nf(Q.length)} คำถาม (อย่างน้อย 1 ระบบ)`, 'bot', citedQ ? '#1e7a46' : '')}${card('คำถามที่ติดตาม', nf(Q.length), checkedQ ? `ตรวจแล้ว ${nf(checkedQ)} · ถึงรอบ ${nf(Q.filter(aisDue).length)}` : 'ยังไม่ได้บันทึกผล', 'search', '')}${card('อัตราถูกอ้างอิง', rate === null ? '—' : rate + '%', 'นับผลตรวจล่าสุดของแต่ละระบบ', 'trending-up', '')}${card('llms.txt', ROBOTS.llms ? 'เปิดใช้' : 'ปิดอยู่', blocked.length ? `ปิด AI ${blocked.length} ตัวใน robots.txt` : '/llms.txt · AI อ่านเว็บได้ทุกตัว', 'file-text', ROBOTS.llms && !blocked.length ? '' : '#9a5b00')}</div>`;
+  const cell = (q, e, u) => { const c = q.checks[e], R = c && AI_RES[c.r], prev = c?.hist?.length ? c.hist[c.hist.length - 1][1] : null;
+    const tr = c && prev && prev !== c.r ? (c.r === 'cited' || (c.r === 'mention' && prev === 'no') ? '<span style="color:#1e7a46">▲</span>' : '<span style="color:#a3222c">▼</span>') : '';
+    return `<td><div class="flex items-center gap-2">${R ? `<button class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[11.5px] whitespace-nowrap" style="color:${R[1]};background:${R[2]}" onclick="aisRecord('${q.id}')" title="ตรวจ ${fmtD(c.at)}${c.url ? ' · ' + esc(c.url) : ''}">${R[0]} ${tr}</button>` : `<button class="text-[12px] text-muted hover:text-maroon" onclick="aisRecord('${q.id}')">ยังไม่ตรวจ</button>`}
+      <a class="text-muted hover:text-maroon" target="_blank" rel="noopener" href="${u(q.q)}" title="ถามคำถามนี้"><i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i></a></div>${c ? `<p class="text-[10.5px] text-muted mt-0.5">${fmtD(c.at)}</p>` : ''}</td>`; };
+  const L = Q.filter(q => !AIS.q || q.q.toLowerCase().includes(AIS.q.toLowerCase())).sort((a, b) => (aisDue(b) - aisDue(a)) || a.q.localeCompare(b.q, 'th'));
+  const F = AI_FREQ[D.cfg.freq], perMonth = D.cfg.n * 3 * F[2];
+  return `${cards}<div class="card overflow-hidden mb-4"><div class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 pb-3"><div><p class="font-medium">คำถาม “ที่ไหนดี” ที่ AI อ้างอิงเรา</p><p class="text-[11.5px] text-muted mt-0.5">กดลูกศรเพื่อถาม AI ตัวนั้น แล้วกดผลเพื่อบันทึก · คำถามที่ถึงรอบตรวจอยู่บนสุด</p></div>
+      <div class="flex flex-wrap items-center gap-2">${Q.length ? `<input class="inp !h-9" style="width:190px" placeholder="ค้นหาคำถาม…" value="${esc(AIS.q)}" onkeydown="if(event.key==='Enter'){AIS.q=this.value;vSeo()}"/>` : ''}<button class="btn btn-o !h-9" onclick="aisAdd()"><i data-lucide="plus" class="w-3.5 h-3.5"></i>เพิ่มคำถาม</button>${Q.length ? `<button class="btn btn-p !h-9" onclick="aisRecord('')"><i data-lucide="plus" class="w-3.5 h-3.5"></i>บันทึกผลการตรวจ</button>` : ''}</div></div>
+    <div class="overflow-x-auto"><table class="tbl min-w-[900px]"><thead><tr><th>คำถาม</th>${AI_ENG.map(([, l]) => `<th>${l}</th>`).join('')}<th></th></tr></thead><tbody>
+    ${L.map(q => `<tr><td class="min-w-[260px]"><span class="lang-b mr-1.5">${q.lang.toUpperCase()}</span>${esc(q.q)}${aisDue(q) && AI_ENG.some(([e]) => q.checks[e]) ? ' <span class="lang-b mid">ถึงรอบ</span>' : ''}</td>${AI_ENG.map(([e, , u]) => cell(q, e, u)).join('')}<td class="text-right"><button class="btn btn-g !px-2 !h-8 text-muted" title="เลิกติดตาม" onclick="aisDel('${q.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('') || `<tr><td colspan="5" class="text-center text-muted py-14">ยังไม่มีคำถาม · กด “เพิ่มคำถาม” แล้วเลือกจากคีย์เวิร์ดที่คนค้นจริง หรือพิมพ์คำถามเอง</td></tr>`}</tbody></table></div></div>
+    <div class="grid xl:grid-cols-2 gap-4 items-start">
+      <div class="card p-5 grid gap-3"><p class="font-medium">ควบคุมค่าใช้จ่าย</p>
+        <label class="grid gap-1.5"><span class="lbl !mb-0">รอบตรวจ</span><select class="inp" onchange="AIS.d.cfg.freq=this.value;aisSave()">${Object.entries(AI_FREQ).map(([k, [l]]) => `<option value="${k}" ${D.cfg.freq === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+        <label class="grid gap-1.5"><span class="lbl !mb-0">จำนวนคำถามต่อรอบ</span><select class="inp" onchange="AIS.d.cfg.n=+this.value;aisSave()">${[10, 20, 30, 50].map(n => `<option value="${n}" ${D.cfg.n === n ? 'selected' : ''}>${n} คำถาม${n === 30 ? ' (คีย์เวิร์ดสำคัญ Top 30)' : ''}</option>`).join('')}</select></label>
+        <p class="text-[11.5px] text-muted">ประมาณ ${D.cfg.n} คำถาม × 3 ระบบ × ${F[2]} รอบ/เดือน = ${nf(perMonth)} ครั้ง/เดือน · ตรวจเองฟรี ไม่ใช้ API · ถึงรอบแล้ว ${nf(Q.filter(aisDue).length)} คำถาม</p></div>
+      <div class="card p-5"><p class="font-medium">ทำให้ AI อ้างอิงเรามากขึ้น</p>
+        <ul class="mt-3 grid gap-2 text-[13px] list-disc pl-5"><li>สรุปคำตอบ 2–3 บรรทัดใต้หัวข้อ ให้ AI ยกไปตอบได้ทันที</li><li>ใส่ตารางเปรียบเทียบที่หัวคอลัมน์ชัดเจน (ราคา จำนวนคน เวลา)</li><li>อัปเดตปีและวันที่ทุกครั้งที่ราคาเปลี่ยน</li><li>มีบล็อก FAQ ในบทความ (ตรวจได้ที่แท็บ ตรวจสุขภาพ)</li><li>ไฟล์ /llms.txt สรุปเรือ ราคา และบทความหลัก${ROBOTS.llms ? '' : ' · <b class="font-medium" style="color:#9a5b00">ตอนนี้ปิดอยู่</b>'}</li>${blocked.length ? `<li style="color:#9a5b00">robots.txt ปิด ${blocked.map(esc).join(', ')} อยู่ · AI ตัวนั้นจะอ่านเว็บไม่ได้</li>` : ''}</ul>
+        <div class="flex flex-wrap gap-2 mt-4"><a class="btn btn-o !h-9" href="/llms.txt" target="_blank" rel="noopener"><i data-lucide="external-link" class="w-3.5 h-3.5"></i>ดู /llms.txt</a><button class="btn btn-g !h-9" onclick="SEOV.tab='sitemap';vSeo()"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>ตั้งค่า llms.txt / AI crawlers</button></div></div></div>`;
+}
+{ const _va = vSeo; vSeo = function () {
+  const on = SEOV.tab === 'ai'; if (on) SEOV.tab = 'schema';
+  try { _va(); } finally { if (on) SEOV.tab = 'ai'; }
+  const bar = $('#view .tabbar'); if (!bar) return;
+  if (on) bar.querySelector('.tab.on')?.classList.remove('on');
+  const st = [...bar.querySelectorAll('.tab')].find(t => (t.getAttribute('onclick') || '').includes("'settings'"));
+  const html = `<button class="tab ${on ? 'on' : ''}" onclick="SEOV.tab='ai';vSeo()">AI Search</button>`;
+  st ? st.insertAdjacentHTML('beforebegin', html) : bar.insertAdjacentHTML('beforeend', html);
+  if (on) { const b = $('#seoBody'); if (b) { b.classList.remove('p-4', 'sm:p-5'); b.classList.add('p-0'); b.innerHTML = seoAiTab(); const c = b.querySelector('[data-kwcards]'); if (c) bar.insertAdjacentElement('afterend', c); const w = b.parentElement; if (w?.classList.contains('card')) w.classList.remove('card'); } }
+  icons();
+}; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
+
 /* ---------- วิเคราะห์เว็บไซต์ → Meta: สถานะจริงจากเซิร์ฟเวอร์ + event ที่ระบบส่งจริง (conversion_events) ---------- */
 const MS = { d: null, at: 0, loading: false };
 function msLoad() {
