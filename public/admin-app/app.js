@@ -5180,6 +5180,63 @@ seoSettings = function () {
 };
 { const _vs = vSeo; vSeo = function () { _vs(); if (SEOV.tab === 'settings') { const t = [...$$('#view .tabbar .tab')].find(x => (x.getAttribute('onclick') || '').includes("'settings'")); if (t) t.textContent = 'ตั้งค่า'; const b = $('#seoBody'); if (b) { b.classList.remove('p-4', 'sm:p-5'); b.classList.add('p-0'); const w = b.parentElement; if (w?.classList.contains('card')) w.classList.remove('card'); } icons(); } else { const t = [...$$('#view .tabbar .tab')].find(x => (x.getAttribute('onclick') || '').includes("'settings'")); if (t) t.textContent = 'ตั้งค่า'; } }; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
 
+/* ---------- วิเคราะห์เว็บไซต์ → เชื่อมต่อ API: ids and the service account key are set here (saved encrypted; .env still wins) ---------- */
+const GGC = { test: null, testing: false, saving: false, sa: '' };
+function ggSetup() {
+  const s = GG.st || {}, C = s.cfg || {}, src = s.src || {}, canSet = can('settings') && !isRO();
+  const env = k => src[k] === 'env', lock = k => env(k) || !canSet ? 'disabled' : '';
+  const fld = (id, l, v, ph, help, k) => `<label class="grid gap-1.5 min-w-0"><span class="lbl !mb-0">${l}</span><input id="${id}" class="inp" ${lock(k)} value="${esc(v || '')}" placeholder="${ph}"/><span class="text-[11px] text-muted">${env(k) ? 'ตั้งใน .env บนเซิร์ฟเวอร์ (ใช้ค่านี้ก่อน)' : help}</span></label>`;
+  const T = GGC.test, row = x => `<li class="flex items-start gap-2 text-[12.5px]"><i data-lucide="${x.ok ? 'circle-check' : 'circle-x'}" class="w-4 h-4 shrink-0 mt-0.5" style="color:${x.ok ? '#1e7a46' : '#a3222c'}"></i><span><b class="font-medium">${esc(x.step)}</b> · <span class="${x.ok ? 'text-muted' : ''}" style="${x.ok ? '' : 'color:#a3222c'}">${esc(x.msg)}</span></span></li>`;
+  const email = s.email || C.savedEmail;
+  return `<div class="grid xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-4 items-start">
+    <div class="card p-5 grid gap-4 min-w-0"><p class="font-medium">ค่าการเชื่อมต่อ</p>
+      <div class="grid md:grid-cols-3 gap-4">${fld('ggcMid', 'GA4 Measurement ID (ติดตั้งโค้ดบนเว็บ)', C.ga4Id, 'G-XXXXXXXXXX', 'GA4 › ผู้ดูแลระบบ › สตรีมข้อมูล › เว็บ', 'ga4Id')}${fld('ggcProp', 'GA4 Property ID (ดึงรายงาน)', C.propertyId, 'เช่น 514093027', 'GA4 › ผู้ดูแลระบบ › รายละเอียดพร็อพเพอร์ตี้ (ตัวเลข)', 'property')}${fld('ggcSite', 'Search Console พร็อพเพอร์ตี้', C.gscSite, 'https://boattripthailand.com/', 'แบบโดเมน: sc-domain:… · แบบ URL: https://…/ (มี / ท้าย)', 'site')}</div>
+      <label class="grid gap-1.5"><span class="lbl !mb-0">Service Account (ไฟล์ JSON) — ใช้ดึงข้อมูล GA4 + Search Console</span>
+        <textarea id="ggcSa" rows="4" class="inp font-mono !text-[12px]" ${lock('key')} spellcheck="false" autocomplete="off" placeholder="${env('key') ? 'ตั้งใน .env บนเซิร์ฟเวอร์ (GOOGLE_SERVICE_ACCOUNT_JSON)' : email ? `บันทึกแล้ว: ${esc(email)} · วางไฟล์ใหม่เพื่อเปลี่ยน` : 'วางเนื้อหาไฟล์ .json ทั้งไฟล์ หรือกด “เลือกไฟล์ .json”'}" oninput="GGC.sa=this.value">${esc(GGC.sa)}</textarea></label>
+      ${canSet && !env('key') ? `<div class="flex flex-wrap items-center gap-2"><label class="btn btn-o !h-9 cursor-pointer"><i data-lucide="upload" class="w-3.5 h-3.5"></i>เลือกไฟล์ .json<input type="file" accept=".json,application/json" class="hidden" onchange="ggcFile(this.files)"/></label>${C.savedEmail ? `<button class="btn btn-g !h-9 text-muted" onclick="ggcRemove()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบที่บันทึกไว้</button>` : ''}<span class="text-[11px] text-muted">เก็บแบบเข้ารหัสบนเซิร์ฟเวอร์ · ไม่ส่งกลับมาที่เบราว์เซอร์อีก</span></div>` : ''}
+      ${T ? `<ul class="grid gap-1.5 rounded-xl bg-sand p-3">${T.map(row).join('')}</ul>` : ''}
+      <div class="flex flex-wrap justify-end gap-2 pt-1"><button class="btn btn-o" ${GGC.testing ? 'disabled' : ''} onclick="ggcTest()"><i data-lucide="zap" class="w-3.5 h-3.5"></i>${GGC.testing ? 'กำลังทดสอบ…' : 'ทดสอบการเชื่อมต่อ Google'}</button>${canSet ? `<button class="btn btn-p" ${GGC.saving ? 'disabled' : ''} onclick="ggcSave()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${GGC.saving ? 'กำลังบันทึก…' : 'บันทึก'}</button>` : ''}</div>
+      ${!canSet ? '<p class="text-[11.5px] text-muted">แก้ค่าได้เฉพาะผู้ที่มีสิทธิ์ ตั้งค่าเว็บไซต์</p>' : ''}</div>
+    <div class="card p-5 min-w-0"><p class="font-medium">วิธีสร้าง Service Account (ฟรี)</p>
+      <ol class="grid gap-2 mt-3 text-[12.5px] list-decimal pl-5"><li>เปิด <a class="text-maroon" href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a> → สร้างโปรเจกต์</li>
+        <li>APIs & Services → เปิด <b class="font-medium">Google Analytics Data API</b> และ <b class="font-medium">Google Search Console API</b></li>
+        <li>IAM → Service Accounts → สร้าง → แท็บ Keys → Add key → JSON (ได้ไฟล์ .json)</li>
+        <li>GA4 › ผู้ดูแลระบบ › การจัดการสิทธิ์เข้าถึงพร็อพเพอร์ตี้ → เพิ่มอีเมล Service Account (ผู้ดู)</li>
+        <li>Search Console › การตั้งค่า › ผู้ใช้และสิทธิ์ → เพิ่มอีเมลเดียวกัน (จำกัด · ถ้าจะกด “ส่งให้ Google” ในศูนย์ SEO ใช้แบบ เต็ม)</li>
+        <li>วางไฟล์ JSON ที่ช่อง Service Account → บันทึก → ทดสอบการเชื่อมต่อ</li></ol>
+      ${email ? `<div class="flex items-center gap-2 rounded-xl bg-sand px-3 py-2.5 mt-4 text-[12.5px] min-w-0"><i data-lucide="check" class="w-4 h-4 shrink-0" style="color:#1e7a46"></i><span class="font-mono truncate flex-1">${esc(email)}</span><button class="text-muted hover:text-maroon shrink-0" title="คัดลอกอีเมล" onclick="navigator.clipboard?.writeText(${esc(JSON.stringify(email))}).then(()=>toast('คัดลอกอีเมลแล้ว · วางในหน้าจัดการสิทธิ์ของ GA4 / Search Console'))"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button></div>` : ''}
+      <p class="text-[11.5px] text-muted mt-4">ตั้งผ่าน .env ได้ด้วย GOOGLE_SERVICE_ACCOUNT_JSON (JSON หรือ base64) · GA4_PROPERTY_ID · GSC_SITE_URL · NEXT_PUBLIC_GA_ID — ค่าใน .env ใช้ก่อนค่าที่บันทึกในหน้านี้ · ข้อมูลจาก Google เก็บไว้ 30 นาที กด “โหลดข้อมูลใหม่” เพื่อดึงใหม่${C.at ? ` · บันทึกล่าสุด ${fmtD(iso(new Date(C.at)))} โดย ${esc(C.by || '')}` : ''}</p></div></div>`;
+}
+function ggcFile(files) {
+  const f = files?.[0]; if (!f) return;
+  f.text().then(t => { let j = null; try { j = JSON.parse(t); } catch (e) { } if (!j || j.type !== 'service_account') return toastErr('ไฟล์นี้ไม่ใช่กุญแจ service account');
+    GGC.sa = t; const el = $('#ggcSa'); if (el) el.value = t; toast(`อ่านไฟล์ของ ${j.client_email} แล้ว · กดบันทึก`); });
+}
+function ggcSave() {
+  const v = id => $('#' + id)?.disabled ? undefined : $('#' + id)?.value.trim();
+  const body = { ga4Id: v('ggcMid') ?? GG.st?.cfg?.ga4Id ?? '', propertyId: v('ggcProp') ?? GG.st?.cfg?.propertyId ?? '', gscSite: v('ggcSite') ?? GG.st?.cfg?.gscSite ?? '' };
+  if (GGC.sa.trim()) body.sa = GGC.sa.trim();
+  GGC.saving = true; vAnalytics();
+  api('PUT', 'analytics/google/config', body).then(r => { GG.st = r.status; GG.d = {}; GGC.sa = ''; AUDIT_DIRTY = true; toast('บันทึกแล้ว · กำลังทดสอบการเชื่อมต่อ…'); GGC.saving = false; ggcTest(); })
+    .catch(e => { GGC.saving = false; fail(e); vAnalytics(); });
+}
+function ggcRemove() {
+  if (!confirm('ลบกุญแจ service account ที่บันทึกไว้? (แท็บ Google Analytics / Search Console จะหยุดดึงข้อมูล)')) return;
+  const C = GG.st?.cfg || {};
+  api('PUT', 'analytics/google/config', { ga4Id: C.ga4Id || '', propertyId: C.propertyId || '', gscSite: C.gscSite || '', sa: null }).then(r => { GG.st = r.status; GG.d = {}; GGC.test = null; AUDIT_DIRTY = true; vAnalytics(); toast('ลบกุญแจแล้ว'); }).catch(fail);
+}
+function ggcTest() {
+  GGC.testing = true; GGC.test = null; vAnalytics();
+  api('POST', 'analytics/google/test').then(r => { GGC.test = r.steps; GG.st = r.status; const ok = r.steps.every(x => x.ok); toast(ok ? 'เชื่อมต่อ Google ได้ครบแล้ว' : 'ยังเชื่อมต่อไม่ครบ · ดูรายละเอียดด้านล่าง'); })
+    .catch(fail).finally(() => { GGC.testing = false; vAnalytics(); });
+}
+/* status cards at the top follow the real connection */
+{ const _va3 = vAnalytics; vAnalytics = function () {
+  if (GA.tab === 'api' && !GG.st && !GGC.st0) { GGC.st0 = 1; api('GET', 'analytics/google/status').then(r => { GG.st = r.status; if (CUR === 'analytics') vAnalytics(); }).catch(() => {}); }
+  _va3();
+  if (GA.tab === 'api') { const f = $('#view .fade'); if (f && !f.querySelector('#ggcSa')) f.innerHTML = ggSetup(); icons(); }
+}; PAGES.find(p => p[0] === 'analytics')[3] = vAnalytics; }
+
 /* ---------- วิเคราะห์เว็บไซต์ → Meta: สถานะจริงจากเซิร์ฟเวอร์ + event ที่ระบบส่งจริง (conversion_events) ---------- */
 const MS = { d: null, at: 0, loading: false };
 function msLoad() {

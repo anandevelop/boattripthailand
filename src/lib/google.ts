@@ -1,6 +1,9 @@
 import 'server-only';
-import { createSign } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, createSign, randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { eq } from 'drizzle-orm';
+import { db } from '@/db';
+import { settings } from '@/db/schema';
 
 /**
  * Real data for /admin → วิเคราะห์เว็บไซต์ (Google Analytics 4 + Search Console tabs).
@@ -10,13 +13,34 @@ import { readFileSync } from 'node:fs';
  *   GA4_PROPERTY_ID              numeric property id (GA4 → Admin → Property details), not G-XXXX
  *   GSC_SITE_URL                 https://boattripthailand.com/  (URL-prefix)  or  sc-domain:boattripthailand.com
  * The service account email must be added as Viewer in GA4 and as a user (Restricted) in Search Console.
+ * The same values can be set in /admin → วิเคราะห์เว็บไซต์ → เชื่อมต่อ API (settings key google.config);
+ * .env wins when both are set. The key file saved there is encrypted (AES-256-GCM, key from .env).
  */
+export const GOOGLE_KEY = 'google.config';
+export type GoogleCfg = { ga4Id: string; propertyId: string; gscSite: string; sa: { email: string; enc: string } | null; at?: string; by?: string };
+let CFG: GoogleCfg = { ga4Id: '', propertyId: '', gscSite: '', sa: null }, cfgAt = 0;
+const secretKey = () => createHash('sha256').update('btt-google|' + (process.env.SETTINGS_KEY || process.env.POSTGRES_PASSWORD || process.env.DATABASE_URL || 'btt')).digest();
+export function sealSecret(plain: string) { const iv = randomBytes(12), c = createCipheriv('aes-256-gcm', secretKey(), iv), enc = Buffer.concat([c.update(plain, 'utf8'), c.final()]); return [iv, c.getAuthTag(), enc].map(b => b.toString('base64')).join('.'); }
+function openSecret(sealed: string) { const [iv, tag, enc] = sealed.split('.').map(x => Buffer.from(x, 'base64')); const d = createDecipheriv('aes-256-gcm', secretKey(), iv); d.setAuthTag(tag); return Buffer.concat([d.update(enc), d.final()]).toString('utf8'); }
+/** saved settings (cached 60 s); call before reading prop() / site() / serviceAccount() */
+export async function loadGoogleCfg(force = false) {
+  if (!force && Date.now() - cfgAt < 60_000) return CFG;
+  try { const [r] = await db.select().from(settings).where(eq(settings.key, GOOGLE_KEY)); const v = (r?.value ?? {}) as Partial<GoogleCfg>; CFG = { ga4Id: v.ga4Id || '', propertyId: v.propertyId || '', gscSite: v.gscSite || '', sa: v.sa ?? null, at: v.at, by: v.by }; }
+  catch (e) { console.error('[google] settings', e); }
+  if (force || cfgAt === 0 || JSON.stringify(CFG.sa) !== lastSa) { saCache = undefined; tokens.clear(); lastSa = JSON.stringify(CFG.sa); }
+  cfgAt = Date.now(); return CFG;
+}
+let lastSa = '';
+const prop = () => process.env.GA4_PROPERTY_ID || CFG.propertyId;
+const site = () => process.env.GSC_SITE_URL || CFG.gscSite;
+export const measurementId = async () => process.env.NEXT_PUBLIC_GA_ID || (await loadGoogleCfg()).ga4Id;
 type SA = { client_email: string; private_key: string };
 let saCache: SA | null | undefined;
 function serviceAccount(): SA | null {
   if (saCache !== undefined) return saCache;
   let raw = (process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').trim();
   try {
+    if (!raw && !process.env.GOOGLE_APPLICATION_CREDENTIALS && CFG.sa?.enc) raw = openSecret(CFG.sa.enc);
     if (!raw && process.env.GOOGLE_APPLICATION_CREDENTIALS) raw = readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8');
     if (raw && !raw.startsWith('{')) raw = Buffer.from(raw, 'base64').toString('utf8');
     const j = raw ? JSON.parse(raw) : null;
@@ -59,7 +83,10 @@ const days2 = (from: number, count: number) => Array.from({ length: count }, (_,
 
 export function googleStatus() {
   const sa = serviceAccount();
-  return { key: !!sa, email: sa?.client_email ?? null, ga: { on: !!sa && !!process.env.GA4_PROPERTY_ID, property: process.env.GA4_PROPERTY_ID || null }, gsc: { on: !!sa && !!process.env.GSC_SITE_URL, site: process.env.GSC_SITE_URL || null } };
+  return { key: !!sa, email: sa?.client_email ?? null, ga: { on: !!sa && !!prop(), property: prop() || null }, gsc: { on: !!sa && !!site(), site: site() || null },
+    // where each value comes from (.env wins), for /admin → เชื่อมต่อ API
+    src: { key: process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_APPLICATION_CREDENTIALS ? 'env' : CFG.sa ? 'admin' : '', property: process.env.GA4_PROPERTY_ID ? 'env' : CFG.propertyId ? 'admin' : '', site: process.env.GSC_SITE_URL ? 'env' : CFG.gscSite ? 'admin' : '', ga4Id: process.env.NEXT_PUBLIC_GA_ID ? 'env' : CFG.ga4Id ? 'admin' : '' },
+    cfg: { ga4Id: process.env.NEXT_PUBLIC_GA_ID || CFG.ga4Id, propertyId: prop(), gscSite: site(), savedEmail: CFG.sa?.email ?? null, at: CFG.at ?? null, by: CFG.by ?? null } };
 }
 
 /* ---------- GA4 Data API ---------- */
@@ -69,7 +96,7 @@ const dim = (r: Row, i = 0) => r.dimensionValues?.[i]?.value ?? '';
 const KEY_EVENTS = ['booking_submit', 'whatsapp_click', 'line_click', 'phone_click'];
 
 async function ga4(days: number) {
-  const id = process.env.GA4_PROPERTY_ID!, url = `https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(id)}:runReport`;
+  const id = prop(), url = `https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(id)}:runReport`;
   const cur = { startDate: thDay(days - 1), endDate: 'today' }, prev = { startDate: thDay(days * 2 - 1), endDate: thDay(days) };
   const run = (b: object) => post(url, b) as Promise<{ rows?: Row[] }>;
   const [daily, tot, pages, ch, dev, country, ev] = await Promise.all([
@@ -100,7 +127,7 @@ const thHourKey = (n = 0) => new Date(Date.now() + 7 * 3600_000 - n * 3600_000).
 const hourKeys = (count: number, endAgo = 0) => Array.from({ length: count }, (_, i) => thHourKey(endAgo + count - 1 - i));
 const gaHour = (h: string) => h.replace(/[-T]/g, '');   // "2026102714"
 async function ga4h() {
-  const id = process.env.GA4_PROPERTY_ID!, url = `https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(id)}:runReport`;
+  const id = prop(), url = `https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(id)}:runReport`;
   const run = (b: object) => post(url, b) as Promise<{ rows?: Row[] }>;
   const H = hourKeys(48), curH = H.slice(24).map(gaHour), prevH = H.slice(0, 24).map(gaHour), R = [{ startDate: '2daysAgo', endDate: 'today' }];
   const inH = (v: string[]) => ({ filter: { fieldName: 'dateHour', inListFilter: { values: v } } });
@@ -131,7 +158,7 @@ async function ga4h() {
 
 /* ---------- Search Console, 24 hours: hourly data (dataState HOURLY_ALL, last ~10 days, a few hours behind) ---------- */
 async function gsch() {
-  const url = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(process.env.GSC_SITE_URL!)}/searchAnalytics/query`;
+  const url = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site())}/searchAnalytics/query`;
   type R = { keys?: string[]; clicks: number; impressions: number; ctr: number; position: number };
   const q = (b: object) => post(url, b) as Promise<{ rows?: R[] }>;
   const hourly = await q({ startDate: thDay(4), endDate: thDay(0), dimensions: ['hour'], dataState: 'hourly_all', rowLimit: 500 });
@@ -161,7 +188,7 @@ async function gsch() {
 
 /* ---------- Search Console (data is final ~3 days later) ---------- */
 async function gsc(days: number) {
-  const url = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(process.env.GSC_SITE_URL!)}/searchAnalytics/query`;
+  const url = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site())}/searchAnalytics/query`;
   const end = 3, cur = { startDate: thDay(end + days - 1), endDate: thDay(end) }, prev = { startDate: thDay(end + days * 2 - 1), endDate: thDay(end + days) };
   type R = { keys?: string[]; clicks: number; impressions: number; ctr: number; position: number };
   const q = (b: object) => post(url, { dataState: 'final', ...b }) as Promise<{ rows?: R[] }>;
@@ -194,6 +221,7 @@ async function cached<T>(k: string, f: () => Promise<T>): Promise<T | { error: s
 
 /** GA4 + Search Console for the selected range (cached 30 minutes; ?refresh=1 skips the cache) */
 export async function googleData(days: number, refresh = false) {
+  await loadGoogleCfg(refresh);
   const s = googleStatus();
   if (refresh) { cache.delete('ga:' + days); cache.delete('gsc:' + days); }
   // 24 hours: refreshed every 10 minutes instead of 30
@@ -205,10 +233,45 @@ export async function googleData(days: number, refresh = false) {
 /** /admin → ศูนย์ SEO → Sitemap & Index → ส่งให้ Google: submit the sitemap through the Search Console API.
  *  Needs the write scope (webmasters) and the service account added as an Owner / Full user of the property. */
 export async function gscSubmitSitemap(feed: string) {
-  const site = process.env.GSC_SITE_URL; if (!site) throw new GoogleError('no_gsc', 'ยังไม่ได้ใส่ GSC_SITE_URL');
+  await loadGoogleCfg();
+  const sc = site(); if (!sc) throw new GoogleError('no_gsc', 'ยังไม่ได้ใส่ Search Console พร็อพเพอร์ตี้');
   const t = await accessToken('https://www.googleapis.com/auth/webmasters');
-  const r = await fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site)}/sitemaps/${encodeURIComponent(feed)}`, { method: 'PUT', headers: { authorization: `Bearer ${t}` } });
+  const r = await fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(sc)}/sitemaps/${encodeURIComponent(feed)}`, { method: 'PUT', headers: { authorization: `Bearer ${t}` } });
   if (r.ok) return true;
   const j = await r.json().catch(() => ({})) as { error?: { message?: string } };
   throw new GoogleError(r.status === 403 ? 'perm' : 'api', r.status === 403 ? 'Search Console ไม่ให้สิทธิ์ส่ง sitemap · เพิ่มอีเมล service account เป็นผู้ใช้แบบ “เต็ม (Full)” หรือเจ้าของ' : `ส่งไม่สำเร็จ (${j.error?.message || r.status})`);
+}
+
+/** Save the connection settings from /admin. `sa` = pasted key file (kept as is when undefined, removed when null). */
+export async function saveGoogleCfg(v: { ga4Id?: unknown; propertyId?: unknown; gscSite?: unknown; sa?: unknown }, by: string) {
+  const cur = await loadGoogleCfg(true), t = (x: unknown, m: number) => (typeof x === 'string' ? x : '').trim().slice(0, m);
+  const ga4Id = t(v.ga4Id, 30).toUpperCase(), propertyId = t(v.propertyId, 20).replace(/^properties\//, ''), gscSite = t(v.gscSite, 200);
+  if (ga4Id && !/^G-[A-Z0-9]{4,16}$/.test(ga4Id)) throw new GoogleError('input', 'Measurement ID ต้องขึ้นต้นด้วย G- เช่น G-ABC123XYZ');
+  if (propertyId && !/^\d{5,15}$/.test(propertyId)) throw new GoogleError('input', 'Property ID เป็นตัวเลขล้วน (GA4 → ผู้ดูแลระบบ → รายละเอียดพร็อพเพอร์ตี้) ไม่ใช่ G-…');
+  if (gscSite && !/^(sc-domain:[a-z0-9.-]+\.[a-z]{2,}|https?:\/\/[^\s]+\/)$/i.test(gscSite)) throw new GoogleError('input', 'Search Console ใช้ sc-domain:example.com หรือ https://example.com/ (มี / ท้าย)');
+  let sa = cur.sa;
+  if (v.sa === null) sa = null;
+  else if (typeof v.sa === 'string' && v.sa.trim()) {
+    let raw = v.sa.trim(); if (!raw.startsWith('{')) { try { raw = Buffer.from(raw, 'base64').toString('utf8'); } catch { /* not base64 */ } }
+    let j: { type?: string; client_email?: string; private_key?: string } = {}; try { j = JSON.parse(raw); } catch { throw new GoogleError('input', 'อ่านไฟล์ JSON ไม่ได้ · ใช้ไฟล์ที่ดาวน์โหลดจาก Google Cloud → Service account → Keys'); }
+    if (j.type !== 'service_account' || !j.client_email || !j.private_key) throw new GoogleError('input', 'ไฟล์นี้ไม่ใช่กุญแจ service account (ต้องมี client_email และ private_key)');
+    sa = { email: j.client_email, enc: sealSecret(JSON.stringify({ type: 'service_account', client_email: j.client_email, private_key: j.private_key })) };
+  }
+  const next: GoogleCfg = { ga4Id, propertyId, gscSite, sa, at: new Date().toISOString(), by };
+  await db.insert(settings).values({ key: GOOGLE_KEY, value: next }).onConflictDoUpdate({ target: settings.key, set: { value: next } });
+  cache.clear(); await loadGoogleCfg(true);
+  return { before: cur, after: next };
+}
+/** "ทดสอบการเชื่อมต่อ": a token, then one tiny request to each API */
+export async function testGoogle() {
+  await loadGoogleCfg(true); cache.clear();
+  const out: { step: string; ok: boolean; msg: string }[] = [];
+  const why = (e: unknown) => { const m = e instanceof Error ? e.message : String(e); return /fetch failed|timeout|aborted|ENOTFOUND|ECONN/i.test(m) ? 'เชื่อมต่อ Google ไม่ได้ · ตรวจอินเทอร์เน็ตของเซิร์ฟเวอร์' : m || 'ไม่สำเร็จ'; };
+  const sa = serviceAccount(); if (!sa) return [{ step: 'กุญแจ service account', ok: false, msg: 'ยังไม่ได้ใส่ไฟล์ JSON' }];
+  try { await accessToken(); out.push({ step: 'กุญแจ service account', ok: true, msg: sa.client_email }); } catch (e) { return [{ step: 'กุญแจ service account', ok: false, msg: why(e) }]; }
+  if (prop()) { try { await post(`https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(prop())}:runReport`, { dateRanges: [{ startDate: '7daysAgo', endDate: 'today' }], metrics: [{ name: 'sessions' }] }); out.push({ step: 'Google Analytics 4', ok: true, msg: 'อ่านรายงานได้ · พร็อพเพอร์ตี้ ' + prop() }); } catch (e) { out.push({ step: 'Google Analytics 4', ok: false, msg: why(e) }); } }
+  else out.push({ step: 'Google Analytics 4', ok: false, msg: 'ยังไม่ได้ใส่ Property ID' });
+  if (site()) { try { await post(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site())}/searchAnalytics/query`, { startDate: thDay(10), endDate: thDay(3), rowLimit: 1 }); out.push({ step: 'Search Console', ok: true, msg: 'อ่านข้อมูลได้ · ' + site() }); } catch (e) { out.push({ step: 'Search Console', ok: false, msg: why(e) }); } }
+  else out.push({ step: 'Search Console', ok: false, msg: 'ยังไม่ได้ใส่พร็อพเพอร์ตี้' });
+  return out;
 }

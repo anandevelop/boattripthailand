@@ -13,7 +13,7 @@ import { cleanHome, HOME_KEY } from '@/lib/home';
 import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
 import { analyticsData } from '@/lib/analytics';
-import { googleData } from '@/lib/google';
+import { GoogleError, googleData, googleStatus, loadGoogleCfg, saveGoogleCfg, testGoogle } from '@/lib/google';
 import { pageSpeed } from '@/lib/pagespeed';
 import { BookingConflict, customerEdit, customerErase, customerMerge, dealOp, dealsFor, wonGuard } from '@/lib/lead-guard';
 import { aiSave, aiStore, cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
@@ -499,6 +499,19 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       if (b0 === 'delete') {
         if (cur) { await db.delete(redirects).where(eq(redirects.from, from)); await audit(actor(me), { action: 'delete', entity: 'redirect', ref: from, label: `ลบ redirect ${from}`, changes: [{ f: from, from: `${cur.code} → ${cur.to}`, to: null }] }); }
         return json({ ok: true });
+    if (a === 'analytics' && b0 === 'google' && c0 === 'config' && method === 'PUT') {
+      // วิเคราะห์เว็บไซต์ → เชื่อมต่อ API: ids + service account key (encrypted at rest; .env still wins)
+      await need(me, 'settings');
+      let r; try { r = await saveGoogleCfg({ ga4Id: body.ga4Id, propertyId: body.propertyId, gscSite: body.gscSite, sa: body.sa === null ? null : typeof body.sa === 'string' ? body.sa : undefined }, me.name); }
+      catch (e) { throw new HttpError(400, e instanceof GoogleError || e instanceof Error ? e.message : 'บันทึกไม่สำเร็จ'); }
+      const F: [keyof typeof r.after, string][] = [['ga4Id', 'GA4 Measurement ID'], ['propertyId', 'GA4 Property ID'], ['gscSite', 'Search Console พร็อพเพอร์ตี้']];
+      const changes = F.filter(([k]) => (r.before[k] ?? '') !== (r.after[k] ?? '')).map(([k, f]) => ({ f, from: String(r.before[k] ?? '') || null, to: String(r.after[k] ?? '') || null }));
+      if ((r.before.sa?.email ?? null) !== (r.after.sa?.email ?? null) || (body.sa && r.after.sa)) changes.push({ f: 'Service account', from: r.before.sa?.email ?? null, to: r.after.sa ? r.after.sa.email + ' (ไฟล์ใหม่)' : null });
+      if (changes.length) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'google', label: 'เชื่อมต่อ Google API', changes });
+      return json({ status: googleStatus() });
+    }
+    if (a === 'analytics' && b0 === 'google' && c0 === 'test' && method === 'POST') { await need(me, 'seo'); const steps = await testGoogle(); return json({ steps, status: googleStatus() }); }
+    if (a === 'analytics' && b0 === 'google' && c0 === 'status' && method === 'GET') { await need(me, 'seo'); await loadGoogleCfg(true); return json({ status: googleStatus() }); }
       }
       const code = [301, 302, 410].includes(Number(body.code)) ? Number(body.code) : 301;
       const toRaw = str(body.to, 1000), to = code === 410 ? '' : /^https:\/\//.test(toRaw) ? toRaw : path(toRaw);
