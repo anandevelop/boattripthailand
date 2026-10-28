@@ -316,7 +316,7 @@ function vBoatEdit(slug) {
     <div class="flex items-center gap-3 mb-5"><button class="btn btn-o !px-2" onclick="go('boats')" aria-label="back"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>${thumb(slug, 'w-14 h-10')}<div class="min-w-0"><h2 class="text-xl font-medium truncate">${esc(b.name)}</h2><p class="text-muted">${TYPE_TH[b.type]} · ${b.marinaP || 'ยังไม่ระบุท่าเรือ'}</p></div>
       <div class="ml-auto flex items-center gap-3"><label class="flex items-center gap-2 text-muted"><span class="hidden sm:inline">แสดงบนเว็บ</span><span class="tgl"><input type="checkbox" ${b.active ? 'checked' : ''} onchange="bySlug('${slug}').active=this.checked"/><span></span></span></label>
       <a class="btn btn-o hidden sm:inline-flex" href="/yacht-charter/${encodeURIComponent(slug)}" target="_blank"><i data-lucide="eye" class="w-3.5 h-3.5"></i>ดูหน้าเรือ</a><button class="btn btn-p" onclick="toast('บันทึกข้อมูลเรือแล้ว · หน้าเว็บอัปเดตทันที (ISR)')"><i data-lucide="save" class="w-3.5 h-3.5"></i>บันทึก</button></div></div>
-    <div class="card"><div class="px-3 pt-3 flex gap-1 overflow-x-auto no-sb border-b border-line pb-3">${tabs.map(([k, l]) => `<button class="tab ${BE.tab === k ? 'on' : ''}" onclick="BE.tab='${k}';vBoatEdit('${slug}')">${l}</button>`).join('')}</div><div class="p-5 fade">${body}</div></div>`;
+    <div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l]) => `<button class="tab ${BE.tab === k ? 'on' : ''}" onclick="BE.tab='${k}';vBoatEdit('${slug}')">${l}</button>`).join('')}</div><div class="card"><div class="p-5 fade">${body}</div></div>`;
   icons();
 }
 
@@ -358,7 +358,7 @@ function vContent() {
   if (CONTENT.tab === 'faq') body = `<div class="space-y-3">${CONTENT.faq.map(([q, a], i) => `<div class="rounded-xl ring-1 ring-line p-3 grid gap-2"><div class="flex gap-2 items-center"><i data-lucide="grip-vertical" class="w-4 h-4 text-muted cursor-grab"></i><input class="inp !h-8 font-medium" value="${esc(q)}"/><button class="btn btn-g !px-2" onclick="CONTENT.faq.splice(${i},1);vContent()"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><textarea class="inp" rows="2">${esc(a)}</textarea></div>`).join('')}<button class="btn btn-o" onclick="CONTENT.faq.push(['',''] );vContent()"><i data-lucide="plus" class="w-3.5 h-3.5"></i>เพิ่มคำถาม</button></div><p class="text-[12px] text-muted mt-4">FAQ ส่งออกเป็น FAQPage schema ให้ Google อัตโนมัติ</p>`;
   if (CONTENT.tab === 'seo') body = `<div class="grid gap-4 max-w-2xl"><label><span class="lbl">Title หน้าแรก (TH)</span><input class="inp" value="Yacht Charter ภูเก็ต – เช่าเรือยอชต์ 70 ลำ | Boat Trip Thailand"/>${lenMeter('Yacht Charter ภูเก็ต – เช่าเรือยอชต์ 70 ลำ | Boat Trip Thailand', 't')}</label><label><span class="lbl">Title หน้าแรก (EN)</span><input class="inp" value="Yacht Charter Phuket – 70 Private Boats | Boat Trip Thailand"/>${lenMeter('Yacht Charter Phuket – 70 Private Boats | Boat Trip Thailand', 't')}</label><label><span class="lbl">Meta description (TH)</span><textarea class="inp" rows="3">Yacht Charter ภูเก็ต เช่าเรือยอชต์ส่วนตัว คาตามารัน สปีดโบ๊ท 70 ลำ ไปพีพี อ่าวพังงา เกาะราชา…</textarea>${lenMeter('Yacht Charter ภูเก็ต เช่าเรือยอชต์ส่วนตัว คาตามารัน สปีดโบ๊ท 70 ลำ ไปพีพี อ่าวพังงา เกาะราชา…', 'd')}</label><label><span class="lbl">รูป OG (แชร์ลงโซเชียล)</span><div class="flex gap-3 items-center"><img src="${THUMBS['leopard-90-ft']}" class="w-40 aspect-[1200/630] object-cover rounded-lg"/><button class="btn btn-o">เปลี่ยนรูป</button></div></label></div>`;
   $('#view').innerHTML = `${head('เนื้อหาเว็บไซต์', 'แก้ไขข้อความ รูป และ SEO โดยไม่ต้องแก้โค้ด', `<button class="btn btn-o" onclick="window.open('/','_blank')"><i data-lucide="eye" class="w-3.5 h-3.5"></i>Preview</button><button class="btn btn-p" onclick="toast('เผยแพร่การเปลี่ยนแปลงแล้ว')"><i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>เผยแพร่</button>`)}
-    <div class="card"><div class="px-3 pt-3 pb-3 flex gap-1 overflow-x-auto no-sb border-b border-line">${tabs.map(([k, l]) => `<button class="tab ${CONTENT.tab === k ? 'on' : ''}" onclick="CONTENT.tab='${k}';vContent()">${l}</button>`).join('')}</div><div class="p-5 fade">${body}</div></div>`;
+    <div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l]) => `<button class="tab ${CONTENT.tab === k ? 'on' : ''}" onclick="CONTENT.tab='${k}';vContent()">${l}</button>`).join('')}</div><div class="card"><div class="p-5 fade">${body}</div></div>`;
   icons();
 }
 
@@ -603,7 +603,7 @@ vContent = function () {
   if (WEB.tab === 'seo') body = `<div class="grid gap-4 max-w-4xl">${bi('Meta title หน้าแรก', WEB.seo.title, { len: 't' })}${bi('Meta description', WEB.seo.desc, { rows: 3, len: 'd' })}<label><span class="lbl">รูป OG (แชร์ลงโซเชียล) · ใช้ร่วมกันทั้ง 2 ภาษา</span><div class="flex gap-3 items-center"><img src="${THUMBS['leopard-90-ft']}" class="w-40 aspect-[1200/630] object-cover rounded-lg"/><button class="btn btn-o">เปลี่ยนรูป</button></div></label></div>`;
   const f = webFields();
   $('#view').innerHTML = `${head('เนื้อหาเว็บไซต์', 'ทุกข้อความมีช่องภาษาไทยและอังกฤษคู่กัน · ช่องที่ยังไม่แปลมีกรอบสีแดง', `<div class="flex items-center gap-1 mr-1">${langBadge(f)}</div><button class="btn btn-o" onclick="window.open('/','_blank')"><i data-lucide="eye" class="w-3.5 h-3.5"></i>Preview</button><button class="btn btn-p" onclick="${langPct(f, 'en') < 100 || langPct(f, 'th') < 100 ? "toast('ยังมีช่องที่ไม่ได้แปล · ภาษานั้นจะแสดงข้อความภาษาไทยแทน')" : "toast('เผยแพร่แล้ว')"}"><i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>เผยแพร่</button>`)}
-    <div class="card"><div class="px-3 pt-3 pb-3 flex gap-1 overflow-x-auto no-sb border-b border-line">${tabs.map(([k, l]) => `<button class="tab ${WEB.tab === k ? 'on' : ''}" onclick="WEB.tab='${k}';vContent()">${l}</button>`).join('')}</div><div class="p-5 fade">${body}</div></div>`;
+    <div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l]) => `<button class="tab ${WEB.tab === k ? 'on' : ''}" onclick="WEB.tab='${k}';vContent()">${l}</button>`).join('')}</div><div class="card"><div class="p-5 fade">${body}</div></div>`;
   icons();
 };
 
@@ -1263,7 +1263,7 @@ function vSeo() {
   const tabs = [['overview', 'ภาพรวม', 'gauge'], ['pages', 'Meta ทุกหน้า', 'file-text'], ['keywords', 'คีย์เวิร์ด', 'tag'], ['redirects', 'Redirect & 404', 'shuffle'], ['schema', 'Schema', 'code'], ['sitemap', 'Sitemap & Robots', 'network'], ['settings', 'ตั้งค่า SEO', 'settings-2']];
   const P = auditAll();
   $('#view').innerHTML = `${head('SEO', 'ตรวจและจัดการ SEO ทุกหน้า ทั้งภาษาไทยและอังกฤษ · ปัญหาคำนวณจากข้อมูลจริงในระบบ · ตัวเลขจาก Google ดึงจาก Search Console', `<button class="btn btn-o" onclick="toast('ตรวจทั้งเว็บใหม่แล้ว · ${P.length} หน้า');vSeo()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>ตรวจใหม่</button>`)}
-    <div class="card"><div class="px-3 py-3 flex gap-1 overflow-x-auto no-sb border-b border-line">${tabs.map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${SEOV.tab === k ? 'on' : ''}" onclick="SEOV.tab='${k}';vSeo()"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>
+    <div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${SEOV.tab === k ? 'on' : ''}" onclick="SEOV.tab='${k}';vSeo()"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div><div class="card">
     <div id="seoBody" class="p-4 sm:p-5 fade">${({ overview: seoOverview, pages: seoPagesTab, keywords: seoKw, redirects: seoRedir, schema: seoSchema, sitemap: seoSitemap, settings: seoSettings })[SEOV.tab](P)}</div></div>`;
   icons();
 }
@@ -1970,7 +1970,7 @@ function vAnalytics() {
   $('#view').innerHTML = `${head('วิเคราะห์เว็บไซต์', 'ข้อมูลจาก Google Analytics 4, Google Search Console และ Meta Pixel', `<div class="flex p-0.5 rounded-full bg-white ring-1 ring-line">${[1, 7, 28, 90].map(d => `<button class="h-8 px-3 rounded-full text-[12px] ${GA.days === d ? 'bg-ink text-white' : 'text-muted'}" onclick="GA.days=${d};vAnalytics()">${d === 1 ? '24 ชม.' : d + ' วัน'}</button>`).join('')}</div><label class="flex items-center gap-2 text-[12px] text-muted"><span class="tgl"><input type="checkbox" ${GA.cmp ? 'checked' : ''} onchange="GA.cmp=this.checked;vAnalytics()"/><span></span></span>เทียบช่วงก่อนหน้า</label><button class="btn btn-o" onclick="toast('ส่งออกรายงาน (จำลอง)')"><i data-lucide="download" class="w-3.5 h-3.5"></i>ส่งออก</button>`)}
     <div class="rounded-xl bg-[#fff8e6] text-[#7a4a00] text-[12px] px-4 py-2.5 mb-4 flex items-start gap-2"><i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>ตัวเลขทั้งหมดในหน้านี้เป็นข้อมูลตัวอย่าง เพื่อให้เห็นหน้าตารายงาน · เมื่อเชื่อม API ในระบบจริงจะแสดงข้อมูลจริงของเว็บ</div>
     <div class="grid md:grid-cols-3 gap-3 mb-4">${conn(GA.gaOn, 'Google Analytics 4', GA.prop || 'Property', 'chart-line')}${conn(GA.gscOn, 'Google Search Console', GA.site, 'search')}${conn(MP.on, 'Meta Pixel + Conversions API', MP.id || 'Pixel', 'megaphone').replace(`GA.tab='api'`, `GA.tab='meta'`)}</div>
-    <div class="flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${GA.tab === k ? 'on' : ''}" onclick="GA.tab='${k}';vAnalytics()"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>
+    <div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${GA.tab === k ? 'on' : ''}" onclick="GA.tab='${k}';vAnalytics()"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>
     <div class="fade">${body}</div>`;
   icons();
 }
@@ -2374,7 +2374,7 @@ vSettings = function () {
       <div class="card p-5 grid gap-2"><p class="font-medium">ข้อมูลระบบ</p>${[['โดเมน', SITE], ['เวอร์ชัน', 'Next.js 15 · mockup v2'], ['สำรองข้อมูลล่าสุด', fmtD(iso(TODAY)) + ' 03:00'], ['CDN รูปภาพ', 'cdn.' + SITE]].map(([a, b]) => `<div class="flex justify-between text-[12.5px] py-1 border-b border-line last:border-0"><span class="text-muted">${a}</span><span class="font-mono text-[12px]">${b}</span></div>`).join('')}
         <div class="flex flex-wrap gap-2 mt-2"><button class="btn btn-o !h-8" onclick="toast('ล้างแคชหน้าเว็บแล้ว (จำลอง)')"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>ล้างแคชเว็บ</button><button class="btn btn-o !h-8" onclick="toast('กำลังสำรองข้อมูล (จำลอง)')"><i data-lucide="download" class="w-3.5 h-3.5"></i>สำรองข้อมูลตอนนี้</button></div></div></div>`;
   $('#view').innerHTML = `${head('ตั้งค่า', 'ข้อมูลเว็บไซต์ แบรนด์ ช่องทางติดต่อ และค่าระบบ', `<button class="btn btn-p" onclick="cfgSave()"><i data-lucide="save" class="w-3.5 h-3.5"></i>บันทึก</button>`)}
-    <div class="grid lg:grid-cols-[210px_minmax(0,1fr)] gap-4 items-start"><nav class="card p-2 flex lg:flex-col gap-0.5 overflow-x-auto no-sb lg:sticky lg:top-20">${CFG_TABS.map(([k, l, ic]) => `<button class="nav-i !h-9 !w-auto lg:!w-full whitespace-nowrap ${t === k ? 'on' : ''}" onclick="SITECFG.tab='${k}';vSettings()"><i data-lucide="${ic}" class="w-4 h-4"></i>${l}</button>`).join('')}</nav><div class="min-w-0 fade">${body}</div></div>`;
+    <nav class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${CFG_TABS.map(([k, l]) => `<button class="tab ${t === k ? 'on' : ''}" onclick="SITECFG.tab='${k}';vSettings()">${l}</button>`).join('')}</nav><div class="min-w-0 fade">${body}</div>`;
   icons();
 };
 function cfgIcon(i, el) {
@@ -3004,7 +3004,7 @@ function vAudiences() {
   }
   if (AU.tab === 'tpl') body = `<div class="grid lg:grid-cols-2 gap-4">${TPL.map((t, i) => `<div class="card p-4"><p class="font-medium">${t.n}</p><label class="block mt-3"><span class="lbl">ไทย</span><textarea class="inp !text-[12.5px]" rows="3" oninput="TPL[${i}].th=this.value">${esc(t.th)}</textarea></label><label class="block mt-2"><span class="lbl">English</span><textarea class="inp !text-[12.5px]" rows="3" oninput="TPL[${i}].en=this.value">${esc(t.en)}</textarea></label></div>`).join('')}</div><p class="text-[11px] text-muted mt-3">ตัวแปรที่ใช้ได้: {name} {me} {boat} {date} {guests} {alt} · เซลล์กดใช้จากหน้าลีด ระบบเติมข้อมูลและเลือกภาษาตามลูกค้าให้</p>`;
   $('#view').innerHTML = `${head('ใช้ประโยชน์จากลีด', 'ทุกลีดมีค่า แม้ยังไม่ปิด · แบ่งกลุ่ม ส่งให้โฆษณาเรียนรู้ ดึงลูกค้ากลับมา และหาโอกาสที่ยังพลาด')}
-    <div class="flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l]) => `<button class="tab ${AU.tab === k ? 'on' : ''}" onclick="AU.tab='${k}';vAudiences()">${l}</button>`).join('')}</div>${body}`;
+    <div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l]) => `<button class="tab ${AU.tab === k ? 'on' : ''}" onclick="AU.tab='${k}';vAudiences()">${l}</button>`).join('')}</div>${body}`;
   icons();
 }
 const segByKey = k => k === 'custom' ? l => { const B = AU.b; return (!B.status || l.status === B.status) && (!B.src || l.src === B.src) && (!B.type || bySlug(l.boat)?.type === B.type) && (!B.lang || l.lang === B.lang) && (!B.score || leadScore(l).t === B.score) && (!B.lost || l.lost === B.lost); } : SEGS.find(s => s.k === k).f;
@@ -3325,7 +3325,7 @@ vBoatEdit = function (slug) {
   if (!BSNAP || BSNAP.slug !== slug) { flushBoat(); BSNAP = { slug, data: snapBoat(b) }; }
   const myTab = BE.tab === 'history' ? 'history' : null;
   _vBoatEdit18(slug);
-  const card = [...$$('#view .card')].find(c => c.querySelector('.tab')), bar = card?.querySelector('.tab')?.parentElement; if (!bar) return;
+  const tb = $('#view .tabbar'), card = tb ? tb.nextElementSibling : [...$$('#view .card')].find(c => c.querySelector('.tab')), bar = tb || card?.querySelector('.tab')?.parentElement; if (!bar || !card) return;
   if (myTab) bar.querySelectorAll('.tab.on').forEach(x => x.classList.remove('on'));
   bar.insertAdjacentHTML('beforeend', `<button class="tab ${myTab === 'history' ? 'on' : ''}" onclick="BE.tab='history';vBoatEdit('${slug}')">ประวัติการแก้ไข</button>`);
   const body = card.querySelector('.p-5') || bar.nextElementSibling;

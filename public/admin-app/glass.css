@@ -56,3 +56,10 @@ body:has(.bg-maroon.text-white.relative) .bg-white.min-h-screen { background: rg
 @media (prefers-reduced-transparency: reduce) {
   #side, header.sticky, .card, #drawer, #modalBox { background: #fff !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
+
+/* page tabs: one glass pill bar above the content (ตั้งค่า, แก้ไขเรือ, เนื้อหาเว็บไซต์, SEO, วิเคราะห์เว็บไซต์, ใช้ประโยชน์จากลีด) */
+.tabbar { width: fit-content; max-width: 100%; gap: 2px; padding: 5px; border-radius: 9999px; background: rgb(255 255 255 / .55);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .95), 0 0 0 1px rgb(35 20 22 / .05), 0 12px 32px -20px rgb(58 0 7 / .35); -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6); }
+.tabbar .tab { height: 40px; padding: 0 18px; font-size: 14px; flex-shrink: 0; }
+.tabbar .tab:hover:not(.on) { background: rgb(255 255 255 / .7); }
+@media (max-width: 640px) { .tabbar .tab { height: 36px; padding: 0 14px; font-size: 13px; } }
