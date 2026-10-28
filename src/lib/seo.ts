@@ -59,5 +59,9 @@ const code = (v: unknown) => { const t = s(v, 400); const m = t.match(/content=[
 
 /** What the public site needs (window.__SEO__) */
 export function publicSeo(c: SeoConfig) {
-  return { pages: c.pages, sx: c.sx, verify: { google: code(c.sset.gsc), bing: code(c.sset.bing) } };
+  const st = c.sset as Record<string, unknown>, o = (v: unknown) => (v ?? {}) as Record<string, unknown>, two = (v: unknown, m = 300) => bi(v, m);
+  // ศูนย์ SEO → ตั้งค่า: templates for pages without their own Title / Description, and the site-wide switches
+  const cfg = { sep: s(st.sep, 3) || '|', site: two(st.site, 80), tpl: { boat: two(o(st.tpl).boat), article: two(o(st.tpl).article) }, dtpl: { boat: two(o(st.dtpl).boat, 400), article: two(o(st.dtpl).article, 400) },
+    year: st.year !== false, ogImg: st.ogImg !== false, ext: st.ext !== false, extNofollow: st.extNofollow === true, noFilter: st.noSearch !== false };
+  return { pages: c.pages, sx: c.sx, verify: { google: code(c.sset.gsc), bing: code(c.sset.bing) }, cfg };
 }

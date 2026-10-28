@@ -1264,6 +1264,64 @@ ctLinks();
 { const _ar = afterRoute; afterRoute = function () { _ar(); try { ctLinks(); const a = document.querySelector('#navLinks a[data-i18n="nav.contact"]'); if (a) a.classList.toggle('is-active', VHASH === '#/contact'); } catch (e) { } }; }
 if (pathToHash(location.pathname, location.search, location.hash) === '#/contact') { VHASH = '#/contact'; try { route(true); } catch (e) { } }
 
+/* =====================================================================
+   /admin → ศูนย์ SEO → ตั้งค่า, applied on the site (browser and server render):
+   Title / Description templates for boats and articles without their own, {{year}} kept current,
+   each boat's cover photo as its share image, external links in articles (new tab, noopener / nofollow),
+   and noindex on the boat list when filters are in the URL.
+   ===================================================================== */
+const FX_SC = (window.__SEO__ || {}).cfg || {};
+const fxYear = () => String(new Date().getFullYear());
+/** "%name%" or "{{name}}" → value; empty values drop their word and doubled separators */
+function fxTpl(t, v) {
+  if (!t) return '';
+  const out = String(t).replace(/\{\{\s*(\w+)\s*\}\}|%(\w+)%/g, (_, a, b) => { const k = a || b; return v[k] != null && v[k] !== '' ? String(v[k]) : ''; });
+  return out.replace(/\s+([|–·»])\s+(?=[|–·»]|$)/g, ' ').replace(/(เริ่ม|from)\s*(?=[|–·»]|$)/gi, '').replace(/\s{2,}/g, ' ').replace(/^\s*[|–·»]\s*|\s*[|–·»]\s*$/g, '').trim();
+}
+function fxMetaSet(title, desc) {
+  if (title) { document.title = title; setMeta('og:title', title, 'property'); setMeta('twitter:title', title); }
+  if (desc) { setMeta('description', desc); setMeta('og:description', desc, 'property'); setMeta('twitter:description', desc); }
+}
+function fxYearFix() {
+  if (FX_SC.year === false) return;
+  const y = fxYear(), re = /\{\{\s*year\s*\}\}|%year%/gi;
+  if (re.test(document.title)) document.title = document.title.replace(re, y);
+  ['description', 'og:title', 'og:description', 'twitter:title', 'twitter:description'].forEach(n => { const m = document.head.querySelector(`meta[name="${n}"],meta[property="${n}"]`); if (m && /\{\{\s*year\s*\}\}|%year%/i.test(m.content)) m.content = m.content.replace(re, y); });
+}
+let FX_POST = null;
+{ const _sp = seoPost; seoPost = function (p) { FX_POST = p; return _sp(p); }; }
+{ const _sf = seoFinal; seoFinal = function (id) {
+  const k = LANG === 'en' ? 'en' : 'th', sep = FX_SC.sep || '|', site = (FX_SC.site && FX_SC.site[k]) || 'Boat Trip Thailand';
+  try {
+    if (id && id.startsWith('b-')) {
+      const b = bySlug(id.slice(2));
+      if (b) {
+        const v = { name: niceTitle(b.title || b.name || ''), price: b.from_ ? (k === 'en' ? '$' + Math.round(b.from_ / 33.42).toLocaleString('en-US') : baht(b.from_)) : '', pax: b.pax || '', marina: b.marinaP || b.marina || '', type: typeLabel(b.type), year: fxYear(), sep, site };
+        const own = o => String(o?.[k] || '').trim();
+        const T = !own(b.i18n?.seoTitle) && fxTpl(FX_SC.tpl?.boat?.[k], v), D = !own(b.i18n?.seoDesc) && fxTpl(FX_SC.dtpl?.boat?.[k], v);
+        fxMetaSet(T, D);
+        if (FX_SC.ogImg !== false) { const h = bimg(b.slug, 'hero') || (b.imgs || [])[0]; if (h) { const u = /^https?:/.test(h) ? h : SITE_ORIGIN + h; setMeta('og:image', u, 'property'); setMeta('twitter:image', u); setMeta('og:image:alt', v.name, 'property'); } }
+      }
+    }
+    if (id && id.startsWith('a-') && FX_POST && String(FX_POST.id) === id.slice(2)) {
+      const p = FX_POST, v = { title: pT(p, 'title'), excerpt: pT(p, 'excerpt'), year: fxYear(), sep, site };
+      const T = !String(p.seoT?.[k] || '').trim() && fxTpl(FX_SC.tpl?.article?.[k], v), D = !String(p.seoD?.[k] || '').trim() && fxTpl(FX_SC.dtpl?.article?.[k], v);
+      fxMetaSet(T, D);
+      if (p.cover) { const u = /^https?:/.test(p.cover) ? p.cover : SITE_ORIGIN + p.cover; setMeta('twitter:image', u); }
+      if (FX_SC.ext !== false) $$('#view-blog .post-body a[href^="http"]').forEach(a => { let h = ''; try { h = new URL(a.href).host; } catch (e) { } if (!h || /(^|\.)boattripthailand\.com$/i.test(h) || h === location.host) return;
+        a.target = '_blank'; a.rel = ['noopener', FX_SC.extNofollow ? 'nofollow' : '', /[?&](ref|aff|affiliate|utm_source)=/i.test(a.href) ? 'sponsored' : ''].filter(Boolean).join(' '); });
+    }
+  } catch (e) { }
+  _sf(id);
+  try {
+    // boat list with filters (?type= ?stay= ?pax= …): one indexable version only
+    if (id === 's-fleet' && FX_SC.noFilter !== false && [...new URLSearchParams(location.search).keys()].some(q => !/^(utm_|gclid|fbclid|lang)/.test(q))) setMeta('robots', 'noindex, follow');
+    fxYearFix();
+  } catch (e) { }
+}; }
+/* the first page was set up before this file loaded */
+try { const h = VH.hash || ''; if (h.startsWith('#/boat/')) applySeo('boat', bySlug(decodeURIComponent(h.slice(7)))); else if (h.startsWith('#/blog/')) { const p = pBySlug(decodeURIComponent(h.slice(7))); if (p) seoPost(p); } else if (h.startsWith('#/fleet')) applySeo('fleet'); else fxYearFix(); } catch (e) { }
+
 /* ---------- start ---------- */
 if (!FX_SSR) {
   addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });

@@ -5124,6 +5124,62 @@ function seoAiTab() {
   icons();
 }; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
 
+/* ---------- ศูนย์ SEO → ตั้งค่า: templates and switches that the site really applies (public/site/fleet.js) ---------- */
+['year', 'ogImg', 'ext', 'noSearch'].forEach(k => { if (SSET[k] === undefined) SSET[k] = true; });
+if (SSET.extNofollow === undefined) SSET.extNofollow = false;
+/* older templates used %name%: shown as {{name}} like the other variables (the site reads both) */
+Object.values(SSET.tpl || {}).forEach(o => LANGS.forEach(([k]) => { if (o && typeof o[k] === 'string') o[k] = o[k].replace(/%(\w+)%/g, '{{$1}}'); }));
+const SST_VARS = { boat: ['name', 'price', 'pax', 'marina', 'type', 'year', 'sep', 'site'], article: ['title', 'excerpt', 'year', 'sep', 'site'] };
+/** same rules as the site (fxTpl): %x% or {{x}}, empty values and dangling separators drop out */
+function sstFill(t, v) {
+  const out = String(t || '').replace(/\{\{\s*(\w+)\s*\}\}|%(\w+)%/g, (_, a, b) => { const k = a || b; return v[k] != null && v[k] !== '' ? String(v[k]) : ''; });
+  return out.replace(/\s+([|–·»])\s+(?=[|–·»]|$)/g, ' ').replace(/(เริ่ม|from)\s*(?=[|–·»]|$)/gi, '').replace(/\s{2,}/g, ' ').replace(/^\s*[|–·»]\s*|\s*[|–·»]\s*$/g, '').trim();
+}
+function sstVals(kind, k) {
+  const sep = SSET.sep || '|', site = SSET.site?.[k] || 'Boat Trip Thailand', y = String(new Date().getFullYear());
+  if (kind === 'boat') { const b = FLEET.find(x => x.active && x.from_) || FLEET[0] || {}; return { name: b.name || 'Leopard 90 ft', price: b.from_ ? (k === 'en' ? '$' + Math.round(b.from_ / 33.42).toLocaleString('en-US') : baht(b.from_)) : '', pax: b.pax || '', marina: String(b.marina || '').replace(/\s*\(.*?\)/, ''), type: k === 'en' ? ({ yacht: 'Yacht', sail: 'Sailing catamaran', power: 'Power catamaran', speed: 'Speedboat' })[b.type] || '' : TYPE_TH[b.type] || '', year: y, sep, site }; }
+  const a = ART.find(x => x.status === 'published' && x.title[k]) || ART[0] || { title: tr(), excerpt: tr() };
+  return { title: a.title[k] || a.title.th, excerpt: a.excerpt?.[k] || '', year: y, sep, site };
+}
+function sstRow(group, kind, label, ph, area) {
+  return `<div class="grid gap-2" style="grid-template-columns:minmax(0,1fr)"><p class="lbl !mb-0">${label}</p>${LANGS.map(([k, C]) => { const v = SSET[group][kind][k] || '', out = v ? sstFill(v, sstVals(kind, k)) : '(เว้นว่าง · ใช้รูปแบบเดิมของระบบ)', n = thLen(out), [mn, mx] = SEO_LEN[group === 'tpl' ? 't' : 'd'];
+    return `<div class="grid gap-1" style="grid-template-columns:minmax(0,1fr)"><div class="relative"><span class="bi-tag">${C}</span>${area ? `<textarea rows="2" class="inp !pl-10" placeholder="${esc(ph[k])}" oninput="SSET.${group}.${kind}.${k}=this.value;sstPrev(this,'${group}','${kind}','${k}')">${esc(v)}</textarea>` : `<input class="inp !pl-10" placeholder="${esc(ph[k])}" value="${esc(v)}" oninput="SSET.${group}.${kind}.${k}=this.value;sstPrev(this,'${group}','${kind}','${k}')"/>`}</div>
+      <p class="text-[11.5px] flex justify-between gap-3"><span class="truncate" style="color:#1a0dab">${esc(out)}</span><span class="tnum shrink-0" style="color:${n > mx ? '#a3222c' : n >= mn ? '#1e7a46' : '#9a5b00'}">${n}</span></p></div>`; }).join('')}</div>`;
+}
+const SST_PH = {
+  tpl: { boat: tr('{{name}} เช่าเรือภูเก็ต เริ่ม {{price}} {{sep}} {{site}}', '{{name}} Yacht Charter Phuket from {{price}} {{sep}} {{site}}'), article: tr('{{title}} {{sep}} {{site}}', '{{title}} {{sep}} {{site}}') },
+  dtpl: { boat: tr('เช่า{{type}} {{name}} ส่วนตัวในภูเก็ต รับได้ {{pax}} คน ออกจาก {{marina}} ราคาเริ่มต้น {{price}} รวมกัปตันและลูกเรือ', 'Charter the {{name}}, a private {{type}} in Phuket for up to {{pax}} guests from {{marina}}. From {{price}} with captain and crew.'), article: tr('{{excerpt}}', '{{excerpt}}') },
+};
+SSET.dtpl ??= { boat: { ...SST_PH.dtpl.boat }, article: { ...SST_PH.dtpl.article } };   // first time: start from the suggested descriptions
+function sstPrev(el, group, kind, k) {
+  const p = el.closest('.grid.gap-1')?.querySelector('p'), out = el.value ? sstFill(el.value, sstVals(kind, k)) : '(เว้นว่าง · ใช้รูปแบบเดิมของระบบ)', n = thLen(out), [mn, mx] = SEO_LEN[group === 'tpl' ? 't' : 'd'];
+  if (p) { p.firstElementChild.textContent = out; p.lastElementChild.textContent = n; p.lastElementChild.style.color = n > mx ? '#a3222c' : n >= mn ? '#1e7a46' : '#9a5b00'; }
+}
+seoSettings = function () {
+  const S = SSET, tg = (k, l, h) => `<label class="flex items-center justify-between gap-4 py-3 border-b border-line last:border-0"><span><span class="block text-[13.5px]">${l}</span>${h ? `<span class="block text-[11.5px] text-muted mt-0.5">${h}</span>` : ''}</span><span class="tgl shrink-0"><input type="checkbox" ${S[k] ? 'checked' : ''} onchange="SSET.${k}=this.checked;try{seoTick()}catch(e){}"/><span></span></span></label>`;
+  const on = (l, h) => `<div class="flex items-center justify-between gap-4 py-3 border-b border-line last:border-0"><span><span class="block text-[13.5px]">${l}</span>${h ? `<span class="block text-[11.5px] text-muted mt-0.5">${h}</span>` : ''}</span><span class="lang-b ok shrink-0">เปิดอยู่เสมอ</span></div>`;
+  const id = (k, l, ph) => `<label class="grid gap-1"><span class="lbl !mb-0">${l}</span><input class="inp font-mono !text-[12px]" placeholder="${ph}" value="${esc(S[k] || '')}" onchange="SSET.${k}=this.value;try{seoTick()}catch(e){}"/></label>`;
+  return `<div class="grid xl:grid-cols-2 gap-4 items-start" style="grid-template-columns:${innerWidth >= 1280 ? 'minmax(0,1fr) minmax(0,1fr)' : 'minmax(0,1fr)'}">
+    <div class="card p-5 grid gap-4" style="grid-template-columns:minmax(0,1fr);min-width:0"><div class="flex items-center justify-between gap-3"><p class="font-medium">รูปแบบ Title & Meta</p><label class="flex items-center gap-2 text-[12px]"><span class="text-muted">ตัวคั่น</span><select class="inp !h-8 !w-16" onchange="SSET.sep=this.value;try{seoTick()}catch(e){};vSeo()">${['|', '–', '·', '»'].map(s => `<option ${S.sep === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label></div>
+      ${sstRow('tpl', 'boat', 'Title หน้าเรือ', SST_PH.tpl.boat)}${sstRow('dtpl', 'boat', 'Meta description หน้าเรือ', SST_PH.dtpl.boat, true)}
+      ${sstRow('tpl', 'article', 'Title บทความ', SST_PH.tpl.article)}${sstRow('dtpl', 'article', 'Meta description บทความ', SST_PH.dtpl.article, true)}
+      <p class="text-[11.5px] text-muted">ใช้เฉพาะหน้าที่ไม่ได้ตั้ง Title / Description เอง · เว้นว่าง = ใช้รูปแบบเดิมของระบบ · ตัวแปรหน้าเรือ: <span class="font-mono">${SST_VARS.boat.map(v => `{{${v}}}`).join(' ')}</span> · บทความ: <span class="font-mono">${SST_VARS.article.map(v => `{{${v}}}`).join(' ')}</span> · บันทึกอัตโนมัติ</p></div>
+    <div class="grid gap-4">
+      <div class="card px-5 py-2">
+        ${tg('year', 'อัปเดตปีใน Title อัตโนมัติเมื่อขึ้นปีใหม่', 'พิมพ์ {{year}} ใน Title / Description ของหน้าไหนก็ได้ (เช่น “เช่าเรือยอชต์ภูเก็ต {{year}}”) ระบบเปลี่ยนเป็นปีปัจจุบันให้เอง')}
+        ${tg('ogImg', 'ใช้รูปหน้าปกเรือเป็นรูปแชร์ (OG 1200×630)', 'แชร์ลิงก์เรือใน LINE / Facebook แล้วขึ้นรูปเรือลำนั้น ไม่ใช่รูปเริ่มต้นของเว็บ · บทความใช้รูปปกบทความอยู่แล้ว')}
+        ${tg('ext', 'ลิงก์ภายนอกในบทความเปิดแท็บใหม่ + rel="noopener"', 'ลิงก์ที่มี ?ref= / ?aff= ใส่ rel="sponsored" ให้เอง ตามกฎของ Google')}
+        ${tg('extNofollow', 'ลิงก์ภายนอกในบทความใส่ rel="nofollow"', 'ไม่ส่งคะแนน SEO ให้เว็บอื่น · ปกติไม่จำเป็น เปิดเมื่อลิงก์ไปเว็บที่ไม่ได้รับรอง')}
+        ${tg('noSearch', 'noindex หน้ารวมเรือที่มีตัวกรอง', 'เช่น ?type=sail ?stay=… ?pax=… · กัน Google เก็บหน้าซ้ำหลายร้อยแบบ · หน้าค้นหาบทความ noindex อยู่แล้ว')}
+        ${on('Canonical อัตโนมัติ (ตัด ?utm, ?gclid, ?page)', 'ทุกหน้าชี้ไป URL หลักของตัวเอง · ตั้ง canonical แยกรายหน้าได้ที่ Meta ทุกหน้า')}
+        ${on('hreflang th / en + Breadcrumb + Twitter card', 'ทุกหน้ามีคู่ภาษา และ JSON-LD Breadcrumb ให้ Google แสดงเส้นทางหน้า')}
+        ${on('แปลงรูปเป็น WebP / AVIF + lazy load', 'ส่งไฟล์ที่เล็กที่สุดตามเบราว์เซอร์ · รูปที่อยู่ด้านล่างโหลดเมื่อเลื่อนถึง')}</div>
+      <div class="card p-5 grid gap-3"><p class="font-medium">ยืนยันความเป็นเจ้าของเว็บ</p><div class="grid sm:grid-cols-2 gap-3">${id('gsc', 'Google Search Console', 'google-site-verification=…')}${id('bing', 'Bing Webmaster Tools', 'msvalidate.01=…')}</div>
+        <p class="text-[11.5px] text-muted">วางรหัสหรือทั้งแท็ก &lt;meta&gt; ได้ · ระบบใส่ในหน้าเว็บให้เอง · Google Analytics และ Meta Pixel ตั้งที่ วิเคราะห์เว็บไซต์ → เชื่อมต่อ API (โหลดหลังลูกค้ายอมรับคุกกี้)</p></div>
+    </div></div>`;
+};
+{ const _vs = vSeo; vSeo = function () { _vs(); if (SEOV.tab === 'settings') { const t = [...$$('#view .tabbar .tab')].find(x => (x.getAttribute('onclick') || '').includes("'settings'")); if (t) t.textContent = 'ตั้งค่า'; const b = $('#seoBody'); if (b) { b.classList.remove('p-4', 'sm:p-5'); b.classList.add('p-0'); const w = b.parentElement; if (w?.classList.contains('card')) w.classList.remove('card'); } icons(); } else { const t = [...$$('#view .tabbar .tab')].find(x => (x.getAttribute('onclick') || '').includes("'settings'")); if (t) t.textContent = 'ตั้งค่า'; } }; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
+
 /* ---------- วิเคราะห์เว็บไซต์ → Meta: สถานะจริงจากเซิร์ฟเวอร์ + event ที่ระบบส่งจริง (conversion_events) ---------- */
 const MS = { d: null, at: 0, loading: false };
 function msLoad() {
