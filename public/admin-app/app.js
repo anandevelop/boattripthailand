@@ -3886,6 +3886,163 @@ function artDelGo(id) {
   $$('#view table.tbl tbody tr.click').forEach(tr => { const id = +(tr.getAttribute('onclick').match(/articles\/(\d+)/) || [])[1]; if (id) tr.insertAdjacentHTML('beforeend', `<td class="text-right"><button class="btn btn-g !px-2 !h-8 text-muted hover:text-[#b42318]" title="ลบบทความ" onclick="event.stopPropagation();artDel(${id})"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>`); });
   icons(); }; PAGES.find(p => p[0] === 'articles')[3] = vArticles; }
 
+/* =====================================================================
+   ศูนย์ SEO — header (รายงาน / สแกนเว็บ), summary cards on "Meta ทุกหน้า", and แก้ไขอัตโนมัติ:
+   Title / Description rewritten from the site's own data (boat name, type, guests, marina, price;
+   article title, excerpt and text). Nothing is sent to an AI service. Every change is shown first and can be
+   unticked; the pages then save themselves the usual way (boats / articles autosave, page meta via settings/seo).
+   ===================================================================== */
+const SEO_FIXABLE = ['t_miss', 't_long', 't_short', 'dup', 'd_miss', 'd_long', 'd_short', 'd_dup'];
+/* duplicate descriptions count too (Google tends to rewrite them) */
+{ const _pi = pageIssues; pageIssues = function (p, all) {
+  const out = _pi(p, all);
+  if (all) {
+    const langs = p.type === 'article' ? LANGS.filter(([k]) => ['orig', 'ok', 'mt'].includes(p.art.tr[k])) : LANGS;
+    langs.forEach(([k, C]) => { const d = (p.d[k] || '').trim(); if (d && all.some(o => o !== p && (o.d[k] || '').trim() === d)) out.push({ lv: 'warn', k: 'd_dup', msg: 'Description ซ้ำกับหน้าอื่น', lang: C }); });
+  }
+  return out;
+}; }
+ISSUE_L.d_dup = 'Description ซ้ำกับหน้าอื่น';
+const SEO_TYPE_EN = { yacht: 'yacht', sail: 'sailing catamaran', power: 'power catamaran', speed: 'speedboat', longtail: 'longtail boat' };
+const seoOk = (s, kind) => { const n = thLen(s), [min, max] = SEO_LEN[kind]; return n >= min && n <= max; };
+const seoClean = s => String(s || '').replace(/\s+/g, ' ').trim();
+/** longest prefix of `s` that ends at a space (or sentence end) and fits `max`; '' when no clean cut exists above `min` */
+function seoCut(s, max, min, ell = '…') {
+  s = seoClean(s); if (thLen(s) <= max) return s;
+  let best = '';
+  for (let i = 0; i < s.length; i++) if (s[i] === ' ' || /[.!?。]/.test(s[i])) { const c = s.slice(0, s[i] === ' ' ? i : i + 1).replace(/[,;:–—-]\s*$/, '').trim(); if (thLen(c) + ell.length <= max) best = c; else break; }
+  return thLen(best) >= min ? best.replace(/[.!?]$/, '') + ell : '';
+}
+/** add parts in order while they fit `max`; the first part is required */
+const seoBuild = (parts, max) => parts.filter(Boolean).reduce((s, p, i) => !i ? p : thLen(s + ' ' + p) <= max ? s + ' ' + p : s, '');
+const seoMarina = b => String(b.marina || '').replace(/\s*\(.*?\)\s*/g, ' ').replace(/\s+Phuket$/i, '').trim();
+const seoUsd = n => '$' + Math.round((n || 0) / 33.42).toLocaleString('en-US');
+function seoTitleFor(p, k) {
+  const site = SSET.site[k], sep = SSET.sep;
+  if (p.type === 'boat') {
+    const b = bySlug(p.id.slice(2)); if (!b) return '';
+    const price = b.from_ ? (k === 'th' ? baht(b.from_) : seoUsd(b.from_)) : '';
+    const tpl = seoClean(SSET.tpl.boat[k].replace('%name%', b.name).replace('%price%', price).replace(/%sep%/g, sep).replace('%site%', site).replace(/(เริ่ม|from)\s*(\||$)/i, '$2'));
+    const c = k === 'th' ? [tpl, `${b.name} เช่าเรือยอชต์ภูเก็ต ${sep} ${site}`, `${b.name} เช่า${TYPE_TH[b.type] || 'เรือ'}ส่วนตัว ภูเก็ต`, `${b.name} เช่าเรือภูเก็ต`]
+      : [tpl, `${b.name} Yacht Charter Phuket ${sep} ${site}`, `${b.name} Private Charter Phuket`, `${b.name} Phuket Charter`];
+    return c.find(t => seoOk(t, 't')) || '';
+  }
+  if (p.type === 'article') {
+    const base = seoClean(p.art.title[k]); if (!base) return '';
+    // too long: keep the part before a natural break (":", "–", "|", "?"), never cut a sentence in the middle
+    const head = (base.match(/^(.+?[?？])\s/) || base.match(/^(.+?)\s*[:：–—|]\s/) || [])[1]?.trim();
+    const c = [`${base} ${sep} ${site}`, base, head && `${head} ${sep} ${site}`, head].filter(Boolean);
+    return c.find(t => seoOk(t, 't')) || '';
+  }
+  if (p.type === 'page') { const t = `${p.name === 'บทความ' && k === 'en' ? 'Blog' : p.name} ${sep} ${site}`; return k === 'th' && seoOk(t, 't') ? t : ''; }
+  return '';
+}
+function seoDescFor(p, k) {
+  if (p.type === 'boat') {
+    const b = bySlug(p.id.slice(2)); if (!b) return '';
+    const m = seoMarina(b);
+    if (k === 'th') return seoBuild([`เช่า${TYPE_TH[b.type] || 'เรือ'} ${b.name} ส่วนตัวในภูเก็ต`, b.pax && `รับได้สูงสุด ${b.pax} คน`, m && `ออกจาก ${m}`, b.from_ && `ราคาเริ่มต้น ${baht(b.from_)}`, 'พร้อมกัปตันและลูกเรือ', 'เลือกได้ทั้งครึ่งวัน เต็มวัน และทริปชมพระอาทิตย์ตก', 'จองง่าย ตอบไวทุกวัน'], 160);
+    return seoBuild([`Charter the ${b.name}, a private ${SEO_TYPE_EN[b.type] || 'boat'} in Phuket${b.pax ? ` for up to ${b.pax} guests` : ''}.`, m && `Departs from ${m}.`, b.from_ && `From ${seoUsd(b.from_)} with captain and crew.`, 'Half-day, full-day and sunset trips.', 'Quick replies every day.'], 160);
+  }
+  if (p.type === 'article') {
+    const a = p.art, paras = blocksOf(a, k).filter(x => x.t === 'p').map(x => txtOf(x.html)).filter(t => t && !/Machine translation|คำแปลจากเครื่อง/.test(t));
+    let s = seoClean([a.excerpt?.[k], ...paras].filter(Boolean).join(' '));
+    if (!s) return '';
+    if (thLen(s) > 160) s = seoCut(s, 160, 110);
+    if (s && thLen(s) < 120) s = seoBuild([s, k === 'th' ? 'อ่านเคล็ดลับเช่าเรือยอชต์ภูเก็ตจาก Boat Trip Thailand' : 'Phuket yacht charter tips from Boat Trip Thailand.'], 160);
+    return s;
+  }
+  return '';
+}
+/** proposed changes for the pages (only fields with a fixable issue, only results that pass the checks themselves) */
+function seoProposals(P, only) {
+  const out = [], may = p => p.type === 'boat' ? can('boats') : p.type === 'article' ? can('content') : p.type === 'page' ? can('seo') : false;
+  const taken = { t: { th: new Map(), en: new Map() }, d: { th: new Map(), en: new Map() } };
+  P.forEach(p => LANGS.forEach(([k]) => { for (const f of ['t', 'd']) { const v = seoClean(p[f][k]); if (v) taken[f][k].set(v, (taken[f][k].get(v) || 0) + 1); } }));
+  let manual = 0;
+  for (const p of P) {
+    if (only && p.id !== only) continue;
+    for (const [k, C] of LANGS) {
+      const iss = p.iss.filter(i => i.lang === C && SEO_FIXABLE.includes(i.k)); if (!iss.length) continue;
+      if (!may(p) || p.type === 'home') { manual += iss.length; continue; }
+      for (const f of ['t', 'd']) {
+        if (!iss.some(i => i.k.startsWith(f + '_') || (f === 't' && i.k === 'dup'))) continue;
+        const old = seoClean(p[f][k]), nv = seoClean(f === 't' ? seoTitleFor(p, k) : seoDescFor(p, k));
+        if (!nv || nv === old || !seoOk(nv, f) || (taken[f][k].get(nv) || 0) > 0) { manual++; continue; }
+        taken[f][k].set(nv, 1); if (old) taken[f][k].set(old, (taken[f][k].get(old) || 1) - 1);
+        out.push({ p, k, C, f, old, nv, why: iss.filter(i => f === 't' ? i.k.startsWith('t_') || i.k === 'dup' : i.k.startsWith('d_')).map(i => ISSUE_L[i.k] || i.msg) });
+      }
+    }
+  }
+  return { list: out, manual };
+}
+let SEOFIX = null;
+function seoAutoFix() {
+  const P = auditAll(), r = seoProposals(P); SEOFIX = r.list.map(x => ({ ...x, on: true }));
+  if (!SEOFIX.length) return toast(r.manual ? `ไม่มีรายการที่ระบบแก้ให้ได้ · อีก ${r.manual} รายการต้องแก้เอง` : 'Title / Description ทุกหน้าผ่านแล้ว');
+  const L = n => `<span class="lang-b ${seoOk(n.v, n.f) ? 'ok' : n.v ? 'mid' : 'low'} tnum">${thLen(n.v) || '—'}</span>`;
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium flex items-center gap-2"><i data-lucide="wand-sparkles" class="w-4 h-4 text-maroon"></i>แก้ไขอัตโนมัติ · ${SEOFIX.length} รายการ</p>
+      <p class="text-[12px] text-muted mt-1">เขียนใหม่จากข้อมูลในระบบ (ชื่อเรือ ประเภท จำนวนคน ท่าเรือ ราคา · ชื่อและเนื้อหาบทความ) ให้ยาวพอดีและไม่ซ้ำกัน · เอาเครื่องหมายออกได้ถ้าไม่ต้องการ${r.manual ? ` · อีก ${r.manual} รายการต้องแก้เอง (เช่น ชื่อบทความภาษาไทยที่ยาวเกิน ตัดเองจะเสียความหมาย)` : ''}</p>
+      <label class="flex items-center gap-2 text-[12.5px] mt-3"><input type="checkbox" checked onchange="SEOFIX.forEach(x=>x.on=this.checked);$$('#seoFixList input').forEach(i=>i.checked=this.checked);seoFixN()"/>เลือกทั้งหมด</label></div>
+    <div id="seoFixList" class="max-h-[58vh] overflow-y-auto divide-y divide-[rgb(35_20_22/.06)]">${SEOFIX.map((x, i) => `<label class="flex gap-3 px-5 py-3 cursor-pointer hover:bg-[#fbf8f7]"><input type="checkbox" checked class="mt-1 shrink-0" onchange="SEOFIX[${i}].on=this.checked;seoFixN()"/>
+      <span class="min-w-0 flex-1"><span class="flex flex-wrap items-center gap-1.5 text-[12px]"><b class="font-medium truncate max-w-[300px]">${esc(x.p.name)}</b><span class="lang-b">${x.C}</span><span class="text-muted">${x.f === 't' ? 'Title' : 'Description'} · ${x.why.map(esc).join(', ')}</span></span>
+        ${x.old ? `<span class="flex items-start gap-2 mt-1.5 text-[12px] text-muted"><span class="line-through flex-1 min-w-0 break-words">${esc(x.old)}</span>${L({ v: x.old, f: x.f })}</span>` : '<span class="block mt-1.5 text-[12px] text-muted">(ว่าง)</span>'}
+        <span class="flex items-start gap-2 mt-1 text-[12.5px]"><span class="flex-1 min-w-0 break-words">${esc(x.nv)}</span>${L({ v: x.nv, f: x.f })}</span></span></label>`).join('')}</div>
+    <div class="p-4 border-t border-line flex items-center justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button id="seoFixGo" class="btn btn-p" onclick="seoFixApply()"><i data-lucide="check" class="w-3.5 h-3.5"></i>แก้ไข <span>${SEOFIX.length}</span> รายการ</button></div>`);
+  $('#modalBox').style.maxWidth = '760px'; icons();
+}
+function seoFixN() { const n = SEOFIX.filter(x => x.on).length, b = $('#seoFixGo'); if (b) { b.disabled = !n; b.querySelector('span').textContent = n; } }
+function seoFixApply() {
+  const pick = (SEOFIX || []).filter(x => x.on); if (!pick.length) return;
+  pick.forEach(x => { x.p[x.f][x.k] = x.nv; });
+  SEOFIX = null; closeModal();
+  // save now: boats / articles push their own records, page meta goes with settings/seo
+  try { boatTick(true); } catch (e) { } try { artTick(true); } catch (e) { } try { seoTick(); } catch (e) { }
+  AUDIT_DIRTY = true; vSeo(); toast(`แก้ไขแล้ว ${pick.length} รายการ · หน้าเว็บอัปเดตภายในไม่กี่นาที`);
+}
+/* one page, inside the SEO drawer */
+function seoAutoOne(id) {
+  const P = auditAll(), r = seoProposals(P, id);
+  if (!r.list.length) return toast(r.manual ? 'หน้านี้ต้องแก้เอง · ระบบเขียนให้ไม่ได้โดยไม่เสียความหมาย' : 'หน้านี้ผ่านแล้ว');
+  r.list.forEach(x => { x.p[x.f][x.k] = x.nv; });
+  try { boatTick(true); } catch (e) { } try { artTick(true); } catch (e) { } try { seoTick(); } catch (e) { }
+  seoEdit(id); toast(`แก้ให้ ${r.list.length} ช่อง · ตรวจและแก้ต่อได้เลย`);
+}
+{ const _se = seoEdit; seoEdit = function (id) { _se(id); const x = $('#drawer .h-16 .flex.items-center.gap-2'); if (x && SE && SE.iss.some(i => SEO_FIXABLE.includes(i.k))) x.insertAdjacentHTML('afterbegin', `<button class="btn btn-o !h-8" onclick="seoAutoOne('${id}')"><i data-lucide="wand-sparkles" class="w-3.5 h-3.5"></i>แก้อัตโนมัติ</button>`); icons(); }; }
+/* รายงาน: every page with its meta, lengths, score and issues (CSV, opens in Excel / Google Sheets) */
+function seoReport() {
+  const P = auditAll(), rows = [['หน้า', 'ประเภท', 'URL TH', 'URL EN', 'Title TH', 'ยาว', 'Title EN', 'ยาว', 'Description TH', 'ยาว', 'Description EN', 'ยาว', 'Index', 'คะแนน', 'ปัญหา']];
+  P.sort((a, b) => a.score - b.score).forEach(p => rows.push([p.name, ST[p.type], p.url.th, p.url.en, p.t.th, thLen(p.t.th), p.t.en, thLen(p.t.en), p.d.th, thLen(p.d.th), p.d.en, thLen(p.d.en), sx(p.id).index ? 'index' : 'noindex', p.score, p.iss.map(i => (i.lang ? i.lang + ': ' : '') + i.msg).join(' · ')]));
+  const csv = '﻿' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `seo-report-${iso(TODAY)}.csv`; a.click();
+  toast(`ดาวน์โหลดรายงาน ${P.length} หน้าแล้ว`);
+}
+function seoScan() { const b = $('#seoScanBtn'); b?.classList.add('opacity-60'); setTimeout(() => { vSeo(); const P = auditAll(), e = P.filter(p => p.iss.some(i => i.lv === 'err')).length; toast(`สแกนแล้ว ${P.length} หน้า · ${e ? e + ' หน้ามีจุดต้องแก้' : 'ไม่มีจุดต้องแก้'}`); }, 250); }
+function seoCards(P) {
+  const ix = P.filter(p => sx(p.id).index).length, meta = P.filter(p => p.iss.some(i => SEO_FIXABLE.includes(i.k) && i.k !== 'd_miss')).length;
+  const dupT = P.filter(p => p.iss.some(i => i.k === 'dup')).length, dupD = P.filter(p => p.iss.some(i => i.k === 'd_dup')).length, auto = P.filter(p => p.iss.some(i => i.k === 'd_miss')).length;
+  const card = (l, v, s, ic, f, tone) => `<button class="card p-5 text-left grid gap-1 hover:ring-1 hover:ring-[rgb(112_0_14/.18)] transition" ${f !== null ? `onclick="SEOV.issue='${f}';SEOV.page=0;vSeo()"` : ''}><span class="flex items-start justify-between gap-2"><span class="text-[12.5px] text-muted">${l}</span><span class="w-9 h-9 -mt-1 -mr-1 rounded-full bg-white grid place-items-center shadow-[0_4px_14px_-8px_rgb(58_0_7/.45)] ${tone || ''}"><i data-lucide="${ic}" class="w-4 h-4"></i></span></span><span class="text-[26px] font-medium tnum leading-tight mt-2">${v}</span><span class="text-[12px] text-muted">${s}</span></button>`;
+  return `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">${card('หน้าที่ให้ Google เก็บ', ix, `จากทั้งหมด ${P.length} หน้า`, 'file-text', null)}${card('หน้าที่มีปัญหา', meta, 'ความยาวไม่พอดี หรือซ้ำกับหน้าอื่น', 'triangle-alert', 'warn', meta ? 'text-[#b4501a]' : '')}${card('Title / Description ซ้ำ', `${dupT} / ${dupD}`, 'Google อาจเขียนใหม่เอง', 'copy', dupT ? 'dup' : 'd_dup')}${card('Description อัตโนมัติ', auto, 'เขียนเองช่วยให้คนกดมากกว่า', 'pencil', 'd_miss')}</div>`;
+}
+{ const _vs = vSeo; vSeo = function () {
+  _vs();
+  const h = $('#view h2'); if (h) h.textContent = 'ศูนย์ SEO';
+  const gsc = typeof GG !== 'undefined' && GG.st?.gsc?.on, sub = $('#view h2 + p'); if (sub) sub.textContent = gsc ? 'ข้อมูลจาก Google Search Console · เชื่อมต่อแล้ว' : 'ข้อมูลจาก Google Search Console · ยังไม่ได้นำเข้า (แท็บ คีย์เวิร์ด)';
+  const act = h?.closest('.mb-5')?.querySelector('.flex.flex-wrap.gap-2');
+  if (act) act.innerHTML = `<button class="btn btn-o" onclick="seoReport()"><i data-lucide="download" class="w-3.5 h-3.5"></i>รายงาน</button><button id="seoScanBtn" class="btn btn-p" onclick="seoScan()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>สแกนเว็บ</button>`;
+  $$('#view .tabbar .tab > i, #view .tabbar .tab > svg').forEach(x => x.remove());
+  if (SEOV.tab === 'pages') {
+    const P = auditAll(), r = seoProposals(P);
+    $('#view .tabbar')?.insertAdjacentHTML('afterend', seoCards(P));
+    const old = [...$$('#seoBody button')].find(b => b.textContent.includes('เติม Title ที่ว่างอัตโนมัติ'))?.parentElement;
+    if (old) old.outerHTML = `<div class="flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl bg-sand p-3 mb-3 text-[12.5px]"><i data-lucide="wand-sparkles" class="w-4 h-4 text-maroon shrink-0"></i>
+      <span class="flex-1">${r.list.length ? `ระบบแก้ให้ได้ <b class="font-medium">${r.list.length} รายการ</b> · Title / Description ที่ว่าง ยาว สั้น หรือซ้ำ เขียนใหม่จากข้อมูลเรือและบทความ ดูก่อนแก้ทุกครั้ง` : 'ไม่มีรายการที่ระบบแก้ให้ได้'}${r.manual ? ` · ต้องแก้เอง ${r.manual} รายการ` : ''}</span>
+      ${r.list.length ? `<button class="btn btn-p !h-8" onclick="seoAutoFix()"><i data-lucide="wand-sparkles" class="w-3.5 h-3.5"></i>แก้ไขอัตโนมัติ</button>` : ''}</div>`;
+    const sel = $('#seoBody select'); if (sel && !sel.querySelector('option[value="d_dup"]')) { sel.insertAdjacentHTML('beforeend', `<option value="d_dup" ${SEOV.issue === 'd_dup' ? 'selected' : ''}>Description ซ้ำ</option>`); }
+  }
+  icons();
+}; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
+
 /* ---------- sidebar groups: แดชบอร์ด · งานขาย · สินค้า & ราคา · เว็บไซต์ · การตลาด · ทีม & ระบบ ---------- */
 { const G = [[null, ['dashboard']], ['งานขาย', ['bookings', 'calendar', 'customers']], ['สินค้า & ราคา', ['boats', 'seasons', 'activities']],
     ['เว็บไซต์', ['content', 'articles', 'media']], ['การตลาด', ['seo', 'analytics', 'audiences']], ['ทีม & ระบบ', ['team', 'audit', 'settings']]];
