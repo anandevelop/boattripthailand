@@ -4610,6 +4610,203 @@ seoKw = function () {
   icons();
 }; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
 
+/* =====================================================================
+   ศูนย์ SEO → ตรวจสุขภาพ: one pass over everything the site publishes (articles TH/EN, boats, page meta,
+   redirects, 404 hits, robots.txt, sitemap, schema, speed) → a list of problems by severity, each with
+   the pages it affects and a way to open them. Runs in the browser on the same data the site is built from.
+   ===================================================================== */
+const SHX = { at: 0, nf: null, nfLoading: false, open: null };
+const SHX_LV = { crit: ['ร้ายแรง', '#a3222c', '#fdecec'], warn: ['ควรแก้', '#9a5b00', '#fff4e0'], tip: ['แนะนำ', '#6b5e60', '#f3eeee'] };
+const HS_STATIC = ['/', '/yacht-charter', '/blog', '/destinations', '/about-us', '/privacy-policy', '/terms-and-conditions', '/cookie-preferences', '/contact'];
+function hsNfLoad() {
+  if (SHX.nf || SHX.nfLoading || !can('seo')) return; SHX.nfLoading = true;
+  api('GET', 'analytics?days=90').then(d => { SHX.nf = d.notFound || []; }).catch(() => { SHX.nf = []; })
+    .finally(() => { SHX.nfLoading = false; if (CUR === 'seo' && SEOV.tab === 'health') vSeo(); });
+}
+/** internal link target → 'ok' | 'redirect' | 'hidden' | 'broken' | null (not a page link) */
+function hsLink(href) {
+  let u = String(href || '').trim();
+  if (!u || /^(mailto|tel|javascript|#)/i.test(u)) return null;
+  const m = u.match(/^https?:\/\/(?:www\.)?boattripthailand\.com(\/.*)?$/i); if (/^https?:/i.test(u) && !m) return null; if (m) u = m[1] || '/';
+  if (!u.startsWith('/')) return null;
+  let p = u.split(/[?#]/)[0]; try { p = decodeURIComponent(p); } catch (e) { }
+  if (/^\/(uploads|img|boats|site|admin|api|_next)\//.test(p) || /\.[a-z0-9]{2,5}$/i.test(p)) return null;
+  const q = p.replace(/^\/en(?=\/|$)/, '').replace(/\/+$/, '') || '/';
+  if (HS_STATIC.includes(q) || q.startsWith('/destinations/')) return 'ok';
+  if (q.startsWith('/yacht-charter/')) { const b = bySlug(q.slice(15)); return b ? (b.active ? 'ok' : 'hidden') : REDIR.some(r => r.from === p.replace(/\/+$/, '')) ? 'redirect' : 'broken'; }
+  if (q.startsWith('/blog/')) { const s = q.slice(6), a = ART.find(x => x.slug.th === s || x.slug.en === s); return a ? (a.status === 'published' ? 'ok' : 'hidden') : REDIR.some(r => r.from === p.replace(/\/+$/, '')) ? 'redirect' : 'broken'; }
+  return REDIR.some(r => r.from === p.replace(/\/+$/, '')) ? 'redirect' : 'broken';
+}
+const hsHrefs = html => [...String(html || '').matchAll(/href\s*=\s*["']([^"']+)["']/gi)].map(m => m[1].replace(/&amp;/g, '&'));
+/** every link, image and heading of one article language */
+function hsScanArt(a, k) {
+  const B = blocksOf(a, k), links = [], imgs = [], heads = [], text = [];
+  for (const b of B) {
+    const html = [b.html, ...(b.items || []).flatMap(x => [x.q, x.a]), ...(b.cols || []).map(c => c.html)].filter(Boolean).join(' ');
+    hsHrefs(html).forEach(h => links.push(h));
+    if (b.t === 'boat' && b.slug) links.push('/yacht-charter/' + b.slug);
+    if (b.t === 'btn' && /^(\/|https?:)/.test(b.href || '')) links.push(b.href);
+    if (b.t === 'img' && b.src) imgs.push(b.alt);
+    if (b.t === 'grid') (b.cells || []).filter(c => c.src).forEach(c => imgs.push(c.alt));
+    if (b.t === 'cols') (b.cols || []).filter(c => c.k === 'img' && c.src).forEach(c => imgs.push(c.alt));
+    if (b.t === 'h') heads.push(+b.lv || 2);
+    if (b.t === 'p' || b.t === 'quote') text.push(txtOf(b.html));
+  }
+  return { B, links, imgs, heads, text, faq: B.some(b => b.t === 'faq' && (b.items || []).some(x => txtOf(x.q))) };
+}
+function seoHealth() {
+  const C = {}, add = (k, lv, l, impact, it, fix) => { (C[k] ??= { k, lv, l, impact, items: [], fix }).items.push(it); };
+  const def = (k, lv, l, impact, fix) => { C[k] ??= { k, lv, l, impact, items: [], fix }; };
+  const artIt = (a, k, sub) => ({ name: a.title[k] || a.title.th || a.title.en || 'บทความไม่มีชื่อ', sub: (k ? k.toUpperCase() + ' · ' : '') + (sub || ''), go: `closeDrawer();go('articles/${a.id}')` });
+  const boatIt = (b, sub) => ({ name: b.name, sub: sub || '', go: `closeDrawer();boatEdit('${b.slug}')` });
+  // checks that always show (passed or not), so the list doubles as a checklist
+  [['link_broken', 'crit', 'มีลิงก์ภายในเสีย (ชี้ไปหน้าที่ไม่มี)', 'ผู้อ่านเจอหน้า 404 · Google เสียเวลาเก็บข้อมูล'], ['dup_title', 'crit', 'Title ซ้ำกันหลายหน้า', 'Google ไม่รู้ว่าหน้าไหนควรขึ้น · แย่งอันดับกันเอง', "closeDrawer();SEOV.tab='pages';SEOV.issue='dup';vSeo()"],
+   ['no_title', 'crit', 'หน้าไม่มี Title', 'Google ตั้งชื่อหน้าให้เอง มักไม่ตรงคำค้น', "closeDrawer();SEOV.tab='pages';SEOV.issue='t_miss';vSeo()"],
+   ['auto_title', 'warn', 'บทความยังไม่ได้ตั้ง SEO Title', 'เว็บใช้ “ชื่อบทความ | Boat Trip Thailand” แทน ซึ่งมักยาวเกินจนถูกตัด · ใช้ แก้ไขอัตโนมัติ ในแท็บ Meta ทุกหน้าได้', "closeDrawer();SEOV.tab='pages';SEOV.type='article';SEOV.issue='t_miss';vSeo()"], ['boat_noimg', 'crit', 'เรือที่แสดงบนเว็บแต่ไม่มีรูป', 'ลูกค้าไม่กด · การ์ดเรือและรูปแชร์ว่าง'],
+   ['noindex', 'warn', 'หน้าสำคัญตั้งเป็น noindex', 'หน้านี้จะไม่ขึ้นใน Google เลย'], ['link_redirect', 'warn', 'ลิงก์ภายในผ่าน redirect', 'ช้าลงหนึ่งจังหวะ · ควรชี้ไป URL ใหม่ตรงๆ'], ['link_hidden', 'warn', 'ลิงก์ไปเรือหรือบทความที่ซ่อนอยู่', 'คนกดแล้วเจอหน้าที่ไม่ได้เผยแพร่'],
+   ['kw_title', 'warn', 'คีย์เวิร์ดไม่อยู่ในหัวข้อ', 'อันดับต่ำกว่าที่ควร'], ['alt', 'warn', 'รูปในบทความไม่มี Alt text', 'Google Images หาไม่เจอ · ผู้พิการทางสายตาไม่รู้ว่ารูปคืออะไร'], ['thin', 'warn', 'เนื้อหาน้อยเกินไป', 'Google มองว่าไม่ช่วยตอบคำถาม · อันดับไม่ขึ้น'],
+   ['mt', 'warn', 'คำแปลจากเครื่องยังไม่ได้ตรวจ', 'ยังไม่แสดงบนเว็บ · อีกภาษาจึงไม่มีหน้า'], ['no_desc', 'warn', 'ไม่มี Meta description', 'เว็บใช้คำโปรยหรือข้อความในหน้าแทน · เขียนเองช่วยให้คนกดมากกว่า', "closeDrawer();SEOV.tab='pages';SEOV.issue='d_miss';vSeo()"],
+   ['meta_len', 'warn', 'Title / Description ยาวไม่พอดี', 'ถูกตัดในผลค้นหา หรือสั้นจนไม่ดึงดูด', "closeDrawer();SEOV.tab='pages';SEOV.issue='warn';vSeo()"], ['no_cover', 'warn', 'บทความไม่มีรูปปก', 'แชร์ใน LINE / Facebook แล้วไม่มีรูป'],
+   ['boat_desc', 'warn', 'คำอธิบายเรือสั้นหรือว่าง', 'หน้าเรือบาง · Google ไม่รู้ว่าเรือดีอย่างไร · ควรมีอย่างน้อย 120 ตัวอักษรต่อภาษา'], ['boat_price', 'warn', 'เรือไม่มีราคาเริ่มต้น', 'ไม่มีราคาในผลค้นหา (Product schema)'], ['nf', 'warn', 'มีคนเข้า URL ที่ไม่มีอยู่ (404) และยังไม่มี redirect', 'เสียลูกค้าและคะแนนจากลิงก์เดิม', "closeDrawer();SEOV.tab='redirects';vSeo()"],
+   ['redir_bad', 'warn', 'Redirect ต่อกันเป็นทอด หรือชี้ไปหน้าที่ไม่มี', 'ช้า · Google อาจหยุดตามก่อนถึงหน้าจริง', "closeDrawer();SEOV.tab='redirects';vSeo()"], ['h1', 'warn', 'มีหัวข้อ H1 ซ้ำในเนื้อหา', 'หน้ามี H1 จากชื่อบทความอยู่แล้ว · โครงหน้าสับสน'],
+   ['faq', 'tip', 'ไม่มี FAQ', 'เสีย FAQ rich result / AI Search'], ['orphan', 'tip', 'ไม่มีลิงก์ภายในชี้มา', 'Google หาเจอยาก · คนอ่านไม่เจอบทความนี้'], ['no_out', 'tip', 'บทความไม่มีลิงก์ไปหน้าเรือ', 'คนอ่านจบแล้วไม่ได้ไปดูเรือ · เสียโอกาสได้ลีด'],
+   ['kw_none', 'tip', 'ยังไม่ได้ตั้งคีย์เวิร์ดหลัก', 'ระบบตรวจไม่ได้ว่าหน้านี้ตั้งใจติดคำไหน'], ['kw_first', 'tip', 'คีย์เวิร์ดไม่อยู่ในย่อหน้าแรก', 'Google และ AI ใช้ย่อหน้าแรกสรุปว่าหน้านี้พูดเรื่องอะไร'], ['h2', 'tip', 'ไม่มีหัวข้อ H2 หรือหัวข้อข้ามระดับ', 'อ่านยาก · Google แบ่งเนื้อหาไม่ได้'],
+   ['one_lang', 'tip', 'บทความมีภาษาเดียว', 'ลูกค้าต่างชาติ (หรือคนไทย) ค้นไม่เจอ'], ['old', 'tip', 'เนื้อหาเก่าเกิน 18 เดือน', 'ราคาและข้อมูลอาจไม่ตรง · Google ชอบเนื้อหาที่อัปเดต'], ['boat_few', 'tip', 'เรือมีรูปน้อยกว่า 5 รูป', 'ลูกค้าตัดสินใจยาก'],
+   ['boat_alt', 'tip', 'รูปเรือไม่มี Alt text', 'Google Images หาไม่เจอ'], ['boat_orphan', 'tip', 'ไม่มีบทความลิงก์ไปเรือลำนี้', 'หน้าเรือได้คะแนนจากลิงก์ภายในน้อย'], ['boat_marina', 'tip', 'เรือยังไม่ได้ระบุท่าเรือ', 'แผนที่และเวลาเดินทางในหน้าเรือไม่แสดง'],
+   ['slug', 'tip', 'URL ยาวเกิน 75 ตัวอักษร', 'ถูกตัดในผลค้นหา · แชร์แล้วดูไม่สวย'], ['robots', 'crit', 'robots.txt ปิดทั้งเว็บ', 'Google เก็บหน้าเว็บไม่ได้เลย', "closeDrawer();SEOV.tab='sitemap';vSeo()"], ['ai_block', 'tip', 'ปิดไม่ให้ AI บางตัวอ่านเว็บ', 'ไม่ถูกแนะนำใน ChatGPT / Claude / Perplexity', "closeDrawer();SEOV.tab='sitemap';vSeo()"],
+   ['hreflang', 'tip', 'Sitemap ไม่มี hreflang', 'Google อาจแสดงหน้าผิดภาษา', "closeDrawer();SEOV.tab='sitemap';vSeo()"], ['schema', 'tip', 'ข้อมูลบริษัท (Schema) ไม่ครบ', 'ไม่ขึ้นการ์ดธุรกิจ · ความน่าเชื่อถือใน Google ลดลง', "closeDrawer();SEOV.tab='schema';vSeo()"],
+   ['speed', 'warn', 'หน้าแรกโหลดช้า (PageSpeed)', 'คนกดออกก่อนหน้าโหลดเสร็จ · Core Web Vitals มีผลกับอันดับ', "closeDrawer();SEOV.tab='overview';vSeo()"],
+  ].forEach(([k, lv, l, im, fix]) => def(k, lv, l, im, fix));
+
+  // ---------- articles ----------
+  const pub = ART.filter(a => a.status === 'published'), inbound = new Map(), boatIn = new Map();
+  const scans = pub.map(a => ({ a, L: LANGS.filter(([k]) => ['orig', 'ok'].includes(a.tr[k]) && (a.title[k] || blocksOf(a, k).length)).map(([k]) => [k, hsScanArt(a, k)]) }));
+  for (const { a, L } of scans) for (const [k, s] of L) for (const h of s.links) {
+    let p = h.replace(/^https?:\/\/(?:www\.)?boattripthailand\.com/i, '').split(/[?#]/)[0]; try { p = decodeURIComponent(p); } catch (e) { }
+    const q = p.replace(/^\/en(?=\/|$)/, '').replace(/\/+$/, '');
+    if (q.startsWith('/blog/')) { const t = ART.find(x => x.slug.th === q.slice(6) || x.slug.en === q.slice(6)); if (t && t !== a) inbound.set(t.id, (inbound.get(t.id) || 0) + 1); }
+    if (q.startsWith('/yacht-charter/')) boatIn.set(q.slice(15), (boatIn.get(q.slice(15)) || 0) + 1);
+  }
+  const old = addDays(TODAY, -548);
+  for (const { a, L } of scans) {
+    const cov = /^__wp/.test(a.cover || '') ? (WP.arts.find(x => x.id === a.id)?.cover || '') : coverUrl(a);
+    if (!cov) add('no_cover', 'warn', '', '', artIt(a, '', 'ไม่มีรูปปก'));
+    const langs = LANGS.filter(([k]) => ['orig', 'ok', 'mt'].includes(a.tr[k]));
+    if (langs.length < 2) add('one_lang', 'tip', '', '', artIt(a, '', `มีแค่${a.tr.th === 'none' ? 'ภาษาอังกฤษ' : 'ภาษาไทย'}`));
+    LANGS.forEach(([k]) => { if (a.tr[k] === 'mt') add('mt', 'warn', '', '', artIt(a, k, 'รอตรวจคำแปล')); });
+    if (a.date && new Date(a.date) < old) add('old', 'tip', '', '', artIt(a, '', 'เผยแพร่ ' + fmtD(a.date)));
+    if (!inbound.get(a.id)) add('orphan', 'tip', '', '', artIt(a, '', 'ไม่มีบทความอื่นลิงก์มา'));
+    for (const [k, s] of L) {
+      const bad = s.links.map(h => [h, hsLink(h)]);
+      bad.filter(x => x[1] === 'broken').forEach(([h]) => add('link_broken', 'crit', '', '', artIt(a, k, h)));
+      bad.filter(x => x[1] === 'redirect').forEach(([h]) => add('link_redirect', 'warn', '', '', artIt(a, k, `${h} → ${REDIR.find(r => r.from === h.split(/[?#]/)[0].replace(/\/+$/, ''))?.to || '?'}`)));
+      bad.filter(x => x[1] === 'hidden').forEach(([h]) => add('link_hidden', 'warn', '', '', artIt(a, k, h)));
+      if (!s.links.some(h => /yacht-charter\/[^/]+/.test(h))) add('no_out', 'tip', '', '', artIt(a, k, 'ไม่มีการ์ดเรือหรือลิงก์ไปเรือ'));
+      const miss = s.imgs.filter(x => !String(x || '').trim()).length; if (miss) add('alt', 'warn', '', '', artIt(a, k, `${miss} รูป`));
+      if (!s.faq) add('faq', 'tip', '', '', artIt(a, k, 'ไม่มีบล็อกคำถามที่พบบ่อย'));
+      if (s.heads.includes(1)) add('h1', 'warn', '', '', artIt(a, k, `H1 ${s.heads.filter(x => x === 1).length} หัวข้อ`));
+      const jump = s.heads.some((h, i) => i ? h - s.heads[i - 1] > 1 : h > 2);
+      if (!s.heads.includes(2) || jump) add('h2', 'tip', '', '', artIt(a, k, !s.heads.includes(2) ? 'ไม่มี H2' : 'หัวข้อข้ามระดับ (เช่น H2 → H4)'));
+      const body = s.text.join(' '), len = k === 'th' ? body.replace(/\s/g, '').length : body.split(/\s+/).filter(Boolean).length;
+      if (len < (k === 'th' ? 800 : 300)) add('thin', 'warn', '', '', artIt(a, k, `${nf(len)} ${k === 'th' ? 'ตัวอักษร' : 'คำ'} · ควรมีอย่างน้อย ${k === 'th' ? '800 ตัวอักษร' : '300 คำ'}`));
+      const kw = (a.kw?.[k] || '').trim().toLowerCase();
+      if (!kw) add('kw_none', 'tip', '', '', artIt(a, k, ''));
+      else {
+        if (!(a.seoT?.[k] || a.title[k] || '').toLowerCase().includes(kw)) add('kw_title', 'warn', '', '', artIt(a, k, `“${a.kw[k]}” ไม่อยู่ใน Title`));
+        if (!(s.text[0] || '').toLowerCase().includes(kw) && !(a.excerpt?.[k] || '').toLowerCase().includes(kw)) add('kw_first', 'tip', '', '', artIt(a, k, `“${a.kw[k]}”`));
+      }
+      const sl = a.slug[k] || ''; if (thLen(sl) > 75) add('slug', 'tip', '', '', artIt(a, k, `/${sl.length > 60 ? sl.slice(0, 60) + '…' : sl} (${thLen(sl)})`));
+    }
+  }
+  // ---------- boats ----------
+  const live = FLEET.filter(b => b.active);
+  for (const b of live) {
+    const I = b.imgs || [];
+    if (!I.length) add('boat_noimg', 'crit', '', '', boatIt(b, 'ไม่มีรูป'));
+    else if (I.length < 5) add('boat_few', 'tip', '', '', boatIt(b, `${I.length} รูป`));
+    const noAlt = I.filter(s => { const m = MEDIA.find(x => x.src === s); return m && !(m.alt?.th || '').trim() && !(m.alt?.en || '').trim(); }).length;
+    if (noAlt) add('boat_alt', 'tip', '', '', boatIt(b, `${noAlt} รูป · แก้ที่คลังสื่อ`));
+    LANGS.forEach(([k, C]) => { if (thLen(b.i18n?.desc?.[k] || '') < 120) add('boat_desc', 'warn', '', '', boatIt(b, `${C} · ${thLen(b.i18n?.desc?.[k] || '') ? 'สั้นเกินไป' : 'ว่าง'}`)); });
+    if (!b.from_) add('boat_price', 'warn', '', '', boatIt(b, 'ไม่มีราคาเริ่มต้น'));
+    if (!String(b.marina || '').trim()) add('boat_marina', 'tip', '', '', boatIt(b, ''));
+    if (!boatIn.get(b.slug)) add('boat_orphan', 'tip', '', '', boatIt(b, 'ยังไม่มีบทความลิงก์มา'));
+  }
+  // ---------- page meta (same rules as Meta ทุกหน้า) ----------
+  const P = auditAll(), pIt = p => ({ name: p.name, sub: ST[p.type], go: `closeDrawer();seoEdit('${p.id}')` });
+  for (const p of P) {
+    const iss = p.iss, langs = k => [...new Set(iss.filter(i => i.k === k).map(i => i.lang))].join('/');
+    if (iss.some(i => i.k === 'dup')) add('dup_title', 'crit', '', '', { ...pIt(p), sub: `${ST[p.type]} · ${langs('dup')}` });
+    if (iss.some(i => i.k === 't_miss')) add(p.type === 'article' ? 'auto_title' : 'no_title', '', '', '', { ...pIt(p), sub: `${ST[p.type]} · ${langs('t_miss')}` });
+    if (iss.some(i => i.k === 'd_miss')) add('no_desc', 'warn', '', '', { ...pIt(p), sub: `${ST[p.type]} · ${langs('d_miss')}` });
+    const ln = iss.filter(i => ['t_long', 't_short', 'd_long', 'd_short', 'd_dup'].includes(i.k)); if (ln.length) add('meta_len', 'warn', '', '', { ...pIt(p), sub: ln.map(i => `${i.lang} ${ISSUE_L[i.k] || i.msg}`).join(' · ') });
+    if (!sx(p.id).index && ['boat', 'article', 'home'].includes(p.type)) add('noindex', 'warn', '', '', pIt(p));
+  }
+  // ---------- redirects & 404 ----------
+  hsNfLoad();
+  (SHX.nf || []).filter(r => !REDIR.some(x => x.from === r.path.replace(/\/+$/, ''))).forEach(r => add('nf', 'warn', '', '', { name: r.path, sub: `${nf(r.views)} ครั้งใน 90 วัน`, go: `closeDrawer();SEOV.tab='redirects';vSeo();seoAddRedir(${esc(JSON.stringify(r.path))},'')` }));
+  const froms = new Map(REDIR.map(r => [r.from, r]));
+  for (const r of REDIR) {
+    if (!r.to) continue;
+    const t = r.to.replace(/^https?:\/\/(?:www\.)?boattripthailand\.com/i, '').split(/[?#]/)[0].replace(/\/+$/, '') || '/';
+    if (froms.has(t)) add('redir_bad', 'warn', '', '', { name: r.from, sub: `ต่อกันเป็นทอด: → ${t} → ${froms.get(t).to || '410'}`, go: `closeDrawer();SEOV.tab='redirects';vSeo()` });
+    else if (t.startsWith('/') && hsLink(t) === 'broken') add('redir_bad', 'warn', '', '', { name: r.from, sub: `ชี้ไป ${t} ซึ่งไม่มีอยู่`, go: `closeDrawer();SEOV.tab='redirects';vSeo()` });
+  }
+  // ---------- site-wide ----------
+  const rb = String(ROBOTS.txt || ''), star = rb.split(/\n(?=user-agent)/i).find(g => /user-agent:\s*\*/i.test(g)) || '';
+  if (/^\s*disallow:\s*\/\s*$/im.test(star)) add('robots', 'crit', '', '', { name: 'robots.txt', sub: 'มี “Disallow: /” สำหรับทุก bot', go: C.robots.fix });
+  const offAi = Object.entries(ROBOTS.ai || {}).filter(([, v]) => !v).map(([k]) => k); if (offAi.length) add('ai_block', 'tip', '', '', { name: offAi.join(', '), sub: 'ปิดอยู่ใน robots.txt', go: C.ai_block.fix });
+  if (!SMAP.hreflang) add('hreflang', 'tip', '', '', { name: 'sitemap.xml', sub: 'ปิด hreflang อยู่', go: C.hreflang.fix });
+  const so = typeof SCHEMA_ORG !== 'undefined' ? SCHEMA_ORG : {}, miss = [['phone', 'เบอร์โทร'], ['street', 'ที่อยู่'], ['lat', 'พิกัด'], ['hours', 'เวลาทำการ']].filter(([k]) => !String(so[k] || '').trim()).map(([, l]) => l);
+  if (miss.length) add('schema', 'tip', '', '', { name: 'Organization / TravelAgency', sub: 'ยังไม่มี: ' + miss.join(', '), go: C.schema.fix });
+  if (typeof PSI !== 'undefined' && PSI.d && !PSI.d.error && PSI.d.score < 90) { C.speed.lv = PSI.d.score < 50 ? 'warn' : 'tip'; add('speed', C.speed.lv, '', '', { name: 'หน้าแรก · มือถือ', sub: `คะแนน PageSpeed ${PSI.d.score}/100`, go: C.speed.fix }); }
+  const list = Object.values(C), w = { crit: 12, warn: 5, tip: 1.5 };
+  const score = Math.max(0, Math.round(100 - list.filter(c => c.items.length).reduce((s, c) => s + w[c.lv] * Math.min(1, .4 + c.items.length / 20), 0)));
+  return { list, score, pages: pub.length + live.length + P.filter(p => p.type === 'page' || p.type === 'home').length };
+}
+function seoHealthTab() {
+  const H = seoHealth(); SHX.res = H; SHX.at = Date.now();
+  const bad = H.list.filter(c => c.items.length).sort((a, b) => ({ crit: 0, warn: 1, tip: 2 }[a.lv] - { crit: 0, warn: 1, tip: 2 }[b.lv]) || b.items.length - a.items.length), ok = H.list.filter(c => !c.items.length);
+  const n = lv => bad.filter(c => c.lv === lv), cnt = lv => n(lv).reduce((s, c) => s + c.items.length, 0);
+  const pill = lv => `<span class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[11.5px] whitespace-nowrap" style="color:${SHX_LV[lv][1]};background:${SHX_LV[lv][2]}"><i style="width:6px;height:6px;border-radius:9px;background:currentColor;display:inline-block"></i>${SHX_LV[lv][0]}</span>`;
+  const card = (l, v, s, ic, col) => `<div class="card p-5 grid gap-1"><span class="flex items-start justify-between gap-2"><span class="text-[12.5px] text-muted">${l}</span><span class="w-9 h-9 rounded-full bg-white grid place-items-center shrink-0" style="margin:-4px -4px 0 0;box-shadow:0 4px 14px -8px rgb(58 0 7/.45);color:${col || 'inherit'}"><i data-lucide="${ic}" class="w-4 h-4"></i></span></span><span class="text-[24px] font-medium tnum leading-tight mt-2" style="color:${col || 'inherit'}">${v}</span><span class="text-[12px] text-muted">${s}</span></div>`;
+  const sc = H.score, scol = sc >= 85 ? '#1e7a46' : sc >= 60 ? '#9a5b00' : '#a3222c';
+  const when = new Date(SHX.at).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return `<div data-kwcards class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">${card('คะแนนสุขภาพ SEO', `${sc}<span class="text-[14px] text-muted"> /100</span>`, `ตรวจ ${nf(H.pages)} หน้า · ${H.list.length} หัวข้อ`, 'heart-pulse', scol)}${card('ร้ายแรง', n('crit').length, `${nf(cnt('crit'))} จุด · ควรแก้ทันที`, 'octagon-alert', n('crit').length ? '#a3222c' : '')}${card('ควรแก้', n('warn').length, `${nf(cnt('warn'))} จุด`, 'triangle-alert', n('warn').length ? '#9a5b00' : '')}${card('แนะนำ', n('tip').length, `${nf(cnt('tip'))} จุด · ทำแล้วดีขึ้น`, 'lightbulb', '')}</div>
+    <div class="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 pb-3"><p class="font-medium">ปัญหาที่พบ <span class="text-muted font-normal">(สแกนล่าสุด ${when})</span></p>${SHX.nfLoading ? '<span class="text-[11.5px] text-muted">กำลังโหลดหน้า 404 จากผู้เข้าชมจริง…</span>' : ''}</div>
+    <div class="overflow-x-auto"><table class="tbl min-w-[860px]"><thead><tr><th>ปัญหา</th><th>ระดับ</th><th class="text-right">จำนวน</th><th>ผลกระทบ</th><th></th></tr></thead><tbody>
+    ${bad.map(c => `<tr class="click" onclick="seoHealthOpen('${c.k}')"><td class="min-w-[260px]">${esc(c.l)}</td><td>${pill(c.lv)}</td><td class="text-right tnum">${nf(c.items.length)}</td><td class="text-muted">${esc(c.impact)}</td><td class="text-right"><button class="btn btn-o !h-8" onclick="event.stopPropagation();seoHealthOpen('${c.k}')">ดูรายการ</button></td></tr>`).join('') || '<tr><td colspan="5" class="text-center py-12 text-[#1e7a46]">ไม่พบปัญหา · เว็บผ่านการตรวจทุกหัวข้อ</td></tr>'}
+    </tbody></table></div>
+    ${ok.length ? `<details class="border-t border-line"><summary class="px-5 py-3 cursor-pointer text-[12.5px] text-muted select-none">ผ่านแล้ว ${ok.length} หัวข้อ</summary><ul class="px-5 pb-4 grid sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-2 text-[12.5px]">${ok.map(c => `<li class="flex items-center gap-2"><i data-lucide="circle-check" class="w-4 h-4 shrink-0" style="color:#1e7a46"></i>${esc(c.l.replace(/^มี/, ''))}</li>`).join('')}</ul></details>` : ''}`;
+}
+function seoHealthOpen(k) {
+  const c = SHX.res?.list.find(x => x.k === k); if (!c) return;
+  const max = 300, L = c.items.slice(0, max);
+  openDrawer(`<div class="h-16 px-5 flex items-center justify-between border-b border-line shrink-0"><div class="min-w-0"><p class="text-[11px] text-muted">ตรวจสุขภาพ · ${SHX_LV[c.lv][0]} · ${nf(c.items.length)} รายการ</p><p class="font-medium truncate">${esc(c.l)}</p></div><button class="btn btn-g !px-2" onclick="closeDrawer()"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+    <div class="px-5 py-3 border-b border-line text-[12.5px] text-muted flex items-start gap-2"><i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5"></i><span class="flex-1">${esc(c.impact)}</span>${c.fix ? `<button class="btn btn-o !h-8 shrink-0" onclick="${c.fix}">ไปแก้ที่นี่</button>` : ''}</div>
+    <div class="flex-1 overflow-y-auto divide-y" style="border-color:rgb(35 20 22/.06)">${L.map(it => `<button class="w-full text-left px-5 py-3 flex items-center gap-3" style="border-color:rgb(35 20 22/.06)" onclick="${it.go}"><span class="min-w-0 flex-1"><span class="block text-[13px] truncate">${esc(it.name)}</span>${it.sub ? `<span class="block text-[11.5px] text-muted break-all">${esc(it.sub)}</span>` : ''}</span><i data-lucide="chevron-right" class="w-4 h-4 text-muted shrink-0"></i></button>`).join('')}
+      ${c.items.length > max ? `<p class="px-5 py-3 text-[12px] text-muted">และอีก ${nf(c.items.length - max)} รายการ · ดาวน์โหลดทั้งหมดได้จากปุ่ม “รายงาน”</p>` : ''}</div>`);
+}
+/* the tab: added to the bar after คีย์เวิร์ด; the body replaces the card content like the other tabs */
+{ const _vh = vSeo; vSeo = function () {
+  const on = SEOV.tab === 'health'; if (on) SEOV.tab = 'schema';
+  try { _vh(); } finally { if (on) SEOV.tab = 'health'; }
+  const bar = $('#view .tabbar'); if (!bar) return;
+  if (on) bar.querySelector('.tab.on')?.classList.remove('on');
+  const kw = [...bar.querySelectorAll('.tab')].find(t => (t.getAttribute('onclick') || '').includes("'keywords'"));
+  (kw || bar.lastElementChild).insertAdjacentHTML('afterend', `<button class="tab ${on ? 'on' : ''}" onclick="SEOV.tab='health';vSeo()">ตรวจสุขภาพ</button>`);
+  if (on) { const b = $('#seoBody'); if (b) { b.classList.remove('p-4', 'sm:p-5'); b.classList.add('p-0'); b.innerHTML = seoHealthTab(); const c = b.querySelector('[data-kwcards]'); if (c) bar.insertAdjacentElement('afterend', c); } }
+  icons();
+}; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
+/* รายงาน on this tab: every problem with every affected page */
+{ const _sr = seoReport; seoReport = function () {
+  if (SEOV.tab !== 'health') return _sr();
+  const H = SHX.res || seoHealth(), rows = [['ปัญหา', 'ระดับ', 'ผลกระทบ', 'หน้า', 'รายละเอียด']];
+  H.list.filter(c => c.items.length).forEach(c => c.items.forEach(it => rows.push([c.l, SHX_LV[c.lv][0], c.impact, it.name, it.sub])));
+  const csv = '﻿' + rows.map(r => r.map(x => `"${String(x ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `seo-health-${iso(TODAY)}.csv`; a.click();
+  toast(`ดาวน์โหลดรายงาน ${rows.length - 1} รายการแล้ว`);
+}; }
+
 /* ---------- วิเคราะห์เว็บไซต์ → Meta: สถานะจริงจากเซิร์ฟเวอร์ + event ที่ระบบส่งจริง (conversion_events) ---------- */
 const MS = { d: null, at: 0, loading: false };
 function msLoad() {
