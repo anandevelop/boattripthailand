@@ -430,7 +430,7 @@ function route() {
   CUR = PAGES.find(x => x[0] === p) ? p : 'dashboard';
   const pg = PAGES.find(x => x[0] === CUR);
   const newCnt = BOOKINGS.filter(b => b.status === 'new').length;
-  $('#nav').innerHTML = PAGES.map(x => x[0] === '—' ? `<p class="px-3 pt-5 pb-1.5 text-[10px] uppercase tracking-[.16em] text-muted">${x[1]}</p>` : `<a href="#/${x[0]}" class="nav-i ${x[0] === CUR ? 'on' : ''}"><i data-lucide="${x[2]}" class="w-[18px] h-[18px]"></i>${x[1]}${x[0] === 'bookings' && newCnt ? `<span class="cnt">${newCnt}</span>` : ''}</a>`).join('');
+  $('#nav').innerHTML = PAGES.map(x => x[0] === '—' ? `<p class="px-3 pt-5 pb-1.5 text-[11px] font-medium tracking-[.02em] text-muted">${x[1]}</p>` : `<a href="#/${x[0]}" class="nav-i ${x[0] === CUR ? 'on' : ''}"><i data-lucide="${x[2]}" class="w-[18px] h-[18px]"></i>${x[1]}${x[0] === 'bookings' && newCnt ? `<span class="cnt">${newCnt}</span>` : ''}</a>`).join('');
   $('#pageTitle').textContent = pg[1]; $('#crumb').textContent = 'Boat Trip Thailand · ระบบหลังบ้าน';
   if (CUR === 'boats' && arg) { $('#pageTitle').textContent = 'แก้ไขเรือ'; vBoatEdit(arg); } else pg[3]();
   toggleSide(false); icons();
@@ -3885,6 +3885,14 @@ function artDelGo(id) {
   $('#view table.tbl thead tr')?.insertAdjacentHTML('beforeend', '<th></th>');
   $$('#view table.tbl tbody tr.click').forEach(tr => { const id = +(tr.getAttribute('onclick').match(/articles\/(\d+)/) || [])[1]; if (id) tr.insertAdjacentHTML('beforeend', `<td class="text-right"><button class="btn btn-g !px-2 !h-8 text-muted hover:text-[#b42318]" title="ลบบทความ" onclick="event.stopPropagation();artDel(${id})"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>`); });
   icons(); }; PAGES.find(p => p[0] === 'articles')[3] = vArticles; }
+
+/* ---------- sidebar groups: แดชบอร์ด · งานขาย · สินค้า & ราคา · เว็บไซต์ · การตลาด · ทีม & ระบบ ---------- */
+{ const G = [[null, ['dashboard']], ['งานขาย', ['bookings', 'calendar', 'customers']], ['สินค้า & ราคา', ['boats', 'seasons', 'activities']],
+    ['เว็บไซต์', ['content', 'articles', 'media']], ['การตลาด', ['seo', 'analytics', 'audiences']], ['ทีม & ระบบ', ['team', 'audit', 'settings']]];
+  const pg = PAGES.filter(p => p[0] !== '—'), byK = new Map(pg.map(p => [p[0], p])), used = new Set(), out = [];
+  for (const [h, ks] of G) { const items = ks.map(k => byK.get(k)).filter(Boolean); if (!items.length) continue; if (h) out.push(['—', h]); items.forEach(p => { out.push(p); used.add(p); }); }
+  out.push(...pg.filter(p => !used.has(p)));   // a page added later and not grouped yet: at the end, under ทีม & ระบบ
+  PAGES.length = 0; PAGES.push(...out); }
 
 /* ---------- site settings ---------- */
 if (BOOT.sitecfg) Object.assign(SITECFG, BOOT.sitecfg, { tab: SITECFG.tab });
