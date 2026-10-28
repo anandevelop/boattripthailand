@@ -2,6 +2,7 @@ import 'server-only';
 import { desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import { auditLogs, boats, customers, leadActivities, leads, media, posts, redirects, settings, users, type Boat, type Customer, type Lead, type Post, type User } from '@/db/schema';
+import { dealsFor } from './lead-guard';
 import { CONTACT_LABEL, STATUS_LABEL } from './lead-meta';
 import { can, permsOf, ROLE_LABEL, type Perm } from './perms';
 import { siteData } from './site-render';
@@ -44,7 +45,7 @@ export const avatarOf = (u: User) => u.profile?.avatar || ava(u.name);
 const DIAL: [string, string][] = [['66', '🇹🇭 TH'], ['44', '🇬🇧 UK'], ['49', '🇩🇪 DE'], ['33', '🇫🇷 FR'], ['39', '🇮🇹 IT'], ['46', '🇸🇪 SE'], ['47', '🇳🇴 NO'], ['45', '🇩🇰 DK'], ['31', '🇳🇱 NL'], ['41', '🇨🇭 CH'], ['7', '🇷🇺 RU'], ['86', '🇨🇳 CN'], ['82', '🇰🇷 KR'], ['81', '🇯🇵 JP'], ['91', '🇮🇳 IN'], ['61', '🇦🇺 AU'], ['65', '🇸🇬 SG'], ['60', '🇲🇾 MY'], ['971', '🇦🇪 AE'], ['1', '🇺🇸 US']];
 const countryOf = (c: Customer) => c.country || (c.phoneNorm.length === 10 && c.phoneNorm.startsWith('0') ? '🇹🇭 TH' : DIAL.find(([d]) => c.phoneNorm.startsWith(d))?.[1] ?? '🌐');
 export function customerToClient(c: Customer) {
-  return { id: c.id, name: c.name, country: countryOf(c), phone: c.phone, email: c.email ?? '', channel: '', tags: [] as string[], consent: c.marketingConsent, lang: c.lang };
+  return { id: c.id, name: c.name, country: countryOf(c), phone: c.phone, email: c.email ?? '', channel: '', tags: [] as string[], consent: c.marketingConsent, lang: c.lang, countryRaw: c.country ?? '', notes: c.notes ?? '' };
 }
 type Act = typeof leadActivities.$inferSelect;
 function actText(a: Act, names: Map<string, string>) {
@@ -145,6 +146,7 @@ export async function adminBoot(me: User) {
     teamImg: Object.fromEntries(team.map(u => [u.id, avatarOf(u)])),
     names: Object.fromEntries(team.map(u => [u.id, u.name])),
     leads: LC,
+    deals: await dealsFor(LC.map(l => l.dbId)),
     customers: CC,
     audit: can(me, 'audit') ? await auditList() : [],
     fleet, extra: site.EXTRA,

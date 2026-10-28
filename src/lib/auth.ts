@@ -122,6 +122,8 @@ export async function ensureTotpSecret(u: User) {
 /** Current fully-authenticated user, or null */
 export async function currentUser() {
   const s = await rawSession();
+  // a role that now requires 2FA but has not set it up yet: end the old session so the next login asks for it
+  if (s && s.mfaVerified && needsMfa(s.user) && !s.user.totpEnabled) { await db.delete(sessions).where(eq(sessions.id, s.id)); return null; }
   return s && s.mfaVerified ? s.user : null;
 }
 

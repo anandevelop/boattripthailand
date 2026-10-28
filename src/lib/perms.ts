@@ -28,8 +28,8 @@ export const ROLE_PERMS: Record<User['role'], Perm[]> = {
   SALES: ['leads'],
 };
 
-/** Roles that must use two-factor authentication */
-export const MFA_ROLES: User['role'][] = ['SUPER_ADMIN', 'ADMIN'];
+/** Roles that must use two-factor authentication — everyone: sales see customers' names, phones and WhatsApp too */
+export const MFA_ROLES: User['role'][] = ['SUPER_ADMIN', 'ADMIN', 'SALES'];
 
 export function permsOf(u: Pick<User, 'role' | 'perms'>): Perm[] {
   const custom = (u.perms ?? []).filter((p): p is Perm => p in PERMS);

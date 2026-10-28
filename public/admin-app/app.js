@@ -3449,7 +3449,7 @@ vTeam = function () {
     <div class="card overflow-hidden"><div class="p-4 border-b border-line flex items-center justify-between gap-3"><div><p class="font-medium">สิทธิ์ตามบทบาท</p><p class="text-[12px] text-muted">บังคับใช้ทุกหน้า ทุกปุ่ม และทุก API · ปรับรายคนได้ในหน้าแก้ไขสมาชิก</p></div></div>
       <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>สิทธิ์</th>${Object.entries(ROLES).map(([k, [l]]) => `<th class="text-center">${l}</th>`).join('')}</tr></thead><tbody>
         ${PERMS.map(([k, l]) => `<tr><td>${l}</td>${Object.keys(ROLES).map(r => `<td class="text-center">${ROLE_PERMS[r].includes(k) ? '<i data-lucide="check" class="w-4 h-4 inline text-[#1e7a46]"></i>' : '<span class="text-[#d6cccc]">—</span>'}</td>`).join('')}</tr>`).join('')}
-        <tr><td>ยืนยัน 2 ขั้นตอน (2FA)</td>${Object.keys(ROLES).map(r => `<td class="text-center text-[11px] ${r !== 'sales' ? 'text-maroon' : 'text-muted'}">${r !== 'sales' ? 'บังคับ' : 'ไม่บังคับ'}</td>`).join('')}</tr>
+        <tr><td>ยืนยัน 2 ขั้นตอน (2FA)</td>${Object.keys(ROLES).map(r => `<td class="text-center text-[11px] text-maroon">บังคับ</td>`).join('')}</tr>
       </tbody></table></div></div>
     <div class="space-y-5">
       <div class="card p-4"><p class="font-medium mb-3">เข้าระบบล่าสุด</p><div class="space-y-2.5">${TEAM.filter(t => !t.deleted).map(t => `<div class="flex items-center gap-2.5"><img src="${TEAM_IMG[t.id]}" class="w-7 h-7 rounded-full object-cover"/><div class="min-w-0 flex-1"><p class="text-[13px] leading-tight">${t.name} <span class="text-muted text-[11px]">· ${ROLES[t.roleKey][0]}</span></p><p class="text-[11px] text-muted">${t.id === ME?.id ? 'ออนไลน์อยู่ · ' + DEVICE : lastLogin(t.id)}</p></div>${t.active ? '' : '<span class="pill bg-sand text-muted">ปิด</span>'}</div>`).join('')}</div>
@@ -3653,7 +3653,7 @@ teamDraw = function (open) {
   if (!TE.isNew && can('team')) {
     const box = d.querySelector('.flex-1.overflow-y-auto');
     box?.insertAdjacentHTML('beforeend', `<div class="rounded-xl ring-1 ring-line p-4"><p class="text-[12px] font-medium">ความปลอดภัยของบัญชี</p>
-      <p class="text-[11.5px] text-muted mt-1">${t.totp ? '2FA เปิดอยู่' : ['super', 'admin'].includes(t.roleKey) ? '2FA ยังไม่ได้ตั้ง (ต้องตั้งตอนเข้าระบบครั้งถัดไป)' : 'ไม่บังคับ 2FA สำหรับ Sales'} · LINE ${t.lineLinked ? 'เชื่อมแล้ว' : 'ยังไม่เชื่อม'}${t.lastLoginAt ? ' · เข้าระบบล่าสุด ' + relTs(t.lastLoginAt) : ' · ยังไม่เคยเข้าระบบ'}</p>
+      <p class="text-[11.5px] text-muted mt-1">${t.totp ? '2FA เปิดอยู่' : '2FA ยังไม่ได้ตั้ง (ต้องตั้งตอนเข้าระบบครั้งถัดไป)'} · LINE ${t.lineLinked ? 'เชื่อมแล้ว' : 'ยังไม่เชื่อม'}${t.lastLoginAt ? ' · เข้าระบบล่าสุด ' + relTs(t.lastLoginAt) : ' · ยังไม่เคยเข้าระบบ'}</p>
       <div class="flex flex-wrap items-center gap-3 mt-3"><button class="btn btn-o !h-8" onclick="teamReset('${t.id}')"><i data-lucide="key-round" class="w-3.5 h-3.5"></i>ตั้งรหัสผ่านชั่วคราว</button>${t.totp ? `<label class="flex items-center gap-2 text-[12px]"><input id="teR2" type="checkbox" class="accent-[#70000e] w-4 h-4"/>ให้ตั้ง 2FA ใหม่ด้วย (มือถือหาย)</label>` : ''}</div>
       <p class="text-[11px] text-muted mt-2">ตั้งรหัสใหม่ = ออกจากระบบทุกอุปกรณ์ของผู้ใช้นี้ทันที</p></div>`);
     icons();
@@ -5246,6 +5246,130 @@ route = function () {
 }; }
 rerender = function () { route(); };
 PAGES.forEach(p => { if (p[0] === 'bookings') p[1] = 'ลีด'; });
+/* =====================================================================
+   ลีด & ลูกค้า: no double booking (server refuses a second WON for the same boat / date / slot; admins can
+   confirm on purpose), the agreed price · deposit · payments of a lead, and customer edit / merge / PDPA erase.
+   ===================================================================== */
+const DEALS = BOOT.deals || {};
+const dealOf = l => DEALS[l.dbId] || { price: null, deposit: null, note: '', payments: [], paid: 0, balance: null };
+/* ---------- ปิดการขาย: the server checks the boat is still free ---------- */
+{ const _ss = setStatus; setStatus = function (id, s) {
+  if (s !== 'won') return _ss(id, s);
+  const l = BOOKINGS.find(x => x.id === id); if (!l || l.status === s) return;
+  if (!can('bookings_all') && !ownB(l)) return toast('ไม่มีสิทธิ์แก้ลีดนี้');
+  wonGo(id, false);
+}; }
+function wonGo(id, force) {
+  api('POST', `leads/${encodeURIComponent(id)}/status`, { status: 'won', force }).then(r => {
+    syncLead(r); closeModal();
+    const l = BOOKINGS.find(x => x.id === id);
+    toast(force ? 'ปิดการขายแล้ว (ยืนยันจองซ้อน)' : 'ปิดการขายแล้ว · ใส่ราคาที่ตกลงกับลูกค้าด้วย');
+    if (l && dealOf(l).price == null) { bookingDetail(id); setTimeout(() => { const i = $('#dlPrice'); i?.scrollIntoView({ block: 'center' }); i?.focus(); }, 60); }
+  }).catch(e => {
+    rerender(); if (DRAWER_LEAD === id && $('#drawer').classList.contains('open')) bookingDetail(id);
+    if (e.status !== 409) return fail(e);
+    openModal(`<div class="p-5 grid gap-2"><p class="font-medium flex items-center gap-2"><i data-lucide="calendar-x-2" class="w-4 h-4 text-[#a3222c]"></i>เรือไม่ว่างในรอบนี้</p><p class="text-[13px]">${esc(e.message)}</p>
+      <p class="text-[12px] text-muted">ระบบไม่ให้ปิดการขายเรือลำเดียวกัน วันเดียวกัน รอบเดียวกันซ้ำ · เปลี่ยนวัน รอบ หรือเรือในลีดนี้ก่อน${can('bookings_all') ? ' · หรือยืนยันถ้าตั้งใจจองซ้อน (เช่น เรือ 2 ลำชื่อเดียวกัน)' : ''}</p>
+      <div class="flex justify-end gap-2 mt-3"><button class="btn btn-o" onclick="closeModal()">ปิด</button>${can('bookings_all') ? `<button class="btn btn-p !bg-[#b42318]" onclick="wonGo('${id}',true)">ยืนยันจองซ้อน</button>` : ''}</div></div>`);
+  });
+}
+/* ---------- the deal: agreed price, deposit, payments ---------- */
+function dealApi(id, body, msg) {
+  const l = BOOKINGS.find(x => x.id === id); if (!l) return;
+  return api('POST', `leads/${encodeURIComponent(id)}/deal`, body).then(r => { if (r.deal) DEALS[l.dbId] = r.deal; syncLead(r); if (msg) toast(msg); }).catch(e => { fail(e); if (DRAWER_LEAD === id) bookingDetail(id); });
+}
+const dlMoney = v => String(v ?? '').replace(/[,\s฿]/g, '');
+function dealBox(l) {
+  const d = dealOf(l), b = bySlug(l.boat), ro = isRO() || (!can('bookings_all') && !ownB(l)), dis = ro ? 'disabled' : '';
+  const due = d.deposit != null && d.paid < d.deposit ? `<span class="pill" style="background:#fff4e0;color:#9a5b00">ยังขาดมัดจำ ${baht(d.deposit - d.paid)}</span>` : d.balance != null && d.balance <= 0 ? '<span class="pill st-confirmed">ชำระครบแล้ว</span>' : d.price != null && d.paid ? '<span class="pill st-quote">รับมัดจำแล้ว</span>' : '';
+  const M = ['โอน', 'บัตรเครดิต', 'เงินสด', 'PayPal', 'อื่นๆ'];
+  return `<div id="dealBox" class="rounded-xl ring-1 ring-line p-4 grid gap-3">
+    <div class="flex items-center justify-between gap-2"><p class="font-medium flex items-center gap-2"><i data-lucide="receipt-text" class="w-4 h-4 text-maroon"></i>ราคาที่ตกลง & การชำระเงิน</p>${due}</div>
+    <div class="grid grid-cols-2 gap-3"><label class="grid gap-1"><span class="lbl !mb-0">ราคาที่ตกลง (บาท)</span><input id="dlPrice" class="inp tnum" inputmode="decimal" ${dis} value="${d.price ?? ''}" placeholder="${b?.from_ ? 'เริ่มต้น ' + nf(b.from_) : 'เช่น 85000'}" onchange="dealApi('${l.id}',{op:'set',price:dlMoney(this.value)},'บันทึกราคาที่ตกลงแล้ว')"/></label>
+      <label class="grid gap-1"><span class="lbl !mb-0">มัดจำที่ต้องจ่าย</span><input class="inp tnum" inputmode="decimal" ${dis} value="${d.deposit ?? ''}" placeholder="${d.price ? 'เช่น ' + nf(Math.round(d.price / 2)) : ''}" onchange="dealApi('${l.id}',{op:'set',deposit:dlMoney(this.value)},'บันทึกมัดจำแล้ว')"/></label></div>
+    <label class="grid gap-1"><span class="lbl !mb-0">รวมอะไรบ้าง / ส่วนลด</span><input class="inp" ${dis} value="${esc(d.note)}" placeholder="เช่น Full day + BBQ ส่วนลด 5,000 · ไม่รวมค่ารถรับส่ง" onchange="dealApi('${l.id}',{op:'set',note:this.value},'บันทึกแล้ว')"/></label>
+    <div class="grid grid-cols-3 gap-2 text-center"><div class="rounded-lg bg-sand p-2"><p class="text-[11px] text-muted">ราคา</p><p class="font-medium tnum">${d.price != null ? baht(d.price) : '—'}</p></div><div class="rounded-lg bg-sand p-2"><p class="text-[11px] text-muted">รับแล้ว</p><p class="font-medium tnum" style="color:#1e7a46">${baht(d.paid)}</p></div><div class="rounded-lg bg-sand p-2"><p class="text-[11px] text-muted">คงเหลือ</p><p class="font-medium tnum" style="color:${d.balance > 0 ? '#a3222c' : 'inherit'}">${d.balance != null ? baht(Math.max(0, d.balance)) : '—'}</p></div></div>
+    ${d.payments.length ? `<ul class="grid gap-1.5">${d.payments.map(p => `<li class="flex items-center gap-2 text-[12.5px]"><i data-lucide="circle-check" class="w-3.5 h-3.5 shrink-0" style="color:#1e7a46"></i><span class="tnum">${fmtD(p.at)}</span><span class="font-medium tnum">${baht(p.amount)}</span><span class="text-muted truncate flex-1">${esc(p.method)}${p.note ? ' · ' + esc(p.note) : ''} · ${esc(p.by)}</span>${ro ? '' : `<button class="text-muted hover:text-[#a3222c]" title="ลบรายการนี้" onclick="if(confirm('ลบรายการรับเงิน ${baht(p.amount)} ?'))dealApi('${l.id}',{op:'unpay',id:'${p.id}'},'ลบรายการแล้ว')"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>`}</li>`).join('')}</ul>` : ''}
+    ${ro ? '' : `<div class="grid grid-cols-[1fr_auto] sm:grid-cols-[110px_120px_1fr_auto] gap-2 items-end pt-2 border-t border-line">
+      <input id="dpAmt" class="inp !h-9 tnum" inputmode="decimal" placeholder="จำนวนเงิน"/><input id="dpAt" type="date" class="inp !h-9" value="${iso(TODAY)}"/>
+      <div class="flex gap-2 col-span-2 sm:col-span-1"><select id="dpM" class="inp !h-9 !w-auto">${M.map(m => `<option>${m}</option>`).join('')}</select><input id="dpN" class="inp !h-9 flex-1 min-w-0" placeholder="หมายเหตุ (เลขที่สลิป)"/></div>
+      <button class="btn btn-p !h-9" onclick="const a=dlMoney($('#dpAmt').value);if(!+a)return toast('ใส่จำนวนเงินที่ได้รับ');dealApi('${l.id}',{op:'pay',amount:a,at:$('#dpAt').value,method:$('#dpM').value,note:$('#dpN').value},'บันทึกรับเงินแล้ว')">รับเงิน</button></div>`}
+    <p class="text-[11px] text-muted">ราคานี้ไม่เปลี่ยนตามฤดูกาลที่แก้ภายหลัง${d.updatedBy ? ` · แก้ล่าสุดโดย ${esc(d.updatedBy)} ${fmtD(iso(new Date(d.updatedAt)))}` : ''}</p></div>`;
+}
+{ const _bd = bookingDetail; bookingDetail = function (id) {
+  _bd(id); const l = BOOKINGS.find(x => x.id === id), d = $('#drawer');
+  if (!l || !d.classList.contains('open') || $('#dealBox')) return;
+  // after "สิ่งที่สนใจ" (boat, date, guests)
+  const anchor = [...d.querySelectorAll('p.lbl')].find(x => x.textContent === 'สิ่งที่สนใจ')?.parentElement || d.querySelector('.overflow-y-auto > *');
+  anchor?.insertAdjacentHTML('afterend', dealBox(l));
+  icons();
+}; }
+/* ---------- customers: edit · merge · PDPA erase ---------- */
+function custApi(id, op, method, body) { return api(method, `customers/${encodeURIComponent(id)}${op === 'edit' ? '' : '/' + op}`, body); }
+function custEdit(id) {
+  const c = custOf(id); if (!c) return;
+  const f = (k, l, v, t = 'text', ph = '') => `<label class="grid gap-1"><span class="lbl !mb-0">${l}</span><input id="ce_${k}" type="${t}" class="inp" value="${esc(v || '')}" placeholder="${ph}"/></label>`;
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">แก้ไขข้อมูลลูกค้า</p></div>
+    <div class="p-5 grid gap-3">${f('name', 'ชื่อ', c.name)}<div class="grid grid-cols-2 gap-3">${f('phone', 'เบอร์โทร', c.phone, 'tel')}${f('wa', 'WhatsApp (ถ้าต่างจากเบอร์โทร)', c.wa, 'tel')}</div>
+      <div class="grid grid-cols-2 gap-3">${f('email', 'อีเมล', c.email, 'email')}${f('country', 'ประเทศ', c.countryRaw ?? '', 'text', 'เช่น Thailand (ว่าง = ดูจากรหัสโทรศัพท์)')}</div>
+      <label class="grid gap-1"><span class="lbl !mb-0">ภาษาที่ติดต่อ</span><select id="ce_lang" class="inp"><option value="th" ${c.lang !== 'en' ? 'selected' : ''}>ไทย</option><option value="en" ${c.lang === 'en' ? 'selected' : ''}>English</option></select></label>
+      <label class="grid gap-1"><span class="lbl !mb-0">บันทึกเกี่ยวกับลูกค้า</span><textarea id="ce_notes" class="inp" rows="3" placeholder="เช่น ชอบเรือใบ มากับครอบครัว แพ้กุ้ง…">${esc(c.notes || '')}</textarea></label></div>
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" onclick="custEditGo('${c.id}')">บันทึก</button></div>`);
+}
+function custEditGo(id) {
+  const v = k => $('#ce_' + k)?.value ?? '';
+  custApi(id, 'edit', 'PUT', { name: v('name'), phone: v('phone'), wa: v('wa'), email: v('email'), country: v('country'), lang: v('lang'), notes: v('notes') }).then(r => {
+    const i = CUSTOMERS.findIndex(c => c.id === id); if (i >= 0) CUSTOMERS[i] = r.customer; AUDIT_DIRTY = true; closeModal(); rerender(); custDetail(id); toast('บันทึกข้อมูลลูกค้าแล้ว');
+  }).catch(fail);
+}
+function custMerge(id) {
+  const c = custOf(id), others = CUSTOMERS.filter(x => x.id !== id);
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">รวมลูกค้าซ้ำเข้ากับ ${esc(c.name)}</p><p class="text-[12px] text-muted mt-1">ลีดทั้งหมดของรายการที่เลือกจะย้ายมาอยู่ที่ ${esc(c.name)} · ช่องที่ว่างจะเติมจากรายการนั้น แล้วรายการนั้นถูกลบ</p>
+      <input class="inp mt-3" placeholder="ค้นหาชื่อ เบอร์ อีเมล…" oninput="const q=this.value.toLowerCase();$$('#cmList label').forEach(x=>x.classList.toggle('hidden',!x.dataset.k.includes(q)))"/></div>
+    <div id="cmList" class="overflow-y-auto" style="max-height:46vh">${others.map(x => { const n = BOOKINGS.filter(l => l.cust === x.id).length, same = x.phone.replace(/\D/g, '').slice(-8) === c.phone.replace(/\D/g, '').slice(-8) || (x.email && x.email === c.email) || x.name.trim().toLowerCase() === c.name.trim().toLowerCase();
+      return `<label class="flex items-center gap-3 px-5 py-2.5 border-b border-line cursor-pointer ${same ? 'order-first' : ''}" data-k="${esc((x.name + ' ' + x.phone + ' ' + x.email + ' ' + (x.wa || '')).toLowerCase())}"><input type="radio" name="cmFrom" value="${x.id}"/><span class="flex-1 min-w-0"><span class="block text-[13px] truncate">${esc(x.name)}${same ? ' <span class="lang-b mid">น่าจะซ้ำ</span>' : ''}</span><span class="block text-[11.5px] text-muted tnum truncate">${esc(x.phone)}${x.email ? ' · ' + esc(x.email) : ''}</span></span><span class="text-[11.5px] text-muted">${n} ลีด</span></label>`; }).join('')}</div>
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" onclick="custMergeGo('${id}')">รวมลูกค้า</button></div>`);
+  $('#cmList').style.display = 'flex'; $('#cmList').style.flexDirection = 'column';
+}
+function custMergeGo(id) {
+  const from = $('input[name=cmFrom]:checked')?.value; if (!from) return toast('เลือกลูกค้าที่จะรวม');
+  custApi(id, 'merge', 'POST', { from }).then(r => {
+    const i = CUSTOMERS.findIndex(c => c.id === id); if (i >= 0) CUSTOMERS[i] = r.customer;
+    const j = CUSTOMERS.findIndex(c => c.id === r.removed); if (j >= 0) CUSTOMERS.splice(j, 1);
+    BOOKINGS.forEach(l => { if (l.cust === r.removed) l.cust = id; });
+    AUDIT_DIRTY = true; closeModal(); rerender(); custDetail(id); toast(`รวมลูกค้าแล้ว · ย้ายมา ${r.moved} ลีด`);
+  }).catch(fail);
+}
+function custErase(id) {
+  const c = custOf(id), L = BOOKINGS.filter(l => l.cust === id), won = L.filter(l => l.status === 'won').length;
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ลบข้อมูลลูกค้าตามคำขอ (PDPA)</p><p class="text-[12.5px] mt-1">${esc(c.name)} · ${esc(c.phone)} · ลีด ${L.length} รายการ${won ? ` (ปิดการขายแล้ว ${won})` : ''}</p></div>
+    <div class="p-5 grid gap-2 text-[12.5px]">
+      <label class="flex gap-2.5 items-start p-3 rounded-xl ring-1 ring-line cursor-pointer"><input type="radio" name="ceMode" value="anonymise" checked class="mt-0.5"/><span><b class="font-medium">ลบข้อมูลส่วนบุคคล</b> · แนะนำ<br/><span class="text-muted text-[11.5px]">ลบชื่อ เบอร์ อีเมล WhatsApp ข้อความจากลูกค้า บันทึก IP และข้อมูลโฆษณา · เก็บวันที่ เรือ และยอดขายไว้ทำบัญชีและภาษี</span></span></label>
+      <label class="flex gap-2.5 items-start p-3 rounded-xl ring-1 ring-line ${won ? 'opacity-50' : 'cursor-pointer'}"><input type="radio" name="ceMode" value="delete" ${won ? 'disabled' : ''} class="mt-0.5"/><span><b class="font-medium">ลบทั้งหมด</b><br/><span class="text-muted text-[11.5px]">${won ? 'ใช้ไม่ได้ เพราะมีการจองที่ปิดการขายแล้ว (ต้องเก็บไว้ทำบัญชี)' : 'ลบลูกค้าและลีดทั้งหมดของลูกค้ารายนี้ออกจากระบบ'}</span></span></label>
+      <p class="text-muted text-[11.5px] mt-1">กู้คืนไม่ได้ · บันทึกกิจกรรมจะเก็บไว้แค่ว่ามีการลบตามคำขอ เป็นหลักฐานว่าดำเนินการแล้ว</p>
+      <label class="grid gap-1 mt-1"><span class="lbl !mb-0">พิมพ์ ลบ เพื่อยืนยัน</span><input id="ceOk" class="inp" placeholder="ลบ"/></label></div>
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p !bg-[#b42318]" onclick="custEraseGo('${id}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบข้อมูล</button></div>`);
+}
+function custEraseGo(id) {
+  if ($('#ceOk').value.trim() !== 'ลบ') return toast('พิมพ์คำว่า ลบ เพื่อยืนยัน');
+  const mode = $('input[name=ceMode]:checked')?.value || 'anonymise';
+  custApi(id, 'erase', 'POST', { mode }).then(() => {
+    if (mode === 'delete') { const i = CUSTOMERS.findIndex(c => c.id === id); if (i >= 0) CUSTOMERS.splice(i, 1); for (let i = BOOKINGS.length - 1; i >= 0; i--) if (BOOKINGS[i].cust === id) BOOKINGS.splice(i, 1); }
+    else { const c = custOf(id); if (c) Object.assign(c, { name: 'ลบตามคำขอ (PDPA)', phone: '—', email: '', wa: '', country: '', notes: '', consent: false }); BOOKINGS.forEach(l => { if (l.cust === id) Object.assign(l, { message: '', note: '' }); }); }
+    AUDIT_DIRTY = true; closeModal(); closeDrawer(); rerender(); toast(mode === 'delete' ? 'ลบลูกค้าและลีดแล้ว' : 'ลบข้อมูลส่วนบุคคลแล้ว · เก็บสถิติการจองไว้');
+  }).catch(fail);
+}
+{ const _cd = custDetail; custDetail = function (id) {
+  _cd(id); const d = $('#drawer'), c = custOf(id); if (!c || !d.classList.contains('open')) return;
+  const mine = can('bookings_all') || BOOKINGS.some(b => b.cust === id && ownB(b)), admin = can('bookings_all') && !isRO();
+  const box = d.querySelector('.overflow-y-auto');
+  if (box && mine && !isRO()) box.insertAdjacentHTML('afterbegin', `<div class="flex flex-wrap gap-2"><button class="btn btn-o !h-8" onclick="custEdit('${id}')"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>แก้ไข</button>${admin ? `<button class="btn btn-o !h-8" onclick="custMerge('${id}')"><i data-lucide="merge" class="w-3.5 h-3.5"></i>รวมลูกค้าซ้ำ</button><button class="btn btn-o !h-8 text-[#b42318]" onclick="custErase('${id}')"><i data-lucide="user-x" class="w-3.5 h-3.5"></i>ลบข้อมูล (PDPA)</button>` : ''}</div>`);
+  // the notes box is saved now (through แก้ไข)
+  const ta = [...d.querySelectorAll('textarea')].find(t => t.placeholder.startsWith('ยังไม่รองรับ') || t.placeholder.startsWith('เช่น ชอบเรือใบ'));
+  if (ta) { ta.disabled = !mine || isRO(); ta.placeholder = 'เช่น ชอบเรือใบ มากับครอบครัว แพ้กุ้ง…'; ta.value = c.notes || ''; ta.onchange = () => custApi(id, 'edit', 'PUT', { name: c.name, phone: c.phone, wa: c.wa, email: c.email, country: c.countryRaw ?? '', lang: c.lang, notes: ta.value }).then(r => { Object.assign(c, r.customer); toast('บันทึกแล้ว'); }).catch(fail); }
+  icons();
+}; }
+
 
 /* =====================================================================
    แปลอัตโนมัติ (Gemini API แบบฟรี) + ตัวนับโควตา — เซิร์ฟเวอร์: src/lib/translate.ts

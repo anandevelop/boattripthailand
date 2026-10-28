@@ -1,7 +1,7 @@
 import { and, eq, inArray, ne } from 'drizzle-orm';
 import { db } from '@/db';
 import { boats, customers, leadActivities, leads, posts, redirects, seasonCalendars, settings, users, type Boat, type Lead, type User } from '@/db/schema';
-import { adminBoot, leadsFor, auditList, boatToClient, CONTACT_FROM_CLIENT, LANG_FROM_CLIENT, leadClientById, permsFromClient, postToClient, ROLE_FROM_CLIENT, STATUS_FROM_CLIENT, userToClient, avatarOf } from '@/lib/admin-boot';
+import { adminBoot, leadsFor, auditList, boatToClient, customerToClient, CONTACT_FROM_CLIENT, LANG_FROM_CLIENT, leadClientById, permsFromClient, postToClient, ROLE_FROM_CLIENT, STATUS_FROM_CLIENT, userToClient, avatarOf } from '@/lib/admin-boot';
 import { audit, verifyAuditChain } from '@/lib/audit';
 import { currentUser, hashPassword, logout, passwordProblem, revokeSessions, verifyPassword } from '@/lib/auth';
 import { randomDigits, tempPassword } from '@/lib/crypto';
@@ -15,6 +15,7 @@ import { cleanSeo, SEO_KEY } from '@/lib/seo';
 import { analyticsData } from '@/lib/analytics';
 import { googleData } from '@/lib/google';
 import { pageSpeed } from '@/lib/pagespeed';
+import { BookingConflict, customerEdit, customerErase, customerMerge, dealOp, dealsFor, wonGuard } from '@/lib/lead-guard';
 import { aiSave, aiStore, cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
 import { sitemapStats, submitSitemap } from '@/lib/sitemap-tools';
 import { deleteDraft, listDrafts, QuotaError, saveDraft, translate, usage as trUsage } from '@/lib/translate';
@@ -56,7 +57,11 @@ async function leadOp(u: User, ref: string, op: string, b: Record<string, unknow
       const reason = str(b.lost) || undefined;
       if (reason && !LOST_REASONS.includes(reason)) throw new HttpError(400, 'เหตุผลไม่ถูกต้อง');
       if (s === 'LOST' && !reason && !l.lostReason) throw new HttpError(400, 'ต้องระบุเหตุผลที่ไม่สำเร็จ');
-      await setLeadStatus(l, s, u, { lostReason: reason });
+      // a boat can be WON once per date and slot (admins may confirm a deliberate overlap)
+      const force = s === 'WON' && !!b.force && can(u, 'leads_all');
+      try { await (s === 'WON' ? wonGuard(l, () => setLeadStatus(l, s, u, { lostReason: reason }), force) : setLeadStatus(l, s, u, { lostReason: reason })); }
+      catch (e) { if (e instanceof BookingConflict) throw new HttpError(409, e.message + (can(u, 'leads_all') ? '' : ' · ติดต่อแอดมินถ้าต้องการจองซ้อน')); throw e; }
+      if (force) await audit(actor(u), { action: 'update', entity: 'lead', ref: l.ref, label: l.ref, changes: [{ f: 'ปิดการขายซ้อนรอบ', from: null, to: 'ยืนยันโดย ' + u.name }] });
       if (['NEW', 'CONTACTED', 'TALKING'].includes(s) && !l.nextFollowUp && b.next) await touch({ nextFollowUp: str(b.next, 10) });
       break;
     }
@@ -120,9 +125,34 @@ async function leadOp(u: User, ref: string, op: string, b: Record<string, unknow
       }
       break;
     }
+    case 'deal': {
+      // agreed price, deposit and payments (kept apart from the season price list)
+      let deal; try { deal = await dealOp(l, u, b); } catch (e) { throw new HttpError(400, e instanceof Error ? e.message : 'บันทึกไม่สำเร็จ'); }
+      return json({ ...(await leadClientById(l.id)), deal });
+    }
     default: throw new HttpError(404, 'unknown op');
   }
   return leadOut(l.id);
+}
+
+/* ---------------- customers: edit · merge · PDPA erase ---------------- */
+async function customerOp(u: User, id: string, op: string, method: string, b: Record<string, unknown>) {
+  await need(u, 'leads');
+  const [c] = await db.select().from(customers).where(eq(customers.id, id));
+  if (!c) throw new HttpError(404, 'ไม่พบลูกค้า');
+  // sales: only customers with a lead assigned to them, and editing only
+  if (!can(u, 'leads_all')) {
+    const [mine] = await db.select({ id: leads.id }).from(leads).where(and(eq(leads.customerId, c.id), eq(leads.assignedToId, u.id))).limit(1);
+    if (!mine || op !== 'edit') { await audit(actor(u), { action: 'denied', entity: 'customer', ref: c.id, label: `พยายาม${op === 'edit' ? 'แก้' : op === 'merge' ? 'รวม' : 'ลบ'}ข้อมูลลูกค้าของคนอื่น`, ...(await clientInfo()) }); throw new HttpError(403, op === 'edit' ? 'ลูกค้ารายนี้ไม่ได้อยู่ในลีดของคุณ' : 'รวมหรือลบลูกค้าได้เฉพาะแอดมิน'); }
+  }
+  const run = async <T>(f: () => Promise<T>) => { try { return await f(); } catch (e) { const x = e as Error & { dup?: string }; throw Object.assign(new HttpError(400, x.message || 'บันทึกไม่สำเร็จ'), { dup: x.dup }); } };
+  if (op === 'edit' && method === 'PUT') { const row = await run(() => customerEdit(c, u, b)); return json({ customer: customerToClient(row) }); }
+  if (op === 'merge' && method === 'POST') {
+    const [from] = await db.select().from(customers).where(eq(customers.id, str(b.from, 60))); if (!from) throw new HttpError(404, 'ไม่พบลูกค้าที่จะรวม');
+    const r = await run(() => customerMerge(c, from, u)); return json({ customer: customerToClient(r.customer), removed: from.id, moved: r.moved });
+  }
+  if (op === 'erase' && method === 'POST') { const r = await run(() => customerErase(c, u, b.mode === 'delete' ? 'delete' : 'anonymise')); return json({ ok: true, ...r }); }
+  throw new HttpError(404, 'unknown op');
 }
 
 async function newLead(u: User, b: Record<string, unknown>) {
@@ -441,6 +471,7 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
     if (a === 'logout' && method === 'POST') { await logout(str(body.reason) === 'timeout' ? 'ไม่มีการใช้งาน 30 นาที · ออกจากระบบอัตโนมัติ' : 'ออกจากระบบ'); return json({ ok: true }); }
     if (a === 'leads' && !b0 && method === 'POST') return await newLead(me, body);
     if (a === 'leads' && b0 && c0 && method === 'POST') return await leadOp(me, decodeURIComponent(b0), c0, body);
+    if (a === 'customers' && b0) return await customerOp(me, decodeURIComponent(b0), c0 ?? 'edit', method, body);
     if (a === 'users') {
       if (!b0 && method === 'POST') return await teamOp(me, undefined, 'create', body);
       if (b0 && (method === 'PUT' || method === 'POST')) return await teamOp(me, b0, c0 ?? 'update', body);
