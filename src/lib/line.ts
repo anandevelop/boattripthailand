@@ -31,7 +31,6 @@ export function leadCard(l: { id: string; ref: string; name: string; phone: stri
   const title = opts.title ?? 'ลีดใหม่ · ตอบภายใน 15 นาที';
   const kind = /เลยเวลา/.test(title) ? 'late' : /ซ้ำ/.test(title) ? 'dup' : 'lead';
   const accent = kind === 'late' ? '#c4262e' : kind === 'dup' ? '#6b5e60' : C.maroon;
-  const scoreColor = l.score >= 60 ? '#b42318' : l.score >= 35 ? '#9a5b00' : '#3b6e8f';
   const at = l.at ? new Date(l.at) : new Date();
   const when = at.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(/\s*น\.?$/, '') + ' น.';
   const wa = 'https://wa.me/' + (l.whatsapp || l.phone).replace(/\D/g, '').replace(/^0/, '66') + '?text=' + encodeURIComponent(opts.waText);
@@ -74,7 +73,6 @@ export function leadCard(l: { id: string; ref: string; name: string; phone: stri
         sep,
         kv('มาจาก', l.source),
         kv('ภาษา', l.lang === 'en' ? 'English' : 'ไทย'),
-        kv('คะแนนลีด', `${l.scoreLabel} · ${l.score}`, { strong: true, color: scoreColor }),
       ] },
       footer: { type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '16px', paddingTop: '0px', contents: [
         btn('รับเรื่อง', { type: 'postback', label: 'รับเรื่อง', data: `claim:${l.id}`, displayText: `รับเรื่อง ${l.ref}` }, accent, '#ffffff'),
