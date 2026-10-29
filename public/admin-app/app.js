@@ -4359,6 +4359,86 @@ function lnPush() { lnBusy('push', api('POST', 'line/push').then(() => toast('�
   $('#view button[onclick="cfgSave()"]')?.classList.add('hidden');   // this tab saves through its own buttons
 }; PAGES.find(p => p[0] === 'settings')[3] = vSettings; }
   }
+/* ---------- Liquid Glass v2 · page details (styles in glass2.css) ---------- */
+/* page name on <body> so glass2.css can style one page without new markup */
+{ const _r = route; route = function () { _r(); document.body.dataset.page = CUR; }; }
+
+/* tabs: a white thumb slides from the last tab to the new one (works across re-renders) */
+const TABPOS = new Map();
+function tabThumbs() {
+  const bars = new Set([...document.querySelectorAll('#view .tab, #drawer .tab, #modalBox .tab')].map(t => t.parentElement));
+  let i = 0;
+  for (const bar of bars) {
+    const on = [...bar.children].find(x => x.classList?.contains('tab') && x.classList.contains('on'));
+    const key = (document.body.dataset.page || '') + ':' + (i++) + ':' + bar.children.length;
+    let th = [...bar.children].find(x => x.classList?.contains('tthumb'));
+    if (!on) { th?.remove(); continue; }
+    bar.classList.add('ttrack');
+    const pos = { l: on.offsetLeft, t: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight };
+    if (!pos.w) continue;
+    if (!th) {
+      th = document.createElement('span'); th.className = 'tthumb'; th.setAttribute('aria-hidden', 'true'); bar.prepend(th);
+      const prev = TABPOS.get(key);
+      if (prev) { th.style.transition = 'none'; Object.assign(th.style, { left: prev.l + 'px', top: prev.t + 'px', width: prev.w + 'px', height: prev.h + 'px' }); void th.offsetWidth; th.style.transition = ''; }
+    }
+    Object.assign(th.style, { left: pos.l + 'px', top: pos.t + 'px', width: pos.w + 'px', height: pos.h + 'px' });
+    TABPOS.set(key, pos);
+  }
+}
+{ let q = 0; const run = () => { q = 0; try { tabThumbs(); } catch (e) { } };
+  const mo = new MutationObserver(() => { if (!q) q = requestAnimationFrame(run); });
+  ['#view', '#drawer', '#modalBox'].forEach(s => { const el = document.querySelector(s); if (el) mo.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] }); });
+  window.addEventListener('resize', () => { if (!q) q = requestAnimationFrame(run); }); }
+
+/* ---------- ตั้งค่า: vertical menu with icons + a save bar that appears when something changed ---------- */
+function cfgDirty() { if (!CFGSNAP) return false; const { tab, ...a } = SITECFG, { tab: t2, ...b } = CFGSNAP; return JSON.stringify(a) !== JSON.stringify(b); }
+function cfgBar() { const bar = $('#cfgBar'); if (bar) bar.classList.toggle('show', cfgDirty()); }
+function cfgUndo() { if (!CFGSNAP) return; const t = SITECFG.tab; Object.keys(SITECFG).forEach(k => { if (k !== 'tab') delete SITECFG[k]; }); Object.assign(SITECFG, clone(CFGSNAP), { tab: t }); vSettings(); toast('ยกเลิกการแก้ไขแล้ว'); }
+{ const _vs = vSettings; vSettings = function () {
+  _vs();
+  const nav = $('#view nav.tabbar');
+  if (nav) { nav.classList.add('vnav'); [...nav.querySelectorAll('button.tab')].forEach((b, i) => { const ic = CFG_TABS[i]?.[2]; if (ic && !b.querySelector('svg, i')) b.insertAdjacentHTML('afterbegin', `<i data-lucide="${ic}"></i>`); }); }
+  if (!['notify', 'system'].includes(SITECFG.tab) && !$('#cfgBar')) {
+    const f = $('#view .fade');
+    f?.insertAdjacentHTML('afterend', `<div id="cfgBar" class="cfg-bar" role="status"><span><i data-lucide="circle-dot"></i>มีการแก้ไขที่ยังไม่บันทึก</span><button class="btn btn-g" onclick="cfgUndo()">ยกเลิก</button><button class="btn btn-p" onclick="cfgSave();setTimeout(cfgBar,50)"><i data-lucide="check"></i>บันทึก</button></div>`);
+    const v = $('#view'); if (v && !v.dataset.cfgw) { v.dataset.cfgw = 1; ['input', 'change', 'click'].forEach(ev => v.addEventListener(ev, () => setTimeout(cfgBar, 30))); }
+  }
+  cfgBar(); icons();
+}; PAGES.find(p => p[0] === 'settings')[3] = vSettings; }
+
+/* ---------- แดชบอร์ด: sparkline in "ลีดเดือนนี้" + เรือที่ถูกถามมากสุด ---------- */
+function sparkSvg(vals, color = '#70000e') {
+  const W = 96, H = 34, max = Math.max(1, ...vals), st = W / Math.max(1, vals.length - 1);
+  const pts = vals.map((v, i) => [(i * st).toFixed(1), (H - 3 - v / max * (H - 8)).toFixed(1)]);
+  const line = pts.map((p, i) => (i ? 'L' : 'M') + p.join(' ')).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs><linearGradient id="spg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".22"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs><path d="${line} L${W} ${H} L0 ${H}Z" fill="url(#spg)"/><path d="${line}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+{ const _vd = vDashboard; vDashboard = function () {
+  _vd();
+  const v = $('#view'); if (!v) return;
+  // weekly leads, last 10 weeks, on the first KPI card
+  const k1 = v.querySelector('.grid .card'); const now = Date.now(), wk = 7 * 864e5;
+  if (k1 && !k1.querySelector('.spark')) {
+    const w = Array.from({ length: 10 }, (_, i) => BOOKINGS.filter(b => { const t = +new Date(b.createdAt || b.created); return t > now - (10 - i) * wk && t <= now - (9 - i) * wk; }).length);
+    k1.classList.add('kpi-spark'); k1.insertAdjacentHTML('beforeend', sparkSvg(w));
+  }
+  // most asked boats (30 days)
+  // under the weekly chart (fills the space next to "ต้องทำตอนนี้")
+  const chart = [...v.querySelectorAll(':scope > .grid > .card.xl\\:col-span-2')][0];
+  let host = null;
+  if (chart) { host = document.createElement('div'); host.className = 'grid gap-4 xl:col-span-2 items-start min-w-0'; chart.classList.remove('xl:col-span-2'); chart.before(host); host.append(chart); }
+  else { const grids = [...v.children].filter(x => x.classList.contains('grid')); host = grids[grids.length - 1]; }
+  const last = host;
+  if (last && !$('#topBoats')) {
+    const m = new Map();
+    BOOKINGS.filter(b => now - +new Date(b.createdAt || b.created) < 30 * 864e5).forEach(b => { const bt = bySlug(b.boat); if (bt) m.set(bt.slug, (m.get(bt.slug) || 0) + 1); });
+    const top = [...m].sort((a, b) => b[1] - a[1]).slice(0, 5);
+    last.insertAdjacentHTML('beforeend', `<div class="card p-5" id="topBoats"><p class="font-medium">เรือที่ถูกถามมากสุด</p><p class="text-[11.5px] text-muted">30 วัน · นับจากลีดที่ระบุเรือ</p>
+      <div class="tb-grid mt-3">${top.map(([s, n]) => { const b = bySlug(s); return `<a href="#/boats/${s}" class="tb-row"><img src="${esc(THUMBS?.[s] || b.imgs?.[0] || '')}" alt=""/><span class="min-w-0 flex-1"><b>${esc(b.name || s)}</b><small>${b.from_ ? 'เริ่ม ฿' + Number(b.from_).toLocaleString() : esc(TYPE_TH?.[b.type] || '')}</small></span><span class="text-right"><b class="tnum">${n}</b><small>ลีด</small></span></a>`; }).join('') || '<p class="text-[12.5px] text-muted py-6 text-center">ยังไม่มีลีดที่ระบุเรือใน 30 วัน</p>'}</div></div>`);
+  }
+  icons();
+}; PAGES.find(p => p[0] === 'dashboard')[3] = vDashboard; }
+
 }
 setInterval(mTick, 3000);
 
