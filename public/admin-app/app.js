@@ -4390,22 +4390,6 @@ function tabThumbs() {
   ['#view', '#drawer', '#modalBox'].forEach(s => { const el = document.querySelector(s); if (el) mo.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] }); });
   window.addEventListener('resize', () => { if (!q) q = requestAnimationFrame(run); }); }
 
-/* ---------- ตั้งค่า: vertical menu with icons + a save bar that appears when something changed ---------- */
-function cfgDirty() { if (!CFGSNAP) return false; const { tab, ...a } = SITECFG, { tab: t2, ...b } = CFGSNAP; return JSON.stringify(a) !== JSON.stringify(b); }
-function cfgBar() { const bar = $('#cfgBar'); if (bar) bar.classList.toggle('show', cfgDirty()); }
-function cfgUndo() { if (!CFGSNAP) return; const t = SITECFG.tab; Object.keys(SITECFG).forEach(k => { if (k !== 'tab') delete SITECFG[k]; }); Object.assign(SITECFG, clone(CFGSNAP), { tab: t }); vSettings(); toast('ยกเลิกการแก้ไขแล้ว'); }
-{ const _vs = vSettings; vSettings = function () {
-  _vs();
-  const nav = $('#view nav.tabbar');
-  if (nav) { nav.classList.add('vnav'); [...nav.querySelectorAll('button.tab')].forEach((b, i) => { const ic = CFG_TABS[i]?.[2]; if (ic && !b.querySelector('svg, i')) b.insertAdjacentHTML('afterbegin', `<i data-lucide="${ic}"></i>`); }); }
-  if (!['notify', 'system'].includes(SITECFG.tab) && !$('#cfgBar')) {
-    const f = $('#view .fade');
-    f?.insertAdjacentHTML('afterend', `<div id="cfgBar" class="cfg-bar" role="status"><span><i data-lucide="circle-dot"></i>มีการแก้ไขที่ยังไม่บันทึก</span><button class="btn btn-g" onclick="cfgUndo()">ยกเลิก</button><button class="btn btn-p" onclick="cfgSave();setTimeout(cfgBar,50)"><i data-lucide="check"></i>บันทึก</button></div>`);
-    const v = $('#view'); if (v && !v.dataset.cfgw) { v.dataset.cfgw = 1; ['input', 'change', 'click'].forEach(ev => v.addEventListener(ev, () => setTimeout(cfgBar, 30))); }
-  }
-  cfgBar(); icons();
-}; PAGES.find(p => p[0] === 'settings')[3] = vSettings; }
-
 /* ---------- แดชบอร์ด: sparkline in "ลีดเดือนนี้" + เรือที่ถูกถามมากสุด ---------- */
 function sparkSvg(vals, color = '#70000e') {
   const W = 96, H = 34, max = Math.max(1, ...vals), st = W / Math.max(1, vals.length - 1);
