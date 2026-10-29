@@ -38,9 +38,11 @@ type SA = { client_email: string; private_key: string };
 let saCache: SA | null | undefined;
 function serviceAccount(): SA | null {
   if (saCache !== undefined) return saCache;
-  let raw = (process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').trim();
+  // a key saved in /admin wins over .env, so the admin can swap or remove it without touching the server
+  let raw = '';
   try {
-    if (!raw && !process.env.GOOGLE_APPLICATION_CREDENTIALS && CFG.sa?.enc) raw = openSecret(CFG.sa.enc);
+    if (CFG.sa?.enc) raw = openSecret(CFG.sa.enc);
+    if (!raw) raw = (process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').trim();
     if (!raw && process.env.GOOGLE_APPLICATION_CREDENTIALS) raw = readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8');
     if (raw && !raw.startsWith('{')) raw = Buffer.from(raw, 'base64').toString('utf8');
     const j = raw ? JSON.parse(raw) : null;
@@ -84,8 +86,8 @@ const days2 = (from: number, count: number) => Array.from({ length: count }, (_,
 export function googleStatus() {
   const sa = serviceAccount();
   return { key: !!sa, email: sa?.client_email ?? null, ga: { on: !!sa && !!prop(), property: prop() || null }, gsc: { on: !!sa && !!site(), site: site() || null },
-    // where each value comes from (.env wins), for /admin → เชื่อมต่อ API
-    src: { key: process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_APPLICATION_CREDENTIALS ? 'env' : CFG.sa ? 'admin' : '', property: process.env.GA4_PROPERTY_ID ? 'env' : CFG.propertyId ? 'admin' : '', site: process.env.GSC_SITE_URL ? 'env' : CFG.gscSite ? 'admin' : '', ga4Id: process.env.NEXT_PUBLIC_GA_ID ? 'env' : CFG.ga4Id ? 'admin' : '' },
+    // where each value comes from, for /admin → เชื่อมต่อ API (.env wins, except the key: a key saved in /admin is used first)
+    src: { key: CFG.sa ? 'admin' : process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_APPLICATION_CREDENTIALS ? 'env' : '', property: process.env.GA4_PROPERTY_ID ? 'env' : CFG.propertyId ? 'admin' : '', envKey: !!(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').trim(), site: process.env.GSC_SITE_URL ? 'env' : CFG.gscSite ? 'admin' : '', ga4Id: process.env.NEXT_PUBLIC_GA_ID ? 'env' : CFG.ga4Id ? 'admin' : '' },
     cfg: { ga4Id: process.env.NEXT_PUBLIC_GA_ID || CFG.ga4Id, propertyId: prop(), gscSite: site(), savedEmail: CFG.sa?.email ?? null, at: CFG.at ?? null, by: CFG.by ?? null } };
 }
 
