@@ -1,0 +1,40 @@
+# Checks every push and pull request: install, type-check, build (same steps as the Docker image).
+# deploy.yml runs this first and only deploys when it passes.
+name: CI
+
+on:
+  push:
+    branches-ignore: [main]          # main is checked by deploy.yml (it calls this workflow)
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Type-check & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22          # same as the Dockerfile (node:22-alpine)
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
