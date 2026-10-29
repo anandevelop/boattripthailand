@@ -4487,6 +4487,75 @@ function mCleanUnused() {
   icons();
 }; PAGES.find(p => p[0] === 'media')[3] = vMedia; }
 
+/* ---------- คลังสื่อ: AI เขียน alt (Gemini free tier, same caps as auto-translate) ----------
+   fills ONLY empty alt fields; mTick saves them like a manual edit. Staff photos (team) are never sent. */
+const mAiOk = m => m.dir !== 'team' && /^\/(?!\/)/.test(m.src);
+const mAiPayload = m => ({ url: m.src, name: m.name, dir: m.dir, owner: m.owner, tags: m.tags, th: m.alt.th, en: m.alt.en });
+async function mAiCall(list) {
+  const r = await fetch('/api/admin/media-alt', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: list.map(mAiPayload) }) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) { location.href = '/admin/login'; throw Object.assign(new Error('login'), { stop: true }); }
+  if (!r.ok) throw Object.assign(new Error(j.error || 'AI เขียน alt ไม่สำเร็จ'), { stop: !!j.stop || r.status === 429 });
+  return j.items || [];
+}
+let MAI = null;   // { done, total } while running
+async function mAiFill() {
+  if (MAI) return;
+  if (!can('content')) return toast('ไม่มีสิทธิ์แก้ไขคลังสื่อ');
+  const todo = MEDIA.filter(m => mNoAlt(m) && mAiOk(m)), skipTeam = MEDIA.filter(m => mNoAlt(m) && m.dir === 'team').length;
+  if (!todo.length) return toast(skipTeam ? 'เหลือแต่รูปทีมงาน · ใส่ alt เองนะ (ไม่ส่งรูปพนักงานให้ AI)' : 'ทุกรูปมี alt ครบแล้ว');
+  const reqs = Math.ceil(todo.length / 6);
+  if (!confirm(`ให้ AI เขียน alt ที่ขาด ${todo.length} รูป?\n\n• ใช้ Gemini ฟรี (โควตาเดียวกับแปลภาษาอัตโนมัติ) ประมาณ ${reqs} ครั้ง · ไม่มีค่าใช้จ่าย\n• เติมเฉพาะช่องที่ว่าง ช่องที่เขียนไว้แล้วไม่ถูกแก้\n• ไม่ส่งรูปทีมงาน${skipTeam ? ` (ข้าม ${skipTeam} รูป)` : ''}\n\nตรวจ/แก้คำได้ทีหลังในรายละเอียดรูป`)) return;
+  MAI = { done: 0, total: todo.length }; let filled = 0, err = '';
+  mAiBtn();
+  for (let i = 0; i < todo.length; i += 6) {
+    const chunk = todo.slice(i, i + 6);
+    try {
+      const out = await mAiCall(chunk);
+      for (const a of out) { const m = MEDIA.find(x => x.src === a.url); if (!m) continue;
+        if (!m.alt.th.trim() && a.th) { m.alt.th = a.th; filled++; } if (!m.alt.en.trim() && a.en) { m.alt.en = a.en; filled++; } }
+    } catch (e) { err = e.message; if (e.stop) break; }
+    MAI.done = Math.min(todo.length, i + 6); mAiBtn();
+  }
+  MAI = null; mTick();
+  if (CUR === 'media') vMedia();
+  const left = MEDIA.filter(m => mNoAlt(m) && mAiOk(m)).length;
+  if (err && err !== 'login') toastErr(`${err}${filled ? ` · เติมไปแล้ว ${filled} ช่อง` : ''}`);
+  else toast(`AI เขียน alt แล้ว ${filled} ช่อง${left ? ` · เหลือ ${left} รูป (กดอีกครั้งได้)` : ' · ครบทุกรูป'} · บันทึกอัตโนมัติ`);
+}
+function mAiBtn() {
+  const b = $('[data-mai]'); if (!b) return;
+  if (MAI) { b.disabled = true; b.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i>AI กำลังเขียน ${MAI.done}/${MAI.total}`; icons(); }
+}
+/* drawer: one image — writes both languages (replaces what is there) */
+async function mAiOne(id) {
+  const m = mById(id), b = $('[data-mai1]'); if (!m || !mAiOk(m)) return toast('รูปนี้ส่งให้ AI ไม่ได้');
+  if (!can('content')) return toast('ไม่มีสิทธิ์แก้ไขคลังสื่อ');
+  if ((m.alt.th.trim() || m.alt.en.trim()) && !confirm('เขียน alt ใหม่ทั้ง 2 ภาษาแทนของเดิม?')) return;
+  if (b) { b.disabled = true; b.innerHTML = '<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i>AI กำลังเขียน…'; icons(); }
+  try {
+    const [a] = await mAiCall([{ ...m, alt: { th: '', en: '' } }]);
+    if (!a) throw new Error('AI ไม่ได้เขียน alt กลับมา');
+    m.alt.th = a.th || m.alt.th; m.alt.en = a.en || m.alt.en; mTick(); mDetail(id); toast('AI เขียน alt แล้ว · ตรวจคำได้เลย บันทึกอัตโนมัติ');
+    if (CUR === 'media') { const d = $('#drawer'); vMedia(); if (d) mDetail(id); }
+  } catch (e) { fail(e); if (b) { b.disabled = false; b.innerHTML = '<i data-lucide="sparkles" class="w-3.5 h-3.5"></i>AI เขียน alt'; icons(); } }
+}
+{ const _vm = vMedia; vMedia = function () {
+  _vm();
+  const old = [...$$('#view button')].find(x => x.textContent.includes('เติม alt ที่ขาด'));
+  if (old) {
+    const n = MEDIA.filter(m => mNoAlt(m) && mAiOk(m)).length;
+    old.outerHTML = `<button class="btn btn-o" data-mai onclick="mAiFill()" ${n && !isRO() ? '' : 'disabled'} title="Gemini ฟรี · เติมเฉพาะช่องที่ว่าง · ไม่ส่งรูปทีมงาน"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i>AI เขียน alt ที่ขาด (${n})</button>`;
+    mAiBtn(); icons();
+  }
+}; PAGES.find(p => p[0] === 'media')[3] = vMedia; }
+{ const _md = mDetail; mDetail = function (id) {
+  _md(id); const m = mById(id); if (!m || !mAiOk(m) || isRO()) return;
+  const lbl = [...$$('#drawer .bi .lbl')].find(x => x.textContent.startsWith('Alt text'));
+  lbl?.closest('.bi')?.insertAdjacentHTML('beforeend', `<button class="btn btn-o !h-8 mt-2" data-mai1 onclick="mAiOne(${m.id})"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i>AI เขียน alt</button>`);
+  icons();
+}; }
+
 /* ---------- sidebar groups: แดชบอร์ด · งานขาย · สินค้า & ราคา · เว็บไซต์ · การตลาด · ทีม & ระบบ ---------- */
 { const G = [[null, ['dashboard']], ['งานขาย', ['bookings', 'calendar', 'customers']], ['สินค้า & ราคา', ['boats', 'seasons', 'activities']],
     ['เว็บไซต์', ['content', 'articles', 'media']], ['การตลาด', ['seo', 'analytics', 'audiences']], ['ทีม & ระบบ', ['team', 'audit', 'settings', 'system']]];
