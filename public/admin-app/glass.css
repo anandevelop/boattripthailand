@@ -36,7 +36,11 @@ header.sticky label.bg-sand { background: rgb(255 255 255 / .6) !important; box-
 
 /* ปุ่ม / ช่องกรอก */
 .btn-o { background: rgb(255 255 255 / .6) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(35 20 22 / .1) !important; }
-.btn-p { box-shadow: 0 8px 20px -10px rgb(112 0 14 / .7), inset 0 1px 0 rgb(255 255 255 / .25); }
+.btn-p { color: #fff; background: linear-gradient(180deg, #86101f, #70000e 55%, #5e000c) !important;   /* same as the site's ส่งคำขอจอง */
+  box-shadow: 0 10px 22px -12px rgb(112 0 14 / .8), inset 0 1px 0 rgb(255 255 255 / .28), inset 0 -2px 0 rgb(0 0 0 / .15); transition: box-shadow .2s, filter .2s, transform .15s; }
+.btn-p:hover { filter: brightness(1.06); box-shadow: 0 14px 28px -12px rgb(112 0 14 / .9), inset 0 1px 0 rgb(255 255 255 / .3), inset 0 -2px 0 rgb(0 0 0 / .15); }
+.btn-p:active { transform: scale(.98); }
+.btn-p:disabled, .btn-p[disabled] { filter: grayscale(.35) opacity(.6); box-shadow: none; transform: none; }
 .tab.on { box-shadow: 0 4px 12px -6px rgb(35 20 22 / .5), inset 0 1px 0 rgb(255 255 255 / .2); }
 .inp { background-color: rgb(255 255 255 / .7) !important; }
 
