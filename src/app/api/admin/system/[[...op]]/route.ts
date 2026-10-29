@@ -3,6 +3,7 @@ import { currentUser } from '@/lib/auth';
 import { can, type Perm } from '@/lib/perms';
 import { clientInfo } from '@/lib/request';
 import { BackupError, createBackup, dumpData, fmtSize, JOBS, packDump, readBackup, restoreBackup, runJob, saveAlerts, saveUpload, sendAlert, systemStatus, validFile } from '@/lib/system';
+import { systemInfo } from '@/lib/system-info';
 import type { User } from '@/db/schema';
 
 export const runtime = 'nodejs';
@@ -32,7 +33,7 @@ async function handle(req: Request, params: Promise<{ op?: string[] }>) {
   }
   const body = async () => { try { return ((await req.json()) ?? {}) as Record<string, unknown>; } catch { return {}; } };
   try {
-    if (!a && method === 'GET') { await need(me, 'settings'); return json({ ...(await systemStatus()), can: { download: can(me, 'export'), restore: can(me, 'team') } }); }
+    if (!a && method === 'GET') { await need(me, 'settings'); return json({ ...(await systemStatus()), info: await systemInfo(req.headers), can: { download: can(me, 'export'), restore: can(me, 'team') } }); }
 
     if (a === 'run' && method === 'POST') {
       await need(me, 'settings');

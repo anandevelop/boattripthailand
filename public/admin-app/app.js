@@ -4556,6 +4556,83 @@ async function mAiOne(id) {
   icons();
 }; }
 
+/* ---------- ตั้งค่า → ระบบ: เวอร์ชันและการเชื่อมต่อ (detailed; states only, no secrets) ---------- */
+function sysInfoCard(I) {
+  const kv = (l, v, o = {}) => `<div class="flex items-start justify-between gap-4 py-2 border-b border-line last:border-0 min-w-0"><span class="text-muted shrink-0">${l}</span><span class="${o.plain ? '' : 'font-mono text-[12.5px]'} text-right min-w-0" style="word-break:break-word${o.color ? ';color:' + o.color : ''}">${v ?? '—'}</span></div>`;
+  const sec = (icon, t, rows) => `<div class="min-w-0"><p class="text-[12px] font-medium flex items-center gap-1.5 mb-1"><i data-lucide="${icon}" class="w-3.5 h-3.5 text-maroon"></i>${t}</p><div class="text-[13px]">${rows}</div></div>`;
+  const dot = (on, opt) => `<span class="inline-block w-2 h-2 rounded-full shrink-0 mt-1.5" style="background:${on ? '#1e7a46' : opt ? '#b9b3b4' : '#c98a1b'}"></span>`;
+  const pct = (a, b) => b ? Math.round(a / b * 100) : null;
+  const A = I.app, S = I.server, D = I.db, N = I.net, M = S.mem;
+  const ok = '#1e7a46', warn = '#9a5b00', bad = '#a3222c';
+  const memCap = M.limit || M.hostTotal, memP = pct(M.rss, memCap), dk = S.disk, diskP = dk ? pct(dk.total - dk.free, dk.total) : null;
+  const commit = A.commit ? `<a class="text-maroon hover:underline" href="${esc(A.repo)}/commit/${esc(A.commit)}" target="_blank" rel="noopener">${esc(A.short)}</a>` : '—';
+  const migOk = D.ok && D.migrations && D.migrations.applied >= D.migrations.total;
+  const left = sec('package', 'เวอร์ชัน', [
+      kv('เวอร์ชันที่รันอยู่', esc(A.version)),
+      kv('Commit', commit),
+      A.commitMsg ? kv('ข้อความ commit', esc(A.commitMsg), { plain: true }) : '',
+      kv('Commit เมื่อ', A.commitTime ? `${sysTs(A.commitTime)} <span class="text-muted">· ${relTs(A.commitTime)}</span>` : '—'),
+      kv('Build เมื่อ', A.built ? `${sysTs(A.built)} <span class="text-muted">· ${relTs(A.built)}</span>` : '<span class="text-muted">ไม่ได้ build ผ่าน deploy</span>'),
+      kv('เริ่มทำงาน (deploy ล่าสุด)', `${sysTs(A.started)} <span class="text-muted">· ${sysDur(A.uptime)}</span>`),
+      kv('โหมด', A.env === 'production' ? 'production' : `<span style="color:${warn}">${esc(A.env)}</span>`),
+      ...I.stack.map(([l, v]) => kv(esc(l), esc(v.startsWith('v') ? v : 'v' + v))),
+    ].join(''));
+  const mid = sec('server', 'เซิร์ฟเวอร์', [
+      kv('เครื่อง', `${esc(S.host)}${S.docker ? ' <span class="text-muted">· Docker</span>' : ''}`),
+      kv('ระบบปฏิบัติการ', esc(S.platform)),
+      kv('CPU', `${S.cpus} คอร์${S.cpuModel ? ` <span class="text-muted">· ${esc(S.cpuModel)}</span>` : ''}`),
+      kv('Load (1 · 5 · 15 นาที)', S.load.join(' · '), { color: S.load[0] > S.cpus ? bad : S.load[0] > S.cpus * .7 ? warn : '' }),
+      kv('RAM ของแอป', `${sysSize(M.rss)} / ${sysSize(memCap)}${memP != null ? ` <span class="text-muted">(${memP}%)</span>` : ''}${M.limit ? '' : ' <span class="text-muted">ทั้งเครื่อง</span>'}`, { color: memP > 85 ? bad : memP > 70 ? warn : '' }),
+      kv('Heap (JS)', `${sysSize(M.heap)} / ${sysSize(M.heapTotal)}`),
+      kv('RAM ว่างทั้งเครื่อง', `${sysSize(M.hostFree)} / ${sysSize(M.hostTotal)}`),
+      kv('ดิสก์ (โฟลเดอร์รูป)', dk ? `ว่าง ${sysSize(dk.free)} / ${sysSize(dk.total)} <span class="text-muted">(ใช้ ${diskP}%)</span>` : '—', { color: diskP > 90 ? bad : diskP > 80 ? warn : '' }),
+      kv('เครื่องเปิดมาแล้ว', sysDur(S.osUptime)),
+      kv('เขตเวลา', esc(S.tz)),
+    ].join(''));
+  const right = sec('database', 'ฐานข้อมูล', D.ok ? [
+      kv('สถานะ', `เชื่อมต่อได้ <span class="text-muted">· ${D.ms} ms</span>`, { color: ok }),
+      kv('เวอร์ชัน', esc(D.version)),
+      kv('ขนาด', sysSize(D.size)),
+      kv('ตาราง', D.tables),
+      kv('การเชื่อมต่อที่ใช้อยู่', `${D.conn.used} / ${D.conn.max}`, { color: D.conn.used > D.conn.max * .8 ? warn : '' }),
+      kv('Migration', `${D.migrations.applied} / ${D.migrations.total}${D.migrations.lastTag ? ` <span class="text-muted">· ${esc(D.migrations.lastTag)}</span>` : ''}`, { color: migOk ? '' : warn }),
+      kv('เปิดมาตั้งแต่', D.started ? `${sysTs(D.started)} <span class="text-muted">· ${relTs(D.started)}</span>` : '—'),
+      kv('เขตเวลา · encoding', `${esc(D.tz)} · ${esc(D.encoding)}`),
+    ].join('') : kv('สถานะ', `เชื่อมต่อไม่ได้ · ${esc(D.error || '')}`, { color: bad, plain: true }))
+    + `<div class="mt-4">${sec('globe', 'เครือข่าย', [
+      kv('โดเมน (APP_URL)', N.appUrl ? esc(N.appUrl) : `<span style="color:${bad}">ยังไม่ได้ตั้ง</span>`),
+      kv('HTTPS', N.https ? 'เปิด' : 'ปิด', { color: N.https ? ok : bad }),
+      kv('Cloudflare', N.cloudflare ? `ผ่าน Cloudflare <span class="text-muted">· ${esc(N.cfRay || '')}</span>` : '<span class="text-muted">ไม่ผ่าน (ต่อตรง)</span>'),
+      N.country ? kv('ประเทศของคุณ (ตาม Cloudflare)', esc(N.country)) : '',
+    ].join(''))}</div>`;
+  const svc = I.services.map(s => `<li class="flex items-start gap-2.5 py-2 border-b border-line last:border-0 min-w-0">${dot(s.on, s.opt)}<span class="min-w-0 flex-1"><span class="block">${esc(s.name)}</span><span class="block text-[11.5px] text-muted" style="word-break:break-word">${esc(s.detail)}</span></span><span class="text-[11.5px] shrink-0" style="color:${s.on ? ok : s.opt ? '#8a8283' : warn}">${s.on ? 'เชื่อมต่อแล้ว' : s.opt ? 'ไม่ได้ใช้' : 'ยังไม่ได้ตั้ง'}</span></li>`).join('');
+  const nOn = I.services.filter(s => s.on).length;
+  return `<div class="card p-5 mb-4 min-w-0" id="sysInfo">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div><p class="font-medium flex items-center gap-2"><i data-lucide="database" class="w-4 h-4"></i>เวอร์ชันและการเชื่อมต่อ</p><p class="text-[11.5px] text-muted">ข้อมูล ณ ${sysTs(S.now)} · แสดงเฉพาะสถานะ ไม่แสดงคีย์หรือรหัสผ่าน</p></div>
+      <button class="btn btn-o !h-9" onclick="sysInfoCopy()"><i data-lucide="clipboard-copy" class="w-3.5 h-3.5"></i>คัดลอกข้อมูลระบบ</button></div>
+    <div class="gap-6" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))">${left}${mid}<div class="min-w-0">${right}</div></div>
+    <div class="mt-5"><p class="text-[12px] font-medium flex items-center gap-1.5 mb-1"><i data-lucide="plug" class="w-3.5 h-3.5 text-maroon"></i>บริการภายนอก <span class="text-muted font-normal">· เชื่อมต่อแล้ว ${nOn}/${I.services.length}</span></p>
+      <ul class="text-[13px] gap-x-10" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))">${svc}</ul></div></div>`;
+}
+/* plain-text summary to paste into a support chat / ticket */
+function sysInfoCopy() {
+  const I = SYS.info; if (!I) return;
+  const A = I.app, S = I.server, D = I.db, N = I.net;
+  const t = [`Boat Trip Thailand · ${A.version} · ${A.short || '—'}${A.commitMsg ? ` (${A.commitMsg})` : ''}`, `build ${A.built || '—'} · started ${A.started} · ${A.env}`,
+    I.stack.map(([l, v]) => `${l} ${v}`).join(' · '), `server ${S.host} · ${S.platform} · ${S.cpus} cpu · load ${S.load.join('/')} · rss ${sysSize(S.mem.rss)} · disk free ${S.disk ? sysSize(S.disk.free) : '—'} · tz ${S.tz}`,
+    D.ok ? `db ${D.version} · ${sysSize(D.size)} · ${D.ms} ms · conn ${D.conn.used}/${D.conn.max} · migrations ${D.migrations.applied}/${D.migrations.total}` : `db ERROR ${D.error || ''}`,
+    `net ${N.appUrl || '—'} · https ${N.https} · cloudflare ${N.cloudflare}`, ...I.services.map(s => `${s.on ? '✓' : '·'} ${s.name}: ${s.detail}`)].join('\n');
+  navigator.clipboard?.writeText(t).then(() => toast('คัดลอกข้อมูลระบบแล้ว'), () => toastErr('คัดลอกไม่ได้'));
+}
+{ const _vs = vSystem; vSystem = function () {
+  if (SYS.d?.info) SYS.info = SYS.d.info;
+  _vs();
+  const host = $('#sysHost'); if (!host || !SYS.info || host.querySelector('#sysInfo')) return;
+  const cron = [...host.querySelectorAll('.card')].find(c => c.textContent.includes('งานอัตโนมัติ (Cron)'));
+  (cron || host.lastElementChild)?.insertAdjacentHTML(cron ? 'afterend' : 'beforebegin', sysInfoCard(SYS.info));
+  icons();
+}; }
+
 /* ---------- sidebar groups: แดชบอร์ด · งานขาย · สินค้า & ราคา · เว็บไซต์ · การตลาด · ทีม & ระบบ ---------- */
 { const G = [[null, ['dashboard']], ['งานขาย', ['bookings', 'calendar', 'customers']], ['สินค้า & ราคา', ['boats', 'seasons', 'activities']],
     ['เว็บไซต์', ['content', 'articles', 'media']], ['การตลาด', ['seo', 'analytics', 'audiences']], ['ทีม & ระบบ', ['team', 'audit', 'settings', 'system']]];

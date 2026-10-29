@@ -90,6 +90,8 @@ jobs:
           git checkout -q -f -B main "$SHA"
 
           # 3. build the new image while the old one keeps serving, then swap (migrations run on start)
+          meta() { export APP_COMMIT="$1" APP_COMMIT_TIME="$(git show -s --format=%cI "$1")" APP_COMMIT_MSG="$(git show -s --format=%s "$1" | cut -c1-200)" APP_BUILD_TIME="$(date -u +%FT%TZ)"; }
+          meta "$SHA"
           docker compose build app
           docker compose up -d --remove-orphans
           # the Caddyfile is bind-mounted (git replaces the file, the running container keeps the old one): restart Caddy when it changed
@@ -108,6 +110,7 @@ jobs:
             if [ -z "$PREV" ]; then echo "::error::first deploy did not come up healthy — nothing to roll back to, see the app log above"; exit 1; fi
             echo "✗ health check failed — rolling back to $PREV"
             git checkout -q -f -B main "$PREV"
+            meta "$PREV"
             docker compose build app && docker compose up -d
             exit 1
           fi

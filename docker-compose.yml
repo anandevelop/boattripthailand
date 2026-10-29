@@ -25,6 +25,11 @@ services:
         NEXT_PUBLIC_WHATSAPP: ${NEXT_PUBLIC_WHATSAPP:-}
         NEXT_PUBLIC_LINE_URL: ${NEXT_PUBLIC_LINE_URL:-}
         NEXT_PUBLIC_CONTACT_EMAIL: ${NEXT_PUBLIC_CONTACT_EMAIL:-}
+        # version info for /admin → ระบบ (set by the deploy)
+        APP_COMMIT: ${APP_COMMIT:-}
+        APP_COMMIT_TIME: ${APP_COMMIT_TIME:-}
+        APP_COMMIT_MSG: ${APP_COMMIT_MSG:-}
+        APP_BUILD_TIME: ${APP_BUILD_TIME:-}
     restart: unless-stopped
     env_file: .env
     environment:

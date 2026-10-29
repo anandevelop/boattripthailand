@@ -32,6 +32,12 @@ COPY src/lib/crypto.ts ./src/lib/crypto.ts
 RUN mkdir -p /app/uploads && chown node:node /app/uploads \
  # files are read by the node user whatever their mode on the build machine
  && chmod -R a+rX /app/site /app/data /app/public /app/drizzle /app/scripts
+# what is running, shown in /admin → ตั้งค่า → ระบบ (passed by the deploy; last, so they never bust the build cache)
+ARG APP_COMMIT=""
+ARG APP_COMMIT_TIME=""
+ARG APP_COMMIT_MSG=""
+ARG APP_BUILD_TIME=""
+ENV APP_COMMIT=$APP_COMMIT APP_COMMIT_TIME=$APP_COMMIT_TIME APP_COMMIT_MSG=$APP_COMMIT_MSG APP_BUILD_TIME=$APP_BUILD_TIME
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s CMD wget -qO- http://127.0.0.1:3000/api/health || exit 1
