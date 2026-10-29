@@ -2333,7 +2333,7 @@ function brandColor(v) {
 }
 function brandBody() {
   const C = SITECFG, host = (typeof SITE === 'string' && SITE) || 'boattripthailand.com';
-  const SW = ['#70000e', '#8a1c2b', '#0f3d5e', '#1d6b57', '#b4501a', '#231416'];
+  const SW = ['#e1d7cb', '#000000', '#1450ff', '#70000e'];   // CI palette
   const name = esc(C.name.th || C.name.en || 'Boat Trip Thailand'), nameEn = esc(C.name.en || 'Boat Trip Thailand');
   const left = `<div class="grid gap-4 min-w-0">
     ${brandSec('type', 'ชื่อ & สโลแกน', 'แสดงที่โลโก้ แท็บเบราว์เซอร์ และผลค้นหา Google', `<div class="grid gap-4">${bi('ชื่อเว็บไซต์', C.name)}${bi('สโลแกน (ใต้โลโก้ / ในผลค้นหา)', C.tagline)}</div>`)}
@@ -2345,7 +2345,7 @@ function brandBody() {
     ${brandSec('palette', 'สีหลักของแบรนด์', 'ใช้กับปุ่ม ลิงก์ และไฮไลต์บนเว็บ', `<div class="flex flex-wrap items-center gap-3">
       <label class="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 cursor-pointer" style="box-shadow:inset 0 0 0 1px rgb(35 20 22 / .12), 0 6px 14px -8px rgb(58 0 7 / .5)"><span class="absolute inset-0" data-bc="background" style="background:${C.color}"></span><input id="bcPick" type="color" value="${C.color}" class="absolute inset-0 opacity-0 cursor-pointer" oninput="brandColor(this.value)"/></label>
       <input id="bcHex" class="inp font-mono" style="width:120px" value="${esc(C.color)}" oninput="brandColor(this.value.trim())"/>
-      <div class="flex gap-1.5">${SW.map(c => `<button class="w-7 h-7 rounded-full" title="${c}" style="background:${c};box-shadow:inset 0 0 0 2px rgb(255 255 255 / .7), 0 0 0 1px rgb(35 20 22 / .12)" onclick="brandColor('${c}')"></button>`).join('')}</div></div>
+      <div class="flex gap-1.5">${SW.map(c => `<button class="w-7 h-7 rounded-full" title="${c}" style="background:${c};box-shadow:inset 0 0 0 2px rgb(255 255 255 / .7), 0 0 0 1px rgb(35 20 22 / .18)${C.color.toLowerCase() === c ? ', 0 0 0 3px #fff, 0 0 0 4.5px ' + c : ''}" onclick="brandColor('${c}');vSettings()"></button>`).join('')}</div></div>
       <div class="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-line"><span class="h-9 px-4 rounded-full text-white text-[12.5px] grid place-items-center" data-bc="background" style="background:${C.color}">จองเลย</span><span class="h-9 px-4 rounded-full text-[12.5px] grid place-items-center" data-bc="color" style="color:${C.color};box-shadow:inset 0 0 0 1px currentColor">ดูเรือทั้งหมด</span><span class="text-[12.5px] underline underline-offset-2" data-bc="color" style="color:${C.color}">ลิงก์ในบทความ</span></div>`)}
   </div>`;
   const right = `<div class="min-w-0 xl:sticky xl:top-20"><div class="card p-5 grid gap-5">
