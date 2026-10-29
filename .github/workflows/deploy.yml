@@ -5,15 +5,15 @@
 #   1. the repo is cloned at DEPLOY_PATH and .env is filled in there (never committed)
 #      – put  COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml  in that .env (prod overrides + Caddy HTTPS)
 #   2. the server can `git fetch` the repo (read-only deploy key on GitHub, or HTTPS for a public repo)
-#   3. a deploy user that can run docker, with the public half of DEPLOY_SSH_KEY in ~/.ssh/authorized_keys
+#   3. a deploy user that can run docker, with the public half of SSH_KEY in ~/.ssh/authorized_keys
 #
 # Repository secrets (Settings → Secrets and variables → Actions):
-#   DEPLOY_HOST          server IP or host name
-#   DEPLOY_USER          SSH user, e.g. deploy
-#   DEPLOY_SSH_KEY       private key (ed25519) for that user
-#   DEPLOY_PATH          folder of the clone on the server, e.g. /srv/boattripthailand
-#   DEPLOY_PORT          optional, default 22
-#   DEPLOY_KNOWN_HOSTS   optional but recommended: output of  ssh-keyscan -p PORT HOST  (otherwise it is scanned on first use)
+#   SSH_HOST             server IP or host name
+#   SSH_USER             SSH user, e.g. deploy
+#   SSH_KEY              private key (ed25519) for that user
+#   DEPLOY_PATH          optional (secret or variable), default /srv/boattripthailand
+#   SSH_PORT             optional, default 22
+#   SSH_KNOWN_HOSTS      optional but recommended: output of  ssh-keyscan -p PORT HOST  (otherwise it is scanned on first use)
 name: Deploy
 
 on:
@@ -44,12 +44,12 @@ jobs:
     steps:
       - name: Set up SSH
         env:
-          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-          HOST: ${{ secrets.DEPLOY_HOST }}
-          PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          HOST: ${{ secrets.SSH_HOST }}
+          PORT: ${{ secrets.SSH_PORT || '22' }}
         run: |
-          test -n "$HOST" && test -n "$SSH_KEY" || { echo "::error::DEPLOY_HOST / DEPLOY_SSH_KEY secrets are not set"; exit 1; }
+          test -n "$HOST" && test -n "$SSH_KEY" || { echo "::error::SSH_HOST / SSH_KEY secrets are not set"; exit 1; }
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
           if [ -n "$KNOWN_HOSTS" ]; then printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts; else ssh-keyscan -p "$PORT" -H "$HOST" > ~/.ssh/known_hosts 2>/dev/null; fi
@@ -57,10 +57,10 @@ jobs:
 
       - name: Pull, rebuild and restart
         env:
-          HOST: ${{ secrets.DEPLOY_HOST }}
-          USER: ${{ secrets.DEPLOY_USER }}
-          PORT: ${{ secrets.DEPLOY_PORT || '22' }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          HOST: ${{ secrets.SSH_HOST }}
+          USER: ${{ secrets.SSH_USER }}
+          PORT: ${{ secrets.SSH_PORT || '22' }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH || '/srv/boattripthailand' }}
           SHA: ${{ github.sha }}
         run: |
           ssh -i ~/.ssh/deploy_key -p "$PORT" -o BatchMode=yes -o ServerAliveInterval=30 "$USER@$HOST" \

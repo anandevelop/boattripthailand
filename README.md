@@ -142,11 +142,11 @@ docker compose up -d --build
 
 # กุญแจให้ GitHub Actions เข้าเซิร์ฟเวอร์
 ssh-keygen -t ed25519 -f ~/actions_key -N '' && cat ~/actions_key.pub >> ~/.ssh/authorized_keys
-cat ~/actions_key            # → secret DEPLOY_SSH_KEY แล้วลบไฟล์นี้: rm ~/actions_key*
-ssh-keyscan -p 22 <IP>       # → secret DEPLOY_KNOWN_HOSTS (รันจากเครื่องตัวเอง)
+cat ~/actions_key            # → secret SSH_KEY แล้วลบไฟล์นี้: rm ~/actions_key*
+ssh-keyscan -p 22 <IP>       # → secret SSH_KNOWN_HOSTS (รันจากเครื่องตัวเอง)
 ```
 
-GitHub repo → Settings → Secrets and variables → Actions: `DEPLOY_HOST` `DEPLOY_USER` (deploy) `DEPLOY_SSH_KEY` `DEPLOY_PATH` (/srv/boattripthailand) · ไม่บังคับ `DEPLOY_PORT` `DEPLOY_KNOWN_HOSTS` · Variables: `SITE_URL` (https://boattripthailand.com)
+GitHub repo → Settings → Secrets and variables → Actions: `SSH_HOST` `SSH_USER` (deploy) `SSH_KEY` · ไม่บังคับ `DEPLOY_PATH` (ค่าเริ่มต้น /srv/boattripthailand) `SSH_PORT` `SSH_KNOWN_HOSTS` · Variables: `SITE_URL` (https://boattripthailand.com)
 
 **docker-compose.prod.yml** (ใช้บนเซิร์ฟเวอร์ผ่าน `COMPOSE_FILE` ใน `.env`): ปิดพอร์ตฐานข้อมูลจากภายนอก · เปิด Caddy (HTTPS) ตลอดโดยไม่ต้องใช้ `--profile` · จำกัด RAM app/db ตัวละ 1 GB · หมุน log 10 MB × 5 · ปรับ Postgres สำหรับ VPS 2–4 GB · ต้องใช้ Docker Compose v2.24 ขึ้นไป
 
