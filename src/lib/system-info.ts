@@ -10,6 +10,7 @@ import { loadLineCfg, lineSaved } from './line-config';
 import { lineEnabled } from './line';
 import { UPLOAD_DIR } from './media';
 import { GEMINI_MODEL, provider, usage } from './translate';
+import { pub } from './env';
 
 /**
  * /admin → ตั้งค่า → ระบบ: "เวอร์ชันและการเชื่อมต่อ" — what is running, where, and which services are connected.
@@ -79,8 +80,8 @@ export async function systemInfo(h: Headers) {
     { k: 'gsc', name: 'Google Search Console', on: g.gsc.on, detail: g.gsc.on ? String(g.gsc.site) : !g.key ? 'ยังไม่มีกุญแจ service account' : 'ยังไม่ได้ใส่พร็อพเพอร์ตี้' },
     { k: 'gsa', name: 'Google service account', on: g.key, detail: g.key ? `${g.email} · จาก${g.src.key === 'admin' ? 'หลังบ้าน' : ' .env'}` : 'ยังไม่ได้ใส่ไฟล์ JSON' },
     { k: 'ga4tag', name: 'GA4 บนหน้าเว็บ (gtag)', on: !!g.cfg.ga4Id, detail: g.cfg.ga4Id || 'ยังไม่ได้ใส่ Measurement ID' },
-    { k: 'pixel', name: 'Meta Pixel', on: !!(process.env.NEXT_PUBLIC_META_PIXEL_ID || process.env.META_PIXEL_ID), detail: process.env.NEXT_PUBLIC_META_PIXEL_ID || process.env.META_PIXEL_ID || 'ยังไม่ได้ใส่ Pixel ID' },
-    { k: 'capi', name: 'Meta Conversions API', on: !!(process.env.META_CAPI_TOKEN && (process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID)), detail: process.env.META_CAPI_TOKEN ? (process.env.META_TEST_EVENT_CODE ? 'โหมดทดสอบ (META_TEST_EVENT_CODE)' : 'ส่งเหตุการณ์จริง') : 'ยังไม่ได้ใส่ META_CAPI_TOKEN' },
+    { k: 'pixel', name: 'Meta Pixel', on: !!(pub('NEXT_PUBLIC_META_PIXEL_ID') || process.env.META_PIXEL_ID), detail: pub('NEXT_PUBLIC_META_PIXEL_ID') || process.env.META_PIXEL_ID || 'ยังไม่ได้ใส่ Pixel ID' },
+    { k: 'capi', name: 'Meta Conversions API', on: !!(process.env.META_CAPI_TOKEN && (process.env.META_PIXEL_ID || pub('NEXT_PUBLIC_META_PIXEL_ID'))), detail: process.env.META_CAPI_TOKEN ? (process.env.META_TEST_EVENT_CODE ? 'โหมดทดสอบ (META_TEST_EVENT_CODE)' : 'ส่งเหตุการณ์จริง') : 'ยังไม่ได้ใส่ META_CAPI_TOKEN' },
     { k: 'psi', name: 'PageSpeed Insights', on: true, detail: process.env.PAGESPEED_API_KEY ? 'ใช้คีย์ของเรา' : 'ไม่มีคีย์ · ใช้โควตาร่วม (ช้ากว่าได้)' },
     { k: 'cron', name: 'Cron ภายนอก', on: !!process.env.CRON_SECRET, opt: true, detail: process.env.CRON_SECRET ? 'ตั้ง CRON_SECRET แล้ว' : 'ไม่บังคับ · ระบบรันงานเองทุกนาที' },
   ];

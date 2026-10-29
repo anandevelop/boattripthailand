@@ -126,7 +126,9 @@ data/                    ข้อมูลตั้งต้นจากโบ�
 
 ## Auto-deploy (GitHub Actions → VPS)
 
-`.github/workflows/ci.yml` ตรวจ type + build ทุก push / PR · `.github/workflows/deploy.yml` push เข้า `main` แล้ว **ผ่าน CI** → SSH เข้าเซิร์ฟเวอร์ → สำรองฐานข้อมูล → `git reset` ไป commit นั้น → `docker compose build` + `up -d` → รอ `/api/health` · ถ้าไม่ขึ้นภายใน 2 นาที **ย้อนกลับ commit เดิมให้อัตโนมัติ** · กดรันเองได้ที่ Actions → Deploy → Run workflow
+push เข้า `main` → **GitHub build Docker image** (มี cache · `next build` ตรวจ type ไปด้วย) แล้วเก็บไว้ที่ `ghcr.io/anandevelop/boattripthailand:<commit>` → SSH เข้าเซิร์ฟเวอร์ → `docker pull` (เว็บยังทำงานอยู่) → สำรองฐานข้อมูล → checkout commit เดียวกัน (compose / Caddyfile) → `up -d` → รอ `/api/health` และตรวจว่าเป็น commit ใหม่จริง · ไม่ผ่าน **ย้อนกลับ image เดิมให้อัตโนมัติ** · เซิร์ฟเวอร์ไม่ต้อง build เอง (ไม่กิน RAM / ไม่ค้าง) · กดรันเองได้ที่ Actions → Deploy → Run workflow · `ci.yml` ตรวจ type + build ทุก branch อื่น / PR
+
+image ที่รันอยู่ชื่อ `btt-app:current` บนเซิร์ฟเวอร์ (`btt-app:previous` = เวอร์ชันก่อนหน้า) · `docker compose up -d` ใช้ตัวนี้เสมอ · build เองบนเซิร์ฟเวอร์ได้ด้วย `docker compose up -d --build` (ควรมี swap ≥ 2 GB) · ค่า `NEXT_PUBLIC_*` ใน `.env` อ่านตอนรัน แก้แล้ว `docker compose up -d` พอ ไม่ต้อง build ใหม่ · เซิร์ฟเวอร์ ARM ตั้ง Variable `DOCKER_PLATFORM=linux/arm64`
 
 ตั้งครั้งเดียวบนเซิร์ฟเวอร์:
 

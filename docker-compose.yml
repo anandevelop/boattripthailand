@@ -17,6 +17,9 @@ services:
       retries: 10
 
   app:
+    # the deploy pulls the image built on GitHub (ghcr.io) and tags it btt-app:current;
+    # `docker compose up -d --build` on the server still builds locally under the same name
+    image: ${APP_IMAGE:-btt-app:current}
     build:
       context: .
       args:

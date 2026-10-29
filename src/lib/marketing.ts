@@ -3,6 +3,7 @@ import { and, desc, eq, gte, inArray, isNotNull, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { conversionEvents, customers, leads, settings } from '@/db/schema';
 import { sha256, sha256Lower } from './crypto';
+import { pub } from './env';
 
 /** ใช้ประโยชน์จากลีด — which conversions go back to the ad platforms, sales message templates */
 export const MKT_KEY = 'marketing.config';
@@ -62,7 +63,7 @@ export async function conversionStatus() {
   return {
     meta: !!(process.env.META_PIXEL_ID && process.env.META_CAPI_TOKEN), test: !!process.env.META_TEST_EVENT_CODE,
     // /admin → วิเคราะห์เว็บไซต์ → Meta: what is configured (the pixel id is public — it is in every page's source)
-    pixelId: process.env.NEXT_PUBLIC_META_PIXEL_ID || process.env.META_PIXEL_ID || null, capi: !!process.env.META_CAPI_TOKEN,
+    pixelId: pub('NEXT_PUBLIC_META_PIXEL_ID') || process.env.META_PIXEL_ID || null, capi: !!process.env.META_CAPI_TOKEN,
     counts: Object.fromEntries(counts.map(c => [c.status, c.n])), gclidWon: gclidWon[0]?.n ?? 0,
     recent: recent.map(r => ({ ...r, at: r.at.toISOString() })),
   };

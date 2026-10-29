@@ -1,19 +1,19 @@
-# Auto-deploy to the VPS (Docker) on every push to main, after CI passes.
-# Can also be started by hand: GitHub → Actions → Deploy → Run workflow.
+# Auto-deploy on every push to main (or by hand: GitHub → Actions → Deploy → Run workflow).
 #
-# One-time set-up on the server (see README → "Auto-deploy"):
-#   1. the repo is cloned at DEPLOY_PATH and .env is filled in there (never committed)
-#      – put  COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml  in that .env (prod overrides + Caddy HTTPS)
-#   2. the server can `git fetch` the repo (read-only deploy key on GitHub, or HTTPS for a public repo)
-#   3. a deploy user that can run docker, with the public half of SSH_KEY in ~/.ssh/authorized_keys
+#   1. image  – GitHub builds the Docker image (16 GB runner, layer cache) and pushes it to
+#               ghcr.io/<owner>/<repo>:<commit>. `next build` type-checks, so a type error stops here.
+#   2. deploy – SSH to the server: backup the database → check out the same commit (compose files, Caddyfile)
+#               → docker pull → restart → wait for /api/health → roll back to the previous image if it fails.
+#   The server never builds, so a deploy takes seconds there and the site stays fast while it runs.
 #
-# Repository secrets (Settings → Secrets and variables → Actions):
-#   SSH_HOST             server IP or host name
-#   SSH_USER             SSH user, e.g. deploy
-#   SSH_KEY              private key (ed25519) for that user
-#   DEPLOY_PATH          optional (secret or variable), default /srv/boattripthailand
-#   SSH_PORT             optional, default 22
-#   SSH_KNOWN_HOSTS      optional but recommended: output of  ssh-keyscan -p PORT HOST  (otherwise it is scanned on first use)
+# One-time set-up on the server (README → "Auto-deploy"):
+#   – the repo cloned at DEPLOY_PATH with .env filled in (never committed);
+#     put  COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml  in that .env (prod overrides + Caddy HTTPS)
+#   – the server can `git fetch` the repo; a deploy user that can run docker, with the public half of SSH_KEY in authorized_keys
+#   Pulling the image needs nothing on the server: the job logs in to ghcr.io with its own short-lived token.
+#
+# Repository secrets: SSH_HOST · SSH_USER · SSH_KEY  ·  optional: SSH_PORT (22) · SSH_KNOWN_HOSTS · DEPLOY_PATH (/srv/boattripthailand)
+# Repository variables (optional): SITE_URL · DOCKER_PLATFORM (linux/amd64; linux/arm64 for an ARM server)
 name: Deploy
 
 on:
@@ -30,14 +30,61 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  ci:
-    uses: ./.github/workflows/ci.yml
+  image:
+    name: Build image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version info
+        id: meta
+        run: |
+          repo=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "image=ghcr.io/$repo:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "latest=ghcr.io/$repo:latest" >> "$GITHUB_OUTPUT"
+          echo "time=$(git show -s --format=%cI HEAD)" >> "$GITHUB_OUTPUT"
+          echo "built=$(date -u +%FT%TZ)" >> "$GITHUB_OUTPUT"
+          { echo 'msg<<EOF_MSG'; git show -s --format=%s HEAD | cut -c1-200; echo 'EOF_MSG'; } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: ${{ vars.DOCKER_PLATFORM || 'linux/amd64' }}
+          tags: |
+            ${{ steps.meta.outputs.image }}
+            ${{ steps.meta.outputs.latest }}
+          build-args: |
+            APP_COMMIT=${{ github.sha }}
+            APP_COMMIT_TIME=${{ steps.meta.outputs.time }}
+            APP_COMMIT_MSG=${{ steps.meta.outputs.msg }}
+            APP_BUILD_TIME=${{ steps.meta.outputs.built }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy to server
-    needs: ci
+    needs: image
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
     environment:
       name: production
       url: ${{ vars.SITE_URL || 'https://new.boattripthailand.com' }}
@@ -55,81 +102,88 @@ jobs:
           if [ -n "$KNOWN_HOSTS" ]; then printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts; else ssh-keyscan -p "$PORT" -H "$HOST" > ~/.ssh/known_hosts 2>/dev/null; fi
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Pull, rebuild and restart
+      - name: Pull and restart
         env:
           HOST: ${{ secrets.SSH_HOST }}
           USER: ${{ secrets.SSH_USER }}
           PORT: ${{ secrets.SSH_PORT || '22' }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH || '/srv/boattripthailand' }}
           SHA: ${{ github.sha }}
+          IMAGE: ${{ needs.image.outputs.image }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ssh -i ~/.ssh/deploy_key -p "$PORT" -o BatchMode=yes -o ServerAliveInterval=30 "$USER@$HOST" \
-            "DEPLOY_PATH='$DEPLOY_PATH' SHA='$SHA' bash -s" <<'REMOTE'
-          # everything runs inside main(): bash reads the whole function before starting, so a command that reads
-          # stdin (docker compose exec) can never swallow the rest of this script and end the deploy early as "success"
+          # the registry token goes in as the first line of stdin (not on the command line), the script follows
+          { printf '%s\n' "$GHCR_TOKEN"; cat <<'REMOTE'
+          # everything runs inside main(): bash reads the whole function before starting, so a command that
+          # reads stdin can never swallow the rest of this script
           main() {
           set -euo pipefail
           cd "$DEPLOY_PATH"
           if ! git_err=$(git remote get-url origin 2>&1); then
             echo "::error::$DEPLOY_PATH on $(hostname) is not a git clone with an 'origin' remote (user $(whoami)): $git_err — see README → Auto-deploy, or set DEPLOY_PATH"
-            ls -la
             exit 1
           fi
-          # empty on the very first deploy (git init + remote, nothing checked out yet)
           PREV=$(git rev-parse -q --verify HEAD || true)
-          echo "→ current ${PREV:-none (first deploy)} · deploying $SHA"
+          echo "→ current ${PREV:-none} · deploying $SHA"
 
-          # 1. safety copy of the database before anything changes (kept 14 days)
-          if [ -n "$PREV" ] && [ -n "$(docker compose ps -q --status running db 2>/dev/null)" ]; then
+          # 1. pull first (the site keeps running): ghcr.io login with the job's token, which expires with the job
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin >/dev/null
+          pulled=0; docker pull -q "$IMAGE" </dev/null && pulled=1
+          docker logout ghcr.io >/dev/null 2>&1 || true
+          [ "$pulled" = 1 ] || { echo "::error::could not pull $IMAGE"; exit 1; }
+
+          # 2. safety copy of the database (kept 14 days)
+          if [ -n "$(docker compose ps -q --status running db 2>/dev/null)" ]; then
             mkdir -p "$HOME/backups"
             docker compose exec -T db pg_dump -U btt btt </dev/null | gzip > "$HOME/backups/btt-$(date +%F-%H%M)-pre-deploy.sql.gz"
             find "$HOME/backups" -name 'btt-*-pre-deploy.sql.gz' -mtime +14 -delete
-          else
-            echo "→ database not running yet, no backup"
           fi
 
-          # 2. exactly the commit that passed CI (.env and uploads are untracked, so they are kept)
-          git fetch --prune origin main || { echo "::error::git fetch failed on the server — the repo is private: add the server's ~/.ssh/github.pub as a read-only Deploy key and use the git@github.com: remote (README → Auto-deploy)"; exit 1; }
+          # 3. the same commit for compose files / Caddyfile (.env and uploads are untracked, so they are kept)
+          git fetch -q --prune origin main
           git checkout -q -f -B main "$SHA"
 
-          # 3. build the new image while the old one keeps serving, then swap (migrations run on start)
-          meta() { export APP_COMMIT="$1" APP_COMMIT_TIME="$(git show -s --format=%cI "$1")" APP_COMMIT_MSG="$(git show -s --format=%s "$1" | cut -c1-200)" APP_BUILD_TIME="$(date -u +%FT%TZ)"; }
-          meta "$SHA"
-          docker compose build app
-          docker compose up -d --remove-orphans
-          # the Caddyfile is bind-mounted (git replaces the file, the running container keeps the old one): restart Caddy when it changed
+          # 4. keep the running image as btt-app:previous, start the new one as btt-app:current (migrations run on start)
+          cid=$(docker compose ps -q app 2>/dev/null || true)
+          [ -n "$cid" ] && docker tag "$(docker inspect -f '{{.Image}}' "$cid")" btt-app:previous
+          docker tag "$IMAGE" btt-app:current
+          unset APP_IMAGE
+          docker compose up -d --no-build --remove-orphans </dev/null
+          # the Caddyfile is bind-mounted: restart Caddy when it changed
           if [ -n "$PREV" ] && ! git diff --quiet "$PREV" "$SHA" -- Caddyfile && [ -n "$(docker compose ps -q --status running caddy 2>/dev/null)" ]; then
-            echo "→ Caddyfile changed, restarting Caddy"; docker compose restart caddy
+            echo "→ Caddyfile changed, restarting Caddy"; docker compose restart caddy </dev/null
           fi
 
-          # 4. wait for /api/health (app + database); roll back to the previous commit if it never comes up
+          # 5. wait for /api/health; roll back to the previous image if it never comes up
           ok=0
           for i in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:3009/api/health >/dev/null 2>&1; then ok=1; break; fi
-            sleep 4
+            sleep 3
           done
-          if [ "$ok" != 1 ]; then
-            docker compose logs --tail=80 app || true
-            if [ -z "$PREV" ]; then echo "::error::first deploy did not come up healthy — nothing to roll back to, see the app log above"; exit 1; fi
-            echo "✗ health check failed — rolling back to $PREV"
-            git checkout -q -f -B main "$PREV"
-            meta "$PREV"
-            docker compose build app && docker compose up -d
+          running=$(docker compose exec -T app printenv APP_COMMIT </dev/null 2>/dev/null | tr -d '\r' || true)
+          if [ "$ok" != 1 ] || [ "$running" != "$SHA" ]; then
+            docker compose logs --tail=80 app </dev/null || true
+            echo "::error::new version did not come up (health=$ok, running=${running:-unknown})"
+            if docker image inspect btt-app:previous >/dev/null 2>&1; then
+              echo "✗ rolling back to the previous image"
+              [ -n "$PREV" ] && git checkout -q -f -B main "$PREV"
+              docker tag btt-app:previous btt-app:current
+              docker compose up -d --no-build </dev/null
+            fi
             exit 1
           fi
 
-          # 5. make sure the running container really is the new build
-          running=$(docker compose exec -T app printenv APP_COMMIT </dev/null 2>/dev/null | tr -d '\r' || true)
-          if [ "$running" != "$SHA" ]; then echo "::error::the app container runs '${running:-unknown}', not $SHA — the new image was not started"; docker compose ps; exit 1; fi
-
-          docker image prune -f >/dev/null
+          # 6. tidy: drop images no container uses that are older than 7 days (btt-app:previous stays until then)
+          docker image prune -af --filter "until=168h" >/dev/null 2>&1 || true
           echo "✓ deployed $(git log -1 --format='%h %s')"
           }
           main
           REMOTE
+          } | ssh -i ~/.ssh/deploy_key -p "$PORT" -o BatchMode=yes -o ServerAliveInterval=30 "$USER@$HOST" \
+            "read -r GHCR_TOKEN && export GHCR_TOKEN DEPLOY_PATH='$DEPLOY_PATH' SHA='$SHA' IMAGE='$IMAGE' GHCR_USER='$GHCR_USER' && exec bash -s"
 
       - name: Check the live site
-        if: success()
         env:
           URL: ${{ vars.SITE_URL || 'https://new.boattripthailand.com' }}
         run: |
