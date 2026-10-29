@@ -55,21 +55,36 @@ function publicSettings(v: unknown) {
 }
 
 export async function siteData(): Promise<SiteData> { return (await siteDataBundle()).data; }
+/**
+ * /boats/x.webp → /boats/x.webp?v=<content hash>. Photos are cached for a year (Cloudflare + browsers), so a
+ * replaced photo under the same name would keep showing the old one; the hash changes only when the file does.
+ */
+const VER = new Map<string, string>();
+export function ver(u: string) {
+  if (!/^\/(boats|img)\/[^?#]+$/.test(u)) return u;
+  let v = VER.get(u);
+  if (v === undefined) {
+    try { v = createHash('sha1').update(readFileSync(path.join(ROOT, 'public', u))).digest('hex').slice(0, 8); } catch { v = ''; }
+    VER.set(u, v);
+  }
+  return v ? `${u}?v=${v}` : u;
+}
+
 /** shared data for every page, served as one cacheable script: /site-data.js?v=<version> */
 export async function siteDataBundle() {
   if (dataCache && Date.now() - dataCache.at < 300_000) return dataCache;
   const [bs, cals, ps, cfg, home, acts, seo] = await Promise.all([db.select().from(boats).where(eq(boats.active, true)).orderBy(asc(boats.sortOrder)), db.select().from(seasonCalendars), db.select().from(posts).where(eq(posts.published, true)), db.select().from(settings).where(eq(settings.key, 'admin.sitecfg')), homeContent(), activitiesContent(), seoConfig()]);
   const extra = JSON.parse(read('data/boats.json')).extra;
   const FLEET = bs.map(b => ({ slug: b.slug, title: b.name, subtitle: b.subtitle ?? '', type: b.type, ft: b.ft, pax: b.pax, from_: b.fromPrice, marina: b.marina ?? '', pattaya: /pattaya/i.test(b.marina ?? ''), pages: [], info: b.data.info ?? [], includes: b.data.includes ?? [], complimentary: b.data.complimentary ?? [], not_included: b.data.not_included ?? [], time_slots: b.data.time_slots ?? [], notes: b.data.notes ?? [], remarks: [], tables: b.data.tables ?? [], i18n: (b.data as { i18n?: unknown }).i18n ?? null }));
-  const BIMG = Object.fromEntries(bs.map(b => [b.slug, Object.fromEntries(['hero', 'a', 'b'].map((k, i) => [k, b.images.find(u => u.endsWith(`-${k}.webp`)) ?? b.images[i] ?? '']))]));
+  const BIMG = Object.fromEntries(bs.map(b => [b.slug, Object.fromEntries(['hero', 'a', 'b'].map((k, i) => [k, ver(b.images.find(u => u.endsWith(`-${k}.webp`)) ?? b.images[i] ?? '')]))]));
   /** every photo of a boat in the order set in the admin — first = cover */
-  const GALLERY = Object.fromEntries(bs.map(b => [b.slug, b.images.filter(Boolean)]));
+  const GALLERY = Object.fromEntries(bs.map(b => [b.slug, b.images.filter(Boolean).map(ver)]));
   const SEASONS = { calendars: cals.map(c => ({ id: c.id, name: c.name, kind: c.kind === 'season' ? 'season' : 'allyear', ranges: c.ranges, special: c.special, ...(c.add ? { add: c.add } : {}), ...(c.addHalf ? { addHalf: c.addHalf } : {}) })), boats: Object.fromEntries(bs.map(b => [b.slug, b.calendarId ?? 'all'])), colmap: Object.fromEntries(bs.filter(b => b.data.colmap).map(b => [b.slug, b.data.colmap])) };
   const SHOWIMG: Record<string, string[]> = {};
   for (const f of readdirSync(path.join(ROOT, 'public/img/acts')).sort()) (SHOWIMG[f.split('-')[0]] ??= []).push('/img/acts/' + f);
   const TEAM_IMG = Object.fromEntries(['kwang', 'save', 'prang'].map(n => [n, `/img/team/${n}.webp`]));
   const POSTS: PostIdx[] = ps.map(postIdx);
-  const data = { __SET__: publicSettings(cfg[0]?.value), __HOME__: home, __ACTS__: acts.filter(a => a.active !== false), __SEO__: publicSeo(seo), FLEET, EXTRA: extra, SEASONS, BIMG, GALLERY, SHOWIMG, TEAM_IMG, POSTS, DEST_PAGES: DESTINATIONS.map(({ match, ...d }) => ({ ...d, match: match.source })) };
+  const data = { __SET__: publicSettings(cfg[0]?.value), __HOME__: home, __ACTS__: acts.filter(a => a.active !== false), __SEO__: publicSeo(seo), FLEET, EXTRA: extra, SEASONS, BIMG, GALLERY, SHOWIMG, TEAM_IMG, POSTS, DEST_PAGES: DESTINATIONS.map(({ match, ...d }) => ({ ...d, hero: ver(d.hero), match: match.source })) };
   const js = Object.entries(data).map(([k, v]) => `window.${k}=${JSON.stringify(v).replace(/</g, '\\u003c')};`).join('\n');
   dataCache = { at: Date.now(), data, js, version: createHash('sha1').update(js).digest('hex').slice(0, 12) };
   return dataCache;
