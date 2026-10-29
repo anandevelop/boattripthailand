@@ -4439,6 +4439,21 @@ function sparkSvg(vals, color = '#70000e') {
   icons();
 }; PAGES.find(p => p[0] === 'dashboard')[3] = vDashboard; }
 
+/* รายละเอียดลีด: 5-step progress — ลีดใหม่ · ติดต่อแล้ว · กำลังคุย · มัดจำแล้ว · ปิดการขาย
+   "มัดจำแล้ว" comes from the deal payments (ราคาที่ตกลง & การชำระเงิน), so the lead statuses stay as they are */
+function leadSteps(id) {
+  const l = BOOKINGS.find(b => b.id === id); if (!l) return;
+  const row = [...document.querySelectorAll('#drawer .flex.items-center.gap-1')].find(r => r.querySelector('.h-1\\.5')); if (!row) return;
+  let d = null; try { d = DEALS[l.dbId] || null; } catch (e) { }
+  const paid = !!d && d.paid > 0 && (!d.deposit || d.paid >= d.deposit);
+  const S = [['new', 'ลีดใหม่'], ['contacted', 'ติดต่อแล้ว'], ['talking', 'กำลังคุย'], ['deposit', 'มัดจำแล้ว'], ['won', 'ปิดการขาย']];
+  const idx = l.status === 'won' ? 4 : paid ? 3 : Math.max(0, ['new', 'contacted', 'talking'].indexOf(l.status));
+  const lost = l.status === 'lost';
+  row.classList.add('lead-steps'); row.classList.replace('items-center', 'items-start');
+  row.innerHTML = S.map(([k, t], i) => `<div class="flex-1"><div class="h-1.5 rounded-full ${lost ? 'bg-[#f3d6d8]' : i <= idx ? 'bg-maroon' : 'bg-sand-100'}"></div><p class="text-[10px] mt-1.5 ${!lost && i === idx ? 'text-ink' : 'text-muted'}">${t}${k === 'deposit' && paid && d?.paid ? ` <span class="tnum">฿${Number(d.paid).toLocaleString()}</span>` : ''}</p></div>`).join('');
+}
+{ const _bd = bookingDetail; bookingDetail = function (id) { _bd(id); try { leadSteps(id); } catch (e) { } }; }
+
 }
 setInterval(mTick, 3000);
 
