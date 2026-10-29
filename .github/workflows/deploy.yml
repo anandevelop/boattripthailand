@@ -65,6 +65,9 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -p "$PORT" -o BatchMode=yes -o ServerAliveInterval=30 "$USER@$HOST" \
             "DEPLOY_PATH='$DEPLOY_PATH' SHA='$SHA' bash -s" <<'REMOTE'
+          # everything runs inside main(): bash reads the whole function before starting, so a command that reads
+          # stdin (docker compose exec) can never swallow the rest of this script and end the deploy early as "success"
+          main() {
           set -euo pipefail
           cd "$DEPLOY_PATH"
           if ! git_err=$(git remote get-url origin 2>&1); then
@@ -79,7 +82,7 @@ jobs:
           # 1. safety copy of the database before anything changes (kept 14 days)
           if [ -n "$PREV" ] && [ -n "$(docker compose ps -q --status running db 2>/dev/null)" ]; then
             mkdir -p "$HOME/backups"
-            docker compose exec -T db pg_dump -U btt btt | gzip > "$HOME/backups/btt-$(date +%F-%H%M)-pre-deploy.sql.gz"
+            docker compose exec -T db pg_dump -U btt btt </dev/null | gzip > "$HOME/backups/btt-$(date +%F-%H%M)-pre-deploy.sql.gz"
             find "$HOME/backups" -name 'btt-*-pre-deploy.sql.gz' -mtime +14 -delete
           else
             echo "→ database not running yet, no backup"
@@ -115,8 +118,14 @@ jobs:
             exit 1
           fi
 
+          # 5. make sure the running container really is the new build
+          running=$(docker compose exec -T app printenv APP_COMMIT </dev/null 2>/dev/null | tr -d '\r' || true)
+          if [ "$running" != "$SHA" ]; then echo "::error::the app container runs '${running:-unknown}', not $SHA — the new image was not started"; docker compose ps; exit 1; fi
+
           docker image prune -f >/dev/null
           echo "✓ deployed $(git log -1 --format='%h %s')"
+          }
+          main
           REMOTE
 
       - name: Check the live site
