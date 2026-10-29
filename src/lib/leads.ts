@@ -97,7 +97,7 @@ export async function leadCardFor(l: Lead, cust: { name: string; phone: string; 
   const date = (l.tripDate ? new Date(l.tripDate + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '-') + (sur ? ` · ⚠️ ${sur}` : '');
   const first = cust.name.split(' ')[0];
   const waText = l.lang === 'en' ? `Hi ${first}, this is Boat Trip Thailand. Thanks for your request for ${boat}${l.tripDate ? ' on ' + l.tripDate : ''}. Let me check availability for you.` : `สวัสดีค่ะคุณ${first} จาก Boat Trip Thailand ได้รับคำขอเรื่อง ${boat}${l.tripDate ? ' วันที่ ' + date : ''} แล้วนะคะ ขอเช็กคิวเรือให้สักครู่ค่ะ`;
-  return leadCard({ id: l.id, ref: l.ref, name: cust.name, phone: cust.phone, whatsapp: cust.whatsapp, boat: boat + (l.program ? ` · ${l.program}` : ''), date, guests: `${l.adults} ผู้ใหญ่${l.children ? ` + ${l.children} เด็ก` : ''}`, source: (SOURCE_LABEL[l.source] ?? l.source) + (l.campaign ? ` · ${l.campaign}` : ''), score: l.score, scoreLabel: SCORE_LABEL(l.score).th, message: l.message, lang: l.lang }, { title, appUrl: appUrl(), waText });
+  return leadCard({ id: l.id, ref: l.ref, name: cust.name, phone: cust.phone, whatsapp: cust.whatsapp, boat: boat + (l.program ? ` · ${l.program}` : ''), date, guests: `${l.adults} ผู้ใหญ่${l.children ? ` + ${l.children} เด็ก` : ''}`, source: (SOURCE_LABEL[l.source] ?? l.source) + (l.campaign ? ` · ${l.campaign}` : ''), score: l.score, scoreLabel: SCORE_LABEL(l.score).th, message: l.message, lang: l.lang, at: l.createdAt }, { title, appUrl: appUrl(), waText });
 }
 
 export async function lineGroupId() {
