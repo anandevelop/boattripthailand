@@ -92,6 +92,10 @@ jobs:
           # 3. build the new image while the old one keeps serving, then swap (migrations run on start)
           docker compose build app
           docker compose up -d --remove-orphans
+          # the Caddyfile is bind-mounted (git replaces the file, the running container keeps the old one): restart Caddy when it changed
+          if [ -n "$PREV" ] && ! git diff --quiet "$PREV" "$SHA" -- Caddyfile && [ -n "$(docker compose ps -q --status running caddy 2>/dev/null)" ]; then
+            echo "→ Caddyfile changed, restarting Caddy"; docker compose restart caddy
+          fi
 
           # 4. wait for /api/health (app + database); roll back to the previous commit if it never comes up
           ok=0
