@@ -67,22 +67,27 @@ jobs:
             "DEPLOY_PATH='$DEPLOY_PATH' SHA='$SHA' bash -s" <<'REMOTE'
           set -euo pipefail
           cd "$DEPLOY_PATH"
-          if ! git_err=$(git rev-parse HEAD 2>&1); then
-            echo "::error::$DEPLOY_PATH on $(hostname) is not a usable git clone for user $(whoami): $git_err — clone the repo there (README → Auto-deploy) or set DEPLOY_PATH"
+          if ! git_err=$(git remote get-url origin 2>&1); then
+            echo "::error::$DEPLOY_PATH on $(hostname) is not a git clone with an 'origin' remote (user $(whoami)): $git_err — see README → Auto-deploy, or set DEPLOY_PATH"
             ls -la
             exit 1
           fi
-          PREV=$(git rev-parse HEAD)
-          echo "→ current $PREV · deploying $SHA"
+          # empty on the very first deploy (git init + remote, nothing checked out yet)
+          PREV=$(git rev-parse -q --verify HEAD || true)
+          echo "→ current ${PREV:-none (first deploy)} · deploying $SHA"
 
           # 1. safety copy of the database before anything changes (kept 14 days)
-          mkdir -p "$HOME/backups"
-          docker compose exec -T db pg_dump -U btt btt | gzip > "$HOME/backups/btt-$(date +%F-%H%M)-pre-deploy.sql.gz"
-          find "$HOME/backups" -name 'btt-*-pre-deploy.sql.gz' -mtime +14 -delete
+          if [ -n "$PREV" ] && [ -n "$(docker compose ps -q --status running db 2>/dev/null)" ]; then
+            mkdir -p "$HOME/backups"
+            docker compose exec -T db pg_dump -U btt btt | gzip > "$HOME/backups/btt-$(date +%F-%H%M)-pre-deploy.sql.gz"
+            find "$HOME/backups" -name 'btt-*-pre-deploy.sql.gz' -mtime +14 -delete
+          else
+            echo "→ database not running yet, no backup"
+          fi
 
           # 2. exactly the commit that passed CI (.env and uploads are untracked, so they are kept)
-          git fetch --prune origin main
-          git reset --hard "$SHA"
+          git fetch --prune origin main || { echo "::error::git fetch failed on the server — the repo is private: add the server's ~/.ssh/github.pub as a read-only Deploy key and use the git@github.com: remote (README → Auto-deploy)"; exit 1; }
+          git checkout -q -f -B main "$SHA"
 
           # 3. build the new image while the old one keeps serving, then swap (migrations run on start)
           docker compose build app
@@ -95,9 +100,10 @@ jobs:
             sleep 4
           done
           if [ "$ok" != 1 ]; then
-            echo "✗ health check failed — rolling back to $PREV"
             docker compose logs --tail=80 app || true
-            git reset --hard "$PREV"
+            if [ -z "$PREV" ]; then echo "::error::first deploy did not come up healthy — nothing to roll back to, see the app log above"; exit 1; fi
+            echo "✗ health check failed — rolling back to $PREV"
+            git checkout -q -f -B main "$PREV"
             docker compose build app && docker compose up -d
             exit 1
           fi
