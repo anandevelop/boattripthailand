@@ -123,3 +123,62 @@ textarea.inp { border-radius:14px; }
 @media (prefers-reduced-transparency: reduce) {
   #side, header.sticky, .card, #drawer, #modalBox { background:#fff !important; -webkit-backdrop-filter:none; backdrop-filter:none; }
 }
+
+/* =====================================================================
+   v2 page details (ui-v2 module in app.js)
+   ===================================================================== */
+/* tabs: sliding white thumb */
+.ttrack { position:relative; }
+.ttrack > .tab { position:relative; z-index:1; }
+.ttrack > .tab.on { background:transparent !important; box-shadow:none !important; }
+.tthumb { position:absolute; z-index:0; border-radius:999px; background:#fff; pointer-events:none;
+  box-shadow:0 4px 12px -6px rgb(70 20 25 / .4), inset 0 0 0 1px rgb(255 255 255 / .9); transition:left .32s cubic-bezier(.3,.8,.3,1), top .32s cubic-bezier(.3,.8,.3,1), width .32s cubic-bezier(.3,.8,.3,1); }
+@media (prefers-reduced-motion: reduce) { .tthumb { transition:none; } }
+
+/* ตั้งค่า: vertical menu on wide screens */
+@media (min-width:1180px) {
+  body[data-page=settings] #view { display:grid; grid-template-columns:232px minmax(0,1fr); column-gap:16px; align-items:start; }
+  body[data-page=settings] #view > * { grid-column:1 / -1; }
+  body[data-page=settings] #view > nav.vnav { grid-column:1; grid-row:span 30; position:sticky; top:92px; margin:0; }
+  body[data-page=settings] #view > nav.vnav ~ * { grid-column:2; }
+  nav.vnav { flex-direction:column; align-items:stretch; width:auto !important; border-radius:22px !important; padding:8px !important; gap:2px !important;
+    background:rgb(255 255 255 / .62) !important; -webkit-backdrop-filter:var(--blur2); backdrop-filter:var(--blur2); box-shadow:var(--edge), var(--lift) !important; overflow:visible !important; }
+  nav.vnav .tab { justify-content:flex-start; height:40px !important; border-radius:13px !important; font-size:13.5px !important; padding:0 12px !important; display:flex; align-items:center; gap:10px; text-align:left; }
+  nav.vnav .tthumb { border-radius:13px; }
+  nav.vnav .tab.on svg { color:var(--maroon); }
+}
+nav.tabbar .tab svg { width:16px; height:16px; flex-shrink:0; }
+@media (max-width:1179px) { nav.vnav .tab svg { display:none; } }
+
+/* ตั้งค่า: save bar */
+.cfg-bar { position:sticky; bottom:14px; z-index:5; display:none; align-items:center; gap:8px; margin-top:16px; padding:8px 8px 8px 20px; border-radius:999px;
+  background:rgb(255 255 255 / .8); -webkit-backdrop-filter:var(--blur2); backdrop-filter:var(--blur2); box-shadow:var(--edge), var(--lift-2); animation:g2-up .3s cubic-bezier(.2,.8,.2,1); }
+.cfg-bar.show { display:flex; }
+.cfg-bar span { margin-right:auto; display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); }
+.cfg-bar span svg { width:13px; height:13px; color:var(--warn); }
+@keyframes g2-up { from { opacity:0; transform:translateY(10px); } }
+
+/* แดชบอร์ด: icon tiles + sparkline + top boats */
+body[data-page=dashboard] #view .card > div > span.w-8.h-8.rounded-full { width:38px; height:38px; border-radius:13px; background:rgb(112 0 14 / .08) !important; color:var(--maroon) !important; box-shadow:inset 0 0 0 1px rgb(112 0 14 / .06); }
+body[data-page=dashboard] #view .card > p.text-2xl { font-size:34px; letter-spacing:-.02em; line-height:1.15; }
+.kpi-spark { position:relative; }
+.kpi-spark .spark { position:absolute; right:20px; top:70px; width:110px; height:36px; opacity:.95; pointer-events:none; }
+.tb-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:4px 12px; }
+.tb-row { display:flex; align-items:center; gap:11px; padding:8px; border-radius:14px; transition:background .15s; }
+.tb-row:hover { background:rgb(255 255 255 / .65); }
+.tb-row img { width:40px; height:40px; border-radius:12px; object-fit:cover; box-shadow:0 0 0 1px rgb(29 18 20 / .06); flex-shrink:0; }
+.tb-row b { display:block; font-weight:500; font-size:13px; } .tb-row small { display:block; font-size:11.5px; color:var(--muted); }
+
+/* รายละเอียดลีด: contact tiles, progress, deal box */
+#drawer button[onclick*="leadContact"] { height:62px !important; border-radius:16px !important; gap:4px !important; font-size:11.5px !important; font-weight:400; color:var(--ink-2) !important; }
+#drawer button[onclick*="leadContact"] svg { width:20px; height:20px; }
+#drawer button[onclick*="'WhatsApp'"] svg { color:#25d366; }
+#drawer button[onclick*="'LINE'"] svg { color:#06c755; }
+#drawer button[onclick*="'โทร'"] svg { color:var(--maroon); }
+#drawer button[onclick*="'อีเมล'"] svg { color:var(--blue); }
+#drawer .h-1\.5.rounded-full { height:5px; }
+#drawer .h-1\.5.rounded-full.bg-maroon { background:linear-gradient(90deg,var(--maroon-hi),var(--maroon)) !important; }
+#drawer .h-1\.5.rounded-full.bg-sand-100 { background:rgb(29 18 20 / .08) !important; }
+#drawer #dealBox, #drawer .ring-line { background:rgb(255 255 255 / .55); box-shadow:inset 0 0 0 1px rgb(255 255 255 / .8), 0 1px 0 rgb(29 18 20 / .03) !important; border-radius:18px; --tw-ring-color:transparent; }
+#drawer > div:first-child { height:74px !important; border-bottom:1px solid var(--line2) !important; }
+#drawer dl > div { padding:9px 11px; border-radius:13px; background:rgb(255 255 255 / .55); box-shadow:inset 0 0 0 1px rgb(255 255 255 / .8); }
