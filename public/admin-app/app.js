@@ -3448,12 +3448,13 @@ function vAudit() {
           <select class="inp flt sm:!w-32" onchange="AV.days=+this.value;vAudit()">${[[1, 'วันนี้'], [7, '7 วัน'], [30, '30 วัน'], [0, 'ทั้งหมด']].map(([d, l]) => `<option value="${d}" ${AV.days === d ? 'selected' : ''}>${l}</option>`).join('')}</select>
         </div>
       </div>
-      <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>การกระทำ</th><th>รายการ</th><th class="min-w-[280px]">เปลี่ยนแปลง (ก่อน → หลัง)</th></tr></thead><tbody>
+      <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>การกระทำ</th><th>รายการ</th><th class="min-w-[280px]">เปลี่ยนแปลง (ก่อน → หลัง)</th><th class="whitespace-nowrap">IP · อุปกรณ์</th></tr></thead><tbody>
         ${L.slice(0, AV.shown).map(e => `<tr class="click" onclick="audDetail(${e.id})"><td class="whitespace-nowrap"><p>${relTs(e.ts)}</p><p class="text-[11px] text-muted">${fmtTs(e.ts)}</p></td>
           <td><div class="flex items-center gap-2 whitespace-nowrap"><img src="${TEAM_IMG[e.uid] || initialsAva('?')}" class="w-6 h-6 rounded-full object-cover"/><div><p>${userName(e.uid)}</p><p class="text-[11px] text-muted">${e.role ? ROLES[e.role]?.[0] : e.ip}</p></div></div></td>
           <td>${actPill(e)}</td>
           <td><p class="text-[11px] text-muted">${ENT[e.ent] || e.ent}${e.sample ? ' · <span class="text-[#8a5a00]">ตัวอย่าง</span>' : ''}</p><p class="truncate max-w-[220px]">${esc(e.label)}</p></td>
-          <td>${e.changes.length ? chHtml(e, 2) : `<span class="text-muted text-[12px]">${esc(e.note || '—')}</span>`}</td></tr>`).join('') || `<tr><td colspan="5" class="text-center text-muted py-12">ไม่พบรายการ</td></tr>`}
+          <td>${e.changes.length ? chHtml(e, 2) : `<span class="text-muted text-[12px]">${esc(e.note || '—')}</span>`}</td>
+          <td class="whitespace-nowrap">${e.ip || e.devS || e.dev ? `<p class="tnum">${esc(e.ip || '—')}</p><p class="text-[11px] text-muted" title="${esc(e.dev || '')}">${esc(e.devS || (e.dev ? e.dev.slice(0, 40) : 'ระบบ'))}</p>` : '<span class="text-muted text-[12px]">ระบบ</span>'}</td></tr>`).join('') || `<tr><td colspan="6" class="text-center text-muted py-12">ไม่พบรายการ</td></tr>`}
       </tbody></table></div>
       ${L.length > AV.shown ? `<button class="w-full py-3 border-t border-line text-[12px] text-maroon" onclick="AV.shown+=40;vAudit()">แสดงเพิ่ม (${L.length - AV.shown})</button>` : ''}
     </div>
@@ -3468,7 +3469,7 @@ function audDetail(id) {
       <div><p class="lbl">รายการ</p><p>${esc(e.label)}</p>${e.ent === 'boat' && bySlug(e.ref) ? `<a class="text-maroon text-[12px]" href="#/boats/${e.ref}">เปิดหน้าเรือ →</a>` : ''}${e.ent === 'booking' && BOOKINGS.find(b => b.id === e.ref) ? `<a class="text-maroon text-[12px]" href="javascript:void 0" onclick="bookingDetail('${e.ref}')">เปิดการจอง →</a>` : ''}</div>
       ${e.changes.length ? `<div><p class="lbl">การเปลี่ยนแปลง</p><div class="rounded-xl ring-1 ring-line overflow-hidden"><table class="tbl"><thead><tr><th>ฟิลด์</th><th>ก่อน</th><th>หลัง</th></tr></thead><tbody>${e.changes.map(c => `<tr><td class="text-muted">${esc(c.f)}${c.sens ? ' <i data-lucide="lock" class="w-3 h-3 inline -mt-0.5"></i>' : ''}</td><td class="line-through decoration-[#c9a3a7] text-muted">${maskV(c, c.from)}</td><td class="${c.kind === 'price' || c.sens ? 'text-maroon font-medium' : ''}">${maskV(c, c.to)}</td></tr>`).join('')}</tbody></table></div></div>` : ''}
       ${e.note ? `<div class="p-3 rounded-xl bg-sand text-[12.5px]">${esc(e.note)}</div>` : ''}
-      <dl class="grid grid-cols-2 gap-3 text-[12px]"><div><dt class="lbl">IP</dt><dd class="tnum">${esc(e.ip || '—')}</dd></div><div><dt class="lbl">อุปกรณ์</dt><dd>${esc(e.dev)}</dd></div><div><dt class="lbl">Hash</dt><dd class="font-mono">${e.hash}</dd></div><div><dt class="lbl">Hash ก่อนหน้า</dt><dd class="font-mono">${e.prev}</dd></div></dl>
+      <dl class="grid grid-cols-2 gap-3 text-[12px]"><div><dt class="lbl">IP</dt><dd class="tnum">${esc(e.ip || '—')}</dd></div><div><dt class="lbl">อุปกรณ์</dt><dd>${e.devS ? `<b class="font-medium">${esc(e.devS)}</b><br/>` : ''}<span class="text-muted break-all">${esc(e.dev)}</span></dd></div><div><dt class="lbl">Hash</dt><dd class="font-mono">${e.hash}</dd></div><div><dt class="lbl">Hash ก่อนหน้า</dt><dd class="font-mono">${e.prev}</dd></div></dl>
       <p class="text-[11px] text-muted flex gap-1.5"><i data-lucide="lock" class="w-3.5 h-3.5 shrink-0"></i>บันทึกนี้แก้ไขหรือลบไม่ได้ · แต่ละรายการผูก hash กับรายการก่อนหน้า ถ้ามีใครแก้ฐานข้อมูลโดยตรง การตรวจความถูกต้องจะเจอทันที</p>
     </div>`);
 }

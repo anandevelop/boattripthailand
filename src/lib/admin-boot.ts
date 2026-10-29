@@ -86,8 +86,16 @@ export async function leadClientById(id: string) {
 }
 
 export function auditToClient(r: typeof auditLogs.$inferSelect) {
+/** "Chrome · Mac" from a user-agent string (บันทึกกิจกรรม → IP · อุปกรณ์) */
+export function uaShort(ua: string | null | undefined) {
+  if (!ua) return '';
+  const b = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /\bLine\//.test(ua) ? 'LINE' : /FBAN|FBAV|Instagram/.test(ua) ? 'แอป Facebook/IG'
+    : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /FxiOS|Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : /bot|curl|node|python|axios|undici/i.test(ua) ? 'ระบบ / สคริปต์' : 'อื่นๆ';
+  const o = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /CrOS/.test(ua) ? 'ChromeOS' : /Linux/.test(ua) ? 'Linux' : '';
+  return o ? `${b} · ${o}` : b;
+}
   const ent = ({ lead: 'booking' } as Record<string, string>)[r.entity] ?? r.entity;
-  return { id: r.id, ts: r.ts.toISOString(), uid: r.userId ?? '—', role: r.role ? (ROLE_TO_CLIENT as Record<string, string>)[r.role] ?? r.role : '', act: r.action, ent, ref: r.ref ?? '', label: r.label, changes: r.changes, note: r.note ?? '', ip: r.ip ?? '', dev: (r.userAgent ?? '').slice(0, 80), hash: r.hash.slice(0, 12), prev: r.prevHash.slice(0, 12), server: true };
+  return { id: r.id, ts: r.ts.toISOString(), uid: r.userId ?? '—', role: r.role ? (ROLE_TO_CLIENT as Record<string, string>)[r.role] ?? r.role : '', act: r.action, ent, ref: r.ref ?? '', label: r.label, changes: r.changes, note: r.note ?? '', ip: r.ip ?? '', dev: (r.userAgent ?? '').slice(0, 300), devS: uaShort(r.userAgent), hash: r.hash.slice(0, 12), prev: r.prevHash.slice(0, 12), server: true };
 }
 export async function auditList(limit = 1500) {
   return (await db.select().from(auditLogs).orderBy(desc(auditLogs.id)).limit(limit)).reverse().map(auditToClient);
