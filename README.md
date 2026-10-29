@@ -123,3 +123,29 @@ src/instrumentation.ts   งานเบื้องหลัง: แจ้ง�
 drizzle/                 migration (รวม trigger ห้ามแก้บันทึกกิจกรรม)
 data/                    ข้อมูลตั้งต้นจากโบรชัวร์และ WordPress
 ```
+
+## Auto-deploy (GitHub Actions → VPS)
+
+`.github/workflows/ci.yml` ตรวจ type + build ทุก push / PR · `.github/workflows/deploy.yml` push เข้า `main` แล้ว **ผ่าน CI** → SSH เข้าเซิร์ฟเวอร์ → สำรองฐานข้อมูล → `git reset` ไป commit นั้น → `docker compose build` + `up -d` → รอ `/api/health` · ถ้าไม่ขึ้นภายใน 2 นาที **ย้อนกลับ commit เดิมให้อัตโนมัติ** · กดรันเองได้ที่ Actions → Deploy → Run workflow
+
+ตั้งครั้งเดียวบนเซิร์ฟเวอร์:
+
+```bash
+# ผู้ใช้สำหรับ deploy (ใช้ docker ได้)
+sudo adduser --disabled-password deploy && sudo usermod -aG docker deploy
+sudo -iu deploy
+ssh-keygen -t ed25519 -f ~/.ssh/github -N ''          # กุญแจให้เซิร์ฟเวอร์ดึงโค้ด → GitHub repo → Settings → Deploy keys (Read-only) วาง ~/.ssh/github.pub
+printf 'Host github.com\n  IdentityFile ~/.ssh/github\n' >> ~/.ssh/config
+git clone git@github.com:anandevelop/boattripthailand.git /srv/boattripthailand   # หรือโฟลเดอร์ที่ต้องการ
+cd /srv/boattripthailand && cp .env.example .env && nano .env   # ใส่ค่าจริง · ถ้าใช้ HTTPS ใส่ COMPOSE_PROFILES=https
+docker compose up -d --build
+
+# กุญแจให้ GitHub Actions เข้าเซิร์ฟเวอร์
+ssh-keygen -t ed25519 -f ~/actions_key -N '' && cat ~/actions_key.pub >> ~/.ssh/authorized_keys
+cat ~/actions_key            # → secret DEPLOY_SSH_KEY แล้วลบไฟล์นี้: rm ~/actions_key*
+ssh-keyscan -p 22 <IP>       # → secret DEPLOY_KNOWN_HOSTS (รันจากเครื่องตัวเอง)
+```
+
+GitHub repo → Settings → Secrets and variables → Actions: `DEPLOY_HOST` `DEPLOY_USER` (deploy) `DEPLOY_SSH_KEY` `DEPLOY_PATH` (/srv/boattripthailand) · ไม่บังคับ `DEPLOY_PORT` `DEPLOY_KNOWN_HOSTS` · Variables: `SITE_URL` (https://boattripthailand.com)
+
+ไฟล์สำรองก่อน deploy อยู่ที่ `~/backups` ของผู้ใช้ deploy (เก็บ 14 วัน)
