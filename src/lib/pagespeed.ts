@@ -12,7 +12,7 @@ const cache = new Map<string, { at: number; v: unknown }>();
 
 export async function pageSpeed(strategy: 'mobile' | 'desktop' = 'mobile', refresh = false) {
   // PageSpeed cannot reach localhost, so a dev setup measures the live domain
-  const url = (/localhost|127\.0\.0\.1/.test(SITE) ? 'https://boattripthailand.com' : SITE) + '/';
+  const url = (/localhost|127\.0\.0\.1/.test(SITE) ? 'https://new.boattripthailand.com' : SITE) + '/';
   const c = cache.get(strategy);
   if (c && !refresh && Date.now() - c.at < 24 * 3600_000) return c.v;
   const q = new URLSearchParams({ url, strategy, category: 'performance' });

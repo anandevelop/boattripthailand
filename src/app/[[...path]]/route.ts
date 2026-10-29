@@ -6,7 +6,7 @@ import { renderPostPreview, renderSite, routeExists } from '@/lib/site-render';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const cfg = async () => ({ site: (process.env.APP_URL || 'https://boattripthailand.com').replace(/\/$/, ''), pixel: process.env.NEXT_PUBLIC_META_PIXEL_ID || '', ga: await measurementId() });
+const cfg = async () => ({ site: (process.env.APP_URL || 'https://new.boattripthailand.com').replace(/\/$/, ''), pixel: process.env.NEXT_PUBLIC_META_PIXEL_ID || '', ga: await measurementId() });
 const PRIVATE = { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' };
 
 export async function GET(req: Request) {

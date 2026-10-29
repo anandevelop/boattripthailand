@@ -8,6 +8,7 @@ import { and, asc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { boats, posts, seasonCalendars, settings } from '@/db/schema';
 import { DESTINATIONS } from './destinations';
+import { SITE } from './i18n';
 import { homeContent } from './home';
 import { activitiesContent } from './activities';
 import { publicSeo, seoConfig } from './seo';
@@ -25,7 +26,7 @@ function loadAssets() {
   // fleet.js (หน้าเรือทั้งหมด) runs right after app.js, in the browser and here
   const version = String(Math.floor(Math.max(statSync(appPath).mtimeMs, statSync(path.join(ROOT, 'public/site/fleet.js')).mtimeMs)));
   if (assets && assets.version === version) return assets;
-  assets = { shell: read('site/shell.html').replaceAll('__V__', version), app: new vm.Script(read('public/site/app.js'), { filename: 'app.js' }), fleet: new vm.Script(read('public/site/fleet.js'), { filename: 'fleet.js' }), lucide: new vm.Script(read('public/site/lucide.min.js'), { filename: 'lucide.js' }), version };
+  assets = { shell: read('site/shell.html').replaceAll('__V__', version).replaceAll('https://boattripthailand.com', SITE), app: new vm.Script(read('public/site/app.js'), { filename: 'app.js' }), fleet: new vm.Script(read('public/site/fleet.js'), { filename: 'fleet.js' }), lucide: new vm.Script(read('public/site/lucide.min.js'), { filename: 'lucide.js' }), version };
   return assets;
 }
 

@@ -3,7 +3,8 @@
 	reverse_proxy app:3000
 }
 
-# the site lives on the bare domain (no www) — send www to it
-www.boattripthailand.com {
-	redir https://boattripthailand.com{uri} permanent
+# optional second host → DOMAIN (e.g. REDIRECT_FROM=www.boattripthailand.com after moving to the main domain).
+# unset = a .localhost name, so Caddy never asks Let's Encrypt for a host that does not point here
+{$REDIRECT_FROM:redirect.localhost} {
+	redir https://{$DOMAIN}{uri} permanent
 }

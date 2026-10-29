@@ -1188,7 +1188,7 @@ function lenMeter(v, kind) {
     <div class="flex justify-between mt-1 text-[10.5px] text-muted"><span>ความยาวที่เหมาะสม ${min}–${max} ตัวอักษร</span><span class="tnum" style="color:${n > max ? c : ''}">${n}</span></div></div>`;
 }
 document.addEventListener('input', e => { const m = e.target.nextElementSibling; if (m?.classList.contains('len-m')) m.outerHTML = lenMeter(e.target.value, m.dataset.k); });
-const SITE = 'boattripthailand.com';
+const SITE = /^(localhost|127\.|\[::1\])/.test(location.hostname) ? 'new.boattripthailand.com' : location.hostname;   // previews, robots.txt and sitemap follow the domain the admin runs on
 const SX = {}; /* per-page overrides: robots, canonical, og, schema */
 const sx = id => SX[id] ??= { index: true, follow: true, canon: '', ogT: tr(), schema: '' };
 const STATIC_SEO = {

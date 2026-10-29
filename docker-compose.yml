@@ -44,6 +44,7 @@ services:
     profiles: ["https"]
     environment:
       DOMAIN: ${DOMAIN:-localhost}
+      REDIRECT_FROM: ${REDIRECT_FROM:-redirect.localhost}
     ports:
       - "80:80"
       - "443:443"

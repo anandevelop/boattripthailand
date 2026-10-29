@@ -3,7 +3,7 @@ export const LANGS: Lang[] = ['th', 'en'];
 export const isLang = (x: string): x is Lang => x === 'th' || x === 'en';
 /** public URL for a path in a language (Thai has no prefix) */
 export const href = (lang: Lang, path = '/') => (lang === 'en' ? '/en' + (path === '/' ? '' : path) : path) || '/';
-export const SITE = (process.env.APP_URL || 'https://boattripthailand.com').replace(/\/$/, '');
+export const SITE = (process.env.APP_URL || 'https://new.boattripthailand.com').replace(/\/$/, '');
 export const abs = (lang: Lang, path = '/') => SITE + href(lang, path);
 export const alternates = (pathTh: string | null, pathEn: string | null, lang: Lang) => ({
   canonical: lang === 'en' ? (pathEn ? abs('en', pathEn) : undefined) : (pathTh ? abs('th', pathTh) : undefined),

@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 30
     environment:
       name: production
-      url: ${{ vars.SITE_URL || 'https://boattripthailand.com' }}
+      url: ${{ vars.SITE_URL || 'https://new.boattripthailand.com' }}
     steps:
       - name: Set up SSH
         env:
@@ -104,7 +104,7 @@ jobs:
       - name: Check the live site
         if: success()
         env:
-          URL: ${{ vars.SITE_URL || 'https://boattripthailand.com' }}
+          URL: ${{ vars.SITE_URL || 'https://new.boattripthailand.com' }}
         run: |
           for i in 1 2 3 4 5; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$URL/api/health" || true)
