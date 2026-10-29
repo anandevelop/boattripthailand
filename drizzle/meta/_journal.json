@@ -57,6 +57,13 @@
       "when": 1792654245161,
       "tag": "0007_conversion_events",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792919400382,
+      "tag": "0008_customer_whatsapp",
+      "breakpoints": true
     }
   ]
 }

@@ -58,6 +58,8 @@ export const customers = pgTable('customers', {
   /** digits only — merges repeat customers */
   phoneNorm: text('phone_norm').notNull().unique(),
   email: text('email'),
+  /** WhatsApp number when it differs from / is given besides `phone` (booking form, admin) */
+  whatsapp: text('whatsapp'),
   country: text('country'),
   lang: text('lang').notNull().default('th'),
   marketingConsent: boolean('marketing_consent').notNull().default(false),

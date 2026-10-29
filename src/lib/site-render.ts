@@ -30,7 +30,7 @@ function loadAssets() {
 }
 
 /* ---------------- data (cached) ---------------- */
-type SiteData = { __SET__: Record<string, unknown>; __HOME__: unknown; __ACTS__: unknown[]; __SEO__: unknown; FLEET: unknown[]; EXTRA: unknown; SEASONS: unknown; BIMG: Record<string, Record<string, string>>; SHOWIMG: Record<string, string[]>; TEAM_IMG: Record<string, string>; POSTS: PostIdx[]; DEST_PAGES: unknown[] };
+type SiteData = { __SET__: Record<string, unknown>; __HOME__: unknown; __ACTS__: unknown[]; __SEO__: unknown; FLEET: unknown[]; EXTRA: unknown; SEASONS: unknown; BIMG: Record<string, Record<string, string>>; GALLERY: Record<string, string[]>; SHOWIMG: Record<string, string[]>; TEAM_IMG: Record<string, string>; POSTS: PostIdx[]; DEST_PAGES: unknown[] };
 type PostIdx = { id: number; cat: string; date: string; cover: string | null; title: { th: string; en: string }; slug: { th: string; en: string }; excerpt: { th: string; en: string }; kw: { th: string; en: string }; has: { th: boolean; en: boolean }; read: { th: number; en: number } };
 let dataCache: { at: number; data: SiteData; js: string; version: string } | null = null;
 const strip = (h?: string) => (h ?? '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
@@ -61,12 +61,14 @@ export async function siteDataBundle() {
   const extra = JSON.parse(read('data/boats.json')).extra;
   const FLEET = bs.map(b => ({ slug: b.slug, title: b.name, subtitle: b.subtitle ?? '', type: b.type, ft: b.ft, pax: b.pax, from_: b.fromPrice, marina: b.marina ?? '', pattaya: /pattaya/i.test(b.marina ?? ''), pages: [], info: b.data.info ?? [], includes: b.data.includes ?? [], complimentary: b.data.complimentary ?? [], not_included: b.data.not_included ?? [], time_slots: b.data.time_slots ?? [], notes: b.data.notes ?? [], remarks: [], tables: b.data.tables ?? [], i18n: (b.data as { i18n?: unknown }).i18n ?? null }));
   const BIMG = Object.fromEntries(bs.map(b => [b.slug, Object.fromEntries(['hero', 'a', 'b'].map((k, i) => [k, b.images.find(u => u.endsWith(`-${k}.webp`)) ?? b.images[i] ?? '']))]));
+  /** every photo of a boat in the order set in the admin — first = cover */
+  const GALLERY = Object.fromEntries(bs.map(b => [b.slug, b.images.filter(Boolean)]));
   const SEASONS = { calendars: cals.map(c => ({ id: c.id, name: c.name, kind: c.kind === 'season' ? 'season' : 'allyear', ranges: c.ranges, special: c.special, ...(c.add ? { add: c.add } : {}), ...(c.addHalf ? { addHalf: c.addHalf } : {}) })), boats: Object.fromEntries(bs.map(b => [b.slug, b.calendarId ?? 'all'])), colmap: Object.fromEntries(bs.filter(b => b.data.colmap).map(b => [b.slug, b.data.colmap])) };
   const SHOWIMG: Record<string, string[]> = {};
   for (const f of readdirSync(path.join(ROOT, 'public/img/acts')).sort()) (SHOWIMG[f.split('-')[0]] ??= []).push('/img/acts/' + f);
   const TEAM_IMG = Object.fromEntries(['kwang', 'save', 'prang'].map(n => [n, `/img/team/${n}.webp`]));
   const POSTS: PostIdx[] = ps.map(postIdx);
-  const data = { __SET__: publicSettings(cfg[0]?.value), __HOME__: home, __ACTS__: acts.filter(a => a.active !== false), __SEO__: publicSeo(seo), FLEET, EXTRA: extra, SEASONS, BIMG, SHOWIMG, TEAM_IMG, POSTS, DEST_PAGES: DESTINATIONS.map(({ match, ...d }) => ({ ...d, match: match.source })) };
+  const data = { __SET__: publicSettings(cfg[0]?.value), __HOME__: home, __ACTS__: acts.filter(a => a.active !== false), __SEO__: publicSeo(seo), FLEET, EXTRA: extra, SEASONS, BIMG, GALLERY, SHOWIMG, TEAM_IMG, POSTS, DEST_PAGES: DESTINATIONS.map(({ match, ...d }) => ({ ...d, match: match.source })) };
   const js = Object.entries(data).map(([k, v]) => `window.${k}=${JSON.stringify(v).replace(/</g, '\\u003c')};`).join('\n');
   dataCache = { at: Date.now(), data, js, version: createHash('sha1').update(js).digest('hex').slice(0, 12) };
   return dataCache;

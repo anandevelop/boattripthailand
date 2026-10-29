@@ -117,11 +117,12 @@
   .nav-a.is-active { color:#70000e; }
   .nav-a.is-active::after { content:''; position:absolute; left:12px; right:12px; bottom:-2px; height:1.5px; border-radius:9999px; background:#70000e; opacity:.6; }
   #navbar .nv-ico, .lang-seg, .lang-seg .lang-btn, #navFind { border-radius:980px !important; }
-  .lang-seg { height:32px; padding:2px; gap:0; background:#ece4e4; font-size:12px; }
-  .lang-seg .lang-btn { height:28px; padding:0 10px 0 6px; display:inline-flex; align-items:center; gap:6px; line-height:1; color:#8a7a7c; background:transparent; transition:background .25s, color .25s, box-shadow .25s; }
-  .lang-seg .lang-btn .flag { width:16px; height:16px; flex:none; border-radius:9999px; box-shadow:0 0 0 1px rgb(0 0 0 / .08); filter:grayscale(.65) opacity(.7); transition:filter .25s; }
-  .lang-seg .lang-btn.chip-active { background:#fff !important; color:#231416 !important; box-shadow:0 1px 3px rgb(0 0 0 / .12), 0 0 0 .5px rgb(0 0 0 / .04) !important; }
-  .lang-seg .lang-btn.chip-active .flag, .lang-seg .lang-btn:hover .flag { filter:none; }
+  .lang-seg { height:36px; padding:3px; gap:2px; background:#ececec; box-shadow:inset 0 0 0 .5px rgb(0 0 0 / .04); font-size:13.5px; }
+  .lang-seg .lang-btn { height:30px; min-width:46px; padding:0 14px; display:inline-flex; align-items:center; justify-content:center; line-height:1; font-weight:500; color:#231416; background:transparent; transition:background .25s, box-shadow .25s, color .25s; }
+  .lang-seg .lang-btn:not(.chip-active) { color:#3a2c2e !important; }
+  .lang-seg .lang-btn:not(.chip-active):hover { background:rgb(255 255 255 / .55); }
+  .lang-seg .lang-btn.chip-active { background:#fff !important; color:#231416 !important; box-shadow:0 1px 2px rgb(0 0 0 / .08), 0 2px 8px rgb(0 0 0 / .08) !important; }
+  .lang-seg .lang-btn:focus-visible { outline:2px solid #70000e; outline-offset:1px; }
   .legal h2 { font-family:inherit; font-weight:500; font-size:19px; line-height:1.35; color:#231416; margin:40px 0 12px; }
   .legal section:first-child h2 { margin-top:0; }
   .legal p { color:#6b5e60; line-height:1.75; margin:10px 0; }

@@ -26,9 +26,9 @@ export const replyLine = (replyToken: string, messages: LineMessage[]) => call('
 export const text = (t: string): LineMessage => ({ type: 'text', text: t.slice(0, 4900) });
 
 /** Flex card sent to sales for every new lead */
-export function leadCard(l: { id: string; ref: string; name: string; phone: string; boat: string; date: string; guests: string; source: string; score: number; scoreLabel: string; message?: string | null; lang: string }, opts: { title?: string; appUrl: string; waText: string }): LineMessage {
+export function leadCard(l: { id: string; ref: string; name: string; phone: string; whatsapp?: string | null; boat: string; date: string; guests: string; source: string; score: number; scoreLabel: string; message?: string | null; lang: string }, opts: { title?: string; appUrl: string; waText: string }): LineMessage {
   const row = (k: string, v: string) => ({ type: 'box', layout: 'baseline', spacing: 'sm', contents: [{ type: 'text', text: k, size: 'sm', color: '#8a7d7f', flex: 3 }, { type: 'text', text: v || '-', size: 'sm', color: '#231416', flex: 7, wrap: true }] });
-  const wa = 'https://wa.me/' + l.phone.replace(/\D/g, '').replace(/^0/, '66') + '?text=' + encodeURIComponent(opts.waText);
+  const wa = 'https://wa.me/' + (l.whatsapp || l.phone).replace(/\D/g, '').replace(/^0/, '66') + '?text=' + encodeURIComponent(opts.waText);
   return {
     type: 'flex', altText: `${opts.title ?? 'ลีดใหม่'}: ${l.name} · ${l.boat}`,
     contents: {
@@ -36,7 +36,7 @@ export function leadCard(l: { id: string; ref: string; name: string; phone: stri
       header: { type: 'box', layout: 'vertical', backgroundColor: '#70000e', paddingAll: '14px', contents: [{ type: 'text', text: opts.title ?? 'ลีดใหม่ · ตอบภายใน 15 นาที', color: '#ffffff', size: 'sm', weight: 'bold' }, { type: 'text', text: `${l.ref} · ${l.scoreLabel} ${l.score}`, color: '#f2e2e4', size: 'xs', margin: 'sm' }] },
       body: { type: 'box', layout: 'vertical', spacing: 'sm', contents: [
         { type: 'text', text: l.name, weight: 'bold', size: 'lg', wrap: true },
-        row('โทร', l.phone), row('สนใจ', l.boat), row('วันที่', l.date), row('จำนวน', l.guests), row('มาจาก', l.source), row('ภาษา', l.lang === 'en' ? 'English' : 'ไทย'),
+        row('โทร', l.phone), ...(l.whatsapp ? [row('WhatsApp', l.whatsapp)] : []), row('สนใจ', l.boat), row('วันที่', l.date), row('จำนวน', l.guests), row('มาจาก', l.source), row('ภาษา', l.lang === 'en' ? 'English' : 'ไทย'),
         ...(l.message ? [{ type: 'text', text: l.message.slice(0, 300), size: 'sm', color: '#6b5e60', wrap: true, margin: 'md' }] : []),
       ] },
       footer: { type: 'box', layout: 'vertical', spacing: 'sm', contents: [

@@ -61,6 +61,23 @@ body:has(.bg-maroon.text-white.relative) .bg-white.min-h-screen { background: rg
   #side, header.sticky, .card, #drawer, #modalBox { background: #fff !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
+/* ---------- ฟอร์ม "เพิ่มลีด" (newBooking ใน app.js): 3 ส่วน ลูกค้า / ทริป / การดูแล ---------- */
+.nb-form { display: grid; gap: 14px; padding: 18px 20px 20px; }
+.nb-sec { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0; padding: 14px 16px 16px; border: 0; border-radius: 18px;
+  background: rgb(255 255 255 / .55); box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(35 20 22 / .06); }
+.nb-sec legend { float: left; grid-column: 1 / -1; display: flex; align-items: center; gap: 7px; width: 100%; padding: 0; margin-bottom: 2px; font-size: 12.5px; font-weight: 500; color: #70000e; }
+.nb-sec legend svg { width: 15px; height: 15px; }
+.nb-sec label { min-width: 0; }
+.nb-wide { grid-column: 1 / -1; }
+.nb-form .inp { height: 40px; }
+.nb-form textarea.inp { height: auto; min-height: 64px; }
+.nb-consent { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 12px; border-radius: 12px; background: rgb(255 255 255 / .7); box-shadow: inset 0 0 0 1px rgb(35 20 22 / .08); cursor: pointer; }
+.nb-consent b { display: block; font-weight: 500; font-size: 13px; }
+.nb-consent small { display: block; margin-top: 2px; font-size: 11px; color: #6b5e60; }
+.nb-foot { position: sticky; bottom: 0; z-index: 2; display: flex; justify-content: flex-end; gap: 8px; margin: 0 -20px -20px; padding: 12px 20px 16px;
+  background: linear-gradient(180deg, rgb(248 244 243 / 0), rgb(248 244 243 / .92) 35%); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }  /* ปุ่มบันทึกเห็นตลอดแม้ฟอร์มยาว */
+@media (max-width: 560px) { .nb-sec { grid-template-columns: 1fr; } }
+
 /* page tabs: one glass pill bar above the content (ตั้งค่า, แก้ไขเรือ, เนื้อหาเว็บไซต์, SEO, วิเคราะห์เว็บไซต์, ใช้ประโยชน์จากลีด) */
 .tabbar { width: fit-content; max-width: 100%; gap: 2px; padding: 5px; border-radius: 9999px; background: rgb(255 255 255 / .55);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / .95), 0 0 0 1px rgb(35 20 22 / .05), 0 12px 32px -20px rgb(58 0 7 / .35); -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6); }

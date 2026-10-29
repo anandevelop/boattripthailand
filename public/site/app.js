@@ -181,7 +181,7 @@ const I18N = {
     'hero.sub':'50+ private yachts, catamarans and speedboats — plus tours, shows and activities across Phuket, all in one place.',
     'hero.cta1':'View all boats','hero.cta2':'Explore activities',
     'qs.tabBoat':'Charter a boat','qs.tabAct':'Tours & Activities','qs.note':'Confirmed in 30 min · No booking fee','qs.trip':'Trip type','qs.tripAll':'All trips',
-    'qs.half':'Half day (4h)','qs.full':'Full day (8h)','qs.sunset':'Sunset (2–3h)','qs.overnight':'Overnight (2D1N)','qs.dest':'Destination','qs.date':'Date','qs.guests':'Guests','qs.search':'Search',
+    'qs.half':'Half day (4h)','qs.full':'Full day (8h)','qs.sunset':'Sunset (2–3h)','qs.overnight':'Overnight (2D1N)','qs.dest':'Destination','qs.date':'Date','qs.guests':'Guests','qs.search':'Search','qs2.boat':'Charter a boat','qs2.tours':'Tours & activities','qs2.dests':'Destinations','qs2.smart':'Help me choose','qs2.anyDest':'All destinations','qs2.pop':'Popular','qs2.chat':'Chat on','qs2.help':'and our team will help you pick a boat',
     'unit.pax':'pax','stat.boats':'boats in our fleet','stat.marina':'marinas & piers','stat.group':'guests per boat','stat.tat':'TAT licensed',
     'cat.kicker':'Explore Phuket','cat.title':'What are we doing today?','cat.sub':'Pick a category and we\'ll curate the best experiences for you.',
     'boats.kicker':'Our Fleet','boats.title':'Featured Boats','boats.sub':'From thrill-seeking speedboats to a 90 ft superyacht — every charter includes captain, crew and insurance.',
@@ -194,7 +194,7 @@ const I18N = {
     'modal.title':'Book a Boat & Activity',
     'f.item':'Boat / activity of interest','f.name':'Full name','f.namePh':'e.g. John Smith','f.phone':'Phone / LINE ID','f.date':'Travel date','f.guests':'Guests','f.adult':'Adults','f.kid':'Kids',
     'f.slot':'Time slot','f.fullday':'Full day 10:00–18:00','f.overnight':'Overnight','f.note':'Notes / special requests','f.notePh':'e.g. birthday celebration, hotel pick-up, food allergies…',
-    'f.consent':'Our sales team will contact you on WhatsApp / LINE / phone to check availability and suggest options for this request.','f.marketing':'Send me news, offers and last-minute availability (unsubscribe anytime)','f.err':'Please fill in your name, phone and travel date','f.submit':'Send booking request',
+    'f.consent':'Our sales team will contact you on WhatsApp / LINE / phone to check availability and suggest options for this request.','f.marketing':'Send me news, offers and last-minute availability (unsubscribe anytime)','f.err':'Please fill in your name, phone and travel date','f.email':'Email','f.opt':'(optional)','f.submit':'Send booking request',
     'foot.about':'Private yacht, catamaran and speedboat charters with full-service tours and activities in Phuket, Krabi and Phang Nga.',
     'foot.services':'Services','foot.l1':'Private yacht charter','foot.l2':'Catamarans','foot.l3':'Speedboats','foot.l4':'Tours & activities','foot.l5':'Stays & spa',
     'foot.info':'Information','foot.i1':'About us','foot.i2':'Marinas & piers','foot.i3':'FAQ','foot.i4':'Booking & cancellation','foot.i5':'Privacy policy','foot.contact':'Contact',
@@ -389,6 +389,8 @@ const FEATURED = ['leopard-90-ft','splo-74-ft','vtech-68-ft','the-origin-90-ft',
 const prettyMarina = s => (s||'').toLowerCase().replace(/(^|[\s(\/-])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase()).replace(/\bRpm\b/,'RPM').replace(/Puhket/,'Phuket').replace('One°15','ONE°15');
 const infoGet = (b, ...keys) => { for (const k of keys) { const r = b.info.find(x => x[0].toLowerCase()===k.toLowerCase()); if (r && r[1] && r[1] !== 'N/A') return r[1]; } return null; };
 const bimg = (slug, k) => (BIMG[slug] || {})[k] || '';
+/** photos of a boat in admin order; falls back to the 3 brochure images */
+const gallery = slug => { const g = (window.GALLERY || {})[slug]; return g && g.length ? g : ['hero', 'a', 'b'].map(k => bimg(slug, k)).filter(Boolean); };
 FLEET.forEach((b, i) => {
   b.idx = i;
   const blob = JSON.stringify(b.tables).toLowerCase() + ' ' + JSON.stringify(b.time_slots).toLowerCase();
@@ -435,7 +437,6 @@ function boatCard(b, i=0) {
       <div class="px-5 pt-4 pb-5 flex flex-col flex-1">
         <p class="text-[10px] uppercase tracking-[.16em] text-muted truncate">${typeLabel(b.type)}</p>
         <h3 class="font-display text-lg leading-tight truncate mt-1"><a href="#/boat/${b.slug}" class="hover:text-maroon" title="${niceTitle(b.title)} yacht charter">${b.title}</a></h3>
-        <p class="text-xs text-muted truncate mt-0.5">${b.subtitle}</p>
         <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted mt-2.5">
           ${b.pax?`<span class="flex items-center gap-1.5"><i data-lucide="users" class="w-3 h-3"></i>${b.pax} ${t('guests')}</span>`:''}
           <span class="flex items-center gap-1.5 min-w-0"><i data-lucide="anchor" class="w-3 h-3 shrink-0"></i><span class="truncate">${b.marinaP}</span></span>
@@ -611,7 +612,6 @@ function seasonBarHTML(b) {
   const head = keys.length ? `<p class="text-xs text-muted mb-2">${date ? L('ราคาตามวันที่คุณเลือก · เลือกดูช่วงอื่นได้', 'Rates for your date · tap to see other seasons') : L('แสดงราคาตามช่วงเวลาปัจจุบัน · เลือกดูช่วงอื่นได้', 'Showing rates for the current season · tap to see others')}</p><div class="flex flex-wrap gap-2">${chips}</div>` : `<p class="text-sm">${L('ราคาเดียวทั้งปี', 'Same price all year')}</p>`;
   return `<div class="sz-bar">${head}${note}<div class="mt-4">${stripHTML(cal, iso, lang)}</div></div>`;
 }
-function pickSeason(k) { DSZ.key = k; DSZ.pick = k; drawProgPrices(bySlug(currentSlug), true); }
 function tableHTML0(tb, ti, b) {
   const progs = allPrograms(b);
   let base = progs.findIndex(p => p.ti === ti);
@@ -629,197 +629,320 @@ function tableHTML0(tb, ti, b) {
       <dl class="mt-2 space-y-2 text-sm">${r.slice(1).map((c,ci)=>`<div data-ti="${ti}" data-ci="${ci+1}" class="flex justify-between gap-3 px-2 -mx-2"><dt class="text-muted text-xs">${tb.columns[ci+1]||''}</dt><dd class="whitespace-nowrap ${isPrice(c)?'font-medium text-ink':'text-muted'}">${cleanPrice(c)}${isPrice(c) && szAdd(DSZ, tb, ci+1, r) ? ` <span class="text-[11px] text-maroon font-normal">+ ${baht(szAdd(DSZ, tb, ci+1, r))}</span>` : ''}</dd></div>`).join('')}</dl></div>`).join('')}</div>
   </div>`;
 }
+function bentoHTML(b) {
+  const g = gallery(b.slug), n = g.length, name = niceTitle(b.title);
+  const tile = (i, cls, extra = '') => g[i] ? `<button type="button" class="bt ${cls} img-fallback group" onclick="openLightbox('${b.slug}',${i})" aria-label="${t('viewPhotos')} ${i + 1}">
+      <img src="${g[i]}" alt="${name} — photo ${i + 1}" loading="lazy" class="gal-img"/>${extra}</button>` : '';
+  const all = `<span class="bt-all"><i data-lucide="layout-grid"></i>${L('ดูรูปทั้งหมด', 'All photos')} ${n}</span>`;
+  const sub = [typeLabel(b.type), b.pax ? `${b.pax} ${t('guests')}` : ''].filter(Boolean).join(' · ');
+  return `<div class="bento bento-n${Math.min(n, 5)}">
+    <div class="bt bt-main img-fallback">
+      <button type="button" class="absolute inset-0 w-full h-full group" onclick="openLightbox('${b.slug}',0)" aria-label="${t('viewPhotos')}"><img src="${g[0] || ''}" alt="${name}" fetchpriority="high" class="gal-img"/></button>
+      ${b.hot ? `<span class="bt-chip"><i data-lucide="star"></i>${L('ยอดนิยม', 'Popular')}</span>` : ''}
+      <div class="bt-acts">
+        <button type="button" class="bt-round" onclick="shareBoat('${b.slug}')" aria-label="${L('แชร์', 'Share')}"><i data-lucide="share-2"></i></button>
+        <button type="button" class="bt-round" data-fav="${b.slug}" onclick="toggleFav('${b.slug}')" aria-pressed="${FAV.includes(b.slug)}" aria-label="${L('บันทึก', 'Save')} ${name}"><i data-lucide="heart"></i></button>
+      </div>
+      <div class="bt-cover">
+        <div class="min-w-0"><h1>${name}</h1><p>${sub}<span class="bt-hide-m">${b.marinaP ? ' · ' + b.marinaP : ''}</span></p></div>
+        ${b.from_ ? `<div class="bt-price"><small>${t('price.from', 'เริ่มต้น')} / ${L('ทริป', 'trip')}</small><b class="tabular-nums">${baht(b.from_)}</b></div>` : ''}
+      </div>
+    </div>
+    ${tile(1, 'bt-1')}${tile(2, 'bt-2')}${tile(3, 'bt-3')}${tile(4, 'bt-4', n > 5 ? all : '')}
+  </div>
+  ${n > 1 ? `<button type="button" class="bt-mall" onclick="openLightbox('${b.slug}',0)">
+    <span class="bt-stack">${g.slice(1, 3).map(s => `<img src="${s}" alt="" loading="lazy"/>`).join('')}</span>
+    <span class="min-w-0"><b>${L('ดูรูปทั้งหมด', 'View all')} ${n} ${L('รูป', 'photos')}</b><span>${L('แตะเพื่อดูภาพเต็มจอ', 'Tap to view full screen')}</span></span>
+    <i data-lucide="chevron-right"></i></button>` : ''}`;
+}
+function shareBoat(slug) {
+  const url = SITE_ORIGIN + hashToPath('#/boat/' + slug);
+  if (navigator.share) navigator.share({ title: niceTitle(bySlug(slug).title), url }).catch(() => {});
+  else { navigator.clipboard?.writeText(url); toast(L('คัดลอกลิงก์แล้ว', 'Link copied')); }
+}
+/* section nav on the boat page: sticky, arrows when it overflows, active link follows the scroll */
+function secState() { const n = $('#secnav'), w = $('#secwrap'); if (!n || !w) return; w.classList.toggle('can-l', n.scrollLeft > 4); w.classList.toggle('can-r', n.scrollLeft + n.clientWidth < n.scrollWidth - 4); }
+function secScroll(d) { const n = $('#secnav'); n?.scrollBy({ left: d * Math.max(140, n.clientWidth * .6), behavior: 'smooth' }); }
+function secGo(id) { const el = document.getElementById(id); if (el) scrollTo({ top: el.getBoundingClientRect().top + scrollY - 140, behavior: 'smooth' }); }
+let secIO;
+function bindSecnav() {
+  const n = $('#secnav'); if (!n) return;
+  n.addEventListener('scroll', secState, { passive: true }); setTimeout(secState, 50);
+  secIO?.disconnect();
+  // the server render (linkedom) has no IntersectionObserver
+  if (typeof IntersectionObserver === 'undefined') return;
+  secIO = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return;
+    $$('#secnav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+    const on = $('#secnav a.on'); if (on) n.scrollTo({ left: on.offsetLeft - (n.clientWidth - on.offsetWidth) / 2, behavior: 'smooth' }); }), { rootMargin: '-40% 0px -55% 0px' });
+  $$('#secnav a').forEach(a => { const t = document.getElementById(a.getAttribute('href').slice(1)); t && secIO.observe(t); });
+}
+addEventListener('resize', secState);
+/* =========================================================
+   BOAT PAGE — Liquid Glass layout (mockup/boattripthailand-boat-liquid-glass.html)
+   Every value comes from the boat record: tables, time_slots, info, notes, includes.
+   ========================================================= */
+const bpTH = s => LANG === 'en' ? String(s || '') : String(s || '').replace(/half[\s-]*day/ig, 'ครึ่งวัน').replace(/full[\s-]*day/ig, 'เต็มวัน').replace(/(\d+(?:\.\d)?)\s*hrs?\.?/ig, '$1 ชม.').replace(/sunset/ig, 'ซันเซ็ต').replace(/over\s*night/ig, 'ค้างคืน');
+const bpTime = s => String(s || '').replace(/(\d{1,2})(?:[:.](\d{2}))?\s*([AP])\.?\s*M\.?/ig, (m, h, mm, ap) => String(+h % 12 + (/p/i.test(ap) ? 12 : 0)).padStart(2, '0') + ':' + (mm || '00')).replace(/\s*-\s*/g, '–');
+const bpHrs = s => { const m = String(s || '').match(/(\d+(?:\.\d)?)\s*(?:hrs?|hours?|ชม)/i); return m ? +m[1] : null; };
+const bpStrip = s => String(s || '').replace(/^\s*(half|full)[\s-]*day\s*(\d+(?:\.\d)?\s*hrs?\.?)?\s*[·:–-]\s*/i, '').trim() || String(s || '');
+const bpKind = s => /half/i.test(s) ? 'half' : /full/i.test(s) ? 'full' : /sunset/i.test(s) ? 'sunset' : /night/i.test(s) ? 'night' : '';
+const bpSzShort = k => k === 'special' ? L('ช่วงพิเศษ', 'Special') : k === 'all' || !SKEY[k] ? L('ทั้งปี', 'All year') : SKEY[k].en.replace(' Season', '');
+const bpSzName = k => k ? SKEY[k][LANG === 'en' ? 'en' : 'th'] : '';
+let bpGuestsN = 2;
+/** every program row of a boat, with its table, hours and a short display name */
+function bpProgs(b) {
+  const out = [];
+  b.tables.forEach((tb, ti) => tb.rows.forEach((r, ri) => {
+    const ctx = r[0] + ' ' + (tb.caption || '');
+    out.push({ i: out.length, ti, ri, row: r, tb, raw: r[0], name: bpStrip(progName(b, ti, ri, r[0])), hrs: bpHrs(r[0]) ?? bpHrs(tb.caption), kind: bpKind(ctx) });
+  }));
+  return out;
+}
+/** price of one program for the season being shown (DSZ); flat tables get the holiday surcharge */
+function bpPrice(b, p) {
+  if (!p) return null;
+  const ks = tableKeys(b.slug, p.tb);
+  if (isSeasonTable(ks)) { const ci = colFor(b, p.tb, DSZ.key, DSZ.base), n = ci > 0 ? priceNum(p.row[ci]) : null; return n == null ? null : { n, add: 0 }; }
+  const ci = p.row.findIndex((c, k) => k > 0 && priceNum(c)); if (ci < 0) return null;
+  return { n: priceNum(p.row[ci]), add: szAdd(DSZ, p.tb, ci, p.row), col: p.tb.columns.filter((c, k) => k > 0 && p.row[k] && priceNum(p.row[k])).length > 1 ? p.tb.columns[ci] : '' };
+}
+function bpGroupLabel(b, ti) {
+  const tb = b.tables[ti], txt = (tb.caption || '') + ' ' + tb.rows.map(r => r[0]).join(' ');
+  const hs = [...new Set(tb.rows.map(r => bpHrs(r[0]) ?? bpHrs(tb.caption)).filter(Boolean))].sort((x, y) => x - y);
+  const h = hs.length ? ` ${hs.length > 1 ? hs[0] + '–' + hs[hs.length - 1] : hs[0]} ${L('ชม.', 'hrs')}` : '';
+  if (/half/i.test(txt) && !/full/i.test(txt)) return L('ครึ่งวัน', 'Half day') + h;
+  if (/full/i.test(txt) && !/half/i.test(txt)) return L('เต็มวัน', 'Full day') + h;
+  if (/sunset/i.test(txt)) return L('ซันเซ็ต', 'Sunset') + h;
+  if (/night/i.test(txt)) return L('ค้างคืน', 'Overnight');
+  return tb.caption ? bpTH(tb.caption.replace(/\*/g, '')) : L(`ตารางที่ ${ti + 1}`, `Table ${ti + 1}`);
+}
+/** time slots that fit a program (same hours / same kind), split "9AM-1PM / 2PM-6PM" into two choices */
+function bpSlots(b, p) {
+  const all = b.time_slots.map(([k, v], si) => ({ k: slotName(b, si, k), raw: k, v }));
+  let fit = p ? all.filter(s => p.hrs && bpHrs(s.raw) === p.hrs) : [];
+  if (!fit.length && p && p.kind) fit = all.filter(s => bpKind(s.raw) === p.kind);
+  return (fit.length ? fit : all).flatMap(s => String(s.v).split('/').map(x => bpTime(x.trim())).filter(Boolean));
+}
+function bpFacts(b) {
+  const g = (...k) => infoGet(b, ...k), num = s => (String(s || '').match(/\d+/) || [])[0], out = [];
+  const night = num(g('Over Night', 'Overnight', 'Overnight Capacity'));
+  if (b.pax) out.push(['users', `${b.pax} ${L('คน', 'guests')}`, night ? L(`รอบกลางวัน (ค้างคืน ${night} คน)`, `Day trips (overnight ${night})`) : L('รอบกลางวัน', 'Day trips')]);
+  const cab = g('Cabin', 'Cabins', 'Bedroom');
+  if (cab) { const n = num(cab); out.push(['bed-double', n ? `${n} ${L('ห้องนอน', n > 1 ? 'cabins' : 'cabin')}` : cab, n ? cab.replace(/^\s*\d+\s*(cabins?|bedrooms?|rooms?)?\s*/i, '') || L('ห้องนอน', 'Cabins') : L('ห้องนอน', 'Cabins')]); }
+  const crew = g('Crew', 'Crews');
+  if (crew) out.push(['life-buoy', num(crew) ? L(`ลูกเรือ ${num(crew)} คน`, `${num(crew)} crew`) : crew, L('กัปตันและลูกเรือดูแลตลอดทริป', 'Captain and crew on board')]);
+  const yr = g('Year', 'Year Built', 'First Launch'), rf = g('Year Refit', 'Last Refit', 'Refit', 'Refitted');
+  if (yr || rf) out.push(['calendar-check', [yr, rf].filter(Boolean).join(' · '), yr && rf ? L('ปีที่ต่อ · ปีที่รีฟิต', 'Built · Refit') : yr ? L('ปีที่ต่อ', 'Built') : L('ปีที่รีฟิต', 'Refit')]);
+  const sp = g('Cruising Speed', 'Cruising', 'Cruise Speed', 'Speed Cruise', 'Speed Cruising');
+  if (out.length < 4 && sp) out.push(['gauge', sp, L('ความเร็วล่องเรือ', 'Cruising speed')]);
+  if (out.length < 4 && b.ft) out.push(['ruler', `${b.ft} ${L('ฟุต', 'ft')}`, L('ความยาวเรือ', 'Length')]);
+  return out.slice(0, 4);
+}
+const bpCondIcon = s => /extra|additional|เพิ่ม/i.test(s) ? 'user-plus' : /guest|pax|passenger|charter is for|คน/i.test(s) ? 'users' : /food|meal|lunch|อาหาร/i.test(s) ? 'utensils' : /fuel/i.test(s) ? 'fuel' : /time|hour|ชม/i.test(s) ? 'clock' : 'info';
+function bpFaq(b) {
+  const rule = extraRule(b), keys = boatKeys(b).filter(k => k !== 'special'), cal = calOf(b.slug), lang = LANG === 'en' ? 'en' : 'th';
+  const night = infoGet(b, 'Over Night', 'Overnight', 'Overnight Capacity'), list = a => a.slice(0, 8).map(moneyText).join(', ');
+  const qa = [];
+  if (b.includes.length) qa.push([L('ราคานี้รวมอะไรบ้าง', 'What does the price include?'), `${L('รวม', 'Included')}: ${list(b.includes)}${b.includes.length > 8 ? '…' : ''}${b.not_included.length ? ` · ${L('ไม่รวม', 'Not included')}: ${list(b.not_included)}` : ''}`]);
+  if (b.pax) qa.push(rule ? [L(`มากันมากกว่า ${rule.from - 1} คนได้ไหม`, `Can we bring more than ${rule.from - 1} guests?`), L(`ได้ สูงสุด ${b.pax} คน คนที่ ${rule.from}–${b.pax} คิดเพิ่มคนละ ${baht(rule.fee)}`, `Yes, up to ${b.pax}. Guests ${rule.from}–${b.pax} are ${baht(rule.fee)} each.`)]
+    : [L('รองรับได้กี่คน', 'How many guests can come?'), L(`สูงสุด ${b.pax} คนต่อทริป`, `Up to ${b.pax} guests per charter.`)]);
+  if (night) qa.push([L('ค้างคืนบนเรือได้ไหม', 'Can we stay overnight?'), L(`ได้ รองรับ ${night}${infoGet(b, 'Cabin', 'Cabins', 'Bedroom') ? ` (${infoGet(b, 'Cabin', 'Cabins', 'Bedroom')})` : ''} ทีมขายจะเสนอโปรแกรมค้างคืนตามวันที่ต้องการ`, `Yes, ${night}. Our team will quote an overnight program for your dates.`)]);
+  qa.push([L('ราคาเปลี่ยนตามวันที่ไหม', 'Does the price change by date?'), keys.length > 1 ? L(`เปลี่ยนตามฤดูกาล: ${keys.map(k => `${bpSzShort(k)} ${rangeText(cal, k, lang)}`).join(' · ')} เลือกวันที่ในกล่องจองแล้วราคาจะเปลี่ยนให้เอง`, `Yes, by season: ${keys.map(k => `${bpSzShort(k)} ${rangeText(cal, k, lang)}`).join(' · ')}. Pick a date and the price updates.`) : L('ราคาเดียวทั้งปี', 'Same price all year.')]);
+  qa.push([L('ต้องจ่ายเงินบนเว็บไหม', 'Do I pay on the website?'), L('ไม่ต้อง ส่งคำขอแล้วทีมขายติดต่อกลับเพื่อเช็กคิวเรือ ยืนยันราคา และแจ้งวิธีชำระเงิน', 'No. Send a request and our team will check availability, confirm the price and explain how to pay.')]);
+  return qa;
+}
+function bpMarina(b) {
+  const has = (a, re) => a.some(x => re.test(x)), out = [];
+  out.push(['map-pin', `<b>${b.marinaP || L('ท่าเรือ', 'Marina')}</b><small>${L('ทีมขายส่งพิกัดให้ทาง WhatsApp / LINE', 'Our team sends the pin on WhatsApp / LINE')}</small>`]);
+  out.push(['clock', L('มาถึงท่าก่อนเวลาออกเรือ 15–20 นาที', 'Arrive 15–20 minutes before departure')]);
+  if (has(b.not_included, /transfer|van|pick ?up/i)) out.push(['car', L('รถรับส่งจากโรงแรมไม่รวมในราคา สอบถามทีมขายได้', 'Hotel transfer not included · ask our team')]);
+  else if (has(b.includes, /transfer|van|pick ?up/i)) out.push(['car', L('รวมรถรับส่งตามเงื่อนไขของเรือ', 'Transfer included (see conditions)')]);
+  if (has(b.not_included, /park|island fee/i)) out.push(['ticket', L('ค่าอุทยาน / ค่าขึ้นเกาะ ชำระตามจริงวันเดินทาง', 'Park / island fees paid on the day')]);
+  return out;
+}
+
 function renderDetail(slug) {
   const b = bySlug(slug);
   const v = $('#view-boat');
   if (!b) { v.innerHTML = `<div class="max-w-3xl mx-auto px-4 py-32 text-center"><p class="text-xl font-medium text-ink">${t('notFound')}</p><a href="#/fleet" class="inline-block mt-6 bg-maroon text-white px-6 py-3 rounded-full">${t('fleet')}</a></div>`; return; }
   track('ViewContent', { content_ids: [b.slug], content_type: 'product', content_name: niceTitle(b.title), content_category: b.type, value: b.from_ || 0, currency: 'THB' });
   detailProgram = 0; { const v0 = seasonView(b, todayISO()); DSZ = { ...v0, pick: null }; if (!v0.key && boatKeys(b).length) { const nx = nextSeason(v0.cal, todayISO()); if (nx) DSZ.key = DSZ.base = nx.key; } }
-  const specs = KEY_SPECS.map(keys => { const r = b.info.find(x => keys.map(k=>k.toLowerCase()).includes(x[0].toLowerCase())); return r && r[1] && r[1]!=='N/A' ? r : null; }).filter(Boolean);
-  const progs = allPrograms(b);
-  const similar = FLEET.filter(x => x.type===b.type && x.slug!==b.slug).sort((x,y)=>Math.abs((x.from_||0)-(b.from_||0))-Math.abs((y.from_||0)-(b.from_||0))).slice(0,3);
-  const prev = FLEET[(b.idx-1+FLEET.length)%FLEET.length], next = FLEET[(b.idx+1)%FLEET.length];
-  const gallery = ['hero','a','b'].map(k => bimg(b.slug,k)).filter(Boolean);
-  v.innerHTML = `
-  <!-- GALLERY HERO -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-5">
-    <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-2 flex-wrap mb-4"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><a href="#/fleet" class="hover:text-maroon">${t('fleet')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span aria-current="page" class="text-ink">${b.title}</span></nav>
-    <div class="gal">
-      <div class="gal-main img-fallback group">
-        <button onclick="openLightbox('${b.slug}',0)" class="absolute inset-0 w-full h-full" aria-label="${t('viewPhotos')}"><img src="${bimg(b.slug,'hero')}" alt="${b.title}" style="--z:1" class="gal-img"/></button>
-        <span class="absolute top-4 left-4 inline-flex items-center gap-2 bg-white/90 backdrop-blur text-ink text-xs px-3 py-1.5 rounded-circle">
-          ${b.hot?`<i data-lucide="star" class="w-3.5 h-3.5 text-maroon fill-maroon"></i>${L('ยอดนิยม','Popular')}`:`<i data-lucide="sailboat" class="w-3.5 h-3.5 text-maroon"></i>${typeLabel(b.type)}`}
-        </span>
-        <button data-fav="${b.slug}" onclick="toggleFav('${b.slug}')" aria-pressed="${FAV.includes(b.slug)}" aria-label="${L('บันทึก','Save')} ${b.title}" class="absolute top-4 right-4 w-10 h-10 grid place-items-center bg-white/90 backdrop-blur text-ink rounded-circle hover:text-maroon"><i data-lucide="heart" class="w-4 h-4 ${FAV.includes(b.slug)?'fill-maroon':''}"></i></button>
-      </div>
-        <button onclick="openLightbox('${b.slug}',1)" class="gal-t img-fallback group" aria-label="${t('viewPhotos')} 2"><img src="${bimg(b.slug,'a')}" alt="${b.title} — photo 2" loading="lazy" style="object-position:50% 50%;--z:1.0" class="gal-img"/></button>
-        <button onclick="openLightbox('${b.slug}',2)" class="gal-t img-fallback group" aria-label="${t('viewPhotos')} 3"><img src="${bimg(b.slug,'b')}" alt="${b.title} — photo 3" loading="lazy" style="object-position:50% 50%;--z:1.0" class="gal-img"/></button>
-        <button onclick="openLightbox('${b.slug}',0)" class="gal-t img-fallback group" aria-label="${t('viewPhotos')} 1"><img src="${bimg(b.slug,'hero')}" alt="" loading="lazy" style="object-position:70% 50%;--z:1.35" class="gal-img"/></button>
-        <button onclick="openLightbox('${b.slug}',0)" class="gal-t img-fallback group" aria-label="${L('ดูรูปทั้งหมด','View all photos')}">
-          <img src="${bimg(b.slug,'a')}" alt="" loading="lazy" class="gal-img" style="--z:1.25;filter:blur(10px)"/>
-          <span class="absolute inset-0 bg-black/35 grid place-items-center text-white text-sm"><span class="inline-flex items-center gap-2 whitespace-nowrap"><i data-lucide="layout-grid" class="w-4 h-4"></i><span class="hidden sm:inline">${L('ดูรูปทั้งหมด','View all photos')}</span></span></span>
-        </button>
-    </div>
-    <div class="mt-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+  bpGuestsN = Math.max(1, Math.min(guests || 2, b.pax || 99));
+  const name = niceTitle(b.title), g = gallery(b.slug), progs = bpProgs(b), facts = bpFacts(b), rule = extraRule(b);
+  const similar = FLEET.filter(x => x.type === b.type && x.slug !== b.slug).sort((x, y) => Math.abs((x.from_ || 0) - (b.from_ || 0)) - Math.abs((y.from_ || 0) - (b.from_ || 0))).slice(0, 3);
+  const refit = infoGet(b, 'Year Refit', 'Last Refit', 'Refit', 'Refitted');
+  const yes = [...b.includes.map(x => [moneyText(x)]), ...b.complimentary.map(x => [x, L('ฟรี', 'free')])], no = b.not_included.map(moneyText);
+  const secs = [['overview', L('ภาพรวม', 'Overview')], progs.length && ['programs', L('โปรแกรม & ราคา', 'Programs & rates')], b.time_slots.length && ['slotsSec', t('timeSlots')], (yes.length || no.length) && ['inclSec', L('รวม / ไม่รวม', 'Included')],
+    ['policySec', L('เงื่อนไข', 'Policies')], ['boatInfoSec', t('boatInfo')], ['marinaSec', L('ท่าเรือ', 'Marina')], ['faqSec', L('คำถาม', 'FAQ')]].filter(Boolean);
+  const panel = (id, h, sub, body, cls = '') => `<section class="bp-panel ${cls}" id="${id}"><h2>${h}</h2>${sub ? `<p class="bp-sub">${sub}</p>` : ''}${body}</section>`;
+  const opts = b.tables.map((tb, ti) => `<optgroup label="${bpGroupLabel(b, ti)}">${progs.filter(p => p.ti === ti).map(p => `<option value="${p.i}">${p.name}</option>`).join('')}</optgroup>`).join('');
+  v.innerHTML = `<div class="bp">
+  <div class="bp-ambient" aria-hidden="true">${g[0] ? `<img src="${g[0]}" alt="" decoding="async"/>` : ''}</div>
+  <div class="bp-wrap">
+    <nav aria-label="Breadcrumb" class="bp-crumb"><a href="#/">${t('home')}</a><i data-lucide="chevron-right"></i><a href="#/fleet">${t('fleet')}</a><i data-lucide="chevron-right"></i><span aria-current="page">${name}</span></nav>
+    ${bentoHTML(b)}
+    <div class="bp-grid">
       <div class="min-w-0">
-        <h1 class="font-display text-2xl sm:text-3xl leading-tight">${niceTitle(b.title)}</h1>
-        <p class="mt-1 text-sm text-muted">${b.title.toLowerCase().startsWith(b.subtitle.toLowerCase().split(' ')[0]) ? typeLabel(b.type) : b.subtitle}${b.ft?` ${b.ft} ft`:''} · ${b.marinaP}${b.pax?` · ${b.pax} ${t('guests')}`:''}</p>
-      </div>
-      <div class="flex items-center gap-4 shrink-0">
-        <p class="text-xs text-muted whitespace-nowrap">${t('price.from','เริ่มต้น')} <span class="text-2xl text-ink font-medium tabular-nums align-middle">${b.from_?baht(b.from_):'—'}</span></p>
-        <button onclick="bookFromDetail('${b.slug}')" class="h-11 px-6 bg-maroon text-white hover:bg-maroon-800 transition">${L('จองเลย','Book now')}</button>
-      </div>
-    </div>
-  </section>
-
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid lg:grid-cols-[1fr_380px] gap-6 items-start">
-    <div class="space-y-6 min-w-0">
-      <!-- FULL SPEC -->
-      <div class="bg-white rounded-xl ring-1 ring-sand-200 overflow-hidden">
-        <h3 class="font-display font-medium text-xl text-ink px-6 pt-4">${t('boatInfo')}</h3>
-        <dl class="grid sm:grid-cols-2 px-6 py-4 gap-x-6">${b.info.map(([k,val])=>`<div class="flex justify-between gap-4 py-2 border-b border-dashed border-sand-200 text-sm"><dt class="text-muted">${k}</dt><dd class="font-medium text-right">${val}</dd></div>`).join('')}
-          <div class="flex justify-between gap-4 py-2 border-b border-dashed border-sand-200 text-sm"><dt class="text-muted">Marina</dt><dd class="font-medium text-right">${b.marinaP}</dd></div></dl>
-      </div>
-
-
-      <!-- PROGRAMS -->
-      <div id="programs">
-        <div class="flex items-end justify-between gap-4 mb-4">
-          <div><p class="text-lagoon-600 font-medium text-sm tracking-wider uppercase">Programs & Rates</p><h2 class="font-display font-medium text-xl sm:text-2xl text-ink">${t('programs2')}</h2></div>
-          <span class="text-xs text-muted hidden sm:block">${t('vatNote')}</span>
+        <div class="secwrap" id="secwrap">
+          <div class="sec-fade l"><button type="button" onclick="secScroll(-1)" aria-label="${L('เลื่อนซ้าย', 'Scroll left')}"><i data-lucide="chevron-left"></i></button></div>
+          <div class="sec-fade r"><button type="button" onclick="secScroll(1)" aria-label="${L('เลื่อนขวา', 'Scroll right')}"><i data-lucide="chevron-right"></i></button></div>
+          <nav class="secnav" id="secnav" aria-label="${L('ส่วนของหน้า', 'Page sections')}">${secs.map(([id, l], i) => `<a href="#${id}" class="${i ? '' : 'on'}" onclick="event.preventDefault();secGo('${id}')">${l}</a>`).join('')}</nav>
         </div>
-        <div id="seasonBar" class="mb-4"></div>
-        <div id="progTables" class="space-y-4">${b.tables.map((tb,ti)=>tableHTML(tb,ti,b)).join('')}</div>
+
+        ${panel('overview', L('ภาพรวม', 'Overview'), [typeLabel(b.type), b.ft ? L(`ขนาด ${b.ft} ฟุต`, `${b.ft} ft`) : '', refit ? L(`รีฟิตปี ${refit}`, `refit ${refit}`) : '', b.pax ? L(`รับได้สูงสุด ${b.pax} คน`, `up to ${b.pax} guests`) : ''].filter(Boolean).join(' · '),
+          `${facts.length ? `<div class="bp-facts">${facts.map(([ic, h, s]) => `<div class="bp-fact"><i data-lucide="${ic}"></i><b>${h}</b><span>${s}</span></div>`).join('')}</div>` : ''}
+          <p class="bp-about">${L(`เหมาลำทั้งลำพร้อมกัปตันและลูกเรือ ออกจาก ${b.marinaP || 'ท่าเรือ'}${b.includes.length ? ` · รวม ${b.includes.slice(0, 5).map(moneyText).join(', ')}` : ''}`, `Private charter with captain and crew from ${b.marinaP || 'the marina'}${b.includes.length ? ` · includes ${b.includes.slice(0, 5).map(moneyText).join(', ')}` : ''}`)}</p>`)}
+
+        ${progs.length ? `<section class="bp-panel" id="programs">
+          <div class="bp-phead"><div><h2>${t('programs2')}</h2><p class="bp-sub m-0">${t('vatNote')}</p></div><div class="bp-seg" id="bpSeason" role="group" aria-label="${L('ฤดูกาล', 'Season')}"></div></div>
+          <div id="bpNote"></div>
+          ${b.tables.length > 1 ? `<div class="bp-seg mb-3" id="bpLen" role="group" aria-label="${L('ระยะเวลา', 'Duration')}"></div>` : ''}
+          <div class="bp-progs" id="bpProgs"></div>
+        </section>` : ''}
+
+        ${b.time_slots.length ? panel('slotsSec', t('timeSlots'), b.marinaP ? L(`เวลาออกเรือจากท่า ${b.marinaP}`, `Departure times from ${b.marinaP}`) : '',
+          `<div class="bp-slots">${b.time_slots.map(([k, val], si) => { const kd = bpKind(k); return `<div class="bp-slot"><i data-lucide="${kd === 'sunset' || (kd === 'full' && si) ? 'sunset' : kd === 'night' ? 'moon' : si === 0 ? 'sunrise' : kd === 'full' ? 'sunset' : 'sun'}"></i><b>${bpTH(slotName(b, si, k))}</b><span>${String(val).split('/').map(x => bpTime(x.trim())).join(L(' หรือ ', ' or '))}</span></div>`; }).join('')}</div>`) : ''}
+
+        ${yes.length || no.length ? panel('inclSec', L('รวม / ไม่รวมในราคา', 'Included / not included'), L('ตามโบรชัวร์ของเรือ', 'From the boat brochure'),
+          `<div class="bp-inc">
+            <div><h3><i data-lucide="check-circle-2" class="text-[#1e7a46]"></i>${L('รวมในราคา', 'Included')}</h3><ul class="yes">${yes.map(([x, s]) => `<li><i data-lucide="check"></i><span>${x}${s ? ` <small>· ${s}</small>` : ''}</span></li>`).join('')}</ul></div>
+            ${no.length ? `<div><h3><i data-lucide="x-circle" class="text-[#b42318]"></i>${L('ไม่รวม', 'Not included')}</h3><ul class="no">${no.map(x => `<li><i data-lucide="x"></i><span>${x}</span></li>`).join('')}</ul></div>` : ''}
+          </div>`) : ''}
+
+        ${panel('policySec', L('เงื่อนไข', 'Policies'), L('อ่านก่อนส่งคำขอ ทีมขายจะยืนยันรายละเอียดอีกครั้ง', 'Please read before sending a request · our team confirms the details'),
+          `${b.notes.length || b.remarks.length ? `<div class="bp-conds">${[...b.notes, ...b.remarks].map(n => `<div class="bp-cond"><i data-lucide="${bpCondIcon(n)}"></i><span>${moneyText(n).replace(/^\*?remarks\s*:?\s*/i, '')}</span></div>`).join('')}</div>` : ''}
+          <div class="bp-accs">${[[t('vanTitle'), vanHTML(), 'bus'], [t('extraTitle'), extraHTML(), 'party-popper'], [t('payTitle'), payHTML(), 'credit-card']].map(([h, body, ic]) => `<details class="bp-acc"><summary><span><i data-lucide="${ic}"></i>${h}</span><i data-lucide="plus" class="bp-plus"></i></summary><div class="bp-acc-b">${body}</div></details>`).join('')}</div>`)}
+
+        ${panel('boatInfoSec', t('boatInfo'), L('จากโบรชัวร์ทางการของเรือ', 'From the official boat brochure'),
+          `<table class="bp-spec"><tbody>${b.info.filter(([, val]) => val && val !== 'N/A').map(([k, val]) => `<tr><td>${k}</td><td>${val}</td></tr>`).join('')}${b.marinaP ? `<tr><td>Marina</td><td>${b.marinaP}</td></tr>` : ''}</tbody></table>`)}
+
+        ${panel('marinaSec', L('ท่าเรือ', 'Marina'), L('จุดนัดพบก่อนออกเรือ', 'Where you board'),
+          `<div class="bp-marina">
+            <div class="bp-map" role="img" aria-label="${L('ภาพประกอบตำแหน่ง', 'Illustration of')} ${b.marinaP}">
+              <svg viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 0h170c10 30-8 55 8 80s40 20 46 52-12 52 6 88H0z" fill="#e8e2d3"/><path d="M0 0h150c8 28-6 52 8 76s36 22 40 50-10 50 4 94H0z" fill="#efe9da"/><circle cx="290" cy="60" r="16" fill="#e8e2d3"/><circle cx="330" cy="150" r="22" fill="#e8e2d3"/><circle cx="252" cy="182" r="9" fill="#e8e2d3"/></svg>
+              <span class="bp-dot"></span><span class="bp-pin">${b.marinaP || L('ท่าเรือ', 'Marina')}</span><span class="bp-illu">${L('ภาพประกอบ', 'Illustration')}</span>
+            </div>
+            <ul>${bpMarina(b).map(([ic, h]) => `<li><i data-lucide="${ic}"></i><span>${h}</span></li>`).join('')}</ul>
+          </div>`)}
+
+        ${panel('faqSec', L('คำถามที่พบบ่อย', 'FAQ'), L('ตอบจากเงื่อนไขของเรือลำนี้', 'Answered from this boat’s conditions'),
+          bpFaq(b).map(([q, a], i) => `<details class="bp-acc"${i ? '' : ' open'}><summary><span>${q}</span><i data-lucide="plus" class="bp-plus"></i></summary><p class="bp-acc-b">${a}</p></details>`).join(''), 'bp-faq')}
+
+        ${similar.length ? `<section class="bp-simwrap" aria-label="${t('similar')}">
+          <div class="bp-simhead"><div><h2>${L('เรือขนาดใกล้เคียง', 'Similar boats')}</h2><p class="bp-sub m-0">${L(`เผื่อวันที่ต้องการ ${name} ไม่ว่าง`, `In case ${name} is booked on your date`)}</p></div><a href="#/fleet">${t('viewAll')} →</a></div>
+          <div class="bp-sims">${similar.map(s => `<a href="#/boat/${s.slug}" class="bp-sim"><div class="ph img-fallback"><img src="${gallery(s.slug)[0] || bimg(s.slug, 'a')}" alt="${niceTitle(s.title)}" loading="lazy"/></div><div class="bd"><b>${niceTitle(s.title)}</b><span>${[typeLabel(s.type), s.pax ? `${s.pax} ${t('guests')}` : '', s.marinaP].filter(Boolean).join(' · ')}</span>${s.from_ ? `<div class="pr">${t('price.from', 'เริ่มต้น')} <strong class="tabular-nums">${baht(s.from_)}</strong></div>` : ''}</div></a>`).join('')}</div>
+        </section>` : ''}
       </div>
 
-      <!-- TIME SLOTS -->
-      ${b.time_slots.length?`<div>
-        <h3 class="font-display font-medium text-xl text-ink mb-3">${t('timeSlots')}</h3>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">${b.time_slots.map(([k,val],si)=>`<div class="flex items-center gap-3 bg-white rounded-lg p-4 ring-1 ring-sand-200"><span class="w-11 h-11 rounded-xl bg-sun-100 text-sun-600 grid place-items-center shrink-0"><i data-lucide="clock-3" class="w-5 h-5"></i></span><div><p class="text-xs text-muted">${slotName(b, si, k)}</p><p class="font-medium">${val}</p></div></div>`).join('')}</div>
-      </div>`:''}
-
-      <!-- INCLUDES -->
-      <div class="grid md:grid-cols-2 gap-4">
-        ${listBlock(t('includes2'), b.includes.map(moneyText), 'circle-check', 'text-lagoon-700')}
-        <div class="space-y-4">
-          ${listBlock(t('complimentary'), b.complimentary, 'gift', 'text-sun-600')}
-          ${listBlock(t('notIncluded'), b.not_included.map(moneyText), 'circle-x', 'text-ink')}
-        </div>
-      </div>
-
-      <!-- NOTES -->
-      ${(b.notes.length||b.remarks.length)?`<div class="bg-sun-100/70 rounded-xl p-6 ring-1 ring-sun/30">
-        <h3 class="font-medium flex items-center gap-2 text-ink"><i data-lucide="info" class="w-5 h-5 text-sun-600"></i>${t('notes')}</h3>
-        <ul class="mt-3 space-y-2 text-sm text-muted list-disc pl-4">${b.notes.map(n=>`<li>${moneyText(n)}</li>`).join('')}</ul>
-        ${b.remarks.map(r=>moneyText(r)).map(r=>`<p class="mt-3 text-sm text-muted bg-white/70 rounded-lg p-4"><b>*Remarks:</b> ${r.replace(/^\*?remarks\s*:?\s*/i,'')}</p>`).join('')}
-      </div>`:''}
-
-      <!-- POLICIES -->
-      <div class="space-y-3">
-        ${accordion(t('vanTitle'), vanHTML(), 'bus')}
-        ${accordion(t('extraTitle'), extraHTML(), 'party-popper')}
-        ${accordion(t('payTitle'), payHTML(), 'credit-card')}
-      </div>
-    </div>
-
-    <!-- SIDEBAR -->
-    <aside class="lg:sticky lg:top-24" id="bookingCard">
-      <div class="bk-card bg-white rounded-[22px] p-6">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-[11px] text-muted">${t('price.from','เริ่มต้น')}${b.szNow && b.szNow.key && boatKeys(b).length ? ' · ' + SKEY[b.szNow.key][LANG==='en'?'en':'th'] : ''}</p>
-            <p class="text-2xl font-medium text-ink tabular-nums leading-tight mt-0.5">${b.from_?baht(b.from_):'—'}<span class="text-sm font-normal text-muted"> ${t('perTrip')}</span></p>
+      <aside class="bp-aside" id="bpAside">
+        <div class="bp-book" id="bookingCard">
+          <div class="bp-from" id="bpFrom"></div>
+          <div class="bp-price tabular-nums" id="bpPrice"></div>
+          <div class="bp-ptitle" id="bpPtitle"></div>
+          <label class="bp-fld"><span>${L('วันที่ต้องการ', 'Date')}</span><input id="dDate" type="date" class="bp-inp"/></label>
+          ${progs.length ? `<label class="bp-fld"><span>${t('program')}</span><select id="dProg" class="bp-inp">${opts}</select></label>` : ''}
+          <div class="bp-two ${b.time_slots.length ? '' : 'one'}">
+            ${b.time_slots.length ? `<label class="bp-fld"><span>${t('timeSlots')}</span><select id="dSlot" class="bp-inp"></select></label>` : ''}
+            <div class="bp-fld"><span>${L('จำนวนคน', 'Guests')}</span><div class="bp-step"><button type="button" onclick="bpGuests(-1)" aria-label="${L('ลดจำนวนคน', 'Fewer guests')}" id="bpMinus"><i data-lucide="minus"></i></button><output class="tabular-nums" id="bpGOut" aria-live="polite"></output><button type="button" onclick="bpGuests(1)" aria-label="${L('เพิ่มจำนวนคน', 'More guests')}" id="bpPlus"><i data-lucide="plus"></i></button></div><input type="hidden" id="dPax" value="${bpGuestsN}"/></div>
           </div>
-          ${b.pax?`<span class="shrink-0 mt-1 inline-flex items-center gap-1.5 text-[11px] text-muted px-2.5 py-1 rounded-full bg-sand"><i data-lucide="users" class="w-3 h-3"></i>${t('upTo')} ${b.pax}</span>`:''}
+          <p id="dPaxWarn" class="hidden"></p>
+          <div class="bp-sum" id="dEstimate" aria-live="polite"></div>
+          <button type="button" class="bp-btn bp-btn-p" onclick="bookFromDetail('${b.slug}')"><i data-lucide="send"></i>${L('ส่งคำขอจอง', 'Send booking request')}</button>
+          <div class="bp-chat"><a class="bp-btn bp-btn-g" href="${WA_URL}" target="_blank" rel="noopener"><i data-lucide="message-circle"></i>WhatsApp</a><a class="bp-btn bp-btn-g" href="${SET.lineUrl}" target="_blank" rel="noopener"><i data-lucide="message-square"></i>LINE</a></div>
+          <ul class="bp-assure"><li><i data-lucide="shield-check"></i>${L('ยังไม่ต้องชำระเงิน · ทีมขายติดต่อกลับเพื่อเช็กคิว', 'No payment now · our team will check availability')}</li><li><i data-lucide="badge-check"></i>${t('vatNote')}</li>${SET.tat ? `<li><i data-lucide="award"></i>TAT ${SET.tat}</li>` : ''}</ul>
         </div>
-
-        <div class="bk-group mt-5">
-          <label class="bk-f bk-full"><span class="bk-l">${t('program')}</span>
-            <select id="dProg" class="bk-v">${progs.map((p,i)=>`<option value="${i}">${p.label}</option>`).join('')}</select></label>
-          <label class="bk-f"><span class="bk-l">${t('f.dateS')}</span><input id="dDate" type="date" class="bk-v" /></label>
-          <label class="bk-f"><span class="bk-l">${t('qs.guestsS')}</span><input id="dPax" type="number" min="1" value="${Math.min(guests, b.pax||guests)}" class="bk-v" /></label>
-        </div>
-        <p id="dPaxWarn" class="hidden mt-2 text-xs text-maroon"></p>
-
-        <div id="dProgPrices" class="mt-5 space-y-1.5 text-[13px]"></div>
-        <div id="dEstimate" class="mt-4 pt-4 border-t border-sand-200" aria-live="polite"></div>
-
-        <button onclick="bookFromDetail('${b.slug}')" class="mt-5 w-full h-12 bg-maroon hover:bg-maroon-800 text-white flex items-center justify-center gap-2 transition">${t('bookThis')}</button>
-        <div class="mt-2 grid grid-cols-2 gap-2">
-          <a href="#" class="h-10 inline-flex items-center justify-center gap-1.5 text-[13px] text-ink ring-1 ring-sand-200 hover:ring-maroon hover:text-maroon transition"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i>LINE</a>
-          <a href="${TEL}" class="h-10 inline-flex items-center justify-center gap-1.5 text-[13px] text-ink ring-1 ring-sand-200 hover:ring-maroon hover:text-maroon transition"><i data-lucide="phone" class="w-3.5 h-3.5"></i>${t('callUs')}</a>
-        </div>
-        <p class="text-[11px] text-muted text-center mt-4">${t('vatNote')}</p>
-      </div>
-      <div class="mt-4 flex items-center justify-center gap-4 text-[11px] text-muted">
-        <span class="inline-flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i>${t('trust1')}</span>
-        <span class="inline-flex items-center gap-1.5"><i data-lucide="badge-check" class="w-3.5 h-3.5"></i>TAT ${SET.tat}</span>
-        <span class="inline-flex items-center gap-1.5"><i data-lucide="headset" class="w-3.5 h-3.5"></i>${t('trust3')}</span>
-      </div>
-    </aside>
-  </section>
-
-  <!-- SIMILAR -->
-  ${similar.length?`<section class="bg-white py-12 lg:py-t7">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6">
-      <div class="flex items-end justify-between gap-4"><h2 class="font-display font-medium text-xl sm:text-2xl text-ink">${t('similar')}</h2><a href="#/fleet" class="text-sm font-medium text-lagoon-700 hover:text-maroon">${t('viewAll')} →</a></div>
-      <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">${similar.map(boatCard).join('')}</div>
-    </div></section>`:''}
-
-  <!-- PREV / NEXT -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-2 gap-4">
-    <a href="#/boat/${prev.slug}" class="group flex items-center gap-3 bg-white rounded-lg p-3 ring-1 ring-sand-200 hover:ring-maroon/40"><img src="${bimg(prev.slug,'a')}" alt="" class="w-16 h-12 sm:w-24 sm:h-16 object-cover rounded-xl" /><div class="min-w-0"><p class="text-xs text-muted">← ${t('prev')}</p><p class="font-medium truncate">${prev.title}</p></div></a>
-    <a href="#/boat/${next.slug}" class="group flex items-center justify-end gap-3 bg-white rounded-lg p-3 ring-1 ring-sand-200 hover:ring-maroon/40 text-right"><div class="min-w-0"><p class="text-xs text-muted">${t('next')} →</p><p class="font-medium truncate">${next.title}</p></div><img src="${bimg(next.slug,'a')}" alt="" class="w-16 h-12 sm:w-24 sm:h-16 object-cover rounded-xl" /></a>
-  </section>
-
-  <!-- MOBILE STICKY BAR -->
-  <div class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-sand-200 px-4 py-3 flex items-center justify-between gap-3 shadow-float">
-    <div><p class="text-xs text-muted">${t('price.from','เริ่มต้น')}</p><p class="font-display font-medium text-xl text-ink leading-none">${b.from_?baht(b.from_):'—'}</p></div>
-    <button onclick="bookFromDetail('${b.slug}')" class="bg-maroon text-white font-medium px-6 py-3 rounded-full flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-sun"></i>${t('bookThis')}</button>
+      </aside>
+    </div>
   </div>
-  <div class="lg:hidden h-20"></div>`;
 
-  const qd = $('#qsDate').dataset.touched ? $('#qsDate').value : ''; if (qd) $('#dDate').value = qd; $('#dDate').min = new Date().toISOString().split('T')[0];
-  $('#dProg').onchange = e => { detailProgram = +e.target.value; drawProgPrices(b); };
+  <div class="bp-mbar" id="bpMbar"><div class="p"><small id="bpMbarL"></small><b class="tabular-nums" id="bpMbarP"></b></div><button type="button" class="bp-btn bp-btn-p" onclick="bpSheet(true)"><i data-lucide="send"></i>${L('จองเรือ', 'Book')}</button></div>
+  <div class="bp-sheet-bg" id="bpSheetBg" onclick="bpSheet(false)"></div>
+  <div class="bp-sheet" id="bpSheet" role="dialog" aria-modal="true" aria-label="${L('ส่งคำขอจอง', 'Booking request')}"><div class="grab"></div><button type="button" class="bp-sheet-x" onclick="bpSheet(false)" aria-label="${L('ปิด', 'Close')}"><i data-lucide="x"></i></button><div id="bpSheetBody"></div></div>
+  <div class="bp-mspace"></div>
+</div>`;
+
+  const qd = $('#qsDate')?.dataset.touched ? $('#qsDate').value : ''; if (qd) $('#dDate').value = qd; $('#dDate').min = todayISO(); datePick($('#dDate'));
+  if ($('#dProg')) $('#dProg').onchange = e => { detailProgram = +e.target.value; drawProgPrices(b); };
   $('#dDate').onchange = () => { DSZ.pick = null; drawProgPrices(b); };
-  $('#dPax').oninput = () => drawProgPrices(b);
-  drawProgPrices(b);
-  $$('.acc-btn', v).forEach(btn => btn.onclick = () => { const p = btn.nextElementSibling; p.classList.toggle('hidden'); btn.querySelector('.acc-chev').classList.toggle('rotate-180'); });
+  drawProgPrices(b, true);
+  bindSecnav();
   icons();
 }
+function bpGuests(d) { const b = bySlug(currentSlug); bpGuestsN = Math.min(b.pax || 99, Math.max(1, bpGuestsN + d)); $('#dPax').value = bpGuestsN; drawProgPrices(b); }
+function bpSheet(on) {
+  const card = $('#bookingCard'); if (!card) return;
+  if (on) $('#bpSheetBody').appendChild(card); else $('#bpAside').appendChild(card);
+  $('#bpSheet').classList.toggle('open', on); $('#bpSheetBg').classList.toggle('open', on); document.body.style.overflow = on ? 'hidden' : '';
+}
+/** close the mobile booking sheet (and unlock page scroll) before the boat page goes away or is redrawn */
+const bpSheetOff = () => { if ($('#bpSheet')?.classList.contains('open')) bpSheet(false); };
+addEventListener('resize', () => { if (innerWidth > 1040) bpSheetOff(); });
+function pickSeason(k) { DSZ.key = k; DSZ.pick = k; drawProgPrices(bySlug(currentSlug), true); }
+function bpPickLen(ti) { const b = bySlug(currentSlug), p = bpProgs(b).find(x => x.ti === ti); if (p) pickProgram(p.i); }
+/* island-route programs: a palm on an island over a wave line (lucide has no island icon) */
+const ISLAND_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 20.2c1.6 0 1.6-1 3.2-1s1.6 1 3.2 1 1.6-1 3.1-1 1.6 1 3.2 1 1.6-1 3.2-1 1.5 1 3.1 1"/><path d="M5.2 17.2c1.9-2.3 4.2-3.4 6.8-3.4s4.9 1.1 6.8 3.4"/><path d="M12.6 13.8c-.3-3.1.3-5.9 1.7-8.2"/><path d="M14.3 5.6c-1.5-1.6-3.8-1.9-5.7-.7"/><path d="M14.3 5.6c1.1-1.9 3.4-2.6 5.4-1.8"/><path d="M14.3 5.6c.3 2.1 1.8 3.6 3.8 4"/><path d="M14.3 5.6c-1.9.2-3.4 1.6-3.8 3.6"/></svg>';
 function drawProgPrices(b, keepPick) {
-  const p = allPrograms(b)[detailProgram];
-  const date = $('#dDate').value, iso = date || todayISO(), v = seasonView(b, iso), meta = SEASON_META[v.base] || SEASON_META.high;
-  const pax = +$('#dPax').value || 1;
-  const prevKey = DSZ ? DSZ.key : null, prevAdd = DSZ ? DSZ.add : 0;
+  const progs = bpProgs(b), p = progs[detailProgram] || progs[0];
+  const date = $('#dDate').value, iso = date || todayISO(), v = seasonView(b, iso), lang = LANG === 'en' ? 'en' : 'th';
   if (!DSZ || !DSZ.pick) { DSZ = { ...v, pick: null }; if (!v.key && boatKeys(b).length) { const nx = nextSeason(v.cal, iso); if (nx) DSZ.key = DSZ.base = nx.key; } }
   else { DSZ = { ...v, key: DSZ.pick, base: DSZ.pick === 'special' ? v.base : DSZ.pick, pick: DSZ.pick }; }
-  if (keepPick || prevKey !== DSZ.key || DSZ.add || prevAdd) { $('#progTables').innerHTML = b.tables.map((tb, ti) => tableHTML(tb, ti, b)).join(''); }
-  $('#seasonBar').innerHTML = seasonBarHTML(b); icons();
-  const season = DSZ.key;
-  // price rows in sidebar
-  let est = null;
-  const ci = p ? (isSeasonTable(tableKeys(b.slug, b.tables[p.ti])) ? colFor(b, b.tables[p.ti], DSZ.key, DSZ.base) : -1) : -1;
-  $('#dProgPrices').innerHTML = p ? p.cells.map((c, k) => { const on = k + 1 === ci; if (on) est = priceNum(c.val); return `<div class="flex items-baseline justify-between gap-3 ${on?'text-ink':'text-muted'}"><span class="flex items-baseline gap-2 min-w-0"><span class="w-1.5 h-1.5 rounded-full shrink-0 translate-y-[-1px] ${on?'bg-maroon':'bg-transparent'}"></span><span>${c.col}</span></span><span class="whitespace-nowrap tabular-nums ${on?'font-medium':''}">${cleanPrice(c.val)}</span></div>`; }).join('') : '';
-  let estCi = ci; if (est == null && p) { const k = p.cells.findIndex(c => priceNum(c.val)); est = k >= 0 ? priceNum(p.cells[k].val) : null; estCi = k + 1; }
-  // flat-price tables only: season tables already have their own surcharge / special-days column
-  const add = p && est != null && !isSeasonTable(tableKeys(b.slug, b.tables[p.ti])) ? szAdd(DSZ, b.tables[p.ti], estCi, p.row) : 0;
-  // smart estimate incl. extra guests
-  const rule = extraRule(b);
-  const extraPax = rule && pax >= rule.from ? pax - rule.from + 1 : 0;
-  const total = est != null ? est + extraPax * (rule ? rule.fee : 0) + add : null;
-  $('#dEstimate').innerHTML = total != null ? `<div class="flex items-baseline justify-between gap-3"><span class="text-[13px] text-muted">${L('ยอดประมาณการ','Estimated total')}</span><span class="text-xl font-medium tabular-nums">${baht(total)}</span></div>
-    <p class="text-[11px] text-muted mt-1 text-right">${DSZ.key ? SKEY[DSZ.key][LANG==='en'?'en':'th'] : ''}${add ? ` + ${baht(add)} ${DSZ.sp?.label || L('ช่วงพิเศษ','special dates')}` : ''} · ${pax} ${t('guests')}${extraPax?` · ${L('รวมค่าผู้โดยสารเพิ่ม','incl. extra guests')} ${extraPax} × ${baht(rule.fee)}`:''}</p>` : '';
-  const w = $('#dPaxWarn');
-  if (b.pax && pax > b.pax) { w.textContent = t('paxOver').replace('{n}', b.pax); w.classList.remove('hidden'); }
-  else w.classList.add('hidden');
+  const keys = boatKeys(b).filter(k => k !== 'all');
+  /* season segmented control + note */
+  if ($('#bpSeason')) $('#bpSeason').innerHTML = keys.length > 1 ? keys.map(k => `<button type="button" aria-pressed="${DSZ.key === k}" onclick="pickSeason('${k}')">${bpSzShort(k)}<small>${(rangeText(v.cal, k, lang) || '').split(', ')[0]}</small></button>`).join('') : '';
+  if ($('#bpNote')) {
+    let note = '';
+    if (!keys.length) note = `<p class="bp-note"><i data-lucide="calendar"></i>${L('ราคาเดียวทั้งปี', 'Same price all year')}</p>`;
+    else if (DSZ.pick) note = `<p class="bp-note"><i data-lucide="info"></i>${L(`กำลังดูราคา <b>${bpSzName(DSZ.key)}</b> · ราคาจริงคิดตามวันที่เดินทาง`, `Showing <b>${bpSzName(DSZ.key)}</b> rates · the price follows your travel date`)}</p>`;
+    else if (v.key) note = `<p class="bp-note"><i data-lucide="calendar"></i>${L(`${date ? 'วันที่ ' + fmtMD(iso, 'th') : 'วันนี้'} อยู่ในช่วง <b>${bpSzName(v.key)}</b>`, `${date ? fmtMD(iso, 'en') : 'Today'} is in <b>${bpSzName(v.key)}</b>`)}</p>`;
+    else { const nx = nextSeason(v.cal, iso); note = `<p class="bp-note"><i data-lucide="info"></i>${L('วันที่นี้ยังไม่มีราคาในตารางของเรือลำนี้ · ทักแชทเพื่อสอบถาม', 'No published rate for this date · please ask our team')}${nx ? L(` · แสดงราคา ${SKEY[nx.key].th} ที่เริ่ม ${fmtMD(nx.from.slice(5), 'th')}`, ` · showing ${SKEY[nx.key].en} from ${fmtMD(nx.from.slice(5), 'en')}`) : ''}</p>`; }
+    if (v.add) note += `<p class="bp-note"><i data-lucide="calendar-plus"></i>${L(`${v.sp.label} ${rangeText({ special: [v.sp] }, 'special', 'th')} บวกเพิ่ม ${addText(b, v.cal)} ต่อทริป`, `${v.sp.label} ${rangeText({ special: [v.sp] }, 'special', 'en')}: ${addText(b, v.cal)} per charter`)}</p>`;
+    else if (v.cal.add) note += `<p class="bp-note"><i data-lucide="calendar-plus"></i>${L(`ช่วงเทศกาล ${rangeText(v.cal, 'special', 'th')} บวกเพิ่ม ${addText(b, v.cal)} ต่อทริป`, `Holiday dates ${rangeText(v.cal, 'special', 'en')}: ${addText(b, v.cal)} per charter`)}</p>`;
+    $('#bpNote').innerHTML = note;
+  }
+  /* duration tabs + program cards */
+  if ($('#bpLen')) $('#bpLen').innerHTML = b.tables.map((tb, ti) => `<button type="button" aria-pressed="${p && p.ti === ti}" onclick="bpPickLen(${ti})">${bpGroupLabel(b, ti)}</button>`).join('');
+  if ($('#bpProgs')) $('#bpProgs').innerHTML = progs.filter(q => !p || q.ti === p.ti).map(q => { const pr = bpPrice(b, q), hrs = q.hrs ? `${q.hrs} ${L('ชั่วโมง', 'hours')}` : '';
+    return `<button type="button" class="bp-prog" aria-pressed="${q.i === p.i}" onclick="pickProgram(${q.i})">
+      <span class="ic">${q.kind === 'sunset' ? '<i data-lucide="sunset"></i>' : q.kind === 'night' ? '<i data-lucide="moon"></i>' : ISLAND_SVG}</span>
+      <span class="min-w-0"><b>${q.name}</b><span>${[hrs, pr && pr.col].filter(Boolean).join(' · ') || bpGroupLabel(b, q.ti)}</span></span>
+      <span class="pr tabular-nums">${pr ? baht(pr.n + pr.add) : `<em>${L('สอบถามราคา', 'On request')}</em>`}<small>${pr ? (pr.add ? `${L('รวม', 'incl.')} + ${baht(pr.add)}` : L('ทั้งลำ', 'per boat')) : ''}</small></span></button>`; }).join('');
+  /* booking card */
+  const pr = bpPrice(b, p), pax = bpGuestsN = Math.max(1, +$('#dPax').value || bpGuestsN);
+  const extraPax = rule => rule && pax >= rule.from ? pax - rule.from + 1 : 0, rule = extraRule(b), xp = extraPax(rule), extra = xp * (rule ? rule.fee : 0);
+  const total = pr ? pr.n + pr.add + extra : null, szLbl = keys.length ? bpSzName(DSZ.key) : L('ราคาทั้งปี', 'All year');
+  $('#bpFrom').textContent = `${szLbl} · ${L('ราคาเหมาลำ', 'private charter')}`;
+  $('#bpPrice').innerHTML = pr ? `${baht(pr.n + pr.add)} <small>/ ${L('ทริป', 'trip')}</small>` : `<span class="bp-ask">${L('สอบถามราคา', 'Price on request')}</span>`;
+  $('#bpPtitle').textContent = p ? [p.name, p.hrs ? `${p.hrs} ${L('ชม.', 'hrs')}` : ''].filter(Boolean).join(' · ') : '';
+  if ($('#dProg')) { $$('#dProg option').forEach(o => { const q = progs[+o.value], x = bpPrice(b, q); o.textContent = q.name + (x ? ' · ' + baht(x.n + x.add) : ''); }); $('#dProg').value = p ? p.i : 0; }
+  if ($('#dSlot')) { const cur = $('#dSlot').value, sl = bpSlots(b, p); $('#dSlot').innerHTML = sl.map(s => `<option${s === cur ? ' selected' : ''}>${s}</option>`).join(''); }
+  $('#bpGOut').textContent = `${pax} ${L('คน', pax > 1 ? 'guests' : 'guest')}`;
+  $('#bpMinus').disabled = pax <= 1; $('#bpPlus').disabled = !!b.pax && pax >= b.pax;
+  $('#dEstimate').innerHTML = pr ? `<div><span>${L('ราคาเรือ', 'Boat')}</span><span class="tabular-nums">${baht(pr.n)}</span></div>
+    ${pr.add ? `<div><span>${DSZ.sp?.label || L('ช่วงพิเศษ', 'Special dates')}</span><span class="tabular-nums">+ ${baht(pr.add)}</span></div>` : ''}
+    ${rule ? (xp ? `<div><span>${L(`ผู้โดยสารเพิ่ม ${xp} คน × ${baht(rule.fee)}`, `${xp} extra guest${xp > 1 ? 's' : ''} × ${baht(rule.fee)}`)}</span><span class="tabular-nums">${baht(extra)}</span></div>` : `<div><span>${L(`รวม 1–${rule.from - 1} คนในราคาแล้ว`, `1–${rule.from - 1} guests included`)}</span><span>—</span></div>`) : ''}
+    <div class="tot"><span>${L('รวมประมาณ', 'Estimated total')}</span><span class="tabular-nums">${baht(total)}</span></div>`
+    : `<div><span>${L('ราคาวันที่นี้', 'Rate for this date')}</span><span>${L('ทีมขายแจ้งราคาให้', 'Our team will quote')}</span></div>`;
+  $('#bpMbarL').textContent = p ? `${p.name} · ${keys.length ? bpSzShort(DSZ.key) : L('ทั้งปี', 'All year')}` : name0(b);
+  $('#bpMbarP').textContent = total != null ? baht(total) : L('สอบถามราคา', 'On request');
+  icons();
 }
-function pickProgram(i) { detailProgram = i; $('#dProg').value = i; drawProgPrices(bySlug(currentSlug)); if (innerWidth < 1024) $('#bookingCard').scrollIntoView({behavior:'smooth'}); else { $('#dProg').classList.add('ring-2','ring-sun'); setTimeout(()=>$('#dProg').classList.remove('ring-2','ring-sun'),900); } }
+const name0 = b => niceTitle(b.title);
+function pickProgram(i) {
+  detailProgram = i; if ($('#dProg')) $('#dProg').value = i; drawProgPrices(bySlug(currentSlug));
+  if (innerWidth > 1040) $('#bookingCard')?.animate([{ transform: 'scale(.985)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out' });
+}
 function bookFromDetail(slug) {
-  const b = bySlug(slug), p = allPrograms(b)[detailProgram];
+  const b = bySlug(slug), p = allPrograms(b)[detailProgram], slot = $('#dSlot')?.value;
+  bpSheet(false);
   openBooking('boat:' + slug, p ? p.label : '');
   if ($('#dDate').value) modalForm.date.value = $('#dDate').value;
   modalForm.adults.value = $('#dPax').value || 2;
+  if (slot) {
+    // select the matching time chip; a time the chips don't have goes in the note and no chip is sent
+    const chips = $$('.slot', modalForm), hit = chips.find(s => s.dataset.slot === slot);
+    chips.forEach(s => s.classList.toggle('chip-active', s === hit));
+    if (!hit && modalForm.note && !modalForm.note.value) modalForm.note.value = L('รอบเวลา: ', 'Time slot: ') + slot;
+  }
 }
 function accordion(title, body, icon) {
   return `<div class="bg-white rounded-lg ring-1 ring-sand-200 overflow-hidden">
@@ -845,10 +968,11 @@ let lbSlug = '', lbIdx = 0;
 (()=>{ let x0=null; document.addEventListener('touchstart',e=>{ if(!$('#lightbox')||$('#lightbox').classList.contains('hidden')) return; x0=e.touches[0].clientX; },{passive:true}); document.addEventListener('touchend',e=>{ if(x0==null) return; const dx=e.changedTouches[0].clientX-x0; x0=null; if(Math.abs(dx)>45){ lbIdx+= dx<0?1:-1; drawLightbox(); } },{passive:true}); })();
 function openLightbox(slug, i) { lbSlug = slug; lbIdx = i; drawLightbox(); const lb = $('#lightbox'); lb.classList.remove('hidden'); lb.classList.add('flex'); document.body.style.overflow='hidden'; icons(); }
 function drawLightbox() {
-  const g = ['hero','a','b'].map(k=>bimg(lbSlug,k)).filter(Boolean); lbIdx = (lbIdx+g.length)%g.length;
+  const g = gallery(lbSlug); lbIdx = (lbIdx+g.length)%g.length;
   const im = $('#lbImg'); im.classList.remove('is-in'); im.src = g[lbIdx]; im.alt = (bySlug(lbSlug)?.title || '') + ' — photo ' + (lbIdx+1); void im.offsetWidth; im.classList.add('is-in');
   $('#lbCount').textContent = `${lbIdx+1} / ${g.length}`;
   $('#lbThumbs').innerHTML = g.map((src,i)=>`<button onclick="lbIdx=${i};drawLightbox()" class="lb-th ${i===lbIdx?'is-on':''}" aria-label="Photo ${i+1}" aria-current="${i===lbIdx}"><img src="${src}" alt=""/></button>`).join('');
+  $('#lbThumbs .is-on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 
 /* =========================================================
@@ -887,7 +1011,7 @@ let guests = 2;
 function stepGuests(d) { guests = Math.min(60, Math.max(1, guests + d)); $('#qsGuests').textContent = guests; }
 $('#quickSearch').addEventListener('submit', e => {
   e.preventDefault();
-  if ($('.qs-tab.tab-active').dataset.qs === 'activity') { document.getElementById('categories').scrollIntoView({behavior:'smooth'}); return; }
+  if ($('.qs-tab.tab-active')?.dataset.qs === 'activity') { document.getElementById('categories').scrollIntoView({behavior:'smooth'}); return; }
   search = { trip: $('#qsTrip').value, dest: $('#qsDest').value, date: $('#qsDate').value, guests };
   track('Search', { search_string: [search.trip, search.dest].filter(Boolean).join(' '), num_guests: guests });
   boatFilter = search.trip==='overnight' ? 'overnight' : 'all';
@@ -916,15 +1040,67 @@ function leadContext() {
     landing_page: L.landing, first_touch: { source: F.src || (F.ref ? new URL(F.ref).hostname : 'direct'), landing_page: F.landing, at: F.ts }, pages_viewed: ATTR.pages, visits: ATTR.visits, returning: ATTR.visits > 1,
     boats_viewed: (typeof RECENT !== 'undefined' ? RECENT : []).slice(0, 5), current_page: location.pathname, lang: LANG, device: matchMedia('(max-width: 768px)').matches ? 'mobile' : 'desktop', event_id: 'lead.' + Date.now().toString(36) };
 }
+/* ---------- booking form spam guard — same link patterns as src/lib/spam.ts (the server checks everything again) ---------- */
+const LINK_RE = /https?:\/\/|www\.|<\s*a[\s>]|\[\/?(?:url|link)\b|\b(?:bit\.ly|t\.me|tinyurl\.com|goo\.gl|wa\.me|lin\.ee)\b/i;
+const DOMAIN_RE = /\b[A-Za-z0-9][A-Za-z0-9-]{2,62}\.(?:com|net|org|info|biz|ru|cn|xyz|top|site|online|shop|store|club|io|ly|link|click|live|app|dev|tk|ml|ga|cf|gq|pw|cc|ws|su|vip|win|bid|loan|work|today|space|website|tech|pro|asia)\b/;
+/** emails are fine in the note; the phone / LINE ID field only blocks real links ("boat.pro" is a normal LINE ID) */
+const bfHasLink = el => { const v = el.value; return LINK_RE.test(v) || (el.name !== 'phone' && DOMAIN_RE.test(v.replace(/[^\s@]+@[^\s@]+/g, ' '))); };
+const BF_TEXT = ['name', 'phone', 'whatsapp', 'note'];
+const EMAIL_RE = /^[a-z0-9._%+'-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i;
+const EMAIL_TYPO = { 'gmial.com': 'gmail.com', 'gmal.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gamil.com': 'gmail.com', 'gnail.com': 'gmail.com', 'gmail.co': 'gmail.com', 'gmail.con': 'gmail.com',
+  'hotmial.com': 'hotmail.com', 'hotmai.com': 'hotmail.com', 'hotmail.co': 'hotmail.com', 'yaho.com': 'yahoo.com', 'yahoo.co': 'yahoo.com', 'outlok.com': 'outlook.com', 'outlook.co': 'outlook.com', 'icloud.co': 'icloud.com' };
+const BF_MSG = {
+  link: () => L('ช่องนี้ใส่ลิงก์หรือชื่อเว็บไซต์ไม่ได้', 'Links and web addresses can’t go in this field'),
+  format: () => L('รูปแบบอีเมลไม่ถูกต้อง', 'This email address doesn’t look right'),
+  disposable: () => L('ไม่รับอีเมลชั่วคราว กรุณาใช้อีเมลที่ใช้งานจริง', 'Please use your real email, not a temporary one'),
+  domain: () => L('อีเมลนี้รับข้อความไม่ได้ ลองตรวจตัวสะกดอีกครั้ง', 'This email can’t receive messages — please check the spelling'),
+  wa: () => L('ใส่เบอร์ WhatsApp เป็นตัวเลข เช่น +66 81 234 5678', 'Enter the WhatsApp number in digits, e.g. +66 81 234 5678'),
+  phone: () => L('ใส่เบอร์โทรหรือ LINE ID เพียงหนึ่งรายการ อย่างน้อย 6 ตัว เช่น 081 234 5678', 'Enter one phone number or LINE ID, at least 6 characters, e.g. +66 81 234 5678'),
+  invalid: () => L('ข้อมูลในช่องนี้ไม่ถูกต้องหรือยาวเกินไป', 'Please check this field — it may be too long'),
+};
+const bfWaOk = v => /^\+?[\d\s().-]+$/.test(v.trim()) && v.replace(/\D/g, '').length >= 7;
+/** same rule as the phone field in src/app/api/leads/route.ts */
+const bfPhoneOk = v => { const s = v.trim(); return s.length >= 6 && s.length <= 40 && /^[+\d\s().\-@a-zA-Z_]+$/.test(s); };
+/** message under a field ('' clears it); html may hold a "did you mean" button */
+function bfHint(el, html, onFix) {
+  const fld = el.closest('.bf-fld'); if (!fld) return;
+  let h = fld.querySelector(':scope > .bf-hint');
+  if (!html) { h?.remove(); el.setAttribute('aria-invalid', 'false'); return; }
+  if (!h) { h = document.createElement('small'); h.className = 'bf-hint'; h.setAttribute('role', 'alert'); fld.append(h); }
+  h.innerHTML = html; el.setAttribute('aria-invalid', 'true');
+  if (onFix) h.querySelector('.bf-fix')?.addEventListener('click', onFix);
+}
+/** format → common typo → /api/leads/email-check (MX records, throwaway inboxes); sets el._ok.
+ *  The same address returns the same (maybe still running) check, so submit waits for the real answer
+ *  and a blur doesn't redraw the "did you mean" button under the pointer. */
+function bfCheckEmail(el) {
+  const v = el.value.trim();
+  if (el._checked === v && el._p) return el._p;
+  el._checked = v;
+  return el._p = bfEmail(el, v);
+}
+async function bfEmail(el, v) {
+  el._ok = true;
+  if (!v) return bfHint(el, '');
+  if (!EMAIL_RE.test(v)) { el._ok = false; return bfHint(el, BF_MSG.format()); }
+  const [user, dom] = v.toLowerCase().split('@'), fix = EMAIL_TYPO[dom];
+  if (fix) { el._ok = false; return bfHint(el, `${L('หมายถึง', 'Did you mean')} <button type="button" class="bf-fix">${esc(user)}@${fix}</button> ${L('ใช่ไหม?', '?')}`, () => { el.value = `${user}@${fix}`; bfCheckEmail(el); el.focus(); }); }
+  try {
+    const r = await fetch('/api/leads/email-check?e=' + encodeURIComponent(v)).then(x => x.json());
+    if (el.value.trim() !== v) return;
+    if (!r.ok) { el._ok = false; return bfHint(el, (BF_MSG[r.reason] || BF_MSG.format)()); }
+  } catch (e) { /* offline: the server checks again on send */ }
+  bfHint(el, '');
+}
 function buildForm(wrap) {
   wrap.innerHTML = ''; wrap.appendChild($('#formTpl').content.cloneNode(true));
   const form = $('form', wrap);
   const sel = $('select[name=item]', form);
   sel.innerHTML = `<option value="">${t('chooseItem')}</option>
-    <optgroup label="${t('boatsGroup')} (${FLEET.length})">${FLEET.map(b=>`<option value="boat:${b.slug}">${b.title} · ${b.subtitle}${b.from_?' · '+t('price.from','เริ่มต้น')+' '+baht(b.from_):''}</option>`).join('')}</optgroup>
+    <optgroup label="${t('boatsGroup')} (${FLEET.length})">${FLEET.map(b=>`<option value="boat:${b.slug}">${b.title}${b.from_?' · '+t('price.from','เริ่มต้น')+' '+baht(b.from_):''}</option>`).join('')}</optgroup>
     <optgroup label="${t('actsGroup')}">${ACTS.map(a=>`<option value="act:${a.en}">${LANG==='en'?a.en:a.th}</option>`).join('')}</optgroup>`;
   const today = new Date().toISOString().split('T')[0];
-  $('input[name=date]', form).min = today;
+  $('input[name=date]', form).min = today; datePick($('input[name=date]', form));
   const progWrap = $('.prog-wrap', form), progSel = $('select[name=program]', form);
   sel.onchange = () => {
     const b = sel.value.startsWith('boat:') && bySlug(sel.value.slice(5));
@@ -933,24 +1109,48 @@ function buildForm(wrap) {
   };
   $$('.slot', form).forEach(s => s.onclick = () => { $$('.slot', form).forEach(x=>x.classList.remove('chip-active')); s.classList.add('chip-active'); });
   $$('[required]', form).forEach(el => el.addEventListener('input', () => { if (el.value.trim()) el.setAttribute('aria-invalid','false'); }));
+  // spam guard: no links in typed fields, real email (checked when the field is left), WhatsApp in digits
+  const em = form.email, wa = form.whatsapp;
+  if (em) {
+    em.addEventListener('blur', () => bfCheckEmail(em));
+    em.addEventListener('input', () => { em._checked = null; if (em.getAttribute('aria-invalid') === 'true') bfHint(em, ''); });
+  }
+  BF_TEXT.forEach(n => form[n]?.addEventListener('input', () => { const el = form[n]; if (el.closest('.bf-fld')?.querySelector('.bf-hint') && !bfHasLink(el)) bfHint(el, ''); }));
+  form.addEventListener('reset', () => $$('.bf-hint', form).forEach(h => h.remove()));
   form._shownAt = Date.now();
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
+    if (form._busy) return;   // Enter / click again while the email check or the send is still running
+    const note = form.note?.value ?? '';   // read now: fleet.js adds the reply-language tag for this click only
     const req = ['name','phone','date'].map(n => form[n]);
-    req.forEach(el => el.setAttribute('aria-invalid', el.value.trim() ? 'false' : 'true'));
+    req.forEach(el => (el._dpVis || el).setAttribute('aria-invalid', el.value.trim() ? 'false' : 'true')); // _dpVis = the visible date field (datePick)
     const bad = req.filter(el => !el.value.trim());
     $('.form-error', form).classList.toggle('hidden', !bad.length);
-    if (bad.length) { bad[0].focus(); return; }
+    if (bad.length) { (bad[0]._dpVis || bad[0]).focus(); return; }
+    const linked = BF_TEXT.map(n => form[n]).filter(el => el && bfHasLink(el === form.note ? { name: 'note', value: note } : el));
+    linked.forEach(el => bfHint(el, BF_MSG.link()));
+    if (!linked.includes(form.phone) && !bfPhoneOk(form.phone.value)) { bfHint(form.phone, BF_MSG.phone()); linked.push(form.phone); }
+    if (wa && wa.value.trim() && !bfWaOk(wa.value)) { bfHint(wa, BF_MSG.wa()); linked.push(wa); }
+    if (em && em.value.trim()) { form._busy = true; try { await bfCheckEmail(em); } finally { form._busy = false; } }
+    if (em && em.value.trim() && !em._ok) linked.push(em);
+    if (linked.length) { linked[0].focus(); return; }
     { const it = form.item?.value || '', b = it.startsWith('boat:') ? bySlug(it.slice(5)) : null; track('Lead', { content_ids: it ? [it.split(':')[1]] : [], content_name: it, value: b?.from_ || 0, currency: 'THB', num_guests: +(form.adults?.value || 0) }); }
     const btn = $('button[type=submit]', form), label = btn.innerHTML;
-    btn.disabled = true; btn.setAttribute('aria-busy','true'); btn.innerHTML = `<span class="spinner" aria-hidden="true"></span><span>${t('sending')}</span>`;
+    form._busy = btn.disabled = true; btn.setAttribute('aria-busy','true'); btn.innerHTML = `<span class="spinner" aria-hidden="true"></span><span>${t('sending')}</span>`;
     const payload = Object.fromEntries(new FormData(form)); payload.slot = $('.slot.chip-active', form)?.dataset.slot; payload.marketing_consent = !!form.marketing?.checked; payload.context = leadContext();
-    payload.lang = LANG; payload.t = Date.now() - (form._shownAt || 0); payload.adults = +(payload.adults || 0); payload.children = +(payload.kids || 0); payload.message = payload.note || ''; delete payload.kids; delete payload.note; delete payload.marketing;
-    const done = ok => { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.innerHTML = label; if (ok) { form.reset(); closeModals(); } };
+    payload.lang = LANG; payload.t = Date.now() - (form._shownAt || 0); payload.adults = +(payload.adults || 0); payload.children = +(payload.kids || 0); payload.message = note; delete payload.kids; delete payload.note; delete payload.marketing;
+    const done = ok => { form._busy = btn.disabled = false; btn.removeAttribute('aria-busy'); btn.innerHTML = label; if (ok) { form.reset(); closeModals(); } };
+    const fail = () => { done(false); toast(L('ส่งไม่สำเร็จ กรุณาลองใหม่ หรือทักเราทาง WhatsApp / LINE', 'Could not send. Please try again or message us on WhatsApp / LINE.')); };
     fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       .then(r => r.json().then(j => ({ ok: r.ok && j.ok, j })))
-      .then(({ ok, j }) => { done(ok); toast(ok ? t('sent') + (j.ref ? ' · ' + j.ref : '') : L('ส่งไม่สำเร็จ กรุณาลองใหม่ หรือทักเราทาง WhatsApp / LINE', 'Could not send. Please try again or message us on WhatsApp / LINE.')); })
-      .catch(() => { done(false); toast(L('ส่งไม่สำเร็จ กรุณาลองใหม่ หรือทักเราทาง WhatsApp / LINE', 'Could not send. Please try again or message us on WhatsApp / LINE.')); });
+      .then(({ ok, j }) => {
+        if (ok) { done(true); toast(t('sent') + (j.ref ? ' · ' + j.ref : '')); return; }
+        // the server found something the browser didn't: mark those fields
+        const els = Object.entries(j.fields || {}).map(([k, why]) => { const el = form[k === 'message' ? 'note' : k]; if (el) bfHint(el, (BF_MSG[why?.[0]] || BF_MSG[{ whatsapp: 'wa', phone: 'phone', email: 'format' }[k] || 'invalid'])()); return el; }).filter(Boolean);
+        if (!els.length) return fail();
+        done(false); els[0].focus(); toast(L('กรุณาแก้ไขช่องที่มีข้อความสีแดง', 'Please fix the fields marked in red'));
+      })
+      .catch(fail);
   });
   applyI18n(wrap); icons();
   return form;
@@ -966,7 +1166,7 @@ function openBooking(preset='', program='') {
   $('#mobileMenu').classList.add('hidden');
   setTimeout(()=>modalForm.name.focus(), 50);
 }
-function closeModals() { ['#bookingModal','#lightbox','#smartModal','#cmpModal','#cmdModal'].forEach(id=>$(id).classList.add('hidden')); document.body.style.overflow=''; }
+function closeModals() { bpSheetOff(); ['#bookingModal','#lightbox','#smartModal','#cmpModal','#cmdModal'].forEach(id=>$(id).classList.add('hidden')); document.body.style.overflow=''; }
 $$('[data-close]').forEach(el => el.onclick = closeModals);
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeModals(); if (!$('#lightbox').classList.contains('hidden')) { if (e.key==='ArrowRight') { lbIdx++; drawLightbox(); } if (e.key==='ArrowLeft') { lbIdx--; drawLightbox(); } } });
 
@@ -977,9 +1177,9 @@ $('#menuBtn').onclick = () => { const open = $('#mobileMenu').classList.toggle('
 $$('#mobileMenu a').forEach(a => a.onclick = () => { $('#mobileMenu').classList.add('hidden'); $('#menuBtn').setAttribute('aria-expanded', false); });
 window.addEventListener('scroll', () => $('#navbar').classList.toggle('is-compact', scrollY > 24), { passive:true });
 function setLang(l) {
-  LANG = l; document.documentElement.lang = l; locFleet();
+  bpSheetOff(); LANG = l; document.documentElement.lang = l; locFleet();
   $$('.lang-btn').forEach(b => { const on = b.dataset.lang===l; b.classList.toggle('chip-active', on); b.classList.toggle('text-muted', !on); b.setAttribute('aria-pressed', on); });
-  applyI18n(); renderAll(); inlineForm = buildForm($('#inlineFormWrap'));
+  applyI18n(); renderAll(); inlineForm = buildForm($('#inlineFormWrap')); dpRelabel();
 }
 $$('.lang-btn').forEach(b => b.onclick = () => { if (b.dataset.lang !== LANG) { const l = b.dataset.lang; history.pushState(null, '', hashToPath(VH.hash, l)); setLang(l); toast(t('toastLang')); } });
 
@@ -995,6 +1195,7 @@ function renderHeroText() {
     + `<span class="ht-line"><span style="animation-delay:.36s"><span class="hero-hl"><span id="heroRot">${rot[0]}</span></span></span></span>`;
   $('#heroSub').textContent = L(`เรือส่วนตัว ${FLEET.length} ลำ · ภูเก็ต กระบี่ พังงา`, `${FLEET.length} private boats · Phuket, Krabi, Phang Nga`);
   $('#heroCta1').textContent = L('ให้เราช่วยเลือก','Smart Match');
+  const tr2 = $('#heroTrust2'); if (tr2) tr2.innerHTML = [['send', L('ส่งคำขอฟรี ไม่ต้องจ่ายบนเว็บ', 'Free request · no payment online')], ['calendar-check', L('ทีมงานเช็กคิวและยืนยันราคาให้', 'Our team checks availability and confirms the price')], SET.tat && ['badge-check', L(`ใบอนุญาตธุรกิจนำเที่ยว TAT ${SET.tat}`, `TAT licence ${SET.tat}`)]].filter(Boolean).map(([ic, x]) => `<li><i data-lucide="${ic}"></i>${x}</li>`).join('');
   $('#heroCta2').textContent = L('ดูเรือทั้งหมด','Browse the fleet');
   $('#promoPrice') && ($('#promoPrice').textContent = baht(375000));
   if (HOME) renderHomeContent();
@@ -1059,7 +1260,7 @@ function renderTypeBand() {
     </div>`;
 }
 
-function renderAll() { renderHeroText(); renderHero(); renderTypeBand(); renderStats(); renderSmartTeaser(); renderGroups(); renderCats(); renderActs(); renderBoatFilters(); renderBoats(); renderRoutes(); renderRecent(); renderSeoGuide(); renderHomeBlog(); renderFaq(); renderTeam(); renderMega(); renderTeamLive(); renderNavText(); updateCompareUI(); route(true); }
+function renderAll() { renderHeroText(); renderHero(); renderTypeBand(); renderStats(); renderSmartTeaser(); renderGroups(); renderCats(); renderActs(); renderBoatFilters(); renderBoats(); renderRoutes(); renderRecent(); renderSeoGuide(); renderHomeBlog(); renderFaq(); renderTeam(); renderTeamLive(); renderNavText(); updateCompareUI(); route(true); }
 
 /* =========================================================
    DESIGN SYSTEM PAGE  (#/design) — implementation guidance
@@ -1609,6 +1810,115 @@ const SCOL = { low: '#e3c3c7', high: '#a33a47', peak: '#3a0007', special: '#c98a
 const M_TH = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], M_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const isoOf = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 const todayISO = () => isoOf(new Date());
+
+/* ---------- date picker: a calendar in the page language and site style (the browser's own follows the OS) ----------
+   datePick(input) turns the original <input type=date> into a hidden field that keeps its id, name and ISO value,
+   so code that reads .value, sets .min, listens for change or submits the form works unchanged.
+   A text field in front shows the date (พ.ศ. in Thai) and opens the calendar. */
+function dpAll() { return dpAll.s || (dpAll.s = new Set()); }
+function dpText(iso) {
+  const d = iso ? new Date(iso + 'T00:00:00') : null; if (!d || isNaN(d)) return iso || '';
+  return LANG === 'en' ? `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()]} ${d.getDate()} ${M_EN[d.getMonth()]} ${d.getFullYear()}`
+    : `${['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'][d.getDay()]} ${d.getDate()} ${M_TH[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+function dpSync(inp) {
+  const v = inp._dpVis; if (!v) return;
+  v.value = dpText(inp.value); v.placeholder = L('เลือกวันที่', 'Select date');
+  if (inp.value && v.getAttribute('aria-invalid') === 'true') v.setAttribute('aria-invalid', 'false');
+}
+function dpSet(inp, iso, silent) {
+  inp.value = iso;
+  if (!silent) ['input', 'change'].forEach(t => inp.dispatchEvent(new Event(t, { bubbles: true })));
+}
+function datePick(inp) {
+  if (!inp || inp._dpVis || navigator.userAgent === 'BTT-SSR') return;
+  const vis = document.createElement('input');
+  vis.type = 'text'; vis.className = inp.className + ' dp-vis'; vis.autocomplete = 'off'; vis.setAttribute('inputmode', 'none');
+  vis.setAttribute('aria-haspopup', 'dialog'); vis.setAttribute('aria-expanded', 'false');
+  vis.required = inp.required; inp.required = false; // hidden inputs are never validated
+  inp.type = 'hidden'; inp.after(vis); inp._dpVis = vis;
+  const nat = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  Object.defineProperty(inp, 'value', { configurable: true, get() { return nat.get.call(this); }, set(v) { nat.set.call(this, v); dpSync(this); } });
+  vis.addEventListener('click', () => dpOpen(inp));
+  vis.addEventListener('beforeinput', e => e.preventDefault());
+  vis.addEventListener('keydown', e => {
+    if (e.key === 'Tab') return; e.preventDefault();
+    if (['Enter', ' ', 'ArrowDown'].includes(e.key)) dpOpen(inp);
+    else if ((e.key === 'Backspace' || e.key === 'Delete') && !vis.required) dpSet(inp, '');
+  });
+  inp.form?.addEventListener('reset', () => setTimeout(() => dpSet(inp, '', true)));
+  dpAll().forEach(i => i.isConnected || dpAll().delete(i)); dpAll().add(inp); dpSync(inp);
+}
+function dpRelabel() { dpClose(); dpAll().forEach(dpSync); }
+
+let DP = null; // the open calendar: { inp, pop, y, m, f } — f = the day that has keyboard focus
+function dpOpen(inp) {
+  if (DP && DP.inp === inp) return dpClose(true);
+  dpClose();
+  const t0 = todayISO(), start = inp.value || (inp.min > t0 ? inp.min : t0), d = new Date(start + 'T00:00:00');
+  const pop = document.createElement('div');
+  pop.className = 'dp-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', L('เลือกวันที่', 'Choose a date'));
+  document.body.appendChild(pop);
+  DP = { inp, pop, y: d.getFullYear(), m: d.getMonth(), f: start };
+  pop.addEventListener('click', dpClick); pop.addEventListener('keydown', dpKey);
+  pop.addEventListener('focusout', e => { const to = e.relatedTarget; if (DP && to && !pop.contains(to) && to !== inp._dpVis) dpClose(); });
+  inp._dpVis.setAttribute('aria-expanded', 'true');
+  dpDraw(); dpPlace(); dpFocus();
+  document.addEventListener('pointerdown', dpOutside, true); addEventListener('scroll', dpPlace, true); addEventListener('resize', dpPlace);
+}
+function dpClose(refocus) {
+  if (!DP) return; const { inp, pop } = DP; DP = null;
+  pop.remove(); inp._dpVis?.setAttribute('aria-expanded', 'false');
+  document.removeEventListener('pointerdown', dpOutside, true); removeEventListener('scroll', dpPlace, true); removeEventListener('resize', dpPlace);
+  if (refocus) inp._dpVis?.focus({ preventScroll: true });
+}
+function dpOutside(e) { if (DP && !DP.pop.contains(e.target) && e.target !== DP.inp._dpVis) dpClose(); }
+function dpPlace() {
+  if (!DP) return; const r = DP.inp._dpVis.getBoundingClientRect(), p = DP.pop;
+  if (!r.width) return dpClose();
+  p.style.width = Math.min(Math.max(r.width, 300), 360, innerWidth - 16) + 'px'; // as wide as its field, within reason
+  let top = r.bottom + 8; if (top + p.offsetHeight > innerHeight - 8 && r.top - 8 - p.offsetHeight > 8) top = r.top - 8 - p.offsetHeight;
+  p.style.top = top + 'px'; p.style.left = Math.max(8, Math.min(r.left, innerWidth - p.offsetWidth - 8)) + 'px';
+}
+function dpFocus() { DP?.pop.querySelector(`.dp-d[data-d="${DP.f}"]`)?.focus({ preventScroll: true }); }
+function dpDraw() {
+  const { inp, pop, y, m, f } = DP, en = LANG === 'en', min = inp.min || '', sel = inp.value, t0 = todayISO();
+  const mon = en ? ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    : ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  const wd = en ? ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] : ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+  const chev = d => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+  const prevOk = !min || isoOf(new Date(y, m, 0)) >= min;
+  let cells = '<span></span>'.repeat(new Date(y, m, 1).getDay());
+  for (let d = 1, n = new Date(y, m + 1, 0).getDate(); d <= n; d++) {
+    const iso = isoOf(new Date(y, m, d));
+    cells += `<button type="button" class="dp-d${iso === t0 ? ' is-today' : ''}" data-d="${iso}" tabindex="${iso === f ? 0 : -1}" aria-label="${dpText(iso)}"${iso === sel ? ' aria-pressed="true"' : ''}${min && iso < min ? ' disabled' : ''}>${d}</button>`;
+  }
+  pop.innerHTML = `<div class="dp-head"><b aria-live="polite">${mon[m]} ${en ? y : y + 543}</b>
+      <span class="dp-nav"><button type="button" data-m="-1" aria-label="${L('เดือนก่อน', 'Previous month')}"${prevOk ? '' : ' disabled'}>${chev('m15 18-6-6 6-6')}</button><button type="button" data-m="1" aria-label="${L('เดือนถัดไป', 'Next month')}">${chev('m9 18 6-6-6-6')}</button></span></div>
+    <div class="dp-wd" aria-hidden="true">${wd.map(w => `<span>${w}</span>`).join('')}</div>
+    <div class="dp-grid">${cells}</div>
+    <div class="dp-foot">${inp._dpVis.required || !sel ? '<span></span>' : `<button type="button" data-clear>${L('ล้าง', 'Clear')}</button>`}${min > t0 ? '' : `<button type="button" data-d="${t0}">${L('วันนี้', 'Today')}</button>`}</div>`;
+}
+function dpMove(days, months, focus) {
+  const c = new Date(DP.f + 'T00:00:00'), day = c.getDate();
+  if (months) { c.setDate(1); c.setMonth(c.getMonth() + months); c.setDate(Math.min(day, new Date(c.getFullYear(), c.getMonth() + 1, 0).getDate())); }
+  else c.setDate(day + days);
+  let f = isoOf(c); if (DP.inp.min && f < DP.inp.min) f = DP.inp.min;
+  const n = new Date(f + 'T00:00:00'); Object.assign(DP, { f, y: n.getFullYear(), m: n.getMonth() });
+  dpDraw(); if (focus) dpFocus();
+}
+function dpClick(e) {
+  const b = e.target.closest('button'); if (!b || b.disabled || !DP) return;
+  const inp = DP.inp;
+  if (b.dataset.m) { dpMove(0, +b.dataset.m); DP.pop.querySelector(`[data-m="${b.dataset.m}"]:not(:disabled)`)?.focus(); }
+  else if ('clear' in b.dataset) { dpClose(true); dpSet(inp, ''); }
+  else if (b.dataset.d) { dpClose(true); dpSet(inp, b.dataset.d); }
+}
+function dpKey(e) {
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); return dpClose(true); } // don't also close the booking modal
+  const k = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [-7, 0], ArrowDown: [7, 0], PageUp: [0, -1], PageDown: [0, 1] }[e.key];
+  if (k && e.target.classList.contains('dp-d')) { e.preventDefault(); dpMove(k[0], k[1], true); }
+}
 const calById = id => SZ.calendars.find(c => c.id === id) || SZ.calendars.find(c => c.id === 'all');
 const calOf = slug => calById(SZ.boats[slug] || 'all');
 const mdIn = (md, a, b) => a <= b ? (md >= a && md <= b) : (md >= a || md <= b);
@@ -2062,10 +2372,11 @@ function renderSeoGuide() {
 function renderFaq() {
   const el = $('#faq'); if (!el) return;
   const k = LANG === 'en' ? 1 : 0;
-  el.innerHTML = `<div class="max-w-3xl mx-auto px-4 sm:px-6 py-12 lg:py-t7" id="guide-faq">
-    <p class="text-xs uppercase tracking-[.2em] text-maroon text-center">FAQ</p>
-    <h2 class="font-display text-2xl sm:text-3xl mt-2 text-center">${L('คำถามที่พบบ่อยเกี่ยวกับ yacht charter','Yacht charter FAQ')}</h2>
-    <div class="mt-8 divide-y divide-sand-200 border-y border-sand-200">${FAQ.map(f => `<details class="group py-4"><summary class="flex items-center justify-between gap-4 cursor-pointer list-none"><h3 class="text-md font-medium">${f.q[k]}</h3><i data-lucide="plus" class="w-4 h-4 text-maroon shrink-0 group-open:rotate-45 transition"></i></summary><p class="mt-3 text-sm text-muted leading-relaxed">${f.a[k]()}</p></details>`).join('')}</div>
+  // styles: .fq-* in glass.css; heading reuses .tm-* from the team section
+  el.innerHTML = `<div class="max-w-3xl mx-auto px-4 sm:px-6 py-14 lg:py-20" id="guide-faq">
+    <div class="text-center"><p class="tm-eyebrow"><i data-lucide="circle-help"></i>FAQ</p>
+    <h2 class="tm-title">${L('คำถามที่พบบ่อยเกี่ยวกับ Yacht Charter','Yacht charter FAQ')}</h2></div>
+    <div class="fq-list">${FAQ.map(f => `<details class="fq"><summary><h3>${f.q[k]}</h3><span class="fq-ic" aria-hidden="true"><i data-lucide="plus"></i></span></summary><p>${f.a[k]()}</p></details>`).join('')}</div>
   </div>`;
 }
 function setMeta(name, val, attr = 'name') { let m = document.head.querySelector(`meta[${attr}="${name}"]`); if (!m) { m = document.createElement('meta'); m.setAttribute(attr, name); document.head.appendChild(m); } m.setAttribute('content', val); }
@@ -2136,89 +2447,40 @@ function copyTel(tel, name) { const done = () => toast(L(`คัดลอกเ�
 function renderTeam() {
   const el = $('#team'); if (!el) return;
   const k = LANG === 'en' ? 1 : 0, on = teamIsOnline();
-  const faces = TEAM.map((m, i) => `<img src="${TEAM_IMG[m.id]}" alt="" class="w-8 h-8 rounded-full object-cover ring-2 ring-white ${i ? '-ml-2.5' : ''}"/>`).join('');
+  const faces = TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="" class="tm-face"/>`).join('');
+  // styles: .tm-* in glass.css (liquid glass, same tone as the boat page)
   el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 lg:py-20">
-    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 reveal">
+    <div class="tm-head reveal">
       <div class="max-w-xl">
-        <p class="text-xs uppercase tracking-[.2em] text-maroon flex items-center gap-2"><i data-lucide="life-buoy" class="w-4 h-4"></i>${L('ทีมของเรา','Our crew')}</p>
-        <h2 id="teamTitle" class="font-display text-2xl sm:text-3xl mt-2">${L('คุยกับผู้เชี่ยวชาญ Yacht Charter','Talk to a yacht charter specialist')}</h2>
-        <p class="text-sm text-muted mt-3 leading-relaxed">${L('บอกวันที่และจำนวนคน ทีมงานจะช่วยเลือกเรือและเส้นทางที่ลงตัวที่สุด พร้อมราคาจริง ทางโทรศัพท์หรือ WhatsApp','Tell us your date and group size — we will match the right boat and route with real prices, by phone or WhatsApp.')}</p>
+        <p class="tm-eyebrow"><i data-lucide="life-buoy"></i>${L('ทีมของเรา','Our crew')}</p>
+        <h2 id="teamTitle" class="tm-title">${L('คุยกับผู้เชี่ยวชาญ Yacht Charter','Talk to a yacht charter specialist')}</h2>
+        <p class="tm-sub">${L('บอกวันที่และจำนวนคน ทีมงานจะช่วยเลือกเรือและเส้นทางที่ลงตัวที่สุด พร้อมราคาจริง ทางโทรศัพท์หรือ WhatsApp','Tell us your date and group size — we will match the right boat and route with real prices, by phone or WhatsApp.')}</p>
       </div>
-      <div class="inline-flex items-center gap-3 self-start lg:self-auto bg-white rounded-full pl-2 pr-4 py-2 ring-1 ring-sand-200 shadow-[0_10px_30px_-18px_rgba(58,0,7,.35)]">
-        <span class="flex">${faces}</span>
-        <span class="leading-tight"><span class="flex items-center gap-1.5 text-sm"><span class="live-dot w-2 h-2 rounded-full ${on ? 'bg-maroon text-maroon' : 'bg-line-strong text-line-strong'}"></span>${on ? L('ออนไลน์ตอนนี้','Online now') : L('ออฟไลน์','Offline')}</span><span class="block text-[11px] text-muted mt-0.5">${on ? L('ตอบเฉลี่ยภายใน 30 นาที','Replies within ~30 min') : L('กลับมา 09:00 น. · ฝากข้อความได้','Back at 09:00 · leave a message')}</span></span>
+      <div class="tm-live${on ? ' on' : ''}">
+        <span class="tm-faces">${faces}</span>
+        <span><b><i class="tm-dot" aria-hidden="true"></i>${on ? L('ออนไลน์ตอนนี้','Online now') : L('ออฟไลน์','Offline')}</b><small>${on ? L('ตอบเฉลี่ยภายใน 30 นาที','Replies within ~30 min') : L('กลับมา 09:00 น. · ฝากข้อความได้','Back at 09:00 · leave a message')}</small></span>
       </div>
     </div>
-    <ul class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      ${TEAM.map((m, i) => `<li class="crew2 reveal group" style="transition-delay:${i * 80}ms" itemscope itemtype="https://schema.org/Person">
-        <div class="flex items-center gap-4">
-          <div class="relative shrink-0">
-            <img src="${TEAM_IMG[m.id]}" alt="${m.name} – ${m.role[1]}, Boat Trip Thailand" width="56" height="56" loading="lazy" class="w-14 h-14 rounded-full object-cover" itemprop="image"/>
-            <span class="absolute right-0 bottom-0 w-3 h-3 rounded-full border-2 border-white ${on ? 'bg-maroon' : 'bg-[#bfb3b4]'}" aria-hidden="true"></span>
-          </div>
-          <div class="min-w-0 flex-1">
-            <p class="text-base text-ink leading-tight" itemprop="name">${m.name}</p>
-            <p class="text-xs text-muted mt-1"><span itemprop="jobTitle">${m.role[k]}</span> · ไทย / English</p>
-          </div>
+    <ul class="tm-grid">
+      ${TEAM.map((m, i) => `<li class="tm-card${on ? ' on' : ''} reveal" style="transition-delay:${i * 80}ms" itemscope itemtype="https://schema.org/Person">
+        <div class="tm-who">
+          <span class="tm-av"><img src="${TEAM_IMG[m.id]}" alt="${m.name} – ${m.role[1]}, Boat Trip Thailand" width="56" height="56" loading="lazy" itemprop="image"/><i class="tm-dot" aria-hidden="true"></i></span>
+          <span class="min-w-0"><b class="tm-name" itemprop="name">${m.name}</b><small class="tm-role"><span itemprop="jobTitle">${m.role[k]}</span> · ไทย / English</small></span>
         </div>
-        <a href="tel:${m.tel}" itemprop="telephone" class="mt-5 block text-lg text-ink tabular-nums hover:text-maroon transition">${m.telFmt}</a>
-        <div class="mt-4 flex items-center gap-2">
-          <a href="${waLink(m)}" target="_blank" rel="noopener" class="flex-1 h-10 inline-flex items-center justify-center gap-2 bg-maroon text-white hover:bg-maroon-800 transition" aria-label="WhatsApp ${m.name}"><i data-lucide="message-circle" class="w-4 h-4"></i>WhatsApp</a>
-          <a href="tel:${m.tel}" class="w-10 h-10 grid place-items-center ring-1 ring-sand-200 text-ink hover:ring-maroon hover:text-maroon transition" aria-label="${L('โทรหา','Call')} ${m.name}"><i data-lucide="phone" class="w-4 h-4"></i></a>
-          <button onclick="copyTel('${m.tel}','${m.name}')" class="w-10 h-10 grid place-items-center ring-1 ring-sand-200 text-ink hover:ring-maroon hover:text-maroon transition" aria-label="${L('คัดลอกเบอร์','Copy number')} ${m.name}"><i data-lucide="copy" class="w-4 h-4"></i></button>
+        <a href="tel:${m.tel}" itemprop="telephone" class="tm-tel tabular-nums">${m.telFmt}</a>
+        <div class="tm-acts">
+          <a href="${waLink(m)}" target="_blank" rel="noopener" class="tm-wa" aria-label="WhatsApp ${m.name}"><i data-lucide="message-circle"></i>WhatsApp</a>
+          <a href="tel:${m.tel}" class="tm-ic" aria-label="${L('โทรหา','Call')} ${m.name}"><i data-lucide="phone"></i></a>
+          <button type="button" onclick="copyTel('${m.tel}','${m.name}')" class="tm-ic" aria-label="${L('คัดลอกเบอร์','Copy number')} ${m.name}"><i data-lucide="copy"></i></button>
         </div>
       </li>`).join('')}
     </ul>
-    <p class="mt-6 text-xs text-muted text-center">${L('ทุกวัน 09:00–21:00 น. (เวลาไทย)','Daily 09:00–21:00 (ICT)')}</p>
+    <p class="tm-hours"><i data-lucide="clock-3"></i>${L('ทุกวัน 09:00–21:00 น. (เวลาไทย)','Daily 09:00–21:00 (ICT)')}</p>
   </div>`; icons();
 }
 
-/* ---------- Navbar: mega menu, sliding ink, live team status ---------- */
-function renderMega() {
-  const el = $('#megaInner'); if (!el) return;
-  const types = TYPES.map(ty => ({ ty, n: FLEET.filter(b => b.type === ty).length, from: minFrom(ty), img: (FLEET.find(b => b.type === ty && FEATURED.includes(b.slug)) || FLEET.find(b => b.type === ty)).slug }));
-  const routes = [['Phi Phi','Phi Phi'],['Phang Nga Bay','Phang Nga'],['Racha','Racha'],['Khai','Khai'],['Krabi','Krabi']];
-  el.innerHTML = `
-    <div>
-      <p class="px-2 pt-2 pb-2 text-[10px] uppercase tracking-[.2em] text-muted">${L('ประเภทเรือ','Boat types')}</p>
-      <ul class="grid gap-0">${types.map(o => `<li><a href="#/fleet" data-type="${o.ty}" class="mega-type group flex items-center gap-3 p-2 rounded-[14px] hover:bg-maroon-50 transition">
-        <span class="w-14 h-10 rounded-[14px] overflow-hidden shrink-0 img-fallback"><img src="${bimg(o.img,'a')}" alt="" class="w-full h-full object-cover group-hover:scale-110 transition duration-500"/></span>
-        <span class="flex-1 min-w-0"><span class="block text-sm text-ink">${typeLabel(o.ty)}</span><span class="block text-xs text-muted">${o.n} ${t('boatsUnit')} · ${t('price.from','เริ่มต้น')} ${baht(o.from)}</span></span>
-        <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-maroon opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition"></i></a></li>`).join('')}</ul>
-      <a href="#/fleet" class="mt-2 mx-2 flex items-center gap-2 text-xs text-maroon hover:underline underline-offset-4">${L(`ดูเรือทั้งหมด ${FLEET.length} ลำ`,`View all ${FLEET.length} boats`)} <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
-    </div>
-    <div class="border-l border-sand-200 pl-3">
-      <p class="px-2 pt-2 pb-2 text-[10px] uppercase tracking-[.2em] text-muted">${L('เส้นทางยอดนิยม','Popular routes')}</p>
-      <ul class="grid gap-0">${routes.map(([n, q]) => { const c = FLEET.filter(b => b.dest.includes(q)).length; return `<li><a href="#/fleet" data-q="${q}" class="mega-route flex items-center justify-between p-2 rounded-[14px] hover:bg-maroon-50 text-sm"><span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-maroon"></i>${n}</span><span class="text-xs text-muted tabular-nums">${c} ${t('boatsUnit')}</span></a></li>`; }).join('')}</ul>
-      <div class="mt-2 mx-2 p-3 rounded-[14px] bg-sand text-xs text-muted flex items-start gap-2"><i data-lucide="calendar-range" class="w-4 h-4 text-maroon shrink-0"></i><span>${L('ตอนนี้','Now')}: <b class="text-ink font-medium">${LANG==='en'?SEASON_META[seasonOf()].en:SEASON_META[seasonOf()].th}</b> · ${LANG==='en'?SEASON_META[seasonOf()].noteEn:SEASON_META[seasonOf()].noteTh}</span></div>
-    </div>
-    <button onclick="closeMega();openSmart()" class="group relative overflow-hidden rounded-[12px] text-left min-h-[260px] img-fallback">
-      <img src="${bimg('lobster-78-ft','hero')}" alt="" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700"/>
-      <span class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></span>
-      <span class="absolute inset-x-0 bottom-0 p-4 text-white">
-        <span class="inline-flex items-center gap-2 text-[10px] uppercase tracking-[.2em] bg-white/20 backdrop-blur px-2 py-2 rounded-full"><i data-lucide="sparkles" class="w-3 h-3"></i>Smart Match</span>
-        <span class="block mt-2 text-md leading-snug">${L('ไม่แน่ใจว่าลำไหน? ตอบ 3 ข้อ เราเลือกให้','Not sure which boat? 3 questions, 3 perfect matches')}</span>
-        <span class="mt-3 inline-flex items-center gap-2 text-xs bg-white text-ink px-3 py-2 rounded-full">${L('เริ่มเลย','Start now')} <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition"></i></span>
-      </span>
-    </button>`;
-  $$('.mega-type', el).forEach(a => a.onclick = () => { fleetState.f = a.dataset.type; fleetState.q = ''; closeMega(); if (VH.hash === '#/fleet') drawFleet(); });
-  $$('.mega-route', el).forEach(a => a.onclick = () => { fleetState.q = a.dataset.q; fleetState.f = 'all'; closeMega(); if (VH.hash === '#/fleet') drawFleet(); });
-  icons();
-}
-let megaTimer, megaAt = 0;
-function openMega() { clearTimeout(megaTimer); if (!$('#megaMenu').classList.contains('is-open')) megaAt = Date.now(); const m = $('#megaMenu'); m.classList.add('is-open'); $('#megaBtn').setAttribute('aria-expanded', true); $('#megaChev').style.transform = 'rotate(180deg)'; }
-function closeMega() { const m = $('#megaMenu'); m.classList.remove('is-open'); $('#megaBtn').setAttribute('aria-expanded', false); $('#megaChev').style.transform = ''; }
+/* ---------- Navbar: sliding ink, live team status ---------- */
 (() => {
-  const btn = $('#megaBtn'), menu = $('#megaMenu');
-  const fine = matchMedia('(hover: hover)').matches;
-  if (fine) {
-    [btn, menu].forEach(el => { el.addEventListener('mouseenter', openMega); el.addEventListener('mouseleave', () => { megaTimer = setTimeout(closeMega, 160); }); });
-  }
-  btn.addEventListener('click', e => { if (fine && e.detail > 0) { closeMega(); VH.hash = '#/fleet'; return; } menu.classList.contains('is-open') ? closeMega() : openMega(); });
-  btn.addEventListener('keydown', e => { if (e.key === 'ArrowDown') { e.preventDefault(); openMega(); menu.querySelector('a,button')?.focus(); } });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && menu.classList.contains('is-open')) { closeMega(); btn.focus(); } });
-  document.addEventListener('click', e => { if (!e.target.closest('#megaMenu, #megaBtn')) closeMega(); });
-  window.addEventListener('btt:nav', closeMega);
   // sliding ink indicator
   const nav = $('#navLinks'), ink = $('#navInk');
   $$('.nav-a', nav).forEach(a => {
@@ -2255,7 +2517,7 @@ let currentSlug = null, currentView = 'home';
 function showView(name) {
   currentView = name;
   $$('#navLinks .nav-a').forEach(a => a.classList.remove('is-active'));
-  { const m = { fleet:'#megaBtn', boat:'#megaBtn', about:'#navLinks a[href="#/about"]', blog:'#navGuide' }[name]; m && $(m)?.classList.add('is-active'); }
+  { const m = { fleet:'#navFleet', boat:'#navFleet', about:'#navLinks a[href="#/about"]', blog:'#navGuide' }[name]; m && $(m)?.classList.add('is-active'); }
   setTimeout(renderTeam, 0);
   ['home','fleet','boat','about','legal','design','blog','dest','nf'].forEach(n => $('#view-'+n).classList.toggle('hidden', n !== name));
   $('#floatCta').classList.toggle('!hidden', name === 'boat' || name === 'home');
@@ -2507,7 +2769,7 @@ function renderNotFound() {
   icons();
 }
 
-function route(keepScroll) { try { return route0(keepScroll); } finally { afterRoute(); pageView(); } }
+function route(keepScroll) { bpSheetOff(); try { return route0(keepScroll); } finally { afterRoute(); pageView(); } }
 /* cookieless page-view counter (/api/t → /admin วิเคราะห์เว็บไซต์): page, traffic source, device and language only —
    no cookies, no visitor id. The source is decided on the first page of a browser session and kept for that session. */
 let PV_LAST = '';
@@ -2559,5 +2821,5 @@ $('#cmdInput').addEventListener('keydown', e => { if (e.key==='ArrowDown') { e.p
 
 $$('[data-bimg]').forEach(img => { const [s,k] = img.dataset.bimg.split(':'); img.src = bimg(s,k); });
 $('#boatSort').onchange = e => { boatSort = e.target.value; renderBoats(); };
-const d = new Date(); d.setDate(d.getDate()+3); $('#qsDate').value = d.toISOString().split('T')[0]; $('#qsDate').min = new Date().toISOString().split('T')[0]; $('#qsDate').addEventListener('change', e => e.target.dataset.touched = 1);
+const d = new Date(); d.setDate(d.getDate()+3); $('#qsDate').value = d.toISOString().split('T')[0]; $('#qsDate').min = new Date().toISOString().split('T')[0]; $('#qsDate').addEventListener('change', e => e.target.dataset.touched = 1); datePick($('#qsDate'));
 applyI18n(); renderAll(); inlineForm = buildForm($('#inlineFormWrap')); route(false); icons(); loadPixel();

@@ -35,7 +35,7 @@ services:
     volumes:
       - uploads:/app/uploads
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3009:3000"
 
   # HTTPS with automatic Let's Encrypt certificates. Point DNS of DOMAIN to this server first.
   caddy:

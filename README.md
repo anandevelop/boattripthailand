@@ -74,7 +74,7 @@ docker compose exec app npx tsx scripts/seed.ts
 docker compose exec app npx tsx scripts/create-user.ts --email anan@boattripthailand.com --name ANAN --role SUPER_ADMIN
 ```
 
-เปิด `http://localhost:3000/admin` → ล็อกอิน → สแกน QR ตั้ง 2FA → กดชื่อตัวเองมุมซ้ายล่างเพื่อเปลี่ยนรหัสผ่าน / เชื่อม LINE → เพิ่มทีมที่ “ทีมงาน & สิทธิ์” (ระบบแสดงรหัสผ่านชั่วคราวให้ส่งต่อ)
+เปิด `http://localhost:3009/admin` → ล็อกอิน → สแกน QR ตั้ง 2FA → กดชื่อตัวเองมุมซ้ายล่างเพื่อเปลี่ยนรหัสผ่าน / เชื่อม LINE → เพิ่มทีมที่ “ทีมงาน & สิทธิ์” (ระบบแสดงรหัสผ่านชั่วคราวให้ส่งต่อ)
 
 **HTTPS + โดเมนจริง**: ตั้ง DNS ของ `DOMAIN` ให้ชี้มาที่เซิร์ฟเวอร์ แล้ว `docker compose --profile https up -d` (Caddy ออกใบรับรองให้อัตโนมัติ)
 
@@ -96,7 +96,7 @@ npm install
 cp .env.example .env    # DATABASE_URL ชี้ไป Postgres บนเครื่อง
 npm run db:migrate && npm run db:seed
 npm run user:create -- --email you@boattripthailand.com --name You --role SUPER_ADMIN
-npm run dev             # http://localhost:3000
+npm run dev             # http://localhost:3009
 ```
 
 แก้ schema ที่ `src/db/schema.ts` แล้ว `npm run db:generate` เพื่อสร้างไฟล์ migration ใหม่ใน `drizzle/`

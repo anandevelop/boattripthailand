@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createLead, sourceKey } from '@/lib/leads';
 import { rateLimit } from '@/lib/ratelimit';
+import { checkEmail, hasLink } from '@/lib/spam';
 
 export const runtime = 'nodejs';
 
@@ -10,12 +11,13 @@ const Body = z.object({
   name: z.string().trim().min(1).max(120),
   phone: z.string().trim().min(6).max(40).regex(/^[+\d\s().\-@a-zA-Z_]+$/),
   email: z.string().trim().email().max(160).optional().or(z.literal('')).nullable(),
+  whatsapp: z.string().trim().max(30).regex(/^\+?[\d\s().-]*$/).refine(v => !v || v.replace(/\D/g, '').length >= 7).optional().nullable(),
   item: str(160), program: str(200),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal('')).nullable(),
   adults: z.coerce.number().int().min(0).max(500).optional(), children: z.coerce.number().int().min(0).max(200).optional(),
   slot: str(40), message: str(2000), lang: z.enum(['th', 'en']).optional(), marketing_consent: z.boolean().optional(),
   /** honeypot — real people never fill it */
-  website: z.string().max(0).optional().or(z.literal('')),
+  website: z.string().max(500).optional().nullable(),   // any value → silently dropped below
   /** ms since the form was shown — bots submit instantly */
   t: z.coerce.number().optional(),
   context: z.object({
@@ -33,16 +35,20 @@ export async function POST(req: Request) {
   const p = Body.safeParse(raw);
   if (!p.success) return NextResponse.json({ ok: false, error: 'invalid', fields: p.error.flatten().fieldErrors }, { status: 422 });
   const b = p.data;
-  // silently accept bots so they don't retry, but don't create anything
-  if (b.website || (b.t !== undefined && b.t < 2500)) return NextResponse.json({ ok: true });
   // security: these are shown as plain labels in the admin — strip markup characters (names / messages are escaped where shown)
   const plain = <T extends string | null | undefined>(v: T) => (typeof v === 'string' ? v.replace(/[<>"'`\\]/g, '').trim() : v) as T;
   b.item = plain(b.item); b.program = plain(b.program); b.slot = plain(b.slot);
   if (b.context) { const c = b.context as Record<string, unknown>; for (const k of Object.keys(c)) if (typeof c[k] === 'string') c[k] = plain(c[k] as string); if (b.context.boats_viewed) b.context.boats_viewed = b.context.boats_viewed.map(x => plain(x)); }
+  // silently accept bots so they don't retry, but don't create anything
+  if (b.website || (b.t !== undefined && b.t < 2500)) return NextResponse.json({ ok: true });
+  // no links in anything a person types (the email field is checked as an address below)
+  const linked = (['name', 'phone', 'whatsapp', 'item', 'program', 'slot', 'message'] as const).filter(k => hasLink(b[k], k !== 'phone'));
+  if (linked.length) return NextResponse.json({ ok: false, error: 'invalid', fields: Object.fromEntries(linked.map(k => [k, ['link']])) }, { status: 422 });
+  if (b.email) { const ec = await checkEmail(b.email); if (!ec.ok) return NextResponse.json({ ok: false, error: 'invalid', fields: { email: [ec.reason] } }, { status: 422 }); }
   const c = b.context ?? {};
   const ctx = { ...c, source: sourceKey(c.source, c.medium, c.gclid, c.fbclid) } as NonNullable<Parameters<typeof createLead>[0]['ctx']>;
   try {
-    const r = await createLead({ name: b.name, phone: b.phone, email: b.email || null, item: b.item, program: b.program, date: b.date || null, adults: b.adults, children: b.children, slot: b.slot, message: b.message, lang: b.lang, marketingConsent: b.marketing_consent, ctx, ip, userAgent: req.headers.get('user-agent') });
+    const r = await createLead({ name: b.name, phone: b.phone, email: b.email || null, whatsapp: b.whatsapp || null, item: b.item, program: b.program, date: b.date || null, adults: b.adults, children: b.children, slot: b.slot, message: b.message, lang: b.lang, marketingConsent: b.marketing_consent, ctx, ip, userAgent: req.headers.get('user-agent') });
     return NextResponse.json({ ok: true, ref: r.lead.ref });
   } catch (e) {
     console.error('[lead]', e);

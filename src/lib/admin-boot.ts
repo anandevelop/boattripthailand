@@ -3,6 +3,7 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import { auditLogs, boats, customers, leadActivities, leads, media, posts, redirects, settings, users, type Boat, type Customer, type Lead, type Post, type User } from '@/db/schema';
 import { dealsFor } from './lead-guard';
+import { trashedIds } from './post-trash';
 import { CONTACT_LABEL, STATUS_LABEL } from './lead-meta';
 import { can, permsOf, ROLE_LABEL, type Perm } from './perms';
 import { siteData } from './site-render';
@@ -13,8 +14,8 @@ import { seoConfig } from './seo';
 import { marketingConfig } from './marketing';
 import { surchargeWarning, surchargeWarnings } from './surcharge';
 import { appUrl } from './leads';
-
 import { lineSaved, loadLineCfg } from './line-config';
+
 /* ---------- vocabulary shared with the admin UI (mockup) ---------- */
 export const ROLE_TO_CLIENT = { SUPER_ADMIN: 'super', ADMIN: 'admin', SALES: 'sales' } as const;
 export const ROLE_FROM_CLIENT: Record<string, User['role']> = { super: 'SUPER_ADMIN', admin: 'ADMIN', sales: 'SALES' };
@@ -46,7 +47,7 @@ export const avatarOf = (u: User) => u.profile?.avatar || ava(u.name);
 const DIAL: [string, string][] = [['66', '🇹🇭 TH'], ['44', '🇬🇧 UK'], ['49', '🇩🇪 DE'], ['33', '🇫🇷 FR'], ['39', '🇮🇹 IT'], ['46', '🇸🇪 SE'], ['47', '🇳🇴 NO'], ['45', '🇩🇰 DK'], ['31', '🇳🇱 NL'], ['41', '🇨🇭 CH'], ['7', '🇷🇺 RU'], ['86', '🇨🇳 CN'], ['82', '🇰🇷 KR'], ['81', '🇯🇵 JP'], ['91', '🇮🇳 IN'], ['61', '🇦🇺 AU'], ['65', '🇸🇬 SG'], ['60', '🇲🇾 MY'], ['971', '🇦🇪 AE'], ['1', '🇺🇸 US']];
 const countryOf = (c: Customer) => c.country || (c.phoneNorm.length === 10 && c.phoneNorm.startsWith('0') ? '🇹🇭 TH' : DIAL.find(([d]) => c.phoneNorm.startsWith(d))?.[1] ?? '🌐');
 export function customerToClient(c: Customer) {
-  return { id: c.id, name: c.name, country: countryOf(c), phone: c.phone, email: c.email ?? '', channel: '', tags: [] as string[], consent: c.marketingConsent, lang: c.lang, countryRaw: c.country ?? '', notes: c.notes ?? '' };
+  return { id: c.id, name: c.name, country: countryOf(c), phone: c.phone, email: c.email ?? '', wa: c.whatsapp ?? '', channel: '', tags: [] as string[], consent: c.marketingConsent, lang: c.lang, countryRaw: c.country ?? '', notes: c.notes ?? '' };
 }
 type Act = typeof leadActivities.$inferSelect;
 function actText(a: Act, names: Map<string, string>) {
@@ -63,9 +64,9 @@ function actText(a: Act, names: Map<string, string>) {
     default: return a.type;
   }
 }
-export function leadToClient(l: Lead, acts: Act[], names: Map<string, string>, surcharge: string | null = null) {
 /** security: free-text lead labels the admin prints as-is (rows saved before the form stripped markup) */
 const P = (s: string | null | undefined) => (s ?? '').replace(/[<>"'`\\]/g, '');
+export function leadToClient(l: Lead, acts: Act[], names: Map<string, string>, surcharge: string | null = null) {
   return {
     surcharge,
     id: l.ref, dbId: l.id, boat: P(l.boatSlug ?? l.item), item: P(l.item), prog: P(l.program), date: l.tripDate ?? '', guests: l.adults + l.children, adults: l.adults, children: l.children,
@@ -85,7 +86,6 @@ export async function leadClientById(id: string) {
   return { lead: leadToClient(l, acts, new Map(), await surchargeWarning(l.boatSlug, l.tripDate)), customer: c ? customerToClient(c) : null };
 }
 
-export function auditToClient(r: typeof auditLogs.$inferSelect) {
 /** "Chrome · Mac" from a user-agent string (บันทึกกิจกรรม → IP · อุปกรณ์) */
 export function uaShort(ua: string | null | undefined) {
   if (!ua) return '';
@@ -94,6 +94,7 @@ export function uaShort(ua: string | null | undefined) {
   const o = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /CrOS/.test(ua) ? 'ChromeOS' : /Linux/.test(ua) ? 'Linux' : '';
   return o ? `${b} · ${o}` : b;
 }
+export function auditToClient(r: typeof auditLogs.$inferSelect) {
   const ent = ({ lead: 'booking' } as Record<string, string>)[r.entity] ?? r.entity;
   return { id: r.id, ts: r.ts.toISOString(), uid: r.userId ?? '—', role: r.role ? (ROLE_TO_CLIENT as Record<string, string>)[r.role] ?? r.role : '', act: r.action, ent, ref: r.ref ?? '', label: r.label, changes: r.changes, note: r.note ?? '', ip: r.ip ?? '', dev: (r.userAgent ?? '').slice(0, 300), devS: uaShort(r.userAgent), hash: r.hash.slice(0, 12), prev: r.prevHash.slice(0, 12), server: true };
 }
@@ -118,8 +119,8 @@ export function boatToClient(b: Boat) {
 export async function systemStatus() {
   const [g] = await db.select().from(settings).where(eq(settings.key, 'line.groupId'));
   const has = (k: string) => !!process.env[k];
-  return [
   await loadLineCfg(); const ls = lineSaved();
+  return [
     ['LINE OA (Messaging API)', (has('LINE_CHANNEL_ACCESS_TOKEN') || !!ls.token) && (has('LINE_CHANNEL_SECRET') || !!ls.secret), `Webhook URL: ${appUrl()}/api/line/webhook`],
     ['กลุ่ม LINE ทีมขาย', !!(process.env.LINE_GROUP_ID || g), process.env.LINE_GROUP_ID || (g?.value as string) || 'เชิญบอท LINE OA เข้ากลุ่มทีมขาย ระบบจะจำกลุ่มให้อัตโนมัติ'],
     ['Meta Pixel (หน้าเว็บ)', has('NEXT_PUBLIC_META_PIXEL_ID'), 'NEXT_PUBLIC_META_PIXEL_ID'],
@@ -149,7 +150,8 @@ export async function adminBoot(me: User) {
   const { leads: LC, customers: CC } = await leadsFor(me);
   const site = await siteData();
   const canContent = can(me, 'content');
-  const P = canContent ? await db.select().from(posts) : [];
+  const P0 = canContent ? await db.select().from(posts) : [], TR = canContent ? await trashedIds() : new Set<number>();
+  const P = P0.filter(p => !TR.has(p.id)), postMax = P0.reduce((m, p) => Math.max(m, p.id), 0);   // articles in the trash are listed by /api/admin/posts/trash
   const teamVisible = can(me, 'team') || can(me, 'leads_all') ? team : team.filter(u => u.id === me.id);
   const fleetRows = await db.select().from(boats).orderBy(boats.sortOrder), fleet = fleetRows.map(boatToClient);
   return {
@@ -165,7 +167,7 @@ export async function adminBoot(me: User) {
     seasons: { ...(site.SEASONS as object), boats: Object.fromEntries(fleetRows.map(b => [b.slug, b.calendarId ?? 'all'])), colmap: Object.fromEntries(fleetRows.filter(b => b.data.colmap).map(b => [b.slug, b.data.colmap])) },
     thumbs: Object.fromEntries(fleet.map(b => [b.slug, b.imgs.find(u => u.endsWith('-a.webp')) || b.imgs[0] || ''])),
     bimg: site.BIMG, actimg: site.SHOWIMG,
-    wp: { arts: P.map(postToClient), redir: can(me, 'seo') ? (await db.select().from(redirects)).map(r => ({ from: r.from, to: r.to, code: r.code, hits: r.hits, wp: 1 })) : [] },
+    wp: { arts: P.map(postToClient), maxId: postMax, trashN: TR.size, redir: can(me, 'seo') ? (await db.select().from(redirects)).map(r => ({ from: r.from, to: r.to, code: r.code, hits: r.hits, wp: 1 })) : [] },
     sitecfg: can(me, 'settings') ? ((await db.select().from(settings).where(eq(settings.key, 'admin.sitecfg')))[0]?.value ?? null) : null,
     sys: can(me, 'settings') ? await systemStatus() : null,
     myLine: { linked: !!me.lineUserId, code: me.lineLinkCode ?? null },

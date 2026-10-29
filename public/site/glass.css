@@ -24,14 +24,16 @@
 }
 
 /* ---------- แถบเมนู: แคปซูลลอย / หน้าแรกลอยทับรูป Hero ---------- */
-#navbar { padding: 10px 12px 0; pointer-events: none; }
+/* ความกว้างเดียวกันทุกหน้า: เนื้อหา 1280px ขอบข้าง 16px (มือถือ) / 24px — แถบเมนูกับเนื้อหาขอบตรงกัน
+   .max-w-7xl ทุกหน้าใช้คู่กับ px-4 sm:px-6 → 1328 - 24×2 = 1280 */
+.max-w-7xl { max-width: 1328px; }
+#navbar { padding: 10px 16px 0; pointer-events: none; }
+@media (min-width: 640px) { #navbar { padding: 10px 24px 0; } }
 #navbar > * { pointer-events: auto; }
-#navPill { max-width: 1304px; margin: 0 auto; border-radius: 24px !important; isolation: isolate; }
+#navPill { max-width: 1280px; margin: 0 auto; border-radius: 24px !important; isolation: isolate; }
 #navPill::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
   background: linear-gradient(135deg, rgb(255 255 255 / .55) 0%, rgb(255 255 255 / 0) 38%, rgb(255 255 255 / 0) 70%, rgb(255 255 255 / .22) 100%); }
 #navbar.is-compact #navPill { background: var(--g-bg-strong) !important; }
-body:has(#view-home:not(.hidden)) #navbar { margin-bottom: -74px; }
-body:has(#view-home:not(.hidden)) #navbar:not(.is-compact) #navPill { background: rgb(255 255 255 / .5) !important; }
 #navInk { background: rgb(255 255 255 / .7) !important; box-shadow: var(--g-spec); }
 #megaInner, #mobileMenu { border-radius: 24px !important; }
 
@@ -81,3 +83,644 @@ body:has(#view-home:not(.hidden)) #navbar:not(.is-compact) #navPill { background
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   #navPill, #mobileMenu, #megaInner, .qs-card, #cookieBar > div, .modal-enter { background: rgb(255 255 255 / .96) !important; }
 }
+
+/* =====================================================================
+   หน้าเรือ — Bento + ชื่อบนรูป + เมนูส่วนของหน้า (BOAT_PAGE_REDESIGN.md)
+   ===================================================================== */
+/* ---------- Bento: ปก 1 + เล็ก 4 ---------- */
+.bento { position: relative; display: grid; gap: 10px; grid-template-columns: 2.8fr 1fr 1fr; grid-template-rows: 250px 250px;
+  grid-template-areas: "m a b" "m c d"; }
+.bento-n4 { grid-template-areas: "m a b" "m c c"; }
+.bento-n3 { grid-template-columns: 2.8fr 1.4fr; grid-template-areas: "m a" "m b"; }
+.bento-n2 { grid-template-columns: 2fr 1fr; grid-template-areas: "m a" "m a"; }
+.bento-n1 { grid-template-columns: 1fr; grid-template-areas: "m" "m"; }
+.bt { position: relative; overflow: hidden; border-radius: 22px !important; isolation: isolate; display: block; padding: 0;
+  box-shadow: 0 20px 50px -28px rgb(58 0 7 / .55), 0 0 0 1px rgb(255 255 255 / .55); }
+.bt-main { grid-area: m; } .bt-1 { grid-area: a; } .bt-2 { grid-area: b; } .bt-3 { grid-area: c; } .bt-4 { grid-area: d; }
+.bt-main .gal-img { object-position: 62% 45%; }
+.bt-main::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgb(0 0 0 / .22), transparent 28%, transparent 52%, rgb(0 0 0 / .55)); }
+
+/* ป้าย + ปุ่มกระจกบนรูปปก */
+.bt-chip { position: absolute; top: 16px; left: 16px; z-index: 3; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
+  border-radius: 999px; font-size: 12.5px; color: #fff; background: rgb(20 6 8 / .28);
+  -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .45), inset 0 0 0 1px rgb(255 255 255 / .28); }
+.bt-chip svg { width: 14px; height: 14px; }
+.bt-acts { position: absolute; top: 16px; right: 16px; z-index: 3; display: flex; gap: 8px; }
+.bt-round { width: 42px; height: 42px; border-radius: 999px !important; display: grid; place-items: center; color: #fff; background: rgb(20 6 8 / .28);
+  -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .45), inset 0 0 0 1px rgb(255 255 255 / .28); transition: transform .2s, background .2s; }
+.bt-round:hover { transform: scale(1.06); background: rgb(255 255 255 / .28); }
+.bt-round svg { width: 18px; height: 18px; }
+.bt-round[aria-pressed="true"] svg { fill: #ff6b7d; stroke: #ff6b7d; }
+
+/* ชื่อ + ราคา ตัวขาวบาง บนรูป */
+.bt-cover { position: absolute; left: 30px; right: 30px; bottom: 26px; z-index: 3; display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 18px; color: #fff; pointer-events: none; text-shadow: 0 2px 18px rgb(0 0 0 / .35); }
+.bt-cover h1 { margin: 0; font-weight: 300; font-size: clamp(36px, 4.2vw, 56px); line-height: 1; letter-spacing: .005em; }
+.bt-cover p { margin: 10px 0 0; color: rgb(255 255 255 / .82); font-size: 13.5px; letter-spacing: .02em; }
+.bt-price { line-height: 1.1; text-align: right; white-space: nowrap; }
+.bt-price small { display: block; font-size: 12px; letter-spacing: .02em; color: rgb(255 255 255 / .75); margin-bottom: 4px; }
+.bt-price b { font-size: 26px; font-weight: 400; }
+
+/* ปุ่มดูรูปทั้งหมด (เล็ก มุมรูปที่ 4) */
+.bt-all { position: absolute; right: 12px; bottom: 12px; z-index: 4; display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px;
+  border-radius: 999px; font-size: 12.5px; color: #231416; background: rgb(255 255 255 / .62);
+  -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
+  box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(255 255 255 / .55), 0 10px 24px -10px rgb(0 0 0 / .45); }
+.bt-all svg { width: 15px; height: 15px; color: #70000e; }
+
+/* ปุ่มดูรูปทั้งหมด (มือถือ) */
+.bt-mall { display: none; align-items: center; gap: 12px; width: 100%; margin-top: 8px; min-height: 52px; padding: 8px 14px 8px 8px; border-radius: 18px !important;
+  text-align: left; background: rgb(255 255 255 / .72); -webkit-backdrop-filter: blur(24px) saturate(185%); backdrop-filter: blur(24px) saturate(185%);
+  box-shadow: 0 18px 50px -24px rgb(58 0 7 / .38), inset 0 1px 0 #fff, inset 0 0 0 1px rgb(255 255 255 / .42); }
+.bt-stack { position: relative; width: 52px; height: 38px; flex-shrink: 0; }
+.bt-stack img { position: absolute; width: 40px; height: 32px; object-fit: cover; border-radius: 8px !important; box-shadow: 0 0 0 2px #fff, 0 4px 10px -4px rgb(0 0 0 / .4); }
+.bt-stack img:nth-child(1) { left: 0; top: 6px; transform: rotate(-6deg); } .bt-stack img:nth-child(2) { left: 12px; top: 2px; transform: rotate(5deg); }
+.bt-mall b { display: block; font-weight: 500; font-size: 14.5px; }
+.bt-mall span span { font-size: 12px; color: #6b5e60; }
+.bt-mall > svg { width: 20px; height: 20px; margin-left: auto; color: #70000e; }
+
+@media (max-width: 720px) {
+  .bento { grid-template-columns: repeat(4, 1fr); grid-template-rows: 400px 84px; grid-template-areas: "m m m m" "a b c d"; gap: 6px; }
+  .bento-n4 { grid-template-columns: repeat(3, 1fr); grid-template-areas: "m m m" "a b c"; }
+  .bento-n3 { grid-template-columns: repeat(2, 1fr); grid-template-areas: "m m" "a b"; }
+  .bento-n2 { grid-template-columns: 1fr; grid-template-rows: 400px; grid-template-areas: "m"; } .bento-n2 .bt-1 { display: none; }
+  .bento-n1 { grid-template-rows: 400px; grid-template-areas: "m"; }
+  .bt-1, .bt-2, .bt-3, .bt-4 { border-radius: 14px !important; }
+  .bt-all { display: none; } .bt-mall { display: flex; }
+  .bt-cover { left: 18px; right: 18px; bottom: 18px; gap: 12px; } .bt-cover h1 { font-size: 32px; } .bt-cover p { font-size: 12px; margin-top: 6px; }
+  .bt-price small { font-size: 10.5px; } .bt-price b { font-size: 19px; } .bt-hide-m { display: none; }
+  .bt-chip { top: 12px; left: 12px; } .bt-acts { top: 12px; right: 12px; }
+}
+
+/* ---------- เมนูส่วนของหน้า + ลูกศรเลื่อน ---------- */
+.secwrap { position: sticky; top: 86px; z-index: 30; border-radius: 999px; background: rgb(255 255 255 / .72);
+  -webkit-backdrop-filter: blur(24px) saturate(185%); backdrop-filter: blur(24px) saturate(185%);
+  box-shadow: 0 18px 50px -24px rgb(58 0 7 / .38), inset 0 1px 0 #fff, inset 0 0 0 1px rgb(255 255 255 / .42); }
+.secnav { display: flex; gap: 4px; padding: 5px; border-radius: 999px; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
+.secnav::-webkit-scrollbar { display: none; }
+.secnav a { padding: 8px 14px; border-radius: 999px; font-size: 13px; color: #6b5e60; white-space: nowrap; transition: background .2s, color .2s; }
+.secnav a.on { background: #fff; color: #231416; box-shadow: 0 4px 12px -6px rgb(35 20 22 / .4); }
+.sec-fade { position: absolute; top: 1px; bottom: 1px; width: 64px; z-index: 2; display: flex; align-items: center; pointer-events: none; opacity: 0; transition: opacity .25s; }
+.sec-fade.l { left: 1px; border-radius: 999px 0 0 999px; background: linear-gradient(90deg, rgb(250 247 246) 40%, rgb(250 247 246 / 0)); padding-left: 5px; }
+.sec-fade.r { right: 1px; border-radius: 0 999px 999px 0; background: linear-gradient(270deg, rgb(250 247 246) 40%, rgb(250 247 246 / 0)); justify-content: flex-end; padding-right: 5px; }
+.secwrap.can-l .sec-fade.l, .secwrap.can-r .sec-fade.r { opacity: 1; }
+.sec-fade button { width: 32px; height: 32px; border-radius: 99px !important; display: grid; place-items: center; background: #fff; color: #70000e;
+  box-shadow: 0 4px 12px -4px rgb(35 20 22 / .35), inset 0 0 0 1px rgb(35 20 22 / .06); }
+.secwrap.can-l .sec-fade.l button, .secwrap.can-r .sec-fade.r button { pointer-events: auto; }
+.sec-fade svg { width: 17px; height: 17px; }
+.secwrap.can-r .sec-fade.r button { animation: secNudge 1.6s ease-in-out 1s 2; }
+@keyframes secNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+@media (max-width: 720px) { .secwrap { top: 74px; } }
+
+@media (prefers-reduced-motion: reduce) { .secwrap .sec-fade button { animation: none; } }
+@media (prefers-reduced-transparency: reduce) { .bt-all, .bt-mall, .secwrap { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* =====================================================================
+   หน้าเรือ — ทั้งหน้า (ส่วนใต้แกลเลอรี) ให้ตรง mockup/boattripthailand-boat-liquid-glass.html
+   ทุกคลาสขึ้นต้นด้วย .bp  ใช้เฉพาะใน #view-boat (renderDetail ใน app.js)
+   ===================================================================== */
+.bp { --bp-ink: #231416; --bp-muted: #6b5e60; --bp-maroon: #70000e; --bp-line: rgb(35 20 22 / .08);
+  --bp-glass: rgb(255 255 255 / .56); --bp-glass-s: rgb(255 255 255 / .72); --bp-blur: blur(24px) saturate(185%);
+  --bp-shadow: 0 18px 50px -24px rgb(58 0 7 / .38), 0 2px 8px -4px rgb(35 20 22 / .08);
+  --bp-spec: inset 0 1px 0 rgb(255 255 255 / .95), inset 0 -1px 0 rgb(255 255 255 / .3), inset 0 0 0 1px rgb(255 255 255 / .42);
+  --bp-tile: rgb(255 255 255 / .5); --bp-tile-spec: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(255 255 255 / .5);
+  position: relative; color: var(--bp-ink); font-size: 15px; line-height: 1.55;
+  /* Jost ตาม mockup — Futura บน Mac ไม่มีน้ำหนัก 300/400 ตัวอักษรเลยหนาเกิน (ชื่อบนรูป, "Low Season" ในการ์ดจอง) */
+  font-family: Jost, "IBM Plex Sans Thai", system-ui, sans-serif; }
+/* :where() ทั้งคู่ = ไม่มีน้ำหนัก specificity — ไม่ทับสีของปุ่มที่มีคลาสเอง (.bt-round สีขาว ฯลฯ) */
+:where(.bp) :where(button, input, select) { font: inherit; color: inherit; }
+
+/* พื้นหลัง: รูปปกเรือเบลอ อยู่หลังทุกอย่าง */
+.bp-ambient { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #e9dfdc; }
+.bp-ambient img { position: absolute; inset: -8%; width: 116%; height: 116%; max-width: none; object-fit: cover; filter: blur(46px) saturate(140%); transform: scale(1.05); opacity: .9; }
+.bp-ambient::after { content: ''; position: absolute; inset: 0;
+  background: radial-gradient(1200px 700px at 15% 0%, rgb(255 255 255 / .55), transparent 60%), radial-gradient(900px 700px at 100% 40%, rgb(112 0 14 / .16), transparent 60%),
+    linear-gradient(180deg, rgb(248 244 243 / .35), rgb(248 244 243 / .82) 55%, rgb(248 244 243 / .94)); }
+body:has(#view-boat:not(.hidden)) { background: transparent; }
+body:has(#view-boat:not(.hidden)) footer { position: relative; }
+
+.bp-wrap { max-width: 1328px; margin: 0 auto; padding: 0 16px; } /* เท่า .max-w-7xl px-4 sm:px-6 → เนื้อหา 1280px */
+@media (min-width: 640px) { .bp-wrap { padding: 0 24px; } }
+.bp-crumb { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12.5px; color: var(--bp-muted); margin: 26px 0 14px; }
+.bp-crumb svg { width: 13px; height: 13px; }
+.bp-crumb a:hover { color: var(--bp-maroon); }
+.bp-crumb span { color: var(--bp-ink); }
+
+/* layout: เนื้อหา + การ์ดจองติดขวา */
+.bp-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 22px; margin-top: 22px; align-items: start; }
+.bp .secwrap { margin-bottom: 18px; }
+.bp-panel { border-radius: 28px !important; padding: 26px; background: var(--bp-glass);
+  -webkit-backdrop-filter: var(--bp-blur); backdrop-filter: var(--bp-blur); box-shadow: var(--bp-shadow), var(--bp-spec); scroll-margin-top: 150px; }
+.bp-panel + .bp-panel { margin-top: 18px; }
+.bp-panel h2, .bp-simhead h2 { margin: 0 0 4px; font-weight: 500; font-size: 22px; letter-spacing: -.005em; line-height: 1.3; }
+.bp-sub { margin: 0 0 18px; color: var(--bp-muted); font-size: 13.5px; }
+.bp-sub.m-0 { margin: 0; }
+
+/* ภาพรวม */
+.bp-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.bp-fact { padding: 14px; border-radius: 16px !important; background: rgb(255 255 255 / .55); box-shadow: var(--bp-tile-spec); min-width: 0; }
+.bp-fact svg { width: 18px; height: 18px; color: var(--bp-maroon); }
+.bp-fact b { display: block; font-weight: 500; font-size: 18px; margin-top: 8px; line-height: 1.2; }
+.bp-fact span { display: block; font-size: 12px; color: var(--bp-muted); overflow-wrap: anywhere; }
+.bp-about { margin: 18px 0 0; color: rgb(35 20 22 / .82); }
+
+/* โปรแกรม & ราคา */
+.bp-phead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.bp-seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-radius: 999px !important; background: rgb(255 255 255 / .45);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .6), inset 0 1px 2px rgb(35 20 22 / .06); }
+.bp-seg:empty { display: none; }
+.bp-seg.mb-3 { margin-bottom: 12px; }
+.bp-seg button { padding: 8px 14px; border-radius: 999px !important; font-size: 13px; color: var(--bp-muted); transition: all .25s; line-height: 1.3; }
+.bp-seg button[aria-pressed="true"] { background: #fff; color: var(--bp-ink); box-shadow: 0 6px 16px -8px rgb(58 0 7 / .45), inset 0 1px 0 #fff; }
+.bp-seg button small { display: block; font-size: 10.5px; color: var(--bp-muted); }
+.bp-note { font-size: 12.5px; color: var(--bp-muted); margin: -4px 0 14px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.bp-note svg { width: 14px; height: 14px; color: var(--bp-maroon); flex-shrink: 0; }
+.bp-note b { font-weight: 500; color: var(--bp-ink); }
+.bp-progs { display: grid; gap: 8px; }
+.bp-prog { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 14px 16px;
+  border-radius: 18px !important; background: rgb(255 255 255 / .42); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .55); transition: background .25s, box-shadow .25s, transform .2s; }
+.bp-prog:hover { background: rgb(255 255 255 / .72); transform: translateY(-1px); }
+/* เลือกอยู่: ไม่มีกรอบหนา — พื้นขาว + เงานุ่ม + ไอคอนเป็นสีแดง */
+.bp-prog[aria-pressed="true"] { background: #fff; box-shadow: 0 12px 28px -18px rgb(58 0 7 / .5), inset 0 0 0 1px rgb(112 0 14 / .12); }
+.bp-prog .ic { width: 42px; height: 42px; border-radius: 14px !important; display: grid; place-items: center; background: rgb(112 0 14 / .06); color: var(--bp-maroon); transition: background .25s, color .25s; }
+.bp-prog .ic svg { width: 23px; height: 23px; }
+.bp-prog[aria-pressed="true"] .ic { color: #fff; background: linear-gradient(180deg, #86101f, #70000e 55%, #5e000c); box-shadow: 0 6px 14px -6px rgb(112 0 14 / .6); }
+.bp-prog b { display: block; font-weight: 500; font-size: 14.5px; line-height: 1.3; }
+.bp-prog span span, .bp-prog .min-w-0 > span { font-size: 12px; color: var(--bp-muted); }
+.bp-prog .pr { text-align: right; font-size: 17px; font-weight: 500; white-space: nowrap; }
+.bp-prog .pr small { display: block; font-size: 11px; color: var(--bp-muted); font-weight: 400; }
+.bp-prog .pr em { font-style: normal; font-size: 13px; color: var(--bp-muted); font-weight: 400; }
+
+/* รอบเวลา */
+.bp-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.bp-slot { padding: 16px; border-radius: 16px !important; background: var(--bp-tile); box-shadow: var(--bp-tile-spec); }
+.bp-slot svg { width: 18px; height: 18px; color: var(--bp-maroon); margin-bottom: 8px; }
+.bp-slot b { display: block; font-weight: 500; }
+.bp-slot span { font-size: 13px; color: var(--bp-muted); }
+
+/* รวม / ไม่รวม */
+.bp-inc { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.bp-inc h3 { margin: 0 0 10px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.bp-inc h3 svg { width: 18px; height: 18px; }
+.bp-inc ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.bp-inc li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.bp-inc li svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+.bp-inc .yes svg { color: #1e7a46; } .bp-inc .no svg { color: #b42318; }
+.bp-inc li small { color: var(--bp-muted); }
+
+/* เงื่อนไข + พับเปิด (FAQ ใช้ร่วมกัน) */
+.bp-conds { display: grid; gap: 10px; margin-bottom: 12px; }
+.bp-cond { display: flex; gap: 12px; padding: 14px 16px; border-radius: 16px !important; background: var(--bp-tile); box-shadow: var(--bp-tile-spec); font-size: 14px; }
+.bp-cond svg { width: 18px; height: 18px; color: var(--bp-maroon); flex-shrink: 0; margin-top: 2px; }
+.bp-acc { border-radius: 16px !important; background: var(--bp-tile); box-shadow: var(--bp-tile-spec); padding: 0 16px; }
+.bp-acc + .bp-acc { margin-top: 8px; }
+.bp-acc summary { list-style: none; cursor: pointer; padding: 14px 0; font-weight: 500; font-size: 14.5px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.bp-acc summary::-webkit-details-marker { display: none; }
+.bp-acc summary > span { display: flex; align-items: center; gap: 10px; }
+.bp-acc summary > span svg { width: 18px; height: 18px; color: var(--bp-maroon); }
+.bp-acc .bp-plus { width: 18px; height: 18px; transition: transform .25s; color: var(--bp-muted); flex-shrink: 0; }
+.bp-acc[open] .bp-plus { transform: rotate(45deg); }
+.bp-acc-b { margin: 0 0 14px; color: var(--bp-muted); font-size: 14px; }
+.bp-acc-b table { background: rgb(255 255 255 / .6); }
+
+/* ข้อมูลเรือ */
+.bp-spec { width: 100%; border-collapse: collapse; font-size: 14px; }
+.bp-spec td { padding: 11px 4px; border-bottom: 1px solid var(--bp-line); vertical-align: top; }
+.bp-spec tr:last-child td { border-bottom: 0; }
+.bp-spec td:first-child { color: var(--bp-muted); width: 42%; }
+
+/* ท่าเรือ */
+.bp-marina { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; align-items: stretch; }
+.bp-map { position: relative; border-radius: 22px !important; overflow: hidden; min-height: 210px; background: radial-gradient(circle at 30% 40%, #cfe6ee 0, #a8d0de 40%, #7fb6c9 100%); }
+.bp-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bp-pin { position: absolute; left: 46%; top: 44%; transform: translate(-50%, -100%); padding: 8px 12px; border-radius: 14px !important; font-size: 12.5px; white-space: nowrap;
+  background: var(--bp-glass-s); -webkit-backdrop-filter: var(--bp-blur); backdrop-filter: var(--bp-blur); box-shadow: var(--bp-shadow), var(--bp-spec); }
+.bp-pin::after { content: ''; position: absolute; left: 50%; bottom: -7px; width: 12px; height: 12px; transform: translateX(-50%) rotate(45deg); background: rgb(255 255 255 / .72); border-radius: 0 !important; }
+.bp-dot { position: absolute; left: 46%; top: 44%; width: 12px; height: 12px; border-radius: 99px !important; background: var(--bp-maroon); transform: translate(-50%, 4px); box-shadow: 0 0 0 6px rgb(112 0 14 / .2); }
+.bp-illu { position: absolute; right: 10px; bottom: 8px; font-size: 10.5px; color: rgb(35 20 22 / .55); }
+.bp-marina ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 14px; align-content: start; }
+.bp-marina li { display: flex; gap: 10px; }
+.bp-marina li svg { width: 18px; height: 18px; color: var(--bp-maroon); flex-shrink: 0; margin-top: 2px; }
+.bp-marina li b { font-weight: 500; display: block; }
+.bp-marina li small { color: var(--bp-muted); }
+
+/* เรือใกล้เคียง */
+.bp-simwrap { margin-top: 34px; }
+.bp-simhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 0 4px 14px; }
+.bp-simhead a { font-size: 13px; color: var(--bp-maroon); white-space: nowrap; }
+.bp-sims { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.bp-sim { display: block; border-radius: 22px !important; overflow: hidden; transition: transform .25s; background: var(--bp-glass);
+  -webkit-backdrop-filter: var(--bp-blur); backdrop-filter: var(--bp-blur); box-shadow: var(--bp-shadow), var(--bp-spec); }
+.bp-sim:hover { transform: translateY(-3px); }
+.bp-sim .ph { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 0 !important; }
+.bp-sim .ph img { width: 100%; height: 100%; object-fit: cover; border-radius: 0 !important; }
+.bp-sim .bd { padding: 14px 16px 16px; border-radius: 0 !important; }
+.bp-sim b { display: block; font-weight: 500; }
+.bp-sim span { font-size: 12.5px; color: var(--bp-muted); }
+.bp-sim .pr { margin-top: 8px; font-size: 13px; color: var(--bp-muted); }
+.bp-sim .pr strong { color: var(--bp-ink); font-weight: 500; font-size: 16px; }
+
+/* การ์ดจอง (ติดขวา / อยู่ในแผ่นเลื่อนขึ้นบนมือถือ) */
+.bp-aside { align-self: stretch; }
+.bp-book { position: sticky; top: 86px; border-radius: 28px !important; padding: 22px; isolation: isolate;
+  background: var(--bp-glass-s); -webkit-backdrop-filter: var(--bp-blur); backdrop-filter: var(--bp-blur); box-shadow: var(--bp-shadow), var(--bp-spec); }
+.bp-book::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(135deg, rgb(255 255 255 / .6) 0%, rgb(255 255 255 / 0) 36%, rgb(255 255 255 / 0) 68%, rgb(255 255 255 / .22) 100%); }
+.bp-from { font-size: 12px; color: var(--bp-muted); }
+.bp-price { font-size: 34px; font-weight: 500; line-height: 1.1; letter-spacing: -.01em; }
+.bp-price small { font-size: 13px; color: var(--bp-muted); font-weight: 400; }
+.bp-price .bp-ask { font-size: 24px; }
+.bp-ptitle { font-size: 13px; color: var(--bp-muted); margin-top: 4px; min-height: 20px; }
+.bp-fld { display: block; margin-top: 12px; min-width: 0; }
+.bp-fld > span { display: block; font-size: 12px; color: var(--bp-muted); margin: 0 0 6px 4px; }
+.bp-inp { display: block; width: 100%; height: 48px; border-radius: 16px !important; border: 0; padding: 0 14px; background-color: rgb(255 255 255 / .7);
+  box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(35 20 22 / .08); font-size: 14.5px; outline: none; -webkit-appearance: none; appearance: none; text-overflow: ellipsis; }
+.bp-inp:focus { box-shadow: inset 0 0 0 1.5px var(--bp-maroon), 0 0 0 4px rgb(112 0 14 / .1); }
+select.bp-inp { padding-right: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b5e60' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+.bp-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .bp-two.one { grid-template-columns: 1fr; }
+.bp-step { display: flex; align-items: center; justify-content: space-between; height: 48px; border-radius: 16px !important; padding: 0 6px; background: rgb(255 255 255 / .7); box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(35 20 22 / .08); }
+.bp-step button { width: 36px; height: 36px; border-radius: 99px !important; display: grid; place-items: center; background: rgb(255 255 255 / .9); box-shadow: 0 2px 6px -3px rgb(0 0 0 / .3), inset 0 0 0 1px rgb(35 20 22 / .06); }
+.bp-step button svg { width: 16px; height: 16px; }
+.bp-step button:disabled { opacity: .35; cursor: default; }
+.bp-step output { font-size: 15px; font-weight: 500; }
+.bp-sum { margin-top: 14px; padding: 12px 14px; border-radius: 16px !important; background: rgb(255 255 255 / .45); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .6); font-size: 13px; display: grid; gap: 6px; }
+.bp-sum div { display: flex; justify-content: space-between; gap: 10px; }
+.bp-sum div span:first-child { color: var(--bp-muted); }
+.bp-sum .tot { padding-top: 6px; border-top: 1px dashed rgb(35 20 22 / .14); font-size: 15px; font-weight: 500; }
+.bp-sum .tot span:first-child { color: var(--bp-ink); }
+.bp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 52px; width: 100%; border-radius: 999px !important; font-size: 15px; font-weight: 500; transition: transform .15s, box-shadow .2s, background .2s; }
+.bp-btn svg { width: 18px; height: 18px; }
+.bp-btn:active { transform: scale(.98); }
+.bp-btn-p { margin-top: 14px; color: #fff; background: linear-gradient(180deg, #86101f, #70000e 55%, #5e000c);
+  box-shadow: 0 14px 30px -14px rgb(112 0 14 / .8), inset 0 1px 0 rgb(255 255 255 / .28), inset 0 -2px 0 rgb(0 0 0 / .15); }
+.bp-btn-p:hover { box-shadow: 0 18px 36px -14px rgb(112 0 14 / .9), inset 0 1px 0 rgb(255 255 255 / .3); }
+.bp-chat { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.bp-btn-g { height: 46px; font-size: 13.5px; background: rgb(255 255 255 / .62); box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(35 20 22 / .08); }
+.bp-btn-g:hover { background: rgb(255 255 255 / .85); }
+.bp-assure { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 12.5px; color: var(--bp-muted); }
+.bp-assure li { display: flex; gap: 8px; align-items: center; }
+.bp-assure svg { width: 15px; height: 15px; color: #1e7a46; flex-shrink: 0; }
+
+/* มือถือ: แถบจองล่าง + แผ่นจองเลื่อนขึ้น */
+.bp-mbar, .bp-sheet, .bp-mspace { display: none; }
+.bp-sheet-bg { position: fixed; inset: 0; z-index: 70; background: rgb(58 0 7 / .2); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .3s; }
+.bp-sheet-bg.open { opacity: 1; pointer-events: auto; }
+@media (max-width: 1040px) {
+  .bp-grid { grid-template-columns: minmax(0, 1fr); }
+  .bp-aside { display: none; }
+  .bp-mbar { display: flex; position: fixed; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 50; align-items: center; gap: 12px; padding: 10px 10px 10px 18px; border-radius: 24px !important;
+    background: var(--bp-glass-s); -webkit-backdrop-filter: var(--bp-blur); backdrop-filter: var(--bp-blur); box-shadow: var(--bp-shadow), var(--bp-spec); }
+  .bp-mbar .p { flex: 1; min-width: 0; }
+  .bp-mbar .p small { display: block; font-size: 11px; color: var(--bp-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bp-mbar .p b { font-size: 19px; font-weight: 500; }
+  .bp-mbar .bp-btn { width: auto; padding: 0 22px; height: 48px; margin: 0; flex-shrink: 0; }
+  .bp-sheet { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 75; border-radius: 28px 28px 0 0 !important; padding: 10px 20px max(22px, env(safe-area-inset-bottom));
+    transform: translateY(105%); transition: transform .4s cubic-bezier(.2,.8,.2,1); max-height: 88vh; overflow-y: auto;
+    background: rgb(255 255 255 / .86); -webkit-backdrop-filter: var(--bp-blur); backdrop-filter: var(--bp-blur); box-shadow: 0 -20px 60px -20px rgb(58 0 7 / .4), var(--bp-spec); }
+  .bp-sheet.open { transform: none; }
+  .bp-sheet .grab { width: 44px; height: 5px; border-radius: 9px !important; background: rgb(35 20 22 / .18); margin: 0 auto 12px; }
+  .bp-sheet-x { position: absolute; top: 10px; right: 12px; width: 36px; height: 36px; border-radius: 99px !important; display: grid; place-items: center; color: var(--bp-muted); }
+  .bp-sheet-x svg { width: 18px; height: 18px; }
+  .bp-sheet .bp-book { position: static; padding: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .bp-sheet .bp-book::before { display: none; }
+  .bp-mspace { display: block; height: 90px; }
+  body:has(#view-boat:not(.hidden)) #floatCta { display: none !important; }
+}
+@media (max-width: 720px) {
+  .bp-crumb { margin-top: 18px; }
+  .bp-panel { padding: 20px 16px; border-radius: 24px !important; }
+  .bp-facts { grid-template-columns: 1fr 1fr; }
+  .bp-slots, .bp-inc, .bp-marina, .bp-sims { grid-template-columns: 1fr; }
+  .bp-prog { grid-template-columns: minmax(0, 1fr) auto; } .bp-prog .ic { display: none; }
+  .bp-phead .bp-seg { width: 100%; justify-content: space-between; } .bp-phead .bp-seg button { flex: 1; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .bp-panel, .bp-book, .bp-sim, .bp-mbar, .bp-sheet, .bp-pin { background: rgb(255 255 255 / .97); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .bp-panel, .bp-book, .bp-sim, .bp-mbar, .bp-sheet { background: rgb(255 255 255 / .94); }
+}
+
+/* =====================================================================
+   ปฏิทินเลือกวันที่ (datePick ใน app.js) — แทนปฏิทินของเบราว์เซอร์ ใช้ทุกช่องวันที่
+   ===================================================================== */
+.dp-vis { cursor: pointer; caret-color: transparent; padding-right: 44px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%236b5e60' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4.5' width='18' height='17' rx='3'/%3E%3Cpath d='M3 9.5h18M8 2.5v4M16 2.5v4'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important; background-position: right 14px center !important; background-size: 18px !important; }
+.dp-vis.qs-v { padding-right: 22px !important; background-position: right 0 center !important; background-size: 15px !important; }
+.dp-vis::placeholder { color: #8a7a7c; opacity: 1; }
+.dp-vis[aria-expanded="true"] { box-shadow: inset 0 0 0 1.5px #70000e, 0 0 0 4px rgb(112 0 14 / .1); }
+.dp-vis.qs-v[aria-expanded="true"] { box-shadow: none !important; color: #70000e; }
+
+.dp-pop { position: fixed; z-index: 200; width: min(312px, calc(100vw - 16px)); padding: 14px 14px 10px; border-radius: 24px !important;
+  font-family: Jost, "IBM Plex Sans Thai", system-ui, sans-serif; font-size: 14px; color: #231416; background: rgb(255 255 255 / .93);
+  -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%);
+  box-shadow: 0 28px 70px -24px rgb(58 0 7 / .45), 0 4px 14px -6px rgb(35 20 22 / .12), inset 0 1px 0 #fff, inset 0 0 0 1px rgb(255 255 255 / .55);
+  animation: dpIn .16s ease-out; }
+@keyframes dpIn { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
+.dp-pop button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.dp-pop button:focus-visible { outline: 2px solid #70000e; outline-offset: 1px; }
+.dp-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px 8px 8px; }
+.dp-head b { font-weight: 500; font-size: 15.5px; }
+.dp-nav { display: flex; gap: 2px; }
+.dp-nav button { width: 34px; height: 34px; border-radius: 999px !important; display: grid; place-items: center; color: #70000e; transition: background .15s; }
+.dp-nav button:hover:not(:disabled) { background: rgb(112 0 14 / .07); }
+/* ทับ button:disabled ทั้งเว็บใน mockup.css (พื้นเทา !important) */
+.dp-pop button:disabled { background: transparent !important; color: rgb(35 20 22 / .22) !important; cursor: default; }
+.dp-wd, .dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.dp-wd span { padding: 4px 0 6px; font-size: 12px; color: #8a7a7c; }
+.dp-d { height: 38px; border-radius: 999px !important; font-variant-numeric: tabular-nums; transition: background .15s, color .15s; }
+.dp-d:hover:not(:disabled) { background: rgb(112 0 14 / .07); }
+.dp-d.is-today { box-shadow: inset 0 0 0 1.5px rgb(112 0 14 / .35); font-weight: 500; }
+.dp-d[aria-pressed="true"] { background: #70000e !important; color: #fff; font-weight: 500; box-shadow: 0 6px 14px -6px rgb(112 0 14 / .6); }
+.dp-foot { display: flex; justify-content: space-between; margin-top: 6px; padding-top: 8px; border-top: 1px solid rgb(35 20 22 / .07); }
+.dp-foot button { padding: 6px 10px; border-radius: 999px !important; font-size: 13px; color: #70000e; font-weight: 500; }
+.dp-foot button:hover { background: rgb(112 0 14 / .07); }
+@media (prefers-reduced-motion: reduce) { .dp-pop { animation: none; } }
+@media (prefers-reduced-transparency: reduce) { .dp-pop { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* =====================================================================
+   ฟอร์มจอง (#formTpl ใน shell.html — ป๊อปอัปจอง + หน้าติดต่อ) + หัวป๊อปอัปจอง
+   โทนเดียวกับการ์ดจองหน้าเรือ (.bp-inp / .bp-btn) — ฟอนต์ Jost, กระจกขาว, เน้นสีแดงเลือดหมู
+   ===================================================================== */
+#bookingModal .modal-enter, .bf { font-family: Jost, "IBM Plex Sans Thai", system-ui, sans-serif; color: #231416; }
+.bm-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 26px 28px 4px; }
+.bm-eyebrow { margin: 0; font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: #70000e; }
+.bm-title { margin: 6px 0 0; font-weight: 400; font-size: 26px; line-height: 1.2; letter-spacing: -.005em; }
+.bm-x { width: 40px; height: 40px; flex-shrink: 0; border-radius: 999px !important; display: grid; place-items: center; color: #231416;
+  background: rgb(255 255 255 / .62); box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(35 20 22 / .08); transition: background .2s, transform .25s; }
+.bm-x:hover { background: #fff; transform: rotate(90deg); }
+.bm-x svg { width: 18px; height: 18px; }
+.bm-body { padding: 18px 28px 28px; }
+@media (max-width: 640px) {
+  .bm-head { padding: 22px 20px 2px; } .bm-title { font-size: 22px; }
+  .bm-body { padding: 16px 20px max(22px, env(safe-area-inset-bottom)); }
+}
+
+.bf { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 14.5px; line-height: 1.5; }
+.bf-wide { grid-column: 1 / -1; }
+.bf .hidden { display: none !important; }
+.bf-fld { display: block; min-width: 0; }
+.bf-fld > span:first-child { display: block; margin: 0 0 6px 4px; font-size: 12.5px; color: #6b5e60; }
+.bf-req { font-weight: 400; color: #70000e; }
+.bf-inp { display: block; width: 100%; height: 48px; border: 0; padding: 0 16px; font: inherit; font-size: 14.5px; color: #231416; background-color: rgb(255 255 255 / .7);
+  box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(35 20 22 / .09); outline: none; -webkit-appearance: none; appearance: none; text-overflow: ellipsis; transition: box-shadow .2s; }
+.bf-inp::placeholder { color: #8a7a7c; opacity: 1; }
+.bf-inp:focus, .bf-inp[aria-expanded="true"] { box-shadow: inset 0 0 0 1.5px #70000e, 0 0 0 4px rgb(112 0 14 / .1); }
+.bf-inp[aria-invalid="true"] { box-shadow: inset 0 0 0 1.5px var(--color-feedback-error, #b42318), 0 0 0 4px rgb(180 35 24 / .1); }
+select.bf-inp { padding-right: 42px; cursor: pointer; background-repeat: no-repeat; background-position: right 16px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b5e60' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); }
+textarea.bf-inp { height: auto; min-height: 96px; padding: 12px 16px; border-radius: 20px !important; resize: vertical; }
+.bf-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.bf-unit { position: relative; display: block; }
+.bf-unit .bf-inp { padding-right: 58px; -moz-appearance: textfield; }
+.bf-unit .bf-inp::-webkit-inner-spin-button, .bf-unit .bf-inp::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.bf-unit > span { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 12.5px; color: #8a7a7c; pointer-events: none; }
+.bf-slots { display: flex; flex-wrap: wrap; gap: 8px; }
+.bf .slot { height: 40px; padding: 0 16px; font-size: 13.5px; color: #231416; background: rgb(255 255 255 / .62);
+  box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(35 20 22 / .09); transition: background .2s, box-shadow .2s; }
+.bf .slot:hover:not(.chip-active) { background: #fff; }
+.bf .slot.chip-active { background: linear-gradient(180deg, #86101f, #70000e 55%, #5e000c) !important;
+  box-shadow: 0 8px 18px -10px rgb(112 0 14 / .8), inset 0 1px 0 rgb(255 255 255 / .25) !important; }
+.bf-note { margin: 2px 0 0 4px; font-size: 13px; line-height: 1.55; color: #6b5e60; }
+.bf-check { display: flex; align-items: flex-start; gap: 10px; margin: -4px 0 0 4px; font-size: 13px; line-height: 1.5; color: #6b5e60; cursor: pointer; }
+.bf-check input { flex-shrink: 0; width: 18px; height: 18px; margin: 1px 0 0; border-radius: 6px; -webkit-appearance: none; appearance: none; cursor: pointer;
+  background: rgb(255 255 255 / .8); box-shadow: inset 0 0 0 1.5px rgb(35 20 22 / .22); transition: background-color .15s, box-shadow .15s; }
+.bf-check input:checked { box-shadow: none; background: #70000e no-repeat center / 12px
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
+.bf-check input:focus-visible { outline: 2px solid #70000e; outline-offset: 2px; }
+.bf-err { margin: 0; padding: 10px 16px; border-radius: 14px; font-size: 13px; color: var(--color-feedback-error, #b42318); background: rgb(180 35 24 / .07); }
+.bf .bp-btn-p { margin-top: 4px; }
+@media (max-width: 640px) { .bf { grid-template-columns: 1fr; } }
+
+/* =====================================================================
+   หน้าแรก — แบนเนอร์โค้งมน + การ์ดค้นหาสีขาว (mockup/boattripthailand-home-app-v2.html)
+   แบนเนอร์กว้างเท่าแถบเมนู (#navPill 1280px) · สไลด์โชว์จากหลังบ้านยังทำงานเหมือนเดิม
+   ===================================================================== */
+#hero.hero2 { padding: 10px 16px 0; }
+@media (min-width: 640px) { #hero.hero2 { padding: 10px 24px 0; } }
+#hero.hero2 #heroBox { max-width: 1280px; margin: 0 auto; height: 440px; border-radius: 28px !important; isolation: isolate; }
+.h2-shade { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgb(4 22 28 / .55), rgb(4 22 28 / .18) 50%, rgb(4 22 28 / .3)); }
+.h2-in { position: relative; z-index: 2; padding: 46px 24px 0; text-align: center; color: #fff; }
+#hero.hero2 #heroTitle, html[lang="th"] #hero.hero2 #heroTitle { margin: 0 auto; max-width: 1000px; font-weight: 500; font-size: clamp(28px, 3.4vw, 44px); line-height: 1.2; letter-spacing: -.005em; text-shadow: 0 2px 20px rgb(0 0 0 / .28); }
+#hero.hero2 .ht-line { display: inline-block; padding: .04em .12em .08em; vertical-align: bottom; }
+#hero.hero2 .ht-line:first-child { display: block; }
+#hero.hero2 #heroTitle .ht-kw { margin-bottom: 10px; font-size: 11.5px; font-weight: 500; }
+.h2-trust { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 0; font-size: 14px; color: rgb(255 255 255 / .92); text-shadow: 0 1px 8px rgb(0 0 0 / .3); }
+.h2-trust li { display: inline-flex; align-items: center; gap: 7px; padding: 0 16px; }
+.h2-trust li + li { border-left: 1px solid rgb(255 255 255 / .45); }
+.h2-trust svg { width: 16px; height: 16px; color: #f4c76b; }
+.h2-ctrl { position: absolute; right: 22px; top: 18px; z-index: 3; display: flex; align-items: center; gap: 10px; }
+.h2-pause { width: 30px; height: 30px; border-radius: 99px !important; display: grid; place-items: center; color: #fff; background: rgb(20 6 8 / .28);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: inset 0 1px 0 rgb(255 255 255 / .4), inset 0 0 0 1px rgb(255 255 255 / .25); }
+
+/* ---------- ช่องค้นหา: แคปซูลกระจกบาง ๆ ทับขอบล่างแบนเนอร์แค่ครึ่งเดียว ให้เห็นรูปเรือเต็ม ๆ ---------- */
+.qs2-wrap { position: relative; z-index: 10; padding: 0 24px; font-family: Jost, "IBM Plex Sans Thai", system-ui, sans-serif; color: #231416; }
+.qs2 { max-width: 1000px; margin: -38px auto 0; }
+.qs2-bar { display: grid; grid-template-columns: 1.25fr 1.2fr 1fr 1fr auto; align-items: center; min-height: 72px; padding: 8px; border-radius: 999px !important;
+  background: rgb(255 255 255 / .74); -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%);
+  box-shadow: 0 24px 60px -28px rgb(15 47 58 / .5), 0 2px 8px -4px rgb(35 20 22 / .1), inset 0 1px 0 rgb(255 255 255 / .95), inset 0 0 0 1px rgb(255 255 255 / .5); }
+.qs2-bar .qs-f { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 6px 20px; border-radius: 999px !important; background: none; transition: background .2s; }
+.qs2-bar .qs-f:hover, .qs2-bar .qs-f:focus-within { background: rgb(255 255 255 / .75); }
+.qs2-ic { width: 18px; height: 18px; flex-shrink: 0; color: #70000e; stroke-width: 1.8; }
+.qs2-t { display: block; flex: 1; min-width: 0; }
+.qs2-bar .qs-l { font-size: 11px; color: #8a7a7c; }
+.qs2-bar .qs-v { font-size: 14.5px; font-weight: 500; }
+.qs2-bar .dp-vis.qs-v { background-image: none !important; padding-right: 0 !important; }
+.qs2-go { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 56px; padding: 0 26px; margin-left: 4px; border-radius: 999px !important;
+  color: #fff; font-size: 15px; font-weight: 500; background: linear-gradient(180deg, #86101f, #70000e 55%, #5e000c);
+  box-shadow: 0 12px 26px -12px rgb(112 0 14 / .85), inset 0 1px 0 rgb(255 255 255 / .28); transition: box-shadow .2s, transform .15s; }
+.qs2-go:hover { box-shadow: 0 16px 32px -12px rgb(112 0 14 / .95), inset 0 1px 0 rgb(255 255 255 / .3); }
+.qs2-go:active { transform: scale(.97); }
+/* แถวลิงก์ใต้แคปซูล: ยอดนิยม (ซ้าย) + ทางลัด (ขวา) — ตัวเล็ก ไม่มีกล่อง */
+.qs2-foot { max-width: 1000px; margin: 12px auto 0; padding: 0 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; font-size: 13px; color: #6b5e60; }
+.qs2-pop, .qs2-links { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.qs2-foot button, .qs2-foot a { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px !important; color: #231416; transition: background .2s, color .2s; }
+.qs2-foot button:hover, .qs2-foot a:hover { background: rgb(112 0 14 / .06); color: #70000e; }
+.qs2-links svg { width: 15px; height: 15px; color: #70000e; }
+@media (max-width: 1023px) {
+  .qs2 { max-width: 640px; }
+  .qs2-bar { grid-template-columns: 1fr 1fr; padding: 6px 8px 8px; border-radius: 26px !important; }
+  .qs2-bar .qs2-dest, .qs2-bar .qs-f:nth-child(4) { grid-column: 1 / -1; }
+  .qs2-bar .qs-f { min-height: 56px; padding: 6px 14px; border-radius: 16px !important; background: none !important; }
+  .qs2-bar .qs-f + .qs-f { box-shadow: 0 -1px 0 rgb(35 20 22 / .08); border-radius: 0 !important; }
+  .qs2-bar .qs-f:nth-child(3) { box-shadow: 0 -1px 0 rgb(35 20 22 / .08), -1px 0 0 rgb(35 20 22 / .08); }
+  .qs2-bar > .qs-f::before { display: none !important; }
+  .qs2-go { grid-column: 1 / -1; margin: 2px 0 0; height: 50px; }
+  .qs2-foot { max-width: 640px; justify-content: center; }
+  .qs2-pop { display: none; }
+}
+@media (max-width: 680px) {
+  #hero.hero2 #heroBox { height: 340px; border-radius: 22px !important; }
+  .h2-in { padding: 28px 16px 0; }
+  #hero.hero2 #heroTitle { font-size: 26px; }
+  .h2-trust { flex-direction: column; align-items: center; gap: 4px; font-size: 12.5px; margin-top: 10px; }
+  .h2-trust li + li { border-left: 0; } .h2-trust li:nth-child(3) { display: none; }
+  .h2-ctrl { top: auto; bottom: 44px; right: 14px; } .h2-ctrl #heroDots { display: none; }
+  .qs2-wrap { padding: 0 16px; }
+  .qs2 { margin-top: -30px; }
+  .qs2-bar .qs-f { padding: 6px 12px; gap: 8px; }
+  .qs2-foot { font-size: 12.5px; padding: 0; }
+}
+
+/* =====================================================================
+   ทีมขาย (#team — renderTeam ใน app.js) — Liquid Glass โทนเดียวกับหน้าเรือ
+   พื้นหลังเป็นแสงสีอ่อน ๆ ให้กระจกมีอะไรเบลอ / หน้าเรือโปร่งให้เห็นพื้นรูปเรือเบลอ (.bp-ambient)
+   ===================================================================== */
+#team { position: relative; isolation: isolate; border-top: 0 !important; font-family: Jost, "IBM Plex Sans Thai", system-ui, sans-serif; color: #231416;
+  background: radial-gradient(900px 520px at 8% 0%, rgb(112 0 14 / .10), transparent 62%), radial-gradient(760px 520px at 96% 100%, rgb(201 138 29 / .12), transparent 60%),
+    radial-gradient(640px 420px at 55% 40%, rgb(255 255 255 / .9), transparent 70%), #f4eeec !important; }
+body:has(#view-boat:not(.hidden)) #team { background: transparent !important; }
+
+.tm-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px 24px; }
+.tm-eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12.5px; color: #70000e; }
+html[lang="en"] .tm-eyebrow { font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; }
+.tm-eyebrow svg { width: 15px; height: 15px; }
+.tm-title { margin: 8px 0 0; font-weight: 400; font-size: clamp(26px, 3vw, 34px); line-height: 1.2; letter-spacing: -.01em; }
+.tm-sub { margin: 10px 0 0; font-size: 14.5px; line-height: 1.65; color: #6b5e60; }
+
+/* แคปซูลสถานะออนไลน์ */
+.tm-live { display: inline-flex; align-items: center; gap: 12px; padding: 7px 18px 7px 8px; border-radius: 999px; background: rgb(255 255 255 / .56);
+  -webkit-backdrop-filter: blur(24px) saturate(185%); backdrop-filter: blur(24px) saturate(185%);
+  box-shadow: 0 14px 36px -20px rgb(58 0 7 / .4), inset 0 1px 0 rgb(255 255 255 / .95), inset 0 0 0 1px rgb(255 255 255 / .45); line-height: 1.25; }
+.tm-faces { display: flex; }
+.tm-face { width: 34px; height: 34px; border-radius: 999px; object-fit: cover; box-shadow: 0 0 0 2px rgb(255 255 255 / .95); }
+.tm-face + .tm-face { margin-left: -10px; }
+.tm-live b { display: flex; align-items: center; gap: 7px; font-weight: 500; font-size: 14px; }
+.tm-live small { display: block; margin-top: 2px; font-size: 12px; color: #6b5e60; }
+.tm-dot { position: relative; display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: #bfb3b4; }
+.on .tm-dot { background: #70000e; }
+.tm-live.on .tm-dot::after { content: ''; position: absolute; inset: -4px; border-radius: inherit; background: rgb(112 0 14 / .3); animation: tmPulse 2s ease-out infinite; }
+@keyframes tmPulse { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+
+/* การ์ดทีม */
+.tm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin: 40px 0 0; padding: 0; list-style: none; }
+.tm-card { position: relative; isolation: isolate; padding: 24px; border-radius: 28px; background: rgb(255 255 255 / .56);
+  -webkit-backdrop-filter: blur(24px) saturate(185%); backdrop-filter: blur(24px) saturate(185%);
+  box-shadow: 0 18px 50px -24px rgb(58 0 7 / .38), 0 2px 8px -4px rgb(35 20 22 / .08), inset 0 1px 0 rgb(255 255 255 / .95), inset 0 -1px 0 rgb(255 255 255 / .3), inset 0 0 0 1px rgb(255 255 255 / .42);
+  transition: transform .35s cubic-bezier(.2, .75, .15, 1), box-shadow .35s; }
+.tm-card::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(135deg, rgb(255 255 255 / .6) 0%, rgb(255 255 255 / 0) 36%, rgb(255 255 255 / 0) 68%, rgb(255 255 255 / .22) 100%); }
+.tm-card:hover { transform: translateY(-3px); box-shadow: 0 28px 60px -26px rgb(58 0 7 / .5), 0 2px 8px -4px rgb(35 20 22 / .08), inset 0 1px 0 #fff, inset 0 0 0 1px rgb(255 255 255 / .5); }
+.tm-who { display: flex; align-items: center; gap: 14px; }
+.tm-av { position: relative; flex-shrink: 0; width: 56px; height: 56px; }
+.tm-av img { width: 56px; height: 56px; border-radius: 999px; object-fit: cover; box-shadow: 0 0 0 3px rgb(255 255 255 / .9), 0 8px 18px -8px rgb(58 0 7 / .45); }
+.tm-av .tm-dot { position: absolute; right: 1px; bottom: 1px; width: 13px; height: 13px; box-shadow: 0 0 0 2.5px #fff; }
+.tm-name { display: block; font-weight: 500; font-size: 16.5px; line-height: 1.2; }
+.tm-role { display: block; margin-top: 4px; font-size: 12.5px; color: #6b5e60; }
+.tm-tel { display: block; margin-top: 20px; font-size: 22px; font-weight: 300; letter-spacing: .01em; color: #231416; transition: color .2s; }
+.tm-tel:hover { color: #70000e; }
+.tm-acts { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+.tm-wa { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; border-radius: 999px; font-size: 14.5px; font-weight: 500; color: #fff;
+  background: linear-gradient(180deg, #86101f, #70000e 55%, #5e000c);
+  box-shadow: 0 14px 30px -14px rgb(112 0 14 / .8), inset 0 1px 0 rgb(255 255 255 / .28), inset 0 -2px 0 rgb(0 0 0 / .15); transition: box-shadow .2s, transform .15s; }
+.tm-wa:hover { box-shadow: 0 18px 36px -14px rgb(112 0 14 / .9), inset 0 1px 0 rgb(255 255 255 / .3); }
+.tm-wa:active, .tm-ic:active { transform: scale(.97); }
+.tm-wa svg { width: 17px; height: 17px; }
+.tm-ic { flex-shrink: 0; width: 46px; height: 46px; border-radius: 999px !important; display: grid; place-items: center; color: #231416; background: rgb(255 255 255 / .62);
+  box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(35 20 22 / .08); transition: background .2s, color .2s, transform .15s; }
+.tm-ic:hover { background: #fff; color: #70000e; }
+.tm-ic svg { width: 17px; height: 17px; }
+.tm-hours { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 26px 0 0; font-size: 12.5px; color: #6b5e60; }
+.tm-hours svg { width: 14px; height: 14px; }
+@media (max-width: 640px) { .tm-card { padding: 20px; border-radius: 24px; } .tm-live { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .tm-live.on .tm-dot::after { animation: none; } .tm-card:hover { transform: none; } }
+@media (prefers-reduced-transparency: reduce) { .tm-live, .tm-card { background: rgb(255 255 255 / .96); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* =====================================================================
+   หน้าแรก: "บอกเราว่าอยากไปที่ไหน" (#booking ใน shell.html) — Liquid Glass ต่อเนื่องกับส่วนทีมขาย
+   แสงแดงมุมซ้ายล่างต่อกับแสงมุมซ้ายบนของ #team พอดี เลยไม่เห็นรอยต่อระหว่าง 2 ส่วน
+   ===================================================================== */
+.bk-sec { position: relative; isolation: isolate; font-family: Jost, "IBM Plex Sans Thai", system-ui, sans-serif; color: #231416;
+  background: radial-gradient(900px 520px at 8% 100%, rgb(112 0 14 / .10), transparent 62%), radial-gradient(760px 520px at 92% 0%, rgb(201 138 29 / .10), transparent 60%),
+    radial-gradient(700px 460px at 60% 55%, rgb(255 255 255 / .9), transparent 70%), #f4eeec; }
+.ct-list { display: grid; gap: 12px; margin-top: 28px; }
+.ct-card { display: flex; align-items: center; gap: 16px; padding: 14px 18px 14px 14px; border-radius: 24px; background: rgb(255 255 255 / .56);
+  -webkit-backdrop-filter: blur(24px) saturate(185%); backdrop-filter: blur(24px) saturate(185%);
+  box-shadow: 0 16px 40px -24px rgb(58 0 7 / .36), inset 0 1px 0 rgb(255 255 255 / .95), inset 0 0 0 1px rgb(255 255 255 / .45);
+  transition: transform .3s cubic-bezier(.2, .75, .15, 1), box-shadow .3s, background .3s; }
+.ct-card:hover { transform: translateY(-2px); background: rgb(255 255 255 / .72); box-shadow: 0 22px 48px -24px rgb(58 0 7 / .45), inset 0 1px 0 #fff, inset 0 0 0 1px rgb(255 255 255 / .5); }
+.ct-ic { flex-shrink: 0; width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(180deg, #86101f, #70000e 55%, #5e000c); box-shadow: 0 10px 22px -10px rgb(112 0 14 / .75), inset 0 1px 0 rgb(255 255 255 / .28); }
+.ct-ic svg { width: 20px; height: 20px; }
+.ct-txt { flex: 1; min-width: 0; line-height: 1.3; }
+.ct-txt small { display: block; font-size: 12.5px; color: #6b5e60; }
+.ct-txt b { display: block; margin-top: 2px; font-weight: 400; font-size: 17px; letter-spacing: .01em; }
+.ct-go { width: 18px; height: 18px; color: #70000e; opacity: 0; transform: translate(-4px, 4px); transition: opacity .25s, transform .25s; }
+.ct-card:hover .ct-go, .ct-card:focus-visible .ct-go { opacity: 1; transform: none; }
+.bk-panel { position: relative; isolation: isolate; padding: 28px; border-radius: 32px; background: rgb(255 255 255 / .56);
+  -webkit-backdrop-filter: blur(28px) saturate(185%); backdrop-filter: blur(28px) saturate(185%);
+  box-shadow: 0 24px 60px -28px rgb(58 0 7 / .42), 0 2px 8px -4px rgb(35 20 22 / .08), inset 0 1px 0 rgb(255 255 255 / .95), inset 0 -1px 0 rgb(255 255 255 / .3), inset 0 0 0 1px rgb(255 255 255 / .42); }
+.bk-panel::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(135deg, rgb(255 255 255 / .6) 0%, rgb(255 255 255 / 0) 36%, rgb(255 255 255 / 0) 68%, rgb(255 255 255 / .22) 100%); }
+@media (max-width: 640px) { .bk-panel { padding: 20px; border-radius: 26px; } .ct-card { border-radius: 20px; } }
+@media (prefers-reduced-transparency: reduce) { .ct-card, .bk-panel { background: rgb(255 255 255 / .96); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* =====================================================================
+   หน้าแรก: FAQ (#faq — renderFaq ใน app.js) — Liquid Glass
+   ด้านบนค่อย ๆ ไล่จากพื้นขาวของส่วนบทความ / แสงทองมุมขวาล่างต่อกับแสงมุมขวาบนของ #booking
+   ===================================================================== */
+#faq { font-family: Jost, "IBM Plex Sans Thai", system-ui, sans-serif; color: #231416;
+  background: linear-gradient(180deg, #fff, rgb(255 255 255 / 0) 240px), radial-gradient(760px 520px at 92% 100%, rgb(201 138 29 / .10), transparent 60%),
+    radial-gradient(700px 480px at 10% 45%, rgb(112 0 14 / .07), transparent 62%), #f4eeec !important; }
+.fq-list { display: grid; gap: 10px; margin-top: 34px; }
+/* details.fq ชนะ "details { border-radius:0 !important }" ใน mockup.css */
+details.fq { border-radius: 22px !important; } .fq { background: rgb(255 255 255 / .56); -webkit-backdrop-filter: blur(24px) saturate(185%); backdrop-filter: blur(24px) saturate(185%);
+  box-shadow: 0 14px 36px -24px rgb(58 0 7 / .34), inset 0 1px 0 rgb(255 255 255 / .95), inset 0 0 0 1px rgb(255 255 255 / .45); transition: background .25s, box-shadow .25s; }
+.fq:hover, .fq[open] { background: rgb(255 255 255 / .74); }
+.fq[open] { box-shadow: 0 20px 46px -24px rgb(58 0 7 / .42), inset 0 1px 0 #fff, inset 0 0 0 1px rgb(255 255 255 / .5); }
+.fq summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 16px 16px 16px 22px; cursor: pointer; list-style: none; border-radius: inherit; }
+.fq summary::-webkit-details-marker { display: none; }
+.fq summary:focus-visible { outline: 2px solid #70000e; outline-offset: 2px; }
+.fq h3 { margin: 0; padding-top: 6px; font-weight: 500; font-size: 15.5px; line-height: 1.45; }
+.fq-ic { flex-shrink: 0; width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center; color: #70000e; background: rgb(255 255 255 / .7);
+  box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgb(35 20 22 / .08); transition: transform .3s cubic-bezier(.2, .75, .15, 1), background .25s, color .25s; }
+.fq-ic svg { width: 16px; height: 16px; }
+.fq[open] .fq-ic { transform: rotate(45deg); color: #fff; background: linear-gradient(180deg, #86101f, #70000e 55%, #5e000c); box-shadow: 0 8px 18px -8px rgb(112 0 14 / .7); }
+.fq p { margin: 0; padding: 0 22px 20px; font-size: 14.5px; line-height: 1.7; color: #6b5e60; animation: fqIn .3s ease-out; }
+@keyframes fqIn { from { opacity: 0; transform: translateY(-4px); } }
+@media (max-width: 640px) { .fq summary { padding: 14px 12px 14px 18px; } .fq p { padding: 0 18px 18px; } .fq h3 { font-size: 15px; } }
+@media (prefers-reduced-motion: reduce) { .fq p { animation: none; } }
+@media (prefers-reduced-transparency: reduce) { .fq { background: rgb(255 255 255 / .96); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* =====================================================================
+   หน้าแรก: หัว "เรือไฮไลท์ของเรา" + ตัวกรองประเภทเรือ (#boats ใน shell.html)
+   ตัวกรอง = แถบแคปซูลแบบ segmented (เหมือนเมนูส่วนของหน้าเรือ .secnav) อันที่เลือกเป็นเม็ดขาวลอย
+   ใช้ #boatFilters เท่านั้น — หน้า /yacht-charter (#fleetChips) ยังเป็นแบบเดิม
+   ===================================================================== */
+#boats .tm-title, #boats .tm-sub, .hf-bar { font-family: Jost, "IBM Plex Sans Thai", system-ui, sans-serif; color: #231416; }
+#boats .tm-sub { color: #6b5e60; }
+.hf-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 26px; }
+.hf-seg { display: flex; gap: 2px; min-width: 0; padding: 5px; overflow-x: auto; border-radius: 999px; scroll-behavior: smooth;
+  background: rgb(244 238 236 / .85); box-shadow: inset 0 1px 2px rgb(35 20 22 / .06), inset 0 0 0 1px rgb(35 20 22 / .05); }
+#boatFilters button { flex-shrink: 0; height: 38px; padding: 0 16px !important; font-size: 13.5px; font-weight: 400; color: #6b5e60;
+  background: transparent !important; box-shadow: none !important; border-radius: 999px !important; transition: background .25s, color .2s, box-shadow .25s; }
+#boatFilters button:hover { color: #231416; }
+#boatFilters button.chip-active { background: #fff !important; color: #231416 !important; font-weight: 500;
+  box-shadow: 0 4px 14px -6px rgb(35 20 22 / .35), inset 0 0 0 1px rgb(255 255 255 / .9) !important; }
+#boatFilters button:focus-visible { outline: 2px solid #70000e; outline-offset: -2px; }
+.hf-sort { position: relative; flex-shrink: 0; display: inline-flex; align-items: center; }
+.hf-sort svg { position: absolute; left: 16px; width: 15px; height: 15px; color: #70000e; pointer-events: none; }
+.hf-sort select { height: 48px; padding: 0 40px; border: 0; border-radius: 999px !important; font: inherit; font-size: 13.5px; color: #231416; cursor: pointer;
+  -webkit-appearance: none; appearance: none; background: rgb(244 238 236 / .85) no-repeat right 16px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b5e60' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  box-shadow: inset 0 1px 2px rgb(35 20 22 / .06), inset 0 0 0 1px rgb(35 20 22 / .05); transition: background-color .2s; }
+.hf-sort select:hover { background-color: rgb(238 230 228 / .95); }
+.hf-sort select:focus-visible { outline: 2px solid #70000e; outline-offset: 2px; }
+@media (max-width: 1023px) {
+  /* ตัวกรองล้นจอ: จางขอบขวาให้รู้ว่าเลื่อนได้ */
+  .hf-seg { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); padding-right: 36px; }
+}
+@media (max-width: 640px) {
+  .hf-bar { flex-direction: column; align-items: stretch; margin-top: 20px; }
+  .hf-sort select { width: 100%; height: 46px; }
+}
+
+/* ฟอร์มจอง: ข้อความเตือนใต้ช่อง (ลิงก์ / อีเมล / WhatsApp — bfHint ใน app.js) + ช่องดักบอท */
+.bf-opt { font-size: 11.5px; color: #8a7a7c; }
+.bf-hint { display: block; margin: 6px 0 0 6px; font-size: 12.5px; line-height: 1.45; color: var(--color-feedback-error, #b42318); }
+.bf-fix { padding: 0 2px; font: inherit; font-weight: 500; color: #70000e; text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; cursor: pointer; }
+.bf-hp { position: absolute !important; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }

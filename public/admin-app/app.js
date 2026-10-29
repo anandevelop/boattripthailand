@@ -1,6 +1,11 @@
 /* data for the signed-in user — sent by the server, already scoped by role */
 const BOOT = window.__BOOT__;
-window.FLEET = BOOT.fleet; window.THUMBS = BOOT.thumbs; window.TEAM_IMG = BOOT.teamImg; window.SEASONS = BOOT.seasons; window.ACTIMG = BOOT.actimg; window.WPDATA = BOOT.wp;
+window.FLEET = BOOT.fleet; window.THUMBS = BOOT.thumbs; /* team photo for <img src>: no id / unknown id (lead not assigned yet, removed user) → dashed "nobody" circle, not a broken image */
+const NOBODY_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#f4eeec" stroke="#c9bcbd" stroke-dasharray="2.5 2"/><circle cx="12" cy="9.5" r="3.2" fill="none" stroke="#a0928f" stroke-width="1.4"/><path d="M6.8 18.2c1-2.6 3-3.9 5.2-3.9s4.2 1.3 5.2 3.9" fill="none" stroke="#a0928f" stroke-width="1.4" stroke-linecap="round"/></svg>');
+window.TEAM_IMG = BOOT.teamImg;
+const teamImg = id => TEAM_IMG[id] || NOBODY_IMG;
+// a team photo whose file is gone (404) → the same circle instead of a broken image
+addEventListener('error', e => { const i = e.target; if (i?.tagName === 'IMG' && i.src !== NOBODY_IMG && (i.id === 'meAva' || Object.values(TEAM_IMG).includes(i.getAttribute('src')))) i.src = NOBODY_IMG; }, true); window.SEASONS = BOOT.seasons; window.ACTIMG = BOOT.actimg; window.WPDATA = BOOT.wp;
 /* =====================================================================
    BTT ADMIN – mockup (vanilla JS) · data, utils, dashboard, bookings, calendar
    ===================================================================== */
@@ -135,7 +140,7 @@ function vBookings() {
           <td><p class="truncate max-w-[150px]">${esc(c.name)}</p><p class="text-[11px] text-muted">${c.country}</p></td>
           <td><div class="flex items-center gap-2.5">${thumb(b.boat, 'w-10 h-7')}<div class="min-w-0"><p class="truncate max-w-[180px]">${bySlug(b.boat).name}</p><p class="text-[11px] text-muted truncate max-w-[180px]">${esc(b.prog)}</p></div></div></td>
           <td class="whitespace-nowrap">${fmtD(b.date)}</td><td class="tnum">${b.guests}</td><td class="text-muted">${b.channel}</td>
-          <td><div class="flex items-center gap-1.5"><img src="${TEAM_IMG[s.id]}" class="w-6 h-6 rounded-full object-cover"/>${s.name}</div></td>
+          <td><div class="flex items-center gap-1.5"><img src="${teamImg(s.id)}" class="w-6 h-6 rounded-full object-cover"/>${s.name}</div></td>
           <td>${pill(b.status)}</td>
           <td class="text-right whitespace-nowrap"><p class="tnum">${baht(b.total)}</p><p class="text-[11px] tnum ${b.paid >= b.total ? 'text-[#1e7a46]' : 'text-muted'}">${b.paid >= b.total ? 'ชำระครบ' : b.paid ? 'มัดจำ ' + baht(b.paid) : 'ยังไม่ชำระ'}</p></td></tr>`; }).join('') || `<tr><td colspan="9" class="text-center text-muted py-12">ไม่พบการจอง</td></tr>`}
       </tbody></table></div>
@@ -384,7 +389,7 @@ function custDetail(id) { const c = custOf(id), bs = BOOKINGS.filter(b => b.cust
 function vTeam() {
   const st = t => { const bs = BOOKINGS.filter(b => b.sales === t.id && b.status !== 'cancel'); return { n: bs.length, rev: bs.reduce((s, b) => s + b.total, 0), open: bs.filter(b => ['new', 'quote', 'deposit'].includes(b.status)).length, conv: Math.round(bs.filter(b => ['confirmed', 'done'].includes(b.status)).length / Math.max(1, bs.length) * 100) }; };
   $('#view').innerHTML = `${head('ทีมเซลล์', 'สถานะออนไลน์แสดงบนหน้าเว็บ · คำขอใหม่กระจายให้เซลล์ที่ออนไลน์อัตโนมัติ', `<button class="btn btn-p" onclick="toast('เชิญสมาชิกใหม่ (จำลอง)')"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i>เพิ่มสมาชิก</button>`)}
-    <div class="grid md:grid-cols-3 gap-4">${TEAM.map((t, i) => { const s = st(t); return `<div class="card p-5"><div class="flex items-center gap-3"><img src="${TEAM_IMG[t.id]}" class="w-12 h-12 rounded-full object-cover"/><div class="flex-1"><p class="font-medium">${t.name}</p><p class="text-[11px] text-muted">${t.role} · ${t.tel}</p></div><label class="flex items-center gap-2 text-[11px] text-muted">${t.online ? 'ออนไลน์' : 'ออฟไลน์'}<span class="tgl"><input type="checkbox" ${t.online ? 'checked' : ''} onchange="TEAM[${i}].online=this.checked;vTeam()"/><span></span></span></label></div>
+    <div class="grid md:grid-cols-3 gap-4">${TEAM.map((t, i) => { const s = st(t); return `<div class="card p-5"><div class="flex items-center gap-3"><img src="${teamImg(t.id)}" class="w-12 h-12 rounded-full object-cover"/><div class="flex-1"><p class="font-medium">${t.name}</p><p class="text-[11px] text-muted">${t.role} · ${t.tel}</p></div><label class="flex items-center gap-2 text-[11px] text-muted">${t.online ? 'ออนไลน์' : 'ออฟไลน์'}<span class="tgl"><input type="checkbox" ${t.online ? 'checked' : ''} onchange="TEAM[${i}].online=this.checked;vTeam()"/><span></span></span></label></div>
       <div class="grid grid-cols-2 gap-3 mt-5"><div class="rounded-xl bg-sand p-3"><p class="text-[11px] text-muted">ยอดจอง</p><p class="font-medium tnum mt-1">${baht(s.rev)}</p></div><div class="rounded-xl bg-sand p-3"><p class="text-[11px] text-muted">ทริป</p><p class="font-medium tnum mt-1">${s.n}</p></div><div class="rounded-xl bg-sand p-3"><p class="text-[11px] text-muted">งานค้าง</p><p class="font-medium tnum mt-1">${s.open}</p></div><div class="rounded-xl bg-sand p-3"><p class="text-[11px] text-muted">ปิดการขาย</p><p class="font-medium tnum mt-1">${s.conv}%</p></div></div>
       <button class="btn btn-o w-full mt-4" onclick="BK.sales='${t.id}';BK.tab='all';go('bookings')">ดูงานของ ${t.name}</button></div>`; }).join('')}</div>
     <div class="card p-5 mt-4 max-w-2xl"><p class="font-medium">การกระจายคำขอ</p><div class="mt-3 space-y-3">${[['วนตามลำดับ (Round-robin) เฉพาะคนที่ออนไลน์', true], ['ส่งแจ้งเตือน LINE / WhatsApp เมื่อมีคำขอใหม่', true], ['ถ้าไม่ตอบใน 30 นาที ส่งต่อให้คนถัดไป', false]].map(([l, on]) => `<label class="flex items-center justify-between gap-3"><span>${l}</span><span class="tgl"><input type="checkbox" ${on ? 'checked' : ''}/><span></span></span></label>`).join('')}</div></div>`;
@@ -2758,7 +2763,7 @@ vBookings = function () {
       <td class="whitespace-nowrap">${fmtD(l.date)}<p class="text-[11px] text-muted">${l.guests} คน</p></td>
       <td>${srcPill(l.src, 1)}<p class="text-[11px] text-muted truncate max-w-[150px]">${esc(l.campaign || l.contact)}</p></td>
       <td>${scorePill(l)}</td>
-      <td><div class="flex items-center gap-1.5 whitespace-nowrap"><img src="${TEAM_IMG[s?.id]}" class="w-6 h-6 rounded-full object-cover"/>${s?.name || '-'}</div></td>
+      <td><div class="flex items-center gap-1.5 whitespace-nowrap"><img src="${teamImg(s?.id)}" alt="" class="w-6 h-6 rounded-full object-cover"/>${s ? esc(s.name) : '<span class="text-muted">ยังไม่มีผู้รับ</span>'}</div></td>
       <td>${pill(l.status)}${l.status === 'lost' ? `<p class="text-[11px] text-muted mt-0.5">${esc(l.lost)}</p>` : ''}</td>
       <td class="whitespace-nowrap">${l.next && OPEN_ST.includes(l.status) ? `<span class="${l.next < iso(TODAY) ? 'text-[#b42318]' : l.next === iso(TODAY) ? 'text-maroon' : 'text-muted'}">${l.next === iso(TODAY) ? 'วันนี้' : fmtD(l.next)}</span>` : '<span class="text-muted">—</span>'}</td></tr>`; };
   const board = () => `<div class="flex gap-3 overflow-x-auto no-sb p-3">${Object.entries(STATUS).map(([k, [n]]) => { const L = list.filter(l => l.status === k); return `<div class="w-[260px] shrink-0 rounded-2xl bg-sand/70 p-2" ondragover="event.preventDefault();this.classList.add('ring-2','ring-maroon')" ondragleave="this.classList.remove('ring-2','ring-maroon')" ondrop="this.classList.remove('ring-2','ring-maroon');setStatus(event.dataTransfer.getData('id'),'${k}')">
@@ -2766,7 +2771,7 @@ vBookings = function () {
       <div class="space-y-2 mt-1 max-h-[64vh] overflow-y-auto">${L.slice(0, 40).map(l => { const c = custOf(l.cust); return `<div draggable="true" ondragstart="event.dataTransfer.setData('id','${l.id}')" onclick="bookingDetail('${l.id}')" class="rounded-xl bg-white ring-1 ring-line p-3 cursor-pointer hover:ring-maroon">
         <div class="flex items-start justify-between gap-2"><p class="text-[13px] leading-tight truncate">${esc(c.name)}</p>${scorePill(l)}</div>
         <p class="text-[11.5px] text-muted mt-1 truncate">${boatName(l.boat)} · ${fmtD(l.date)} · ${l.guests} คน</p>
-        <div class="flex items-center justify-between mt-2">${srcPill(l.src, 1)}<img src="${TEAM_IMG[l.sales]}" class="w-5 h-5 rounded-full object-cover"/></div>
+        <div class="flex items-center justify-between mt-2">${srcPill(l.src, 1)}<img src="${teamImg(l.sales)}" class="w-5 h-5 rounded-full object-cover"/></div>
         ${l.status === 'new' ? `<p class="text-[11px] mt-1.5 ${leadAgeMin(l) > 30 ? 'text-[#b42318]' : 'text-muted'}">รอติดต่อ ${ago(leadAgeMin(l))}</p>` : l.next && OPEN_ST.includes(l.status) ? `<p class="text-[11px] mt-1.5 ${l.next < iso(TODAY) ? 'text-[#b42318]' : 'text-muted'}">ติดตาม ${l.next === iso(TODAY) ? 'วันนี้' : fmtD(l.next)}</p>` : ''}
       </div>`; }).join('') || '<p class="text-[11px] text-muted text-center py-6">ไม่มี</p>'}</div></div>`; }).join('')}</div>`;
   $('#view').innerHTML = `
@@ -2826,7 +2831,7 @@ bookingDetail = function (id) {
       <div class="flex items-center gap-1">${['new', 'contacted', 'talking', 'won'].map((s, i) => `<div class="flex-1"><div class="h-1.5 rounded-full ${l.status === 'lost' ? 'bg-[#f3d6d8]' : i <= idx ? 'bg-maroon' : 'bg-sand-100'}"></div><p class="text-[10px] mt-1.5 ${i === idx ? 'text-ink' : 'text-muted'}">${STATUS[s][0]}</p></div>`).join('')}</div>
       ${l.status === 'new' ? `<div class="rounded-xl p-3 ${leadAgeMin(l) > 30 ? 'bg-[#fff7f6] ring-1 ring-[#f3c7c2] text-[#b42318]' : 'bg-sand'} text-[12.5px] flex items-center gap-2"><i data-lucide="alarm-clock" class="w-4 h-4 shrink-0"></i>รอติดต่อมา ${ago(leadAgeMin(l))} · กดช่องทางด้านล่าง ระบบจะบันทึกเวลาตอบกลับให้</div>` : ''}
       <div><p class="lbl">ติดต่อลูกค้า</p><div class="grid grid-cols-4 gap-2">${[['WhatsApp', 'message-circle'], ['LINE', 'message-square'], ['โทร', 'phone'], ['อีเมล', 'mail']].map(([v, i]) => `<button class="btn btn-o !h-11 flex-col !gap-0.5 !text-[11px]" onclick="leadContact('${l.id}','${v}')"><i data-lucide="${i}" class="w-4 h-4"></i>${v}</button>`).join('')}</div>
-        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-[12.5px]"><div><dt class="lbl">โทร</dt><dd class="tnum">${c.phone}</dd></div><div><dt class="lbl">อีเมล</dt><dd class="break-all">${c.email || '—'}</dd></div><div><dt class="lbl">ภาษา</dt><dd>${l.lang === 'th' ? 'ไทย' : 'English'}</dd></div><div><dt class="lbl">รับข่าวสาร (PDPA)</dt><dd>${c.consent ? '<span class="text-[#1e7a46]">ยินยอม</span>' : '<span class="text-muted">ไม่ยินยอม</span>'}</dd></div></dl></div>
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-[12.5px]"><div><dt class="lbl">โทร</dt><dd class="tnum">${c.phone}</dd></div><div><dt class="lbl">WhatsApp</dt><dd class="tnum">${c.wa ? `<a class="text-maroon hover:underline" href="https://wa.me/${phoneIntl(c.wa) || c.wa.replace(/\D/g, '')}" target="_blank" rel="noopener">${esc(c.wa)}</a>` : '—'}</dd></div><div><dt class="lbl">อีเมล</dt><dd class="break-all">${c.email || '—'}</dd></div><div><dt class="lbl">ภาษา</dt><dd>${l.lang === 'th' ? 'ไทย' : 'English'}</dd></div><div><dt class="lbl">รับข่าวสาร (PDPA)</dt><dd>${c.consent ? '<span class="text-[#1e7a46]">ยินยอม</span>' : '<span class="text-muted">ไม่ยินยอม</span>'}</dd></div></dl></div>
       <div><p class="lbl">สิ่งที่สนใจ</p><div class="flex gap-3 items-center p-3 rounded-xl bg-sand">${thumb(l.boat, 'w-20 h-14')}<div class="min-w-0"><p class="font-medium">${boatName(l.boat)}</p><p class="text-[12px] text-muted truncate">${esc(l.prog || 'ยังไม่เลือกโปรแกรม')}</p><p class="text-[12px] text-muted">${fmtD(l.date)} · ${l.guests} คน${l.slot ? ' · ' + l.slot : ''}${l.pickup ? ' · รับที่ ' + esc(l.pickup) : ''}</p></div></div>
         ${l.viewed?.length > 1 ? `<p class="text-[11px] text-muted mt-3 mb-1.5">เรือที่ลูกค้าดูในเว็บ</p><div class="flex flex-wrap gap-1.5">${l.viewed.map(s => `<span class="inline-flex items-center gap-1.5 h-7 pl-1 pr-2.5 rounded-full ring-1 ring-line text-[12px]">${thumb(s, 'w-5 h-5 !rounded-full')}${boatName(s)}</span>`).join('')}</div>` : ''}
         ${alt.length ? `<p class="text-[11px] text-muted mt-3 mb-1.5">เรือทางเลือกที่ยังว่างวันนั้น (ประเภทเดียวกัน รับได้ ${l.guests}+ คน)</p><div class="flex flex-wrap gap-1.5">${alt.map(x => `<a href="#/boats/${x.slug}" class="inline-flex items-center gap-1.5 h-7 pl-1 pr-2.5 rounded-full bg-[#eaf6ef] text-[#1e7a46] text-[12px]">${thumb(x.slug, 'w-5 h-5 !rounded-full')}${x.name}</a>`).join('')}</div>` : ''}</div>
@@ -2873,19 +2878,26 @@ recordPay = function () { };
 newBooking = function (slug) {
   const boats = FLEET.filter(b => b.active !== false);
   openModal(`<div class="p-5 border-b border-line flex items-center justify-between"><div><p class="font-medium">เพิ่มลีด</p><p class="text-[12px] text-muted">สำหรับลูกค้าที่ทักแชทหรือโทรมาโดยตรง · ลีดจากเว็บเข้ามาเอง</p></div><button class="btn btn-g !px-2" onclick="closeModal()"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-    <form id="nbF" class="p-5 grid grid-cols-2 gap-3" onsubmit="event.preventDefault();saveNew()">
-      <label><span class="lbl">ชื่อลูกค้า *</span><input id="nbName" class="inp" required/></label>
-      <label><span class="lbl">เบอร์ / WhatsApp *</span><input id="nbPhone" class="inp" inputmode="tel" required/></label>
-      <label class="col-span-2"><span class="lbl">อีเมล</span><input id="nbEmail" type="email" class="inp"/></label>
-      <label><span class="lbl">มาจาก</span><select id="nbSrc" class="inp">${Object.entries(SRC).map(([k, [n]]) => `<option value="${k}" ${k === 'wa' ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-      <label><span class="lbl">ติดต่อผ่าน</span><select id="nbCh" class="inp">${CONTACT.map(c => `<option ${c === 'WhatsApp' ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
-      <label class="col-span-2"><span class="lbl">เรือที่สนใจ</span><select id="nbBoat" class="inp">${boats.map(b => `<option value="${b.slug}" ${b.slug === slug ? 'selected' : ''}>${b.name} · ${TYPE_TH[b.type]}</option>`).join('')}</select></label>
-      <label><span class="lbl">วันที่ต้องการ</span><input id="nbDate" type="date" class="inp" value="${iso(addDays(TODAY, 14))}"/></label>
-      <label><span class="lbl">จำนวนคน</span><input id="nbG" type="number" min="1" class="inp" value="8"/></label>
-      <label><span class="lbl">เซลล์</span><select id="nbS" class="inp">${TEAM.filter(t => !t.deleted && ['super', 'admin', 'sales'].includes(t.roleKey)).map(t => `<option value="${t.id}" ${t.id === ME?.id ? 'selected' : ''}>${t.name}</option>`).join('')}</select></label>
-      <label class="flex items-center gap-2 text-[12.5px] self-end pb-2"><input id="nbConsent" type="checkbox" class="accent-[#70000e] w-4 h-4"/>ลูกค้ายินยอมรับข่าวสาร</label>
-      <label class="col-span-2"><span class="lbl">บันทึก</span><textarea id="nbNote" class="inp" rows="2"></textarea></label>
-      <div class="col-span-2 flex justify-end gap-2 pt-1"><button type="button" class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p">บันทึกลีด</button></div>
+    <form id="nbF" class="nb-form" onsubmit="event.preventDefault();saveNew()">
+      <fieldset class="nb-sec"><legend><i data-lucide="user-round"></i>ลูกค้า</legend>
+        <label><span class="lbl">ชื่อลูกค้า *</span><input id="nbName" class="inp" required placeholder="ชื่อ หรือชื่อในแชท"/></label>
+        <label><span class="lbl">เบอร์โทร *</span><input id="nbPhone" class="inp" inputmode="tel" required placeholder="+66 8x xxx xxxx"/></label>
+        <label><span class="lbl">WhatsApp</span><input id="nbWa" class="inp" inputmode="tel" placeholder="ถ้าเป็นคนละเบอร์กับเบอร์โทร"/></label>
+        <label><span class="lbl">อีเมล</span><input id="nbEmail" type="email" class="inp" placeholder="name@email.com"/></label>
+        <label><span class="lbl">มาจาก</span><select id="nbSrc" class="inp">${Object.entries(SRC).map(([k, [n]]) => `<option value="${k}" ${k === 'wa' ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <label><span class="lbl">ติดต่อผ่าน</span><select id="nbCh" class="inp">${CONTACT.map(c => `<option ${c === 'WhatsApp' ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+      </fieldset>
+      <fieldset class="nb-sec"><legend><i data-lucide="sailboat"></i>ทริป</legend>
+        <label class="nb-wide"><span class="lbl">เรือที่สนใจ</span><select id="nbBoat" class="inp">${boats.map(b => `<option value="${b.slug}" ${b.slug === slug ? 'selected' : ''}>${b.name} · ${TYPE_TH[b.type]}</option>`).join('')}</select></label>
+        <label><span class="lbl">วันที่ต้องการ</span><input id="nbDate" type="date" class="inp" value="${iso(addDays(TODAY, 14))}"/></label>
+        <label><span class="lbl">จำนวนคน</span><input id="nbG" type="number" min="1" class="inp" value="8"/></label>
+      </fieldset>
+      <fieldset class="nb-sec"><legend><i data-lucide="headset"></i>การดูแล</legend>
+        <label class="nb-wide"><span class="lbl">เซลล์ผู้ดูแล</span><select id="nbS" class="inp">${TEAM.filter(t => !t.deleted && ['super', 'admin', 'sales'].includes(t.roleKey)).map(t => `<option value="${t.id}" ${t.id === ME?.id ? 'selected' : ''}>${t.name}</option>`).join('')}</select></label>
+        <label class="nb-wide"><span class="lbl">บันทึก</span><textarea id="nbNote" class="inp" rows="2" placeholder="รายละเอียดที่คุยไว้ เช่น งบ โอกาสพิเศษ รับที่โรงแรม"></textarea></label>
+        <label class="nb-wide nb-consent"><span><b>ลูกค้ายินยอมรับข่าวสาร</b><small>ถามลูกค้าก่อนเปิด · ใช้ส่งโปรโมชันได้เฉพาะคนที่ยินยอม (PDPA)</small></span><span class="tgl"><input id="nbConsent" type="checkbox"/><span></span></span></label>
+      </fieldset>
+      <div class="nb-foot"><button type="button" class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p"><i data-lucide="check" class="w-4 h-4"></i>บันทึกลีด</button></div>
     </form>`);
   setTimeout(() => $('#nbName')?.focus(), 30);
 };
@@ -2969,18 +2981,18 @@ vCalendar = function () {
 /* ---------- customers ---------- */
 vCustomers = function () {
   const st = c => { const L = BOOKINGS.filter(l => l.cust === c.id); return { n: L.length, w: L.filter(l => l.status === 'won').length, last: L.map(l => l.created).sort().pop(), src: L.map(l => l.src).pop() }; };
-  const list = CUSTOMERS.filter(c => !CQ || (c.name + c.phone + c.email).toLowerCase().includes(CQ.toLowerCase())).map(c => ({ c, s: st(c) })).sort((a, b) => (b.s.last || '').localeCompare(a.s.last || ''));
+  const list = CUSTOMERS.filter(c => !CQ || (c.name + c.phone + (c.wa || '') + c.email).toLowerCase().includes(CQ.toLowerCase())).map(c => ({ c, s: st(c) })).sort((a, b) => (b.s.last || '').localeCompare(a.s.last || ''));
   $('#view').innerHTML = `${head('ลูกค้า', `${CUSTOMERS.length} ราย · ยินยอมรับข่าวสาร ${CUSTOMERS.filter(c => c.consent).length} ราย`, `<input class="inp !w-64" placeholder="ค้นหาชื่อ เบอร์ อีเมล" value="${esc(CQ)}" oninput="CQ=this.value;clearTimeout(window._cq);window._cq=setTimeout(()=>{vCustomers();const i=$('#view input');i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)"/>`)}
     <div class="card overflow-x-auto"><table class="tbl"><thead><tr><th>ลูกค้า</th><th>ติดต่อ</th><th>มาจาก</th><th>ลีด</th><th>ปิดได้</th><th>ล่าสุด</th><th>รับข่าวสาร</th></tr></thead><tbody>
       ${list.map(({ c, s }) => `<tr class="click" onclick="custDetail('${c.id}')"><td><div class="flex items-center gap-3"><span class="w-8 h-8 rounded-full bg-sand grid place-items-center text-[12px]">${esc(c.name.slice(0, 1))}</span><div><p>${esc(c.name)} ${s.w ? '<span class="pill st-confirmed ml-1">ลูกค้า</span>' : ''}${c.tags.map(t => `<span class="pill st-new ml-1">${t}</span>`).join('')}</p><p class="text-[11px] text-muted">${c.country}</p></div></div></td>
-        <td><p class="tnum">${c.phone}</p><p class="text-[11px] text-muted">${c.email}</p></td><td>${s.src ? srcPill(s.src, 1) : '—'}</td><td class="tnum">${s.n}</td><td class="tnum">${s.w}</td><td class="text-muted whitespace-nowrap">${s.last ? fmtD(s.last) : '—'}</td><td>${c.consent ? '<i data-lucide="check" class="w-4 h-4 text-[#1e7a46]"></i>' : '<span class="text-muted">—</span>'}</td></tr>`).join('')}
+        <td><p class="tnum">${c.phone}</p>${c.wa && c.wa.replace(/\D/g, '') !== String(c.phone).replace(/\D/g, '') ? `<p class="text-[11px] text-muted tnum">WhatsApp ${esc(c.wa)}</p>` : ''}<p class="text-[11px] text-muted">${c.email}</p></td><td>${s.src ? srcPill(s.src, 1) : '—'}</td><td class="tnum">${s.n}</td><td class="tnum">${s.w}</td><td class="text-muted whitespace-nowrap">${s.last ? fmtD(s.last) : '—'}</td><td>${c.consent ? '<i data-lucide="check" class="w-4 h-4 text-[#1e7a46]"></i>' : '<span class="text-muted">—</span>'}</td></tr>`).join('')}
     </tbody></table></div>`;
   icons();
 };
 custDetail = function (id) {
   const c = custOf(id), L = BOOKINGS.filter(l => l.cust === id);
   openDrawer(`<div class="h-16 px-5 flex items-center justify-between border-b border-line"><p class="font-medium">${esc(c.name)}</p><button class="btn btn-g !px-2" onclick="closeDrawer()"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-    <div class="flex-1 overflow-y-auto p-5 space-y-5"><dl class="grid grid-cols-2 gap-3"><div><dt class="lbl">ประเทศ</dt><dd>${c.country}</dd></div><div><dt class="lbl">ภาษา</dt><dd>${c.lang === 'th' ? 'ไทย' : 'English'}</dd></div><div><dt class="lbl">โทร</dt><dd class="tnum">${c.phone}</dd></div><div><dt class="lbl">อีเมล</dt><dd class="break-all">${c.email || '—'}</dd></div></dl>
+    <div class="flex-1 overflow-y-auto p-5 space-y-5"><dl class="grid grid-cols-2 gap-3"><div><dt class="lbl">ประเทศ</dt><dd>${c.country}</dd></div><div><dt class="lbl">ภาษา</dt><dd>${c.lang === 'th' ? 'ไทย' : 'English'}</dd></div><div><dt class="lbl">โทร</dt><dd class="tnum">${c.phone}</dd></div><div><dt class="lbl">WhatsApp</dt><dd class="tnum">${c.wa ? `<a class="text-maroon hover:underline" href="https://wa.me/${phoneIntl(c.wa) || c.wa.replace(/\D/g, '')}" target="_blank" rel="noopener">${esc(c.wa)}</a>` : '—'}</dd></div><div><dt class="lbl">อีเมล</dt><dd class="break-all">${c.email || '—'}</dd></div></dl>
     <label class="flex items-center justify-between rounded-xl ring-1 ring-line p-3"><span><span class="block text-[13px]">ยินยอมรับข่าวสารและโปรโมชัน</span><span class="block text-[11px] text-muted">ใช้ส่งข้อเสนอ และอัปโหลดเข้ากลุ่มโฆษณาได้เฉพาะคนที่ยินยอม (PDPA)</span></span><span class="tgl"><input type="checkbox" ${c.consent ? 'checked' : ''} onchange="custOf('${id}').consent=this.checked;toast(this.checked?'บันทึกความยินยอมแล้ว':'ถอนความยินยอมแล้ว · จะถูกนำออกจากกลุ่มโฆษณาในการซิงก์ครั้งถัดไป')"/><span></span></span></label>
     <div><p class="lbl">ลีดทั้งหมด (${L.length})</p><ul class="space-y-2">${L.map(l => `<li class="flex items-center gap-3 p-2 rounded-xl ring-1 ring-line cursor-pointer" onclick="bookingDetail('${l.id}')">${thumb(l.boat, 'w-12 h-9')}<div class="flex-1 min-w-0"><p class="truncate">${boatName(l.boat)}</p><p class="text-[11px] text-muted">${fmtD(l.date)} · ${l.guests} คน · ${SRC[l.src][0]}</p></div>${pill(l.status)}</li>`).join('')}</ul></div>
     <label class="block"><span class="lbl">บันทึกเกี่ยวกับลูกค้า</span><textarea class="inp" rows="3" placeholder="เช่น ชอบเรือใบ มากับครอบครัว แพ้กุ้ง…"></textarea></label></div>`);
@@ -3086,14 +3098,14 @@ function auBRender() {
   openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ส่งข้อความถึง “${esc(B.n)}”</p><p class="text-[12px] text-muted mt-1">${B.rows.length} คนที่ยินยอมรับข่าวสาร · กดส่งทีละคน ระบบเติมชื่อและเรือให้ และบันทึกลงประวัติลีด</p></div>
     <div class="p-5 grid sm:grid-cols-2 gap-3"><label><span class="lbl">ข้อความภาษาไทย</span><textarea class="inp !text-[12.5px]" rows="4" oninput="AUB.th=this.value">${esc(B.th)}</textarea></label><label><span class="lbl">English</span><textarea class="inp !text-[12.5px]" rows="4" oninput="AUB.en=this.value">${esc(B.en)}</textarea></label>
       <p class="sm:col-span-2 text-[11px] text-muted -mt-1">ตัวแปร: {name} {boat} {date} · ระบบต่อท้ายวิธียกเลิกรับข่าวสารให้ทุกข้อความ · ภาษาตามที่ลูกค้าติดต่อมา</p></div>
-    <ul class="max-h-[46vh] overflow-y-auto border-t border-line divide-y divide-line">${B.rows.map((x, i) => { const ph = phoneIntl(x.c.phone), done = B.done.has(i); return `<li class="px-5 py-2.5 flex items-center gap-3"><div class="min-w-0 flex-1"><p class="truncate">${done ? '<i data-lucide="check" class="w-3.5 h-3.5 inline text-[#1e7a46]"></i> ' : ''}${esc(x.c.name)} <span class="text-[11px] text-muted">${x.l.lang === 'th' ? 'TH' : 'EN'}</span></p><p class="text-[11px] text-muted truncate">${esc(x.c.phone || '')}${x.c.email ? ' · ' + esc(x.c.email) : ''} · ${x.l.boat ? boatName(x.l.boat) : '—'}</p></div>
+    <ul class="max-h-[46vh] overflow-y-auto border-t border-line divide-y divide-line">${B.rows.map((x, i) => { const ph = phoneIntl(x.c.wa || x.c.phone), done = B.done.has(i); return `<li class="px-5 py-2.5 flex items-center gap-3"><div class="min-w-0 flex-1"><p class="truncate">${done ? '<i data-lucide="check" class="w-3.5 h-3.5 inline text-[#1e7a46]"></i> ' : ''}${esc(x.c.name)} <span class="text-[11px] text-muted">${x.l.lang === 'th' ? 'TH' : 'EN'}</span></p><p class="text-[11px] text-muted truncate">${esc(x.c.phone || '')}${x.c.email ? ' · ' + esc(x.c.email) : ''} · ${x.l.boat ? boatName(x.l.boat) : '—'}</p></div>
       ${ph ? `<button class="btn btn-o !h-8" onclick="auBSend(${i},'whatsapp')">WhatsApp</button>` : ''}${x.c.email ? `<button class="btn btn-o !h-8" onclick="auBSend(${i},'email')">อีเมล</button>` : ''}<button class="btn btn-g !h-8" title="คัดลอกไปส่งทาง LINE หรือช่องทางอื่น" onclick="auBSend(${i},'copy')"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button></li>`; }).join('') || '<li class="p-6 text-center text-muted">ไม่มีคนที่ยินยอมในกลุ่มนี้</li>'}</ul>
     <div class="p-4 border-t border-line flex items-center justify-between gap-2"><p class="text-[12px] text-muted">ส่งแล้ว ${B.done.size} / ${B.rows.length}</p><button class="btn btn-p" onclick="closeModal()">เสร็จ</button></div>`);
   icons();
 }
 function auBSend(i, via) {
   const x = AUB.rows[i], t = auBText(x);
-  if (via === 'whatsapp') window.open(`https://wa.me/${phoneIntl(x.c.phone)}?text=${encodeURIComponent(t)}`, '_blank', 'noopener');
+  if (via === 'whatsapp') window.open(`https://wa.me/${phoneIntl(x.c.wa || x.c.phone)}?text=${encodeURIComponent(t)}`, '_blank', 'noopener');
   else if (via === 'email') location.href = `mailto:${encodeURIComponent(x.c.email)}?subject=${encodeURIComponent('Boat Trip Thailand')}&body=${encodeURIComponent(t)}`;
   else navigator.clipboard?.writeText(t).then(() => toast('คัดลอกข้อความแล้ว'), () => toast('คัดลอกไม่สำเร็จ'));
   api('POST', `leads/${encodeURIComponent(x.l.id)}/outreach`, { via, seg: AUB.n }).then(d => { if (d?.lead) { const j = BOOKINGS.findIndex(l => l.dbId === d.lead.dbId); if (j >= 0) BOOKINGS[j] = d.lead; } AUDIT_DIRTY = true; }).catch(fail);
@@ -3208,7 +3220,7 @@ function showLogin() {
           <button class="btn btn-p !h-11 mt-1" ${lock ? 'disabled' : ''}>เข้าสู่ระบบ</button>
         </form>
         <div class="mt-8 rounded-2xl bg-sand p-4"><p class="text-[11px] uppercase tracking-[.14em] text-muted">บัญชีทดลอง (เฉพาะ mockup)</p><p class="text-[11px] text-muted mt-1">รหัสผ่าน <b class="tnum text-ink">${DEMO_PW}</b> · กดเพื่อกรอกอัตโนมัติ</p>
-          <div class="mt-3 grid gap-1.5">${demo.map(t => `<button type="button" class="flex items-center gap-2.5 p-2 rounded-xl bg-white ring-1 ring-line hover:ring-maroon text-left" onclick="$('#lgEmail').value='${t.email}';$('#lgPw').value='${DEMO_PW}';$('#lgPw').focus()"><img src="${TEAM_IMG[t.id]}" class="w-7 h-7 rounded-full object-cover"/><span class="min-w-0 flex-1"><span class="block text-[13px] leading-tight">${t.name} <span class="text-muted">· ${ROLES[t.roleKey][0]}</span></span><span class="block text-[11px] text-muted truncate">${ROLES[t.roleKey][1]}</span></span></button>`).join('')}</div></div>`
+          <div class="mt-3 grid gap-1.5">${demo.map(t => `<button type="button" class="flex items-center gap-2.5 p-2 rounded-xl bg-white ring-1 ring-line hover:ring-maroon text-left" onclick="$('#lgEmail').value='${t.email}';$('#lgPw').value='${DEMO_PW}';$('#lgPw').focus()"><img src="${teamImg(t.id)}" class="w-7 h-7 rounded-full object-cover"/><span class="min-w-0 flex-1"><span class="block text-[13px] leading-tight">${t.name} <span class="text-muted">· ${ROLES[t.roleKey][0]}</span></span><span class="block text-[11px] text-muted truncate">${ROLES[t.roleKey][1]}</span></span></button>`).join('')}</div></div>`
         : `
         <button class="btn btn-g !px-2 -ml-2 mb-4" onclick="LG.step='pw';LG.err='';showLogin()"><i data-lucide="arrow-left" class="w-4 h-4"></i>กลับ</button>
         <div class="w-12 h-12 rounded-2xl bg-maroon-50 grid place-items-center text-maroon"><i data-lucide="smartphone" class="w-6 h-6"></i></div>
@@ -3262,7 +3274,7 @@ function paintMe() {
 }
 function mePanel() {
   const P = permsOf(ME), mins = Math.max(0, IDLE_MIN - Math.floor((Date.now() - lastAct) / 60000));
-  openModal(`<div class="p-5 border-b border-line flex items-center gap-3"><img src="${TEAM_IMG[ME.id]}" class="w-11 h-11 rounded-full object-cover"/><div class="min-w-0 flex-1"><p class="font-medium">${esc(ME.name)}</p><p class="text-[12px] text-muted">${ME.email} · ${ROLES[ME.roleKey][0]}</p></div><button class="btn btn-g !px-2" onclick="closeModal()" aria-label="Close"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+  openModal(`<div class="p-5 border-b border-line flex items-center gap-3"><img src="${teamImg(ME.id)}" class="w-11 h-11 rounded-full object-cover"/><div class="min-w-0 flex-1"><p class="font-medium">${esc(ME.name)}</p><p class="text-[12px] text-muted">${ME.email} · ${ROLES[ME.roleKey][0]}</p></div><button class="btn btn-g !px-2" onclick="closeModal()" aria-label="Close"><i data-lucide="x" class="w-5 h-5"></i></button></div>
     <div class="p-5 space-y-4"><div><p class="lbl">สิทธิ์ของคุณ</p><div class="grid gap-1">${PERMS.map(([k, l]) => `<p class="flex items-center gap-2 text-[12.5px] ${P.includes(k) ? '' : 'text-muted line-through decoration-[#d9cfcf]'}"><i data-lucide="${P.includes(k) ? 'check' : 'x'}" class="w-3.5 h-3.5 ${P.includes(k) ? 'text-[#1e7a46]' : 'text-[#c9bfbf]'}"></i>${l}</p>`).join('')}</div></div>
       <div class="rounded-xl bg-sand p-3 text-[12px] grid gap-1"><p class="flex justify-between"><span class="text-muted">เข้าระบบเมื่อ</span><span>${new Date(loginAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}</span></p><p class="flex justify-between"><span class="text-muted">อุปกรณ์</span><span>${DEVICE}</span></p><p class="flex justify-between"><span class="text-muted">หมดเวลาถ้าไม่ใช้งานใน</span><span>${mins} นาที</span></p></div>
       <p class="text-[11px] text-muted">ต้องการสิทธิ์เพิ่ม ติดต่อ Admin · ทุกการเปลี่ยนสิทธิ์ถูกบันทึกไว้</p></div>
@@ -3493,7 +3505,7 @@ vTeam = function () {
         <tr><td>ยืนยัน 2 ขั้นตอน (2FA)</td>${Object.keys(ROLES).map(r => `<td class="text-center text-[11px] text-maroon">บังคับ</td>`).join('')}</tr>
       </tbody></table></div></div>
     <div class="space-y-5">
-      <div class="card p-4"><p class="font-medium mb-3">เข้าระบบล่าสุด</p><div class="space-y-2.5">${TEAM.filter(t => !t.deleted).map(t => `<div class="flex items-center gap-2.5"><img src="${TEAM_IMG[t.id]}" class="w-7 h-7 rounded-full object-cover"/><div class="min-w-0 flex-1"><p class="text-[13px] leading-tight">${t.name} <span class="text-muted text-[11px]">· ${ROLES[t.roleKey][0]}</span></p><p class="text-[11px] text-muted">${t.id === ME?.id ? 'ออนไลน์อยู่ · ' + DEVICE : lastLogin(t.id)}</p></div>${t.active ? '' : '<span class="pill bg-sand text-muted">ปิด</span>'}</div>`).join('')}</div>
+      <div class="card p-4"><p class="font-medium mb-3">เข้าระบบล่าสุด</p><div class="space-y-2.5">${TEAM.filter(t => !t.deleted).map(t => `<div class="flex items-center gap-2.5"><img src="${teamImg(t.id)}" class="w-7 h-7 rounded-full object-cover"/><div class="min-w-0 flex-1"><p class="text-[13px] leading-tight">${t.name} <span class="text-muted text-[11px]">· ${ROLES[t.roleKey][0]}</span></p><p class="text-[11px] text-muted">${t.id === ME?.id ? 'ออนไลน์อยู่ · ' + DEVICE : lastLogin(t.id)}</p></div>${t.active ? '' : '<span class="pill bg-sand text-muted">ปิด</span>'}</div>`).join('')}</div>
         ${can('audit') ? '<a href="#/audit" class="btn btn-o w-full mt-4">ดูบันทึกกิจกรรมทั้งหมด</a>' : ''}</div>
       <div class="card p-4 text-[12px] space-y-2"><p class="font-medium text-[13px]">ระบบจริงบังคับใช้ที่เซิร์ฟเวอร์</p>${['ทุก API ตรวจ session + สิทธิ์ก่อนอ่าน/เขียน · ไม่พึ่งการซ่อนปุ่มในหน้าจอ', 'Sales: query ลีดกรอง <code>sales_id = ผู้ใช้</code> ที่ฐานข้อมูล', 'เบอร์และอีเมลลูกค้าเห็นเฉพาะเซลล์เจ้าของลีดและ Admin', 'บันทึก audit ใน transaction เดียวกับการแก้ไข · ตาราง append-only', 'เปลี่ยนสิทธิ์หรือปิดบัญชี = ยกเลิกเซสชันเดิมทันที'].map(x => `<p class="flex gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#1e7a46] shrink-0 mt-0.5"></i><span>${x}</span></p>`).join('')}</div>
     </div></div>`);
@@ -3601,7 +3613,8 @@ leadSet = function (id, k, v) {
 };
 leadContact = function (id, via) {
   const l = BOOKINGS.find(x => x.id === id), c = custOf(l.cust), msg = encodeURIComponent(tplText(l.status === 'new' ? 'first' : 'follow', l)), ph = String(c.phone).replace(/[^\d]/g, '');
-  const url = { WhatsApp: `https://wa.me/${ph}?text=${msg}`, LINE: `https://line.me/R/msg/text/?${msg}`, 'โทร': `tel:+${ph}`, 'อีเมล': c.email ? `mailto:${c.email}?subject=Boat%20Trip%20Thailand&body=${msg}` : '' }[via];
+  const wa = phoneIntl(c.wa || c.phone) || ph;
+  const url = { WhatsApp: `https://wa.me/${wa}?text=${msg}`, LINE: `https://line.me/R/msg/text/?${msg}`, 'โทร': `tel:+${ph}`, 'อีเมล': c.email ? `mailto:${c.email}?subject=Boat%20Trip%20Thailand&body=${msg}` : '' }[via];
   if (url) window.open(url, '_blank', 'noopener');
   leadApi(id, 'contact', { via }, l.status === 'new' ? `บันทึกการติดต่อแล้ว · ตอบกลับใน ${ago(leadAgeMin(l))}` : 'บันทึกการติดต่อแล้ว');
 };
@@ -3609,7 +3622,7 @@ bkAssign = function (id, v) { if (!can('bookings_all')) return toast('ไม่�
 bkNote = function (id, v) { leadApi(id, 'note', { note: v }, 'บันทึกแล้ว'); };
 saveNew = function () {
   const phone = $('#nbPhone').value.trim();
-  const body = { name: $('#nbName').value.trim(), phone, email: $('#nbEmail').value.trim(), src: $('#nbSrc').value, contact: $('#nbCh').value, boat: $('#nbBoat').value, date: $('#nbDate').value, guests: +$('#nbG').value || 1, sales: $('#nbS').value, consent: $('#nbConsent').checked, note: $('#nbNote').value, lang: /^(\+?66|0)/.test(phone) ? 'th' : 'en' };
+  const body = { name: $('#nbName').value.trim(), phone, whatsapp: $('#nbWa')?.value.trim() || '', email: $('#nbEmail').value.trim(), src: $('#nbSrc').value, contact: $('#nbCh').value, boat: $('#nbBoat').value, date: $('#nbDate').value, guests: +$('#nbG').value || 1, sales: $('#nbS').value, consent: $('#nbConsent').checked, note: $('#nbNote').value, lang: /^(\+?66|0)/.test(phone) ? 'th' : 'en' };
   const btn = $('#nbF button.btn-p'); if (btn) btn.disabled = true;
   api('POST', 'leads', body).then(r => {
     closeModal(); syncLead(r);
@@ -3898,34 +3911,105 @@ setInterval(() => artTick(false), 2000);
 setInterval(() => artTick(true), 15000);
 { const _ap = artPublish; artPublish = function (id) { _ap(id); const a = artById(id); if (a) { if (a.status === 'scheduled') toast('ตั้งเวลาเผยแพร่ยังไม่รองรับ · บทความจะแสดงเมื่อกดเผยแพร่ในวันนั้น'); pushArt(a, JSON.stringify(postPayload(a)), true); } }; }
 { const _ve = vArticleEdit; vArticleEdit = function (id) { _ve(id); const h = $('#view h2'); if (h && can('content')) h.insertAdjacentHTML('afterend', '<p id="artSaveInd" class="text-[11px] text-muted mt-1">บันทึกอัตโนมัติ</p>');
-  if (can('content')) $(`#view button[onclick^="artPreview(${+id},"]`)?.insertAdjacentHTML('beforebegin', `<button class="btn btn-g !px-2 text-[#b42318]" title="ลบบทความ" onclick="artDel(${+id})"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`); icons(); }; }
+  if (can('content')) $(`#view button[onclick^="artPreview(${+id},"]`)?.insertAdjacentHTML('beforebegin', `<button class="btn btn-g !px-2 text-[#b42318]" title="ย้ายไปถังขยะ" onclick="artDel(${+id})"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`); icons(); }; }
 /* delete an article: a live one sends its URLs (and old WordPress links to it) to the blog list, or answers 410 */
 function artDel(id) {
   const a = artById(id); if (!a || !can('content')) return;
   const live = a.status === 'published', t = a.title.th || a.title.en || 'บทความไม่มีชื่อ';
   const urls = [a.slug.th && `/blog/${a.slug.th}`, a.slug.en && `/en/blog/${a.slug.en}`].filter(Boolean);
-  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ลบบทความนี้?</p><p class="text-[12.5px] mt-1">${esc(t)}</p><p class="text-[12px] text-muted mt-1">ลบทั้งภาษาไทยและอังกฤษ · กู้คืนไม่ได้</p></div>
-    <div class="p-5 grid gap-2 text-[12.5px]">${live ? `<p class="lbl">บทความนี้เผยแพร่อยู่ · คนที่เข้าลิงก์เดิมจะ…</p>
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ย้ายบทความไปถังขยะ?</p><p class="text-[12.5px] mt-1">${esc(t)}</p><p class="text-[12px] text-muted mt-1">ทั้งภาษาไทยและอังกฤษ · กู้คืนได้ที่แท็บถังขยะภายใน 30 วัน จากนั้นจะถูกลบถาวรอัตโนมัติ</p></div>
+    <div class="p-5 grid gap-2 text-[12.5px]">${live ? `<p class="lbl">บทความนี้เผยแพร่อยู่ · ระหว่างอยู่ในถังขยะ คนที่เข้าลิงก์เดิมจะ…</p>
       <label class="flex gap-2.5 items-start p-3 rounded-xl ring-1 ring-line cursor-pointer"><input type="radio" name="artDelMode" value="blog" checked class="mt-0.5"/><span><b class="font-medium">ไปหน้ารวมบทความ (301)</b> · แนะนำ<br/><span class="text-muted text-[11.5px]">เก็บคะแนน SEO และลิงก์จากเว็บอื่นไว้</span></span></label>
       <label class="flex gap-2.5 items-start p-3 rounded-xl ring-1 ring-line cursor-pointer"><input type="radio" name="artDelMode" value="gone" class="mt-0.5"/><span><b class="font-medium">แจ้งว่าลบแล้ว (410)</b><br/><span class="text-muted text-[11.5px]">ให้ Google เอาออกจากผลค้นหาเร็วที่สุด</span></span></label>
       <p class="text-[11px] text-muted font-mono break-all">${urls.map(esc).join('<br/>')}</p>` : '<p class="text-muted">บทความนี้ยังไม่เผยแพร่ ไม่มีผลกับหน้าเว็บ</p>'}</div>
-    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button id="artDelGo" class="btn btn-p !bg-[#b42318]" onclick="artDelGo(${+id})"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบบทความ</button></div>`);
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button id="artDelGo" class="btn btn-p !bg-[#b42318]" onclick="artDelGo(${+id})"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ย้ายไปถังขยะ</button></div>`);
   icons();
 }
 function artDelGo(id) {
   if (AFLY.has(id)) return toast('กำลังบันทึกบทความอยู่ ลองใหม่อีกครั้ง');
   const mode = $('input[name="artDelMode"]:checked')?.value || 'blog', b = $('#artDelGo'); if (b) b.disabled = true;
   const drop = () => { for (const L of [ART, typeof ART_ALL !== 'undefined' ? ART_ALL : []]) { const i = L.findIndex(x => x.id === id); if (i >= 0) L.splice(i, 1); } ASYNC.delete(id); ASEEN.delete(id); };
+  const a = artById(id);
   api('DELETE', 'posts/' + id, { mode }).then(r => {
-    drop(); AUDIT_DIRTY = true;
+    drop(); AUDIT_DIRTY = true; if (r.trash && a && typeof TRASH !== 'undefined' && TRASH.list) TRASH.list.unshift({ ...a, cover: coverUrl(a), trash: r.trash });
     for (const x of r.redirects || []) { const i = REDIR.findIndex(y => y.from === x.from); if (i >= 0) Object.assign(REDIR[i], x); else REDIR.unshift({ ...x, hits: 0 }); }
-    closeModal(); go('articles'); toast(r.redirects?.length ? `ลบบทความแล้ว · ลิงก์เดิม ${r.redirects.length} URL ${mode === 'gone' ? 'ตอบ 410' : 'ไปหน้ารวมบทความ'} (มีผลภายใน 5 นาที)` : 'ลบบทความแล้ว');
+    closeModal(); go('articles'); setTimeout(() => { if (CUR === 'articles' && !location.hash.split('/')[2]) vArticles(); }, 0); toast(r.redirects?.length ? `ย้ายไปถังขยะแล้ว · ลิงก์เดิม ${r.redirects.length} URL ${mode === 'gone' ? 'ตอบ 410' : 'ไปหน้ารวมบทความ'} (มีผลภายใน 5 นาที)` : 'ย้ายไปถังขยะแล้ว · กู้คืนได้ภายใน 30 วัน');
   }).catch(e => { if (e.status === 404) { drop(); closeModal(); go('articles'); toast('ลบบทความแล้ว'); } else { fail(e); if (b) b.disabled = false; } });
 }
 { const _vl = vArticles; vArticles = function () { _vl(); if (location.hash.split('/')[2] || !can('content')) return;
   $('#view table.tbl thead tr')?.insertAdjacentHTML('beforeend', '<th></th>');
-  $$('#view table.tbl tbody tr.click').forEach(tr => { const id = +(tr.getAttribute('onclick').match(/articles\/(\d+)/) || [])[1]; if (id) tr.insertAdjacentHTML('beforeend', `<td class="text-right"><button class="btn btn-g !px-2 !h-8 text-muted hover:text-[#b42318]" title="ลบบทความ" onclick="event.stopPropagation();artDel(${id})"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>`); });
+  $$('#view table.tbl tbody tr.click').forEach(tr => { const id = +(tr.getAttribute('onclick').match(/articles\/(\d+)/) || [])[1]; if (id) tr.insertAdjacentHTML('beforeend', `<td class="text-right"><button class="btn btn-g !px-2 !h-8 text-muted hover:text-[#b42318]" title="ย้ายไปถังขยะ" onclick="event.stopPropagation();artDel(${id})"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>`); });
   icons(); }; PAGES.find(p => p[0] === 'articles')[3] = vArticles; }
+
+/* ---------- articles: ถังขยะ — a deleted article waits here (TRASH.days, 30) before it is deleted for good ---------- */
+const TRASH = { list: null, loading: false, days: 30 };
+function trashLoad(force) {
+  if (!can('content') || TRASH.loading || (TRASH.list && !force)) return; TRASH.loading = true;
+  api('GET', 'posts/trash').then(r => { TRASH.list = r.trash || []; TRASH.days = r.days || 30; if (CUR === 'articles' && !location.hash.split('/')[2]) vArticles(); })
+    .catch(() => { TRASH.list ??= []; }).finally(() => { TRASH.loading = false; });
+}
+const trLeft = a => Math.max(0, TRASH.days - Math.floor((Date.now() - new Date(a.trash.at)) / 864e5));
+function trashHTML() {
+  const L = (TRASH.list || []).filter(a => (!AFL.cat || a.cat === AFL.cat) && (!AFL.q || (a.title.th + ' ' + a.title.en).toLowerCase().includes(AFL.q.toLowerCase())));
+  const when = s => { const d = new Date(s); return fmtD(iso(d)) + ' ' + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); };
+  return `<div class="px-4 py-3 border-b border-line flex flex-wrap items-center gap-2 text-[12px] text-muted"><i data-lucide="info" class="w-4 h-4"></i>
+      <span class="flex-1 min-w-[240px]">บทความในถังขยะไม่แสดงบนเว็บ และจะถูกลบถาวรอัตโนมัติเมื่อครบ ${TRASH.days} วัน · ลิงก์เดิมยัง redirect ตามที่เลือกตอนลบ · กู้คืนแล้วทุกอย่างกลับเหมือนเดิม</span>
+      ${TRASH.list?.length ? `<button class="btn btn-o !h-8 text-[#b42318]" onclick="trashEmpty()"><i data-lucide="trash" class="w-3.5 h-3.5"></i>ล้างถังขยะ</button>` : ''}</div>
+    <div class="overflow-x-auto"><table class="tbl min-w-[860px]" id="trashTbl"><thead><tr><th>บทความ</th><th>หมวด</th><th>สถานะก่อนลบ</th><th>ลบโดย</th><th>ลบเมื่อ</th><th>ลบถาวรใน</th><th></th></tr></thead><tbody>
+    ${!TRASH.list ? '<tr><td colspan="7" class="text-center text-muted py-10">กำลังโหลด…</td></tr>' : L.map(a => { const t = a.title.th || a.title.en || 'บทความไม่มีชื่อ', d = trLeft(a), st = a.trash.published ? 'published' : 'draft';
+      return `<tr><td><div class="flex items-center gap-3 min-w-[280px]">${coverUrl(a) ? `<img src="${esc(coverUrl(a))}" class="w-16 h-11 rounded-lg object-cover shrink-0 opacity-70"/>` : '<span class="w-16 h-11 rounded-lg bg-sand shrink-0"></span>'}<div class="min-w-0"><p class="truncate max-w-[340px]">${esc(t)}</p><p class="text-[11px] text-muted truncate max-w-[340px]">${a.title.th && a.title.en ? esc(a.title.en) : ''}</p></div></div></td>
+        <td class="text-muted whitespace-nowrap">${ACAT_A[a.cat] || esc(a.cat)}</td><td><span class="pill ${ART_ST[st][1]}">${ART_ST[st][0]}</span>${a.trash.published ? `<p class="text-[10.5px] text-muted mt-1">ลิงก์เดิม → ${a.trash.mode === 'gone' ? '410' : 'หน้ารวมบทความ'}</p>` : ''}</td>
+        <td class="whitespace-nowrap">${esc(a.trash.name || '—')}</td><td class="text-muted whitespace-nowrap">${when(a.trash.at)}</td>
+        <td class="whitespace-nowrap tnum ${d <= 3 ? 'text-[#b42318]' : 'text-muted'}">${d ? d + ' วัน' : 'วันนี้'}</td>
+        <td class="text-right whitespace-nowrap"><button class="btn btn-o !h-8" onclick="trashRestore(${+a.id})"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>กู้คืน</button>
+          <button class="btn btn-g !px-2 !h-8 text-muted hover:text-[#b42318]" title="ลบถาวร" onclick="trashPurge(${+a.id})"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`; }).join('') || `<tr><td colspan="7" class="text-center text-muted py-12"><i data-lucide="trash-2" class="w-6 h-6 mx-auto mb-2 opacity-40"></i>${TRASH.list.length ? 'ไม่พบบทความที่ค้นหาในถังขยะ' : 'ถังขยะว่าง'}</td></tr>`}
+    </tbody></table></div>`;
+}
+{ const _vt = vArticles; vArticles = function () {
+  if (location.hash.split('/')[2] || !can('content')) return _vt();
+  const inT = AFL.tab === 'trash'; if (inT) AFL.tab = 'all';
+  try { _vt(); } finally { if (inT) AFL.tab = 'trash'; }
+  trashLoad();
+  const bar = $('#view .card .flex.gap-1.overflow-x-auto');
+  if (bar) { if (inT) bar.querySelector('.tab.on')?.classList.remove('on');
+    bar.insertAdjacentHTML('beforeend', `<button class="tab ${inT ? 'on' : ''}" onclick="AFL.tab='trash';AP.page=0;vArticles()"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline-block -mt-0.5"></i> ถังขยะ <span class="opacity-60 tnum">${TRASH.list ? TRASH.list.length : (WP.trashN ?? '…')}</span></button>`); }
+  if (inT) { const t = $('#view table.tbl')?.closest('.overflow-x-auto'); if (t) { let n = t.nextElementSibling; while (n) { const x = n.nextElementSibling; n.remove(); n = x; } t.outerHTML = trashHTML(); } }
+  icons(); }; PAGES.find(p => p[0] === 'articles')[3] = vArticles; }
+function trashRestore(id) {
+  const a = TRASH.list?.find(x => x.id === id); if (!a) return;
+  api('POST', `posts/${id}/restore`).then(r => {
+    const w = r.post, n = { ...w, cover: '__wp' + w.id, blocks: { th: w.blocks.th, en: w.blocks.en }, body: { th: blocksHtml(w.blocks.th), en: blocksHtml(w.blocks.en) }, imported: true };
+    THUMBS[n.cover] = w.cover || THUMBS['leopard-90-ft'];
+    ART.push(n); if (typeof ART_ALL !== 'undefined' && ART_ALL !== ART && ART_ALL.length) ART_ALL.push(n);
+    ASYNC.set(n.id, JSON.stringify(postPayload(n)));
+    for (const x of r.redir || []) { const i = REDIR.findIndex(y => y.from === x.from); if (x.created) { if (i >= 0) REDIR.splice(i, 1); } else if (i >= 0) Object.assign(REDIR[i], { to: x.to, code: x.code }); }
+    TRASH.list.splice(TRASH.list.indexOf(a), 1); AUDIT_DIRTY = true; vArticles();
+    toast(`กู้คืนแล้ว · ${n.status === 'published' ? 'กลับมาแสดงบนเว็บ (มีผลภายใน 5 นาที)' : 'อยู่ในแท็บร่าง'}`);
+  }).catch(e => { if (e.status === 404) { TRASH.list.splice(TRASH.list.indexOf(a), 1); vArticles(); } fail(e); });
+}
+function trashPurge(id) {
+  const a = TRASH.list?.find(x => x.id === id); if (!a) return;
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ลบบทความถาวร?</p><p class="text-[12.5px] mt-1">${esc(a.title.th || a.title.en || 'บทความไม่มีชื่อ')}</p><p class="text-[12px] text-muted mt-1">ลบทั้งภาษาไทยและอังกฤษ · กู้คืนไม่ได้อีก · ลิงก์เดิมยัง redirect ตามเดิม</p></div>
+    <div class="p-4 flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button id="trPurgeGo" class="btn btn-p !bg-[#b42318]" onclick="trashPurgeGo([${+id}])"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบถาวร</button></div>`);
+}
+function trashEmpty() {
+  const n = TRASH.list?.length; if (!n) return;
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ล้างถังขยะ?</p><p class="text-[12.5px] mt-1">ลบถาวร ${n} บทความ · กู้คืนไม่ได้อีก</p></div>
+    <div class="p-4 flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button id="trPurgeGo" class="btn btn-p !bg-[#b42318]" onclick="trashPurgeGo(TRASH.list.map(a => a.id))"><i data-lucide="trash" class="w-3.5 h-3.5"></i>ลบถาวรทั้งหมด</button></div>`);
+}
+async function trashPurgeGo(ids) {
+  const b = $('#trPurgeGo'); if (b) b.disabled = true; let ok = 0;
+  for (const id of ids) {
+    try { await api('DELETE', 'posts/' + id, { permanent: true }); ok++; } catch (e) { if (e.status !== 404) { fail(e); break; } }
+    const i = TRASH.list.findIndex(x => x.id === id); if (i >= 0) TRASH.list.splice(i, 1);
+  }
+  AUDIT_DIRTY = true; closeModal(); vArticles(); if (ok) toast(`ลบถาวรแล้ว ${ok} บทความ`);
+}
+/* a new article never takes the id of one in the trash */
+{ const _na = newArticle; newArticle = function () {
+  const hi = Math.max(0, WP.maxId || 0, ...(TRASH.list || []).map(a => a.id));
+  if (hi <= Math.max(0, ...ART.map(a => a.id))) return _na();
+  const ph = { id: hi, _ph: 1 }; ART.push(ph); try { _na(); } finally { const i = ART.indexOf(ph); if (i >= 0) ART.splice(i, 1); } }; }
 
 /* =====================================================================
    ศูนย์ SEO — header (รายงาน / สแกนเว็บ), summary cards on "Meta ทุกหน้า", and แก้ไขอัตโนมัติ:
@@ -4200,6 +4284,160 @@ const addBoatTabs = k => { const h = $('#view > div'); if (h && !$('#view > .tab
 }; }
 PAGE_PERM.system = 'settings';
 
+/* ---------- ตั้งค่า → LINE & แจ้งเตือน: LINE Messaging API keys (encrypted on the server; .env still wins), webhook, sales group, quota ---------- */
+const LN = { st: null, loading: false, test: null, busy: {}, err: '' };
+const lnOn = () => CUR === 'settings' && SITECFG.tab === 'notify' && !!$('#lnHost');
+function lnLoad(refresh) {
+  if (LN.loading) return; LN.loading = true;
+  api('GET', 'line' + (refresh ? '?refresh=1' : '')).then(r => { LN.st = r.status; LN.err = ''; }).catch(e => { LN.err = e.message; fail(e); })
+    .finally(() => { LN.loading = false; if (lnOn()) lnRender(); });
+}
+function lnBusy(k, p) { LN.busy[k] = true; lnRender(); return p.finally(() => { LN.busy[k] = false; if (lnOn()) lnRender(); }); }
+const lnPill = (ok, yes, no) => `<span class="pill" style="background:${ok ? '#eaf6ef' : '#fff6e5'};color:${ok ? '#1e7a46' : '#9a5b00'}">${ok ? yes : no}</span>`;
+function lnRender() {
+  const host = $('#lnHost'); if (!host) return;
+  const S = LN.st;
+  if (!S) { host.innerHTML = `<div class="card p-10 text-center text-muted">${LN.err ? esc(LN.err) : 'กำลังโหลด…'}</div>`; if (!LN.err) lnLoad(); return; }
+  const ro = isRO(), envS = S.secret.src === 'env', envT = S.token.src === 'env', bot = S.bot && !S.bot.error ? S.bot : null;
+  const connected = !!bot && !!S.secret.src;
+  const T = LN.test, step = x => `<li class="flex items-start gap-2 text-[12.5px]"><i data-lucide="${x.ok ? 'circle-check' : 'circle-x'}" class="w-4 h-4 shrink-0 mt-0.5" style="color:${x.ok ? '#1e7a46' : '#a3222c'}"></i><span><b class="font-medium">${esc(x.step)}</b> · <span class="${x.ok ? 'text-muted' : ''}" style="${x.ok ? '' : 'color:#a3222c'}">${esc(x.msg)}</span></span></li>`;
+  const ph = (f, env, envName) => env ? `ตั้งใน .env บนเซิร์ฟเวอร์ (${envName}) · ใช้ค่านั้นก่อน` : f.src ? `บันทึกแล้ว ••••${esc(f.tail)} · วางค่าใหม่เพื่อเปลี่ยน` : '';
+  const ep = S.endpoint, q = S.quota, pct = q && q.limit ? Math.min(100, Math.round((q.used || 0) / q.limit * 100)) : null;
+  const ic = (n, c = '#70000e') => `<span class="w-9 h-9 rounded-xl grid place-items-center shrink-0" style="background:rgb(112 0 14 / .08);color:${c}"><i data-lucide="${n}" class="w-4 h-4"></i></span>`;
+  const sec = (icon, title, sub, inner, right = '') => `<div class="card p-5 min-w-0"><div class="flex items-start gap-3 mb-4">${ic(icon)}<div class="flex-1 min-w-0"><p class="font-medium">${title}</p>${sub ? `<p class="text-[11.5px] text-muted">${sub}</p>` : ''}</div>${right}</div>${inner}</div>`;
+  const left = `<div class="grid gap-4 min-w-0">
+    <div class="card p-5 min-w-0"><div class="flex items-center gap-3">
+      ${bot?.pic ? `<img src="${esc(bot.pic)}" alt="" class="w-12 h-12 rounded-full object-cover shrink-0" style="box-shadow:0 0 0 2px #fff, 0 6px 14px -8px rgb(58 0 7 / .5)"/>` : `<span class="w-12 h-12 rounded-full grid place-items-center shrink-0" style="background:#06c755;color:#fff">${socIco('line', 'w-6 h-6')}</span>`}
+      <div class="flex-1 min-w-0"><p class="font-medium truncate">${bot ? esc(bot.name || '') : 'LINE Messaging API'}</p><p class="text-[11.5px] text-muted truncate">${bot ? esc(bot.basicId || '') + ' · บอท LINE OA ของร้าน' : S.bot?.error ? esc(S.bot.error) : 'ยังไม่ได้เชื่อม · ใส่ Channel secret และ Channel access token ด้านล่าง'}</p></div>
+      ${lnPill(connected, 'เชื่อมแล้ว', 'ยังไม่เชื่อม')}<button class="btn btn-g !h-8 !px-2" title="ตรวจสถานะใหม่" onclick="lnLoad(true)" ${LN.loading ? 'disabled' : ''}><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div></div>
+    ${sec('key-round', 'กุญแจ Channel', 'จาก LINE Developers Console · เก็บแบบเข้ารหัสบนเซิร์ฟเวอร์ ไม่ส่งกลับมาที่เบราว์เซอร์อีก', `<div class="grid gap-4">
+      <label class="grid gap-1.5"><span class="lbl !mb-0">Channel secret <span class="text-muted font-normal">(แท็บ Basic settings)</span></span><input id="lnSecret" type="password" autocomplete="off" spellcheck="false" class="inp font-mono" ${envS || ro ? 'disabled' : ''} placeholder="${ph(S.secret, envS, 'LINE_CHANNEL_SECRET') || 'ตัวอักษร 32 ตัว'}"/></label>
+      <label class="grid gap-1.5"><span class="lbl !mb-0">Channel access token (long-lived) <span class="text-muted font-normal">(แท็บ Messaging API › Issue)</span></span><textarea id="lnToken" rows="3" autocomplete="off" spellcheck="false" class="inp font-mono !text-[12px]" style="-webkit-text-security:disc" ${envT || ro ? 'disabled' : ''} placeholder="${ph(S.token, envT, 'LINE_CHANNEL_ACCESS_TOKEN') || 'วาง token ทั้งหมด'}"></textarea></label>
+      ${T ? `<ul class="grid gap-1.5 rounded-xl bg-sand p-3">${T.map(step).join('')}</ul>` : ''}
+      <div class="flex flex-wrap items-center gap-2">${(S.secret.src === 'saved' || S.token.src === 'saved') && !ro ? `<button class="btn btn-g !h-9 text-muted" onclick="lnRemove()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบที่บันทึกไว้</button>` : ''}
+        <span class="ml-auto"></span><button class="btn btn-o !h-9" ${LN.busy.test ? 'disabled' : ''} onclick="lnTest()"><i data-lucide="zap" class="w-3.5 h-3.5"></i>${LN.busy.test ? 'กำลังทดสอบ…' : 'ทดสอบการเชื่อมต่อ'}</button>${envS && envT ? '' : `<button class="btn btn-p !h-9" ${LN.busy.save || ro ? 'disabled' : ''} onclick="lnSave()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${LN.busy.save ? 'กำลังบันทึก…' : 'บันทึก'}</button>`}</div></div>`)}
+    ${sec('webhook', 'Webhook', 'ให้ LINE ส่งข้อความ ปุ่ม “รับเรื่อง” และการเชิญเข้ากลุ่มมาที่เว็บ', `<div class="flex items-center gap-2 rounded-xl bg-sand px-3 h-10 min-w-0"><span class="font-mono text-[12px] truncate flex-1">${esc(S.webhook)}</span><button class="text-muted hover:text-maroon shrink-0" title="คัดลอก" onclick="navigator.clipboard?.writeText(${esc(JSON.stringify(S.webhook))}).then(()=>toast('คัดลอก Webhook URL แล้ว'))"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button></div>
+      <div class="flex flex-wrap items-center gap-2 mt-3 text-[12px]">${!S.https ? `<span style="color:#9a5b00">APP_URL ยังไม่ใช่ https โดเมนจริง · LINE ส่งเข้า localhost ไม่ได้ ตั้งเมื่อขึ้นเซิร์ฟเวอร์จริง</span>` : ep ? `${lnPill(ep.match, 'URL ตรงกับ LINE', ep.url ? 'URL ใน LINE ไม่ตรง' : 'ยังไม่ได้ตั้งใน LINE')} ${lnPill(ep.active, 'เปิด Use webhook แล้ว', 'ยังไม่เปิด Use webhook')}` : '<span class="text-muted">เชื่อม Token ก่อนจึงตรวจได้</span>'}
+        <span class="ml-auto"></span>${bot && S.https && !(ep?.match) && !ro ? `<button class="btn btn-o !h-8 !text-[12px]" ${LN.busy.wh ? 'disabled' : ''} onclick="lnWebhook()"><i data-lucide="link" class="w-3.5 h-3.5"></i>ตั้ง Webhook ให้อัตโนมัติ</button>` : ''}</div>
+      ${ep && ep.match && !ep.active ? '<p class="text-[11.5px] text-muted mt-2">เปิดสวิตช์ “Use webhook” เองใน LINE Developers › Messaging API (LINE ไม่ให้เปิดผ่านระบบ)</p>' : ''}`)}
+  </div>`;
+  const right = `<div class="grid gap-4 min-w-0">
+    ${sec('users', 'กลุ่ม LINE ทีมขาย', 'รับลีดใหม่ ลีดที่ยังไม่มีคนตอบ และแจ้งเตือนระบบ', `${S.group.id ? `<div class="flex items-center gap-3 rounded-xl bg-sand px-3 py-2.5"><i data-lucide="circle-check" class="w-4 h-4 shrink-0" style="color:#1e7a46"></i><div class="min-w-0 flex-1"><p class="truncate">${esc(S.group.name || 'กลุ่มทีมขาย')}</p><p class="text-[11px] text-muted font-mono">${esc(S.group.id)}${S.group.src === 'env' ? ' · ตั้งใน .env' : ''}</p></div></div>`
+      : `<ol class="grid gap-1.5 text-[12.5px] list-decimal pl-5"><li>LINE OA Manager › ตั้งค่า › ตอบกลับ → เปิด “อนุญาตให้บอทเข้าร่วมกลุ่ม”</li><li>เชิญบอทเข้ากลุ่ม LINE ของทีมขาย</li><li>บอทตอบในกลุ่มว่า “เชื่อมแล้ว” และระบบจะจำกลุ่มให้เอง</li></ol>`}
+      <div class="flex justify-end mt-3"><button class="btn btn-o !h-9" ${!S.group.id || !bot || LN.busy.push ? 'disabled' : ''} onclick="lnPush()"><i data-lucide="send" class="w-3.5 h-3.5"></i>${LN.busy.push ? 'กำลังส่ง…' : 'ส่งข้อความทดสอบเข้ากลุ่ม'}</button></div>`)}
+    ${sec('gauge', 'โควตาข้อความเดือนนี้', 'นับเฉพาะข้อความที่ระบบส่งเอง (push) · การตอบกลับในแชตไม่นับ', q ? `<div class="flex items-end justify-between"><p class="text-2xl tnum">${(q.used ?? 0).toLocaleString()}<span class="text-[13px] text-muted"> / ${q.limit == null ? 'ไม่จำกัด' : q.limit.toLocaleString()}</span></p>${pct != null ? `<span class="text-[12px] ${pct >= 80 ? '' : 'text-muted'}" style="${pct >= 80 ? 'color:#a3222c' : ''}">${pct}%</span>` : ''}</div>
+      ${pct != null ? `<div class="h-2 rounded-full mt-2 overflow-hidden" style="background:rgb(35 20 22 / .08)"><div class="h-full rounded-full" style="width:${pct}%;background:${pct >= 80 ? '#a3222c' : '#70000e'}"></div></div>` : ''}
+      <p class="text-[11px] text-muted mt-3">แพ็กเกจฟรี: เมื่อครบโควตา LINE จะหยุดส่งจนถึงเดือนถัดไป ไม่ตัดเงินเอง · มีค่าใช้จ่ายเฉพาะเมื่ออัปเกรดแพ็กเกจเองใน LINE OA Manager</p>` : '<p class="text-[12px] text-muted">เชื่อม Token ก่อนจึงดูโควตาได้</p>')}
+    <div class="card p-5 min-w-0"><p class="font-medium">วิธีเชื่อม (ฟรี)</p><ol class="grid gap-2 mt-3 text-[12.5px] list-decimal pl-5">
+      <li>เปิด <a class="text-maroon" href="https://developers.line.biz/console/" target="_blank" rel="noopener">developers.line.biz/console</a> → เลือก Provider → channel แบบ Messaging API ของ LINE OA ร้าน</li>
+      <li>แท็บ Basic settings → คัดลอก <b class="font-medium">Channel secret</b></li><li>แท็บ Messaging API → Channel access token (long-lived) → Issue → คัดลอก</li>
+      <li>วางทั้งสองช่อง → บันทึก → ทดสอบการเชื่อมต่อ</li><li>กด “ตั้ง Webhook ให้อัตโนมัติ” แล้วเปิด <b class="font-medium">Use webhook</b> ใน LINE Developers</li><li>เชิญบอทเข้ากลุ่มทีมขาย → ส่งข้อความทดสอบ</li></ol>
+      <p class="text-[11px] text-muted mt-4">ตั้งผ่าน .env ได้ด้วย LINE_CHANNEL_SECRET · LINE_CHANNEL_ACCESS_TOKEN · LINE_GROUP_ID — ค่าใน .env ใช้ก่อนค่าที่บันทึกในหน้านี้${S.savedAt ? ` · บันทึกล่าสุด ${new Date(S.savedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })} โดย ${esc(S.savedBy || '')}` : ''}</p></div>
+  </div>`;
+  host.innerHTML = `<div class="gap-4 items-start" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))">${left}${right}</div>`;
+  icons();
+}
+function lnSave() {
+  const s = $('#lnSecret'), t = $('#lnToken'), body = {};
+  if (s && !s.disabled && s.value.trim()) body.secret = s.value.trim();
+  if (t && !t.disabled && t.value.trim()) body.token = t.value.trim();
+  if (!Object.keys(body).length) return toastErr('วาง Channel secret หรือ Channel access token ก่อน');
+  lnBusy('save', api('PUT', 'line/config', body).then(r => { LN.st = r.status; AUDIT_DIRTY = true; toast('บันทึกแล้ว · กำลังทดสอบ…'); setTimeout(lnTest, 50); }).catch(fail));
+}
+function lnRemove() {
+  if (!confirm('ลบกุญแจ LINE ที่บันทึกไว้? (ลีดใหม่และการแจ้งเตือนจะไม่ส่งเข้า LINE จนกว่าจะใส่ใหม่)')) return;
+  lnBusy('save', api('PUT', 'line/config', { secret: null, token: null }).then(r => { LN.st = r.status; LN.test = null; AUDIT_DIRTY = true; toast('ลบกุญแจ LINE แล้ว'); }).catch(fail));
+}
+function lnTest() { LN.test = null; lnBusy('test', api('POST', 'line/test').then(r => { LN.test = r.steps; LN.st = r.status; toast(r.steps.every(x => x.ok) ? 'เชื่อม LINE ครบแล้ว' : 'ยังเชื่อมไม่ครบ · ดูรายละเอียด'); }).catch(fail)); }
+function lnWebhook() { lnBusy('wh', api('POST', 'line/webhook').then(r => { LN.st = r.status; AUDIT_DIRTY = true; toast('ตั้ง Webhook ใน LINE แล้ว · อย่าลืมเปิด Use webhook'); }).catch(fail)); }
+function lnPush() { lnBusy('push', api('POST', 'line/push').then(() => toast('ส่งข้อความทดสอบเข้ากลุ่มแล้ว')).catch(fail)); }
+{ const t = CFG_TABS.find(x => x[0] === 'notify'); if (t) t[1] = 'LINE & แจ้งเตือน'; }
+{ const _vs = vSettings; vSettings = function () {
+  _vs(); if (SITECFG.tab !== 'notify') return;
+  const f = $('#view .fade'); if (!f) return;
+  f.innerHTML = '<div id="lnHost"></div>'; lnRender();
+  $('#view button[onclick="cfgSave()"]')?.classList.add('hidden');   // this tab saves through its own buttons
+}; PAGES.find(p => p[0] === 'settings')[3] = vSettings; }
+
+/* ---------- Liquid Glass v2 · page details (styles in glass2.css) ---------- */
+/* page name on <body> so glass2.css can style one page without new markup */
+{ const _r = route; route = function () { _r(); document.body.dataset.page = CUR; }; }
+
+/* tabs: a white thumb slides from the last tab to the new one (works across re-renders) */
+const TABPOS = new Map();
+function tabThumbs() {
+  const bars = new Set([...document.querySelectorAll('#view .tab, #drawer .tab, #modalBox .tab')].map(t => t.parentElement));
+  let i = 0;
+  for (const bar of bars) {
+    const on = [...bar.children].find(x => x.classList?.contains('tab') && x.classList.contains('on'));
+    const key = (document.body.dataset.page || '') + ':' + (i++) + ':' + bar.children.length;
+    let th = [...bar.children].find(x => x.classList?.contains('tthumb'));
+    if (!on) { th?.remove(); continue; }
+    bar.classList.add('ttrack');
+    const pos = { l: on.offsetLeft, t: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight };
+    if (!pos.w) continue;
+    if (!th) {
+      th = document.createElement('span'); th.className = 'tthumb'; th.setAttribute('aria-hidden', 'true'); bar.prepend(th);
+      const prev = TABPOS.get(key);
+      if (prev) { th.style.transition = 'none'; Object.assign(th.style, { left: prev.l + 'px', top: prev.t + 'px', width: prev.w + 'px', height: prev.h + 'px' }); void th.offsetWidth; th.style.transition = ''; }
+    }
+    Object.assign(th.style, { left: pos.l + 'px', top: pos.t + 'px', width: pos.w + 'px', height: pos.h + 'px' });
+    TABPOS.set(key, pos);
+  }
+}
+{ let q = 0; const run = () => { q = 0; try { tabThumbs(); } catch (e) { } };
+  const mo = new MutationObserver(() => { if (!q) q = requestAnimationFrame(run); });
+  ['#view', '#drawer', '#modalBox'].forEach(s => { const el = document.querySelector(s); if (el) mo.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] }); });
+  window.addEventListener('resize', () => { if (!q) q = requestAnimationFrame(run); }); }
+
+/* ---------- แดชบอร์ด: sparkline in "ลีดเดือนนี้" + เรือที่ถูกถามมากสุด ---------- */
+function sparkSvg(vals, color = '#70000e') {
+  const W = 96, H = 34, max = Math.max(1, ...vals), st = W / Math.max(1, vals.length - 1);
+  const pts = vals.map((v, i) => [(i * st).toFixed(1), (H - 3 - v / max * (H - 8)).toFixed(1)]);
+  const line = pts.map((p, i) => (i ? 'L' : 'M') + p.join(' ')).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs><linearGradient id="spg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".22"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs><path d="${line} L${W} ${H} L0 ${H}Z" fill="url(#spg)"/><path d="${line}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+{ const _vd = vDashboard; vDashboard = function () {
+  _vd();
+  const v = $('#view'); if (!v) return;
+  // weekly leads, last 10 weeks, on the first KPI card
+  const k1 = v.querySelector('.grid .card'); const now = Date.now(), wk = 7 * 864e5;
+  if (k1 && !k1.querySelector('.spark')) {
+    const w = Array.from({ length: 10 }, (_, i) => BOOKINGS.filter(b => { const t = +new Date(b.createdAt || b.created); return t > now - (10 - i) * wk && t <= now - (9 - i) * wk; }).length);
+    k1.classList.add('kpi-spark'); k1.insertAdjacentHTML('beforeend', sparkSvg(w));
+  }
+  // most asked boats (30 days)
+  // under the weekly chart (fills the space next to "ต้องทำตอนนี้")
+  const chart = [...v.querySelectorAll(':scope > .grid > .card.xl\\:col-span-2')][0];
+  let host = null;
+  if (chart) { host = document.createElement('div'); host.className = 'grid gap-4 xl:col-span-2 items-start min-w-0'; chart.classList.remove('xl:col-span-2'); chart.before(host); host.append(chart); }
+  else { const grids = [...v.children].filter(x => x.classList.contains('grid')); host = grids[grids.length - 1]; }
+  const last = host;
+  if (last && !$('#topBoats')) {
+    const m = new Map();
+    BOOKINGS.filter(b => now - +new Date(b.createdAt || b.created) < 30 * 864e5).forEach(b => { const bt = bySlug(b.boat); if (bt) m.set(bt.slug, (m.get(bt.slug) || 0) + 1); });
+    const top = [...m].sort((a, b) => b[1] - a[1]).slice(0, 5);
+    last.insertAdjacentHTML('beforeend', `<div class="card p-5" id="topBoats"><p class="font-medium">เรือที่ถูกถามมากสุด</p><p class="text-[11.5px] text-muted">30 วัน · นับจากลีดที่ระบุเรือ</p>
+      <div class="tb-grid mt-3">${top.map(([s, n]) => { const b = bySlug(s); return `<a href="#/boats/${s}" class="tb-row"><img src="${esc(THUMBS?.[s] || b.imgs?.[0] || '')}" alt=""/><span class="min-w-0 flex-1"><b>${esc(b.name || s)}</b><small>${b.from_ ? 'เริ่ม ฿' + Number(b.from_).toLocaleString() : esc(TYPE_TH?.[b.type] || '')}</small></span><span class="text-right"><b class="tnum">${n}</b><small>ลีด</small></span></a>`; }).join('') || '<p class="text-[12.5px] text-muted py-6 text-center">ยังไม่มีลีดที่ระบุเรือใน 30 วัน</p>'}</div></div>`);
+  }
+  icons();
+}; PAGES.find(p => p[0] === 'dashboard')[3] = vDashboard; }
+
+/* รายละเอียดลีด: 5-step progress — ลีดใหม่ · ติดต่อแล้ว · กำลังคุย · มัดจำแล้ว · ปิดการขาย
+   "มัดจำแล้ว" comes from the deal payments (ราคาที่ตกลง & การชำระเงิน), so the lead statuses stay as they are */
+function leadSteps(id) {
+  const l = BOOKINGS.find(b => b.id === id); if (!l) return;
+  const row = [...document.querySelectorAll('#drawer .flex.items-center.gap-1')].find(r => r.querySelector('.h-1\\.5')); if (!row) return;
+  let d = null; try { d = DEALS[l.dbId] || null; } catch (e) { }
+  const paid = !!d && d.paid > 0 && (!d.deposit || d.paid >= d.deposit);
+  const S = [['new', 'ลีดใหม่'], ['contacted', 'ติดต่อแล้ว'], ['talking', 'กำลังคุย'], ['deposit', 'มัดจำแล้ว'], ['won', 'ปิดการขาย']];
+  const idx = l.status === 'won' ? 4 : paid ? 3 : Math.max(0, ['new', 'contacted', 'talking'].indexOf(l.status));
+  const lost = l.status === 'lost';
+  row.classList.add('lead-steps'); row.classList.replace('items-center', 'items-start');
+  row.innerHTML = S.map(([k, t], i) => `<div class="flex-1"><div class="h-1.5 rounded-full ${lost ? 'bg-[#f3d6d8]' : i <= idx ? 'bg-maroon' : 'bg-sand-100'}"></div><p class="text-[10px] mt-1.5 ${!lost && i === idx ? 'text-ink' : 'text-muted'}">${t}${k === 'deposit' && paid && d?.paid ? ` <span class="tnum">฿${Number(d.paid).toLocaleString()}</span>` : ''}</p></div>`).join('');
+}
+{ const _bd = bookingDetail; bookingDetail = function (id) { _bd(id); try { leadSteps(id); } catch (e) { } }; }
+
 /* ---------- sidebar groups: แดชบอร์ด · งานขาย · สินค้า & ราคา · เว็บไซต์ · การตลาด · ทีม & ระบบ ---------- */
 { const G = [[null, ['dashboard']], ['งานขาย', ['bookings', 'calendar', 'customers']], ['สินค้า & ราคา', ['boats', 'seasons', 'activities']],
     ['เว็บไซต์', ['content', 'articles', 'media']], ['การตลาด', ['seo', 'analytics', 'audiences']], ['ทีม & ระบบ', ['team', 'audit', 'settings', 'system']]];
@@ -4283,161 +4521,7 @@ function mTick() {
   for (const src of [...MSNAP.keys()]) if (!live.has(src)) {
     const m = MOBJ.get(src); MSNAP.delete(src); MOBJ.delete(src);
     api('DELETE', 'media?url=' + encodeURIComponent(src)).then(() => { AUDIT_DIRTY = true; }).catch(e => { fail(e); if (m && !MEDIA.includes(m)) { MEDIA.push(m); MSNAP.set(src, mKey(m)); MOBJ.set(src, m); if (CUR === 'media') vMedia(); } });
-
-/* ---------- ตั้งค่า → LINE & แจ้งเตือน: LINE Messaging API keys (encrypted on the server; .env still wins), webhook, sales group, quota ---------- */
-const LN = { st: null, loading: false, test: null, busy: {}, err: '' };
-const lnOn = () => CUR === 'settings' && SITECFG.tab === 'notify' && !!$('#lnHost');
-function lnLoad(refresh) {
-  if (LN.loading) return; LN.loading = true;
-  api('GET', 'line' + (refresh ? '?refresh=1' : '')).then(r => { LN.st = r.status; LN.err = ''; }).catch(e => { LN.err = e.message; fail(e); })
-    .finally(() => { LN.loading = false; if (lnOn()) lnRender(); });
-}
-function lnBusy(k, p) { LN.busy[k] = true; lnRender(); return p.finally(() => { LN.busy[k] = false; if (lnOn()) lnRender(); }); }
-const lnPill = (ok, yes, no) => `<span class="pill" style="background:${ok ? '#eaf6ef' : '#fff6e5'};color:${ok ? '#1e7a46' : '#9a5b00'}">${ok ? yes : no}</span>`;
-function lnRender() {
-  const host = $('#lnHost'); if (!host) return;
-  const S = LN.st;
-  if (!S) { host.innerHTML = `<div class="card p-10 text-center text-muted">${LN.err ? esc(LN.err) : 'กำลังโหลด…'}</div>`; if (!LN.err) lnLoad(); return; }
-  const ro = isRO(), envS = S.secret.src === 'env', envT = S.token.src === 'env', bot = S.bot && !S.bot.error ? S.bot : null;
-  const connected = !!bot && !!S.secret.src;
-  const T = LN.test, step = x => `<li class="flex items-start gap-2 text-[12.5px]"><i data-lucide="${x.ok ? 'circle-check' : 'circle-x'}" class="w-4 h-4 shrink-0 mt-0.5" style="color:${x.ok ? '#1e7a46' : '#a3222c'}"></i><span><b class="font-medium">${esc(x.step)}</b> · <span class="${x.ok ? 'text-muted' : ''}" style="${x.ok ? '' : 'color:#a3222c'}">${esc(x.msg)}</span></span></li>`;
-  const ph = (f, env, envName) => env ? `ตั้งใน .env บนเซิร์ฟเวอร์ (${envName}) · ใช้ค่านั้นก่อน` : f.src ? `บันทึกแล้ว ••••${esc(f.tail)} · วางค่าใหม่เพื่อเปลี่ยน` : '';
-  const ep = S.endpoint, q = S.quota, pct = q && q.limit ? Math.min(100, Math.round((q.used || 0) / q.limit * 100)) : null;
-  const ic = (n, c = '#70000e') => `<span class="w-9 h-9 rounded-xl grid place-items-center shrink-0" style="background:rgb(112 0 14 / .08);color:${c}"><i data-lucide="${n}" class="w-4 h-4"></i></span>`;
-  const sec = (icon, title, sub, inner, right = '') => `<div class="card p-5 min-w-0"><div class="flex items-start gap-3 mb-4">${ic(icon)}<div class="flex-1 min-w-0"><p class="font-medium">${title}</p>${sub ? `<p class="text-[11.5px] text-muted">${sub}</p>` : ''}</div>${right}</div>${inner}</div>`;
-  const left = `<div class="grid gap-4 min-w-0">
-    <div class="card p-5 min-w-0"><div class="flex items-center gap-3">
-      ${bot?.pic ? `<img src="${esc(bot.pic)}" alt="" class="w-12 h-12 rounded-full object-cover shrink-0" style="box-shadow:0 0 0 2px #fff, 0 6px 14px -8px rgb(58 0 7 / .5)"/>` : `<span class="w-12 h-12 rounded-full grid place-items-center shrink-0" style="background:#06c755;color:#fff">${socIco('line', 'w-6 h-6')}</span>`}
-      <div class="flex-1 min-w-0"><p class="font-medium truncate">${bot ? esc(bot.name || '') : 'LINE Messaging API'}</p><p class="text-[11.5px] text-muted truncate">${bot ? esc(bot.basicId || '') + ' · บอท LINE OA ของร้าน' : S.bot?.error ? esc(S.bot.error) : 'ยังไม่ได้เชื่อม · ใส่ Channel secret และ Channel access token ด้านล่าง'}</p></div>
-      ${lnPill(connected, 'เชื่อมแล้ว', 'ยังไม่เชื่อม')}<button class="btn btn-g !h-8 !px-2" title="ตรวจสถานะใหม่" onclick="lnLoad(true)" ${LN.loading ? 'disabled' : ''}><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div></div>
-    ${sec('key-round', 'กุญแจ Channel', 'จาก LINE Developers Console · เก็บแบบเข้ารหัสบนเซิร์ฟเวอร์ ไม่ส่งกลับมาที่เบราว์เซอร์อีก', `<div class="grid gap-4">
-      <label class="grid gap-1.5"><span class="lbl !mb-0">Channel secret <span class="text-muted font-normal">(แท็บ Basic settings)</span></span><input id="lnSecret" type="password" autocomplete="off" spellcheck="false" class="inp font-mono" ${envS || ro ? 'disabled' : ''} placeholder="${ph(S.secret, envS, 'LINE_CHANNEL_SECRET') || 'ตัวอักษร 32 ตัว'}"/></label>
-      <label class="grid gap-1.5"><span class="lbl !mb-0">Channel access token (long-lived) <span class="text-muted font-normal">(แท็บ Messaging API › Issue)</span></span><textarea id="lnToken" rows="3" autocomplete="off" spellcheck="false" class="inp font-mono !text-[12px]" style="-webkit-text-security:disc" ${envT || ro ? 'disabled' : ''} placeholder="${ph(S.token, envT, 'LINE_CHANNEL_ACCESS_TOKEN') || 'วาง token ทั้งหมด'}"></textarea></label>
-      ${T ? `<ul class="grid gap-1.5 rounded-xl bg-sand p-3">${T.map(step).join('')}</ul>` : ''}
-      <div class="flex flex-wrap items-center gap-2">${(S.secret.src === 'saved' || S.token.src === 'saved') && !ro ? `<button class="btn btn-g !h-9 text-muted" onclick="lnRemove()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบที่บันทึกไว้</button>` : ''}
-        <span class="ml-auto"></span><button class="btn btn-o !h-9" ${LN.busy.test ? 'disabled' : ''} onclick="lnTest()"><i data-lucide="zap" class="w-3.5 h-3.5"></i>${LN.busy.test ? 'กำลังทดสอบ…' : 'ทดสอบการเชื่อมต่อ'}</button>${envS && envT ? '' : `<button class="btn btn-p !h-9" ${LN.busy.save || ro ? 'disabled' : ''} onclick="lnSave()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${LN.busy.save ? 'กำลังบันทึก…' : 'บันทึก'}</button>`}</div></div>`)}
-    ${sec('webhook', 'Webhook', 'ให้ LINE ส่งข้อความ ปุ่ม “รับเรื่อง” และการเชิญเข้ากลุ่มมาที่เว็บ', `<div class="flex items-center gap-2 rounded-xl bg-sand px-3 h-10 min-w-0"><span class="font-mono text-[12px] truncate flex-1">${esc(S.webhook)}</span><button class="text-muted hover:text-maroon shrink-0" title="คัดลอก" onclick="navigator.clipboard?.writeText(${esc(JSON.stringify(S.webhook))}).then(()=>toast('คัดลอก Webhook URL แล้ว'))"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button></div>
-      <div class="flex flex-wrap items-center gap-2 mt-3 text-[12px]">${!S.https ? `<span style="color:#9a5b00">APP_URL ยังไม่ใช่ https โดเมนจริง · LINE ส่งเข้า localhost ไม่ได้ ตั้งเมื่อขึ้นเซิร์ฟเวอร์จริง</span>` : ep ? `${lnPill(ep.match, 'URL ตรงกับ LINE', ep.url ? 'URL ใน LINE ไม่ตรง' : 'ยังไม่ได้ตั้งใน LINE')} ${lnPill(ep.active, 'เปิด Use webhook แล้ว', 'ยังไม่เปิด Use webhook')}` : '<span class="text-muted">เชื่อม Token ก่อนจึงตรวจได้</span>'}
-        <span class="ml-auto"></span>${bot && S.https && !(ep?.match) && !ro ? `<button class="btn btn-o !h-8 !text-[12px]" ${LN.busy.wh ? 'disabled' : ''} onclick="lnWebhook()"><i data-lucide="link" class="w-3.5 h-3.5"></i>ตั้ง Webhook ให้อัตโนมัติ</button>` : ''}</div>
-      ${ep && ep.match && !ep.active ? '<p class="text-[11.5px] text-muted mt-2">เปิดสวิตช์ “Use webhook” เองใน LINE Developers › Messaging API (LINE ไม่ให้เปิดผ่านระบบ)</p>' : ''}`)}
-  </div>`;
-  const right = `<div class="grid gap-4 min-w-0">
-    ${sec('users', 'กลุ่ม LINE ทีมขาย', 'รับลีดใหม่ ลีดที่ยังไม่มีคนตอบ และแจ้งเตือนระบบ', `${S.group.id ? `<div class="flex items-center gap-3 rounded-xl bg-sand px-3 py-2.5"><i data-lucide="circle-check" class="w-4 h-4 shrink-0" style="color:#1e7a46"></i><div class="min-w-0 flex-1"><p class="truncate">${esc(S.group.name || 'กลุ่มทีมขาย')}</p><p class="text-[11px] text-muted font-mono">${esc(S.group.id)}${S.group.src === 'env' ? ' · ตั้งใน .env' : ''}</p></div></div>`
-      : `<ol class="grid gap-1.5 text-[12.5px] list-decimal pl-5"><li>LINE OA Manager › ตั้งค่า › ตอบกลับ → เปิด “อนุญาตให้บอทเข้าร่วมกลุ่ม”</li><li>เชิญบอทเข้ากลุ่ม LINE ของทีมขาย</li><li>บอทตอบในกลุ่มว่า “เชื่อมแล้ว” และระบบจะจำกลุ่มให้เอง</li></ol>`}
-      <div class="flex justify-end mt-3"><button class="btn btn-o !h-9" ${!S.group.id || !bot || LN.busy.push ? 'disabled' : ''} onclick="lnPush()"><i data-lucide="send" class="w-3.5 h-3.5"></i>${LN.busy.push ? 'กำลังส่ง…' : 'ส่งข้อความทดสอบเข้ากลุ่ม'}</button></div>`)}
-    ${sec('gauge', 'โควตาข้อความเดือนนี้', 'นับเฉพาะข้อความที่ระบบส่งเอง (push) · การตอบกลับในแชตไม่นับ', q ? `<div class="flex items-end justify-between"><p class="text-2xl tnum">${(q.used ?? 0).toLocaleString()}<span class="text-[13px] text-muted"> / ${q.limit == null ? 'ไม่จำกัด' : q.limit.toLocaleString()}</span></p>${pct != null ? `<span class="text-[12px] ${pct >= 80 ? '' : 'text-muted'}" style="${pct >= 80 ? 'color:#a3222c' : ''}">${pct}%</span>` : ''}</div>
-      ${pct != null ? `<div class="h-2 rounded-full mt-2 overflow-hidden" style="background:rgb(35 20 22 / .08)"><div class="h-full rounded-full" style="width:${pct}%;background:${pct >= 80 ? '#a3222c' : '#70000e'}"></div></div>` : ''}
-      <p class="text-[11px] text-muted mt-3">แพ็กเกจฟรี: เมื่อครบโควตา LINE จะหยุดส่งจนถึงเดือนถัดไป ไม่ตัดเงินเอง · มีค่าใช้จ่ายเฉพาะเมื่ออัปเกรดแพ็กเกจเองใน LINE OA Manager</p>` : '<p class="text-[12px] text-muted">เชื่อม Token ก่อนจึงดูโควตาได้</p>')}
-    <div class="card p-5 min-w-0"><p class="font-medium">วิธีเชื่อม (ฟรี)</p><ol class="grid gap-2 mt-3 text-[12.5px] list-decimal pl-5">
-      <li>เปิด <a class="text-maroon" href="https://developers.line.biz/console/" target="_blank" rel="noopener">developers.line.biz/console</a> → เลือก Provider → channel แบบ Messaging API ของ LINE OA ร้าน</li>
-      <li>แท็บ Basic settings → คัดลอก <b class="font-medium">Channel secret</b></li><li>แท็บ Messaging API → Channel access token (long-lived) → Issue → คัดลอก</li>
-      <li>วางทั้งสองช่อง → บันทึก → ทดสอบการเชื่อมต่อ</li><li>กด “ตั้ง Webhook ให้อัตโนมัติ” แล้วเปิด <b class="font-medium">Use webhook</b> ใน LINE Developers</li><li>เชิญบอทเข้ากลุ่มทีมขาย → ส่งข้อความทดสอบ</li></ol>
-      <p class="text-[11px] text-muted mt-4">ตั้งผ่าน .env ได้ด้วย LINE_CHANNEL_SECRET · LINE_CHANNEL_ACCESS_TOKEN · LINE_GROUP_ID — ค่าใน .env ใช้ก่อนค่าที่บันทึกในหน้านี้${S.savedAt ? ` · บันทึกล่าสุด ${new Date(S.savedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })} โดย ${esc(S.savedBy || '')}` : ''}</p></div>
-  </div>`;
-  host.innerHTML = `<div class="gap-4 items-start" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))">${left}${right}</div>`;
-  icons();
-}
-function lnSave() {
-  const s = $('#lnSecret'), t = $('#lnToken'), body = {};
-  if (s && !s.disabled && s.value.trim()) body.secret = s.value.trim();
-  if (t && !t.disabled && t.value.trim()) body.token = t.value.trim();
-  if (!Object.keys(body).length) return toastErr('วาง Channel secret หรือ Channel access token ก่อน');
-  lnBusy('save', api('PUT', 'line/config', body).then(r => { LN.st = r.status; AUDIT_DIRTY = true; toast('บันทึกแล้ว · กำลังทดสอบ…'); setTimeout(lnTest, 50); }).catch(fail));
-}
-function lnRemove() {
-  if (!confirm('ลบกุญแจ LINE ที่บันทึกไว้? (ลีดใหม่และการแจ้งเตือนจะไม่ส่งเข้า LINE จนกว่าจะใส่ใหม่)')) return;
-  lnBusy('save', api('PUT', 'line/config', { secret: null, token: null }).then(r => { LN.st = r.status; LN.test = null; AUDIT_DIRTY = true; toast('ลบกุญแจ LINE แล้ว'); }).catch(fail));
-}
-function lnTest() { LN.test = null; lnBusy('test', api('POST', 'line/test').then(r => { LN.test = r.steps; LN.st = r.status; toast(r.steps.every(x => x.ok) ? 'เชื่อม LINE ครบแล้ว' : 'ยังเชื่อมไม่ครบ · ดูรายละเอียด'); }).catch(fail)); }
-function lnWebhook() { lnBusy('wh', api('POST', 'line/webhook').then(r => { LN.st = r.status; AUDIT_DIRTY = true; toast('ตั้ง Webhook ใน LINE แล้ว · อย่าลืมเปิด Use webhook'); }).catch(fail)); }
-function lnPush() { lnBusy('push', api('POST', 'line/push').then(() => toast('ส่งข้อความทดสอบเข้ากลุ่มแล้ว')).catch(fail)); }
-{ const t = CFG_TABS.find(x => x[0] === 'notify'); if (t) t[1] = 'LINE & แจ้งเตือน'; }
-{ const _vs = vSettings; vSettings = function () {
-  _vs(); if (SITECFG.tab !== 'notify') return;
-  const f = $('#view .fade'); if (!f) return;
-  f.innerHTML = '<div id="lnHost"></div>'; lnRender();
-  $('#view button[onclick="cfgSave()"]')?.classList.add('hidden');   // this tab saves through its own buttons
-}; PAGES.find(p => p[0] === 'settings')[3] = vSettings; }
   }
-/* ---------- Liquid Glass v2 · page details (styles in glass2.css) ---------- */
-/* page name on <body> so glass2.css can style one page without new markup */
-{ const _r = route; route = function () { _r(); document.body.dataset.page = CUR; }; }
-
-/* tabs: a white thumb slides from the last tab to the new one (works across re-renders) */
-const TABPOS = new Map();
-function tabThumbs() {
-  const bars = new Set([...document.querySelectorAll('#view .tab, #drawer .tab, #modalBox .tab')].map(t => t.parentElement));
-  let i = 0;
-  for (const bar of bars) {
-    const on = [...bar.children].find(x => x.classList?.contains('tab') && x.classList.contains('on'));
-    const key = (document.body.dataset.page || '') + ':' + (i++) + ':' + bar.children.length;
-    let th = [...bar.children].find(x => x.classList?.contains('tthumb'));
-    if (!on) { th?.remove(); continue; }
-    bar.classList.add('ttrack');
-    const pos = { l: on.offsetLeft, t: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight };
-    if (!pos.w) continue;
-    if (!th) {
-      th = document.createElement('span'); th.className = 'tthumb'; th.setAttribute('aria-hidden', 'true'); bar.prepend(th);
-      const prev = TABPOS.get(key);
-      if (prev) { th.style.transition = 'none'; Object.assign(th.style, { left: prev.l + 'px', top: prev.t + 'px', width: prev.w + 'px', height: prev.h + 'px' }); void th.offsetWidth; th.style.transition = ''; }
-    }
-    Object.assign(th.style, { left: pos.l + 'px', top: pos.t + 'px', width: pos.w + 'px', height: pos.h + 'px' });
-    TABPOS.set(key, pos);
-  }
-}
-{ let q = 0; const run = () => { q = 0; try { tabThumbs(); } catch (e) { } };
-  const mo = new MutationObserver(() => { if (!q) q = requestAnimationFrame(run); });
-  ['#view', '#drawer', '#modalBox'].forEach(s => { const el = document.querySelector(s); if (el) mo.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] }); });
-  window.addEventListener('resize', () => { if (!q) q = requestAnimationFrame(run); }); }
-
-/* ---------- แดชบอร์ด: sparkline in "ลีดเดือนนี้" + เรือที่ถูกถามมากสุด ---------- */
-function sparkSvg(vals, color = '#70000e') {
-  const W = 96, H = 34, max = Math.max(1, ...vals), st = W / Math.max(1, vals.length - 1);
-  const pts = vals.map((v, i) => [(i * st).toFixed(1), (H - 3 - v / max * (H - 8)).toFixed(1)]);
-  const line = pts.map((p, i) => (i ? 'L' : 'M') + p.join(' ')).join(' ');
-  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs><linearGradient id="spg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".22"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs><path d="${line} L${W} ${H} L0 ${H}Z" fill="url(#spg)"/><path d="${line}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-}
-{ const _vd = vDashboard; vDashboard = function () {
-  _vd();
-  const v = $('#view'); if (!v) return;
-  // weekly leads, last 10 weeks, on the first KPI card
-  const k1 = v.querySelector('.grid .card'); const now = Date.now(), wk = 7 * 864e5;
-  if (k1 && !k1.querySelector('.spark')) {
-    const w = Array.from({ length: 10 }, (_, i) => BOOKINGS.filter(b => { const t = +new Date(b.createdAt || b.created); return t > now - (10 - i) * wk && t <= now - (9 - i) * wk; }).length);
-    k1.classList.add('kpi-spark'); k1.insertAdjacentHTML('beforeend', sparkSvg(w));
-  }
-  // most asked boats (30 days)
-  // under the weekly chart (fills the space next to "ต้องทำตอนนี้")
-  const chart = [...v.querySelectorAll(':scope > .grid > .card.xl\\:col-span-2')][0];
-  let host = null;
-  if (chart) { host = document.createElement('div'); host.className = 'grid gap-4 xl:col-span-2 items-start min-w-0'; chart.classList.remove('xl:col-span-2'); chart.before(host); host.append(chart); }
-  else { const grids = [...v.children].filter(x => x.classList.contains('grid')); host = grids[grids.length - 1]; }
-  const last = host;
-  if (last && !$('#topBoats')) {
-    const m = new Map();
-    BOOKINGS.filter(b => now - +new Date(b.createdAt || b.created) < 30 * 864e5).forEach(b => { const bt = bySlug(b.boat); if (bt) m.set(bt.slug, (m.get(bt.slug) || 0) + 1); });
-    const top = [...m].sort((a, b) => b[1] - a[1]).slice(0, 5);
-    last.insertAdjacentHTML('beforeend', `<div class="card p-5" id="topBoats"><p class="font-medium">เรือที่ถูกถามมากสุด</p><p class="text-[11.5px] text-muted">30 วัน · นับจากลีดที่ระบุเรือ</p>
-      <div class="tb-grid mt-3">${top.map(([s, n]) => { const b = bySlug(s); return `<a href="#/boats/${s}" class="tb-row"><img src="${esc(THUMBS?.[s] || b.imgs?.[0] || '')}" alt=""/><span class="min-w-0 flex-1"><b>${esc(b.name || s)}</b><small>${b.from_ ? 'เริ่ม ฿' + Number(b.from_).toLocaleString() : esc(TYPE_TH?.[b.type] || '')}</small></span><span class="text-right"><b class="tnum">${n}</b><small>ลีด</small></span></a>`; }).join('') || '<p class="text-[12.5px] text-muted py-6 text-center">ยังไม่มีลีดที่ระบุเรือใน 30 วัน</p>'}</div></div>`);
-  }
-  icons();
-}; PAGES.find(p => p[0] === 'dashboard')[3] = vDashboard; }
-
-/* รายละเอียดลีด: 5-step progress — ลีดใหม่ · ติดต่อแล้ว · กำลังคุย · มัดจำแล้ว · ปิดการขาย
-   "มัดจำแล้ว" comes from the deal payments (ราคาที่ตกลง & การชำระเงิน), so the lead statuses stay as they are */
-function leadSteps(id) {
-  const l = BOOKINGS.find(b => b.id === id); if (!l) return;
-  const row = [...document.querySelectorAll('#drawer .flex.items-center.gap-1')].find(r => r.querySelector('.h-1\\.5')); if (!row) return;
-  let d = null; try { d = DEALS[l.dbId] || null; } catch (e) { }
-  const paid = !!d && d.paid > 0 && (!d.deposit || d.paid >= d.deposit);
-  const S = [['new', 'ลีดใหม่'], ['contacted', 'ติดต่อแล้ว'], ['talking', 'กำลังคุย'], ['deposit', 'มัดจำแล้ว'], ['won', 'ปิดการขาย']];
-  const idx = l.status === 'won' ? 4 : paid ? 3 : Math.max(0, ['new', 'contacted', 'talking'].indexOf(l.status));
-  const lost = l.status === 'lost';
-  row.classList.add('lead-steps'); row.classList.replace('items-center', 'items-start');
-  row.innerHTML = S.map(([k, t], i) => `<div class="flex-1"><div class="h-1.5 rounded-full ${lost ? 'bg-[#f3d6d8]' : i <= idx ? 'bg-maroon' : 'bg-sand-100'}"></div><p class="text-[10px] mt-1.5 ${!lost && i === idx ? 'text-ink' : 'text-muted'}">${t}${k === 'deposit' && paid && d?.paid ? ` <span class="tnum">฿${Number(d.paid).toLocaleString()}</span>` : ''}</p></div>`).join('');
-}
-{ const _bd = bookingDetail; bookingDetail = function (id) { _bd(id); try { leadSteps(id); } catch (e) { } }; }
-
 }
 setInterval(mTick, 3000);
 

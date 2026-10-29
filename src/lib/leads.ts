@@ -13,12 +13,12 @@ import { surchargeWarning } from './surcharge';
 
 export * from './lead-meta';
 
-export const appUrl = () => (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+export const appUrl = () => (process.env.APP_URL || 'http://localhost:3009').replace(/\/$/, '');
 export const normPhone = (p: string) => { let d = p.replace(/\D/g, ''); if (d.startsWith('0') && d.length === 10) d = '66' + d.slice(1); return d; };
 const ymd = (d = new Date()) => d.toISOString().slice(2, 10).replace(/-/g, '');
 
 export type LeadInput = {
-  name: string; phone: string; email?: string | null; item?: string | null; program?: string | null; date?: string | null; adults?: number; children?: number; slot?: string | null; message?: string | null;
+  name: string; phone: string; email?: string | null; whatsapp?: string | null; item?: string | null; program?: string | null; date?: string | null; adults?: number; children?: number; slot?: string | null; message?: string | null;
   marketingConsent?: boolean; lang?: string; contactVia?: string;
   ctx?: { source?: string; medium?: string; campaign?: string; content?: string; gclid?: string; fbclid?: string; referrer?: string; landing_page?: string; first_touch?: unknown; pages_viewed?: number; visits?: number; returning?: boolean; boats_viewed?: string[]; device?: string; event_id?: string; current_page?: string };
   ip?: string | null; userAgent?: string | null;
@@ -52,9 +52,9 @@ export async function createLead(input: LeadInput, actor?: User) {
     let [cust] = await tx.select().from(customers).where(eq(customers.phoneNorm, phoneNorm));
     const consent = !!input.marketingConsent;
     if (!cust) {
-      [cust] = await tx.insert(customers).values({ name: input.name.trim(), phone: input.phone.trim(), phoneNorm, email: input.email || null, lang, marketingConsent: consent, consentAt: consent ? new Date() : null, consentSource: consent ? 'web_form' : null }).returning();
+      [cust] = await tx.insert(customers).values({ name: input.name.trim(), phone: input.phone.trim(), phoneNorm, email: input.email || null, whatsapp: input.whatsapp || null, lang, marketingConsent: consent, consentAt: consent ? new Date() : null, consentSource: consent ? 'web_form' : null }).returning();
     } else {
-      await tx.update(customers).set({ email: cust.email || input.email || null, ...(consent && !cust.marketingConsent ? { marketingConsent: true, consentAt: new Date(), consentSource: 'web_form' } : {}), updatedAt: new Date() }).where(eq(customers.id, cust.id));
+      [cust] = await tx.update(customers).set({ email: cust.email || input.email || null, whatsapp: input.whatsapp || cust.whatsapp || null, ...(consent && !cust.marketingConsent ? { marketingConsent: true, consentAt: new Date(), consentSource: 'web_form' } : {}), updatedAt: new Date() }).where(eq(customers.id, cust.id)).returning();
     }
     // duplicate within 24h for the same item → add to the existing lead instead of a new one
     const [dupe] = await tx.select().from(leads).where(and(eq(leads.customerId, cust.id), gte(leads.createdAt, new Date(Date.now() - 864e5)), inArray(leads.status, ['NEW', 'CONTACTED', 'TALKING']))).orderBy(desc(leads.createdAt)).limit(1);
@@ -91,13 +91,13 @@ async function boatName(slug: string | null) {
   return b?.name ?? slug;
 }
 
-export async function leadCardFor(l: Lead, cust: { name: string; phone: string }, title?: string) {
+export async function leadCardFor(l: Lead, cust: { name: string; phone: string; whatsapp?: string | null }, title?: string) {
   const boat = (await boatName(l.boatSlug)) ?? (l.item?.split(':')[1] ?? 'ยังไม่ระบุ');
   const sur = await surchargeWarning(l.boatSlug, l.tripDate);   // holiday surcharge: sales confirm the price with the owner
   const date = (l.tripDate ? new Date(l.tripDate + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '-') + (sur ? ` · ⚠️ ${sur}` : '');
   const first = cust.name.split(' ')[0];
   const waText = l.lang === 'en' ? `Hi ${first}, this is Boat Trip Thailand. Thanks for your request for ${boat}${l.tripDate ? ' on ' + l.tripDate : ''}. Let me check availability for you.` : `สวัสดีค่ะคุณ${first} จาก Boat Trip Thailand ได้รับคำขอเรื่อง ${boat}${l.tripDate ? ' วันที่ ' + date : ''} แล้วนะคะ ขอเช็กคิวเรือให้สักครู่ค่ะ`;
-  return leadCard({ id: l.id, ref: l.ref, name: cust.name, phone: cust.phone, boat: boat + (l.program ? ` · ${l.program}` : ''), date, guests: `${l.adults} ผู้ใหญ่${l.children ? ` + ${l.children} เด็ก` : ''}`, source: (SOURCE_LABEL[l.source] ?? l.source) + (l.campaign ? ` · ${l.campaign}` : ''), score: l.score, scoreLabel: SCORE_LABEL(l.score).th, message: l.message, lang: l.lang }, { title, appUrl: appUrl(), waText });
+  return leadCard({ id: l.id, ref: l.ref, name: cust.name, phone: cust.phone, whatsapp: cust.whatsapp, boat: boat + (l.program ? ` · ${l.program}` : ''), date, guests: `${l.adults} ผู้ใหญ่${l.children ? ` + ${l.children} เด็ก` : ''}`, source: (SOURCE_LABEL[l.source] ?? l.source) + (l.campaign ? ` · ${l.campaign}` : ''), score: l.score, scoreLabel: SCORE_LABEL(l.score).th, message: l.message, lang: l.lang }, { title, appUrl: appUrl(), waText });
 }
 
 export async function lineGroupId() {
@@ -106,7 +106,7 @@ export async function lineGroupId() {
   return (s?.value as string) || null;
 }
 
-async function notifyNewLead(l: Lead, cust: { name: string; phone: string }, assignee: User | null, duplicate: boolean) {
+async function notifyNewLead(l: Lead, cust: { name: string; phone: string; whatsapp?: string | null }, assignee: User | null, duplicate: boolean) {
   if (!lineEnabled()) return;
   const card = await leadCardFor(l, cust, duplicate ? 'ลูกค้าส่งคำขอซ้ำ' : assignee ? `ลีดใหม่ของ ${assignee.name} · ตอบภายใน 15 นาที` : 'ลีดใหม่ · ยังไม่มีผู้รับ');
   const group = await lineGroupId();

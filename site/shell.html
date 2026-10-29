@@ -55,7 +55,7 @@
       <!-- primary nav with sliding indicator -->
       <nav id="navLinks" aria-label="Primary" class="hidden lg:flex relative items-center justify-self-center text-sm">
         <span id="navInk" class="absolute top-1/2 -translate-y-1/2 h-8 bg-maroon-50 rounded-[12px] opacity-0 transition-all duration-300 ease-out pointer-events-none" aria-hidden="true"></span>
-        <button id="megaBtn" aria-expanded="false" aria-controls="megaMenu" class="nav-a whitespace-nowrap relative z-10 h-8 px-3 flex items-center gap-2 hover:text-maroon"><span data-i18n="nav.boats">เช่าเรือ</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-300" id="megaChev"></i></button>
+        <a href="#/fleet" id="navFleet" class="nav-a whitespace-nowrap relative z-10 h-8 px-3 flex items-center hover:text-maroon" data-i18n="nav.boats">เช่าเรือ</a>
         <a href="#categories" class="nav-a whitespace-nowrap relative z-10 h-8 px-3 flex items-center hover:text-maroon" data-i18n="nav.tours">ทัวร์ & กิจกรรม</a>
         <a href="#/blog" class="nav-a whitespace-nowrap relative z-10 h-8 px-3 flex items-center hover:text-maroon" id="navGuide">บทความ</a>
         <a href="#/about" class="nav-a whitespace-nowrap relative z-10 h-8 px-3 flex items-center hover:text-maroon"><span class="navAbout">เกี่ยวกับเรา</span></a>
@@ -71,8 +71,8 @@
         <a href="#/fleet?fav" class="nv-ico relative h-10 w-10 grid place-items-center text-ink hover:bg-black/[.05] transition" aria-label="Favourites"><i data-lucide="heart" class="w-[18px] h-[18px]" stroke-width="2"></i><span class="fav-count hidden absolute top-1 right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-maroon text-white text-[9px] leading-[15px] text-center"></span></a>
         <!-- language -->
         <div id="langSeg" class="lang-seg hidden sm:flex items-center" role="group" aria-label="Language">
-          <button class="lang-btn chip-active" data-lang="th" aria-label="ภาษาไทย"><svg class="flag" viewBox="0 0 30 30" aria-hidden="true"><clipPath id="fTHa"><circle cx="15" cy="15" r="15"/></clipPath><g clip-path="url(#fTHa)"><rect width="30" height="30" fill="#A51931"/><rect y="5" width="30" height="20" fill="#F4F5F8"/><rect y="10" width="30" height="10" fill="#2D2A4A"/></g></svg><span>ไทย</span></button>
-          <button class="lang-btn text-muted" data-lang="en" aria-label="English"><svg class="flag" viewBox="0 0 30 30" aria-hidden="true"><clipPath id="fGBa"><circle cx="15" cy="15" r="15"/></clipPath><g clip-path="url(#fGBa)"><rect width="30" height="30" fill="#012169"/><path d="M-5 -5L35 35M35 -5L-5 35" stroke="#fff" stroke-width="7"/><path d="M-5 -5L35 35M35 -5L-5 35" stroke="#C8102E" stroke-width="2.5"/><path d="M15 -5V35M-5 15H35" stroke="#fff" stroke-width="9"/><path d="M15 -5V35M-5 15H35" stroke="#C8102E" stroke-width="5"/></g></svg><span>EN</span></button>
+          <button class="lang-btn chip-active" data-lang="th" aria-label="ภาษาไทย"><span>ไทย</span></button>
+          <button class="lang-btn text-muted" data-lang="en" aria-label="English"><span>EN</span></button>
         </div>
         <!-- mobile -->
         <button id="menuBtn" aria-expanded="false" aria-controls="mobileMenu" class="lg:hidden h-10 w-10 grid place-items-center rounded-[14px] hover:bg-maroon-50" aria-label="Menu"><span class="burger" aria-hidden="true"><i></i><i></i></span></button>
@@ -80,10 +80,6 @@
     </div>
     <div id="scrollProg" class="hidden" aria-hidden="true"></div>
 
-    <!-- mega menu -->
-    <div id="megaMenu" class="mega hidden lg:block absolute left-0 right-0 top-full pt-2 max-w-7xl mx-auto px-4 sm:px-6" role="region" aria-label="Charter menu">
-      <div id="megaInner" class="bg-white ring-1 ring-black/5 rounded-[22px] shadow-[0_24px_60px_-24px_rgba(58,0,7,.35)] p-3 grid grid-cols-[1.25fr_1fr_.95fr] gap-3"></div>
-    </div>
   </div>
 
   <!-- mobile sheet -->
@@ -97,8 +93,8 @@
     </nav>
     <div class="border-t border-sand-200 p-3 flex items-center justify-between gap-3">
       <div class="lang-seg flex items-center" role="group" aria-label="Language">
-          <button class="lang-btn chip-active" data-lang="th" aria-label="ภาษาไทย"><svg class="flag" viewBox="0 0 30 30" aria-hidden="true"><clipPath id="fTHb"><circle cx="15" cy="15" r="15"/></clipPath><g clip-path="url(#fTHb)"><rect width="30" height="30" fill="#A51931"/><rect y="5" width="30" height="20" fill="#F4F5F8"/><rect y="10" width="30" height="10" fill="#2D2A4A"/></g></svg><span>ไทย</span></button>
-          <button class="lang-btn text-muted" data-lang="en" aria-label="English"><svg class="flag" viewBox="0 0 30 30" aria-hidden="true"><clipPath id="fGBb"><circle cx="15" cy="15" r="15"/></clipPath><g clip-path="url(#fGBb)"><rect width="30" height="30" fill="#012169"/><path d="M-5 -5L35 35M35 -5L-5 35" stroke="#fff" stroke-width="7"/><path d="M-5 -5L35 35M35 -5L-5 35" stroke="#C8102E" stroke-width="2.5"/><path d="M15 -5V35M-5 15H35" stroke="#fff" stroke-width="9"/><path d="M15 -5V35M-5 15H35" stroke="#C8102E" stroke-width="5"/></g></svg><span>EN</span></button>
+          <button class="lang-btn chip-active" data-lang="th" aria-label="ภาษาไทย"><span>ไทย</span></button>
+          <button class="lang-btn text-muted" data-lang="en" aria-label="English"><span>EN</span></button>
       </div>
       <button onclick="$('#mobileMenu').classList.add('hidden');openBooking()" class="flex-1 h-10 rounded-[14px] bg-maroon text-white flex items-center justify-center gap-2"><i data-lucide="zap" class="w-4 h-4"></i><span data-i18n="cta.quick">จองเรือด่วน</span></button>
     </div>
@@ -110,75 +106,82 @@
 <span id="top"></span>
 <div id="view-home">
 <!-- ============ HERO (full-bleed slideshow) ============ -->
-<section id="hero" class="" aria-roledescription="carousel" aria-label="Featured yachts">
-  <div id="heroBox" class="relative w-full overflow-hidden h-[clamp(620px,88vh,720px)] sm:h-[clamp(660px,80vh,740px)] bg-ink on-dark touch-pan-y">
+<section id="hero" class="hero2" aria-roledescription="carousel" aria-label="Featured yachts">
+  <div id="heroBox" class="relative overflow-hidden bg-ink on-dark touch-pan-y">
     <div id="heroStage" class="absolute inset-0"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50 pointer-events-none" aria-hidden="true"></div>
-    <div class="relative h-full flex flex-col items-center justify-center text-center text-white px-5 pb-20 sm:pb-24">
+    <div class="h2-shade" aria-hidden="true"></div>
+    <div class="h2-in">
       <span id="heroEyebrow" hidden></span>
-      <h1 id="heroTitle" class="max-w-5xl"></h1>
-      <p id="heroSub" class="hero-fade mt-4 text-sm text-white/80 max-w-md leading-relaxed [text-wrap:balance]" style="animation-delay:.75s"></p>
-      <div class="hero-fade mt-7 flex flex-wrap justify-center gap-2.5" style="animation-delay:.9s">
-        <a href="#/fleet" class="inline-flex items-center gap-2 h-11 px-6 bg-white text-ink hover:bg-white/90 transition text-[13px]"><span id="heroCta2"></span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
-        <button onclick="openSmart()" class="inline-flex items-center gap-2 h-11 px-6 text-white ring-1 ring-white/40 hover:bg-white/10 transition text-[13px]"><span id="heroCta1"></span></button>
-      </div>
+      <h1 id="heroTitle"></h1>
+      <ul id="heroTrust2" class="h2-trust hero-fade" style="animation-delay:.6s"></ul>
+      <p id="heroSub" hidden></p>
+      <div hidden><span id="heroCta2"></span><span id="heroCta1"></span></div>
       <span id="seasonPill" hidden></span><span id="heroTrust" hidden></span>
     </div>
-    <!-- slide caption + controls -->
-    <div class="absolute inset-x-0 bottom-0 max-w-7xl mx-auto px-5 sm:px-6 pb-16 sm:pb-16 flex items-end justify-center md:justify-between gap-4 text-white">
-      <div id="heroCap" class="hidden md:block min-w-0 text-left" aria-live="polite"></div>
-      <div class="flex items-center gap-2 shrink-0">
-        <div id="heroDots" class="hidden md:flex items-center gap-1.5 mr-2"></div>
-        <button onclick="heroGo(heroIdx-1)" class="w-10 h-10 grid place-items-center bg-white/15 hover:bg-white/30 backdrop-blur-md ring-1 ring-white/30 transition" aria-label="Previous slide"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
-        <button onclick="heroGo(heroIdx+1)" class="w-10 h-10 grid place-items-center bg-white/15 hover:bg-white/30 backdrop-blur-md ring-1 ring-white/30 transition" aria-label="Next slide"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
-        <button id="heroPause" onclick="heroToggle()" class="w-10 h-10 grid place-items-center bg-white/15 hover:bg-white/30 backdrop-blur-md ring-1 ring-white/30 transition" aria-label="Pause slideshow" aria-pressed="false"><i data-lucide="pause" class="w-4 h-4"></i></button>
-      </div>
+    <div class="h2-ctrl">
+      <div id="heroCap" hidden aria-live="polite"></div>
+      <div id="heroDots" class="flex items-center gap-1.5"></div>
+      <button id="heroPause" onclick="heroToggle()" class="h2-pause" aria-label="Pause slideshow" aria-pressed="false"><i data-lucide="pause" class="w-3.5 h-3.5"></i></button>
     </div>
   </div>
 </section>
 
-<!-- ============ QUICK SEARCH ============ -->
-<section id="qsWrap" class="relative z-10 max-w-[1240px] mx-auto px-6 sm:px-10 -mt-10 lg:-mt-9">
-  <div class="qs-card bg-white rounded-[22px] lg:rounded-full p-2">
-    <div hidden><button class="qs-tab tab-active" data-qs="boat"></button><button class="qs-tab" data-qs="activity"></button></div>
-    <form id="quickSearch" class="qs-bar grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.25fr_1.25fr_1fr_1fr_auto] items-center gap-1 lg:gap-0">
+<!-- ============ QUICK SEARCH (white card over the banner) ============ -->
+<section id="qsWrap" class="qs2-wrap">
+  <!-- ช่องค้นหาแบบแคปซูลกระจก ทับขอบล่างแบนเนอร์ครึ่งเดียว (สไตล์ .qs2-* ใน glass.css) -->
+  <div class="qs2">
+    <form id="quickSearch" class="qs-bar qs2-bar">
+      <label class="qs-f qs2-dest">
+        <i data-lucide="map-pin" class="qs2-ic"></i>
+        <span class="qs2-t"><span class="qs-l" data-i18n="qs.dest">จุดหมาย</span>
+        <select id="qsDest" class="qs-v">
+          <option value="" data-i18n="qs2.anyDest">ทุกปลายทาง</option>
+          <option>Phi Phi</option><option>Racha Yai</option><option>Phang Nga Bay</option>
+          <option>Khai Island</option><option>Coral Island</option><option>Maiton</option>
+          <option>Naka Noi</option><option>Hong Krabi</option>
+        </select></span>
+      </label>
       <label class="qs-f">
-        <span class="qs-l" data-i18n="qs.trip">รอบเรือ / ประเภท</span>
+        <i data-lucide="calendar" class="qs2-ic"></i>
+        <span class="qs2-t"><span class="qs-l" data-i18n="qs.date">วันที่</span>
+        <input id="qsDate" type="date" class="qs-v" /></span>
+      </label>
+      <div class="qs-f">
+        <i data-lucide="users" class="qs2-ic"></i>
+        <span class="qs2-t"><span class="qs-l" data-i18n="qs.guests">จำนวนคน</span>
+        <span class="flex items-center justify-between gap-2">
+          <button type="button" class="qs-step" onclick="stepGuests(-1)" aria-label="-"><i data-lucide="minus" class="w-3.5 h-3.5"></i></button>
+          <span class="text-[15px] font-medium tabular-nums"><span id="qsGuests">2</span> <span data-i18n="unit.pax">คน</span></span>
+          <button type="button" class="qs-step" onclick="stepGuests(1)" aria-label="+"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
+        </span></span>
+      </div>
+      <label class="qs-f">
+        <i data-lucide="clock-3" class="qs2-ic"></i>
+        <span class="qs2-t"><span class="qs-l" data-i18n="qs.trip">รอบเรือ / ประเภท</span>
         <select id="qsTrip" class="qs-v">
           <option value="all" data-i18n="qs.tripAll">ทุกรอบ</option>
           <option value="half" data-i18n="qs.half">ครึ่งวัน (4 ชม.)</option>
           <option value="full" data-i18n="qs.full">เต็มวัน (8 ชม.)</option>
           <option value="sunset" data-i18n="qs.sunset">ซันเซ็ต (2–3 ชม.)</option>
           <option value="overnight" data-i18n="qs.overnight">ค้างคืน (2 วัน 1 คืน)</option>
-        </select>
+        </select></span>
       </label>
-      <label class="qs-f">
-        <span class="qs-l" data-i18n="qs.dest">จุดหมาย</span>
-        <select id="qsDest" class="qs-v">
-          <option value="">Phi Phi · Racha · Phang Nga…</option>
-          <option>Phi Phi</option><option>Racha Yai</option><option>Phang Nga Bay</option>
-          <option>Khai Island</option><option>Coral Island</option><option>Maiton</option>
-          <option>Naka Noi</option><option>Hong Krabi</option>
-        </select>
-      </label>
-      <label class="qs-f">
-        <span class="qs-l" data-i18n="qs.date">วันที่</span>
-        <input id="qsDate" type="date" class="qs-v" />
-      </label>
-      <div class="qs-f">
-        <span class="qs-l" data-i18n="qs.guests">จำนวนคน</span>
-        <div class="flex items-center justify-between gap-2">
-          <button type="button" class="qs-step" onclick="stepGuests(-1)" aria-label="-"><i data-lucide="minus" class="w-3.5 h-3.5"></i></button>
-          <span class="text-[14px] font-medium tabular-nums"><span id="qsGuests">2</span> <span data-i18n="unit.pax">คน</span></span>
-          <button type="button" class="qs-step" onclick="stepGuests(1)" aria-label="+"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
-        </div>
-      </div>
-      <button type="submit" class="sm:col-span-2 lg:col-span-1 h-12 px-6 lg:ml-1 bg-maroon hover:bg-maroon-800 text-white flex items-center justify-center gap-2 transition">
-        <i data-lucide="search" class="w-4 h-4"></i><span data-i18n="qs.search">ค้นหา</span>
-      </button>
+      <button type="submit" class="qs2-go"><i data-lucide="search" class="w-[18px] h-[18px]"></i><span data-i18n="qs.search">ค้นหา</span></button>
     </form>
   </div>
-
+  <div class="qs2-foot">
+    <div class="qs2-pop"><span data-i18n="qs2.pop">ยอดนิยม</span> ·
+        <button type="button" onclick="quickDest('Phi Phi');document.getElementById('boats').scrollIntoView({behavior:'smooth'})">Phi Phi</button>
+        <button type="button" onclick="quickDest('Phang Nga Bay');document.getElementById('boats').scrollIntoView({behavior:'smooth'})">Phang Nga Bay</button>
+        <button type="button" onclick="quickDest('Racha Yai');document.getElementById('boats').scrollIntoView({behavior:'smooth'})">Racha Yai</button>
+        <button type="button" onclick="quickDest('Coral Island');document.getElementById('boats').scrollIntoView({behavior:'smooth'})">Coral Island</button>
+      </div>
+    <nav class="qs2-links" aria-label="Shortcuts">
+      <button type="button" onclick="document.getElementById('categories').scrollIntoView({behavior:'smooth'})"><i data-lucide="palmtree"></i><span data-i18n="qs2.tours">ทัวร์ & กิจกรรม</span></button>
+      <a href="#/destinations"><i data-lucide="map"></i><span data-i18n="qs2.dests">ปลายทาง</span></a>
+      <button type="button" onclick="openSmart()"><i data-lucide="sparkles"></i><span data-i18n="qs2.smart">ให้เราช่วยเลือก</span></button>
+    </nav>
+  </div>
   <!-- stats -->
   <div id="statsRow" hidden></div>
 </section>
@@ -189,21 +192,22 @@
 <!-- ============ FEATURED BOATS ============ -->
 <section id="boats" class="bg-white pt-20 lg:pt-24 pb-14 lg:pb-20 relative scroll-mt-16">
   <div class="max-w-7xl mx-auto px-4 sm:px-6">
-    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-      <div>
-        <p class="text-lagoon-600 font-medium text-sm tracking-wider uppercase" data-i18n="boats.kicker">Our Fleet</p>
-        <h2 class="font-display font-medium text-2xl sm:text-3xl text-ink mt-2" data-i18n="boats.title">เรือไฮไลท์ของเรา</h2>
-        <p class="text-muted mt-2 max-w-xl" data-i18n="boats.sub">ตั้งแต่สปีดโบ๊ทสายลุย ไปจนถึงซูเปอร์ยอชต์ 90 ฟุต — ทุกลำมีกัปตัน ลูกเรือ และประกันภัย</p>
-      </div>
-      <div class="flex flex-col sm:flex-row gap-3 sm:items-center min-w-0 max-w-full">
-        <div id="boatFilters" class="flex gap-2 overflow-x-auto no-scrollbar py-1 px-1 -mx-1 min-w-0"></div>
-        <select id="boatSort" class="bg-sand ring-1 ring-line-strong rounded-full px-4 py-2 text-sm font-medium focus:outline-none">
+    <!-- หัวข้อใช้ .tm-* (ชุดเดียวกับส่วนทีมขาย) · ตัวกรองแบบแถบสไลด์ .hf-* ใน glass.css -->
+    <div>
+      <p class="tm-eyebrow"><i data-lucide="ship"></i><span data-i18n="boats.kicker">Our Fleet</span></p>
+      <h2 class="tm-title" data-i18n="boats.title">เรือไฮไลท์ของเรา</h2>
+      <p class="tm-sub max-w-xl" data-i18n="boats.sub">ตั้งแต่สปีดโบ๊ทสายลุย ไปจนถึงซูเปอร์ยอชต์ 90 ฟุต — ทุกลำมีกัปตัน ลูกเรือ และประกันภัย</p>
+    </div>
+    <div class="hf-bar">
+      <div id="boatFilters" class="hf-seg no-scrollbar" role="group" aria-label="Boat type"></div>
+      <label class="hf-sort"><i data-lucide="arrow-up-down"></i>
+        <select id="boatSort" aria-label="Sort">
           <option value="pop" data-i18n="sort.pop">เรียง: ยอดนิยม</option>
           <option value="low" data-i18n="sort.low">ราคา: ต่ำ → สูง</option>
           <option value="high" data-i18n="sort.high">ราคา: สูง → ต่ำ</option>
           <option value="size" data-i18n="sort.size">ขนาดเรือ</option>
         </select>
-      </div>
+      </label>
     </div>
     <div id="searchSummary" class="hidden mt-6 items-center gap-3 bg-lagoon-50 text-lagoon-700 rounded-lg px-4 py-3 text-sm"></div>
     <div id="boatGrid" class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-5"></div>
@@ -291,19 +295,20 @@
 <section id="faq" class="bg-sand"></section>
 
 <!-- ============ BOOKING SECTION ============ -->
-<section id="booking" class="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-t7 scroll-mt-16">
-  <div class="grid lg:grid-cols-[1fr_1.3fr] gap-6 items-start">
+<!-- Liquid Glass: .bk-sec / .ct-* / .bk-panel ใน glass.css, หัวข้อใช้ .tm-* ชุดเดียวกับส่วนทีมขาย -->
+<section id="booking" class="bk-sec scroll-mt-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 lg:py-20 grid lg:grid-cols-[1fr_1.3fr] gap-8 items-start">
     <div>
-      <p class="text-lagoon-600 font-medium text-sm tracking-wider uppercase" data-i18n="book.kicker">Plan your trip</p>
-      <h2 class="font-display font-medium text-2xl sm:text-3xl text-ink mt-2" data-i18n="book.title">บอกเราว่าอยากไปที่ไหน</h2>
-      <p class="text-muted mt-3" data-i18n="book.sub">ทีมงานจะติดต่อกลับพร้อมใบเสนอราคาและโปรแกรมที่เหมาะกับคุณภายใน 30 นาที (09:00–21:00 น.)</p>
-      <div class="mt-6 grid gap-3">
-        <a href="tel:+66611725854" data-set="tel" class="flex items-center gap-4 bg-white rounded-lg p-4 ring-1 ring-sand-200 hover:ring-maroon/40 transition"><span class="w-12 h-12 rounded-xl bg-maroon text-white grid place-items-center"><i data-lucide="phone-call" class="w-5 h-5"></i></span><div><p class="text-xs text-muted" data-i18n="book.call">โทรจองด่วน</p><p class="font-medium" data-set="phone">+66 61 172 5854</p></div></a>
-        <a href="https://lin.ee/kkzkoX7" data-set="lineUrl" target="_blank" rel="noopener" class="flex items-center gap-4 bg-white rounded-lg p-4 ring-1 ring-sand-200 hover:ring-maroon/40 transition"><span class="w-12 h-12 rounded-xl bg-maroon text-white grid place-items-center"><i data-lucide="message-circle" class="w-5 h-5"></i></span><div><p class="text-xs text-muted">LINE Official</p><p class="font-medium" data-set="line">@boattripthailand</p></div></a>
-        <a href="https://wa.me/66611725854" data-set="wa" target="_blank" rel="noopener" class="flex items-center gap-4 bg-white rounded-lg p-4 ring-1 ring-sand-200 hover:ring-maroon/40 transition"><span class="w-12 h-12 rounded-xl bg-maroon text-white grid place-items-center"><i data-lucide="smartphone" class="w-5 h-5"></i></span><div><p class="text-xs text-muted">WhatsApp</p><p class="font-medium" data-set="waText">+66 61 172 5854</p></div></a>
+      <p class="tm-eyebrow"><i data-lucide="compass"></i><span data-i18n="book.kicker">Plan your trip</span></p>
+      <h2 class="tm-title" data-i18n="book.title">บอกเราว่าอยากไปที่ไหน</h2>
+      <p class="tm-sub" data-i18n="book.sub">ทีมงานจะติดต่อกลับพร้อมใบเสนอราคาและโปรแกรมที่เหมาะกับคุณภายใน 30 นาที (09:00–21:00 น.)</p>
+      <div class="ct-list">
+        <a href="tel:+66611725854" data-set="tel" class="ct-card"><span class="ct-ic"><i data-lucide="phone-call"></i></span><span class="ct-txt"><small data-i18n="book.call">โทรจองด่วน</small><b data-set="phone">+66 61 172 5854</b></span><i data-lucide="arrow-up-right" class="ct-go"></i></a>
+        <a href="https://lin.ee/kkzkoX7" data-set="lineUrl" target="_blank" rel="noopener" class="ct-card"><span class="ct-ic"><i data-lucide="message-circle"></i></span><span class="ct-txt"><small>LINE Official</small><b data-set="line">@boattripthailand</b></span><i data-lucide="arrow-up-right" class="ct-go"></i></a>
+        <a href="https://wa.me/66611725854" data-set="wa" target="_blank" rel="noopener" class="ct-card"><span class="ct-ic"><i data-lucide="smartphone"></i></span><span class="ct-txt"><small>WhatsApp</small><b data-set="waText">+66 61 172 5854</b></span><i data-lucide="arrow-up-right" class="ct-go"></i></a>
       </div>
     </div>
-    <div class="bg-white rounded-xl p-6 sm:p-6 shadow-float ring-1 ring-sand-200" id="inlineFormWrap"></div>
+    <div class="bk-panel" id="inlineFormWrap"></div>
   </div>
 </section>
 
@@ -388,11 +393,11 @@
   <div class="absolute inset-0 bg-maroon-900/60 backdrop-blur-sm" data-close></div>
   <div class="relative h-full overflow-y-auto flex items-end sm:items-center justify-center p-0 sm:p-6">
     <div class="modal-enter relative w-full sm:max-w-2xl bg-white rounded-t-xl sm:rounded-xl shadow-float overflow-hidden">
-      <div class="bg-maroon text-white px-6 py-4 flex items-center justify-between on-dark">
-        <div><p class="text-xs text-sun font-medium tracking-widest">BOOKING REQUEST</p><h3 id="bmTitle" class="font-display font-medium text-xl" data-i18n="modal.title">จองเรือ & กิจกรรม</h3></div>
-        <button data-close class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 grid place-items-center" aria-label="Close"><i data-lucide="x" class="w-5 h-5"></i></button>
+      <div class="bm-head">
+        <div><p class="bm-eyebrow">Booking request</p><h3 id="bmTitle" class="bm-title" data-i18n="modal.title">จองเรือ & กิจกรรม</h3></div>
+        <button type="button" data-close class="bm-x" aria-label="Close"><i data-lucide="x"></i></button>
       </div>
-      <div class="p-6 sm:p-6" id="modalFormWrap"></div>
+      <div class="bm-body" id="modalFormWrap"></div>
     </div>
   </div>
 </div>
@@ -468,51 +473,36 @@
 
 <!-- form template -->
 <template id="formTpl">
-  <form class="booking-form grid sm:grid-cols-2 gap-4" novalidate>
-    <div class="sm:col-span-2">
-      <label class="text-sm font-medium" data-i18n="f.item">เรือ / กิจกรรมที่สนใจ</label>
-      <select name="item" class="mt-2 w-full bg-sand rounded-xl px-4 py-3 ring-1 ring-line-strong focus:ring-2 focus:ring-maroon focus:outline-none"></select>
-    </div>
-    <div class="prog-wrap sm:col-span-2 hidden">
-      <label class="text-sm font-medium" data-i18n="f.program">โปรแกรม / เส้นทาง</label>
-      <select name="program" class="mt-2 w-full bg-sand rounded-xl px-4 py-3 ring-1 ring-line-strong focus:ring-2 focus:ring-maroon focus:outline-none"></select>
-    </div>
-    <div>
-      <label class="text-sm font-medium"><span data-i18n="f.name">ชื่อ-นามสกุล</span> <span class="text-ink">*</span></label>
-      <input name="name" required class="mt-2 w-full bg-sand rounded-xl px-4 py-3 ring-1 ring-line-strong focus:ring-2 focus:ring-maroon focus:outline-none" data-i18n-ph="f.namePh" placeholder="เช่น สมชาย ใจดี" />
-    </div>
-    <div>
-      <label class="text-sm font-medium"><span data-i18n="f.phone">เบอร์โทร / LINE ID</span> <span class="text-ink">*</span></label>
-      <input name="phone" required class="mt-2 w-full bg-sand rounded-xl px-4 py-3 ring-1 ring-line-strong focus:ring-2 focus:ring-maroon focus:outline-none" placeholder="08x-xxx-xxxx" />
-    </div>
-    <div>
-      <label class="text-sm font-medium"><span data-i18n="f.date">วันที่เดินทาง</span> <span class="text-ink">*</span></label>
-      <input name="date" type="date" required class="mt-2 w-full bg-sand rounded-xl px-4 py-3 ring-1 ring-line-strong focus:ring-2 focus:ring-maroon focus:outline-none" />
-    </div>
-    <div>
-      <label class="text-sm font-medium" data-i18n="f.guests">จำนวนคน</label>
-      <div class="mt-2 grid grid-cols-2 gap-2">
-        <div class="relative"><input name="adults" type="number" min="1" value="2" class="w-full bg-sand rounded-xl pl-4 pr-14 py-3 ring-1 ring-line-strong focus:ring-2 focus:ring-maroon focus:outline-none" /><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted" data-i18n="f.adult">ผู้ใหญ่</span></div>
-        <div class="relative"><input name="kids" type="number" min="0" value="0" class="w-full bg-sand rounded-xl pl-4 pr-14 py-3 ring-1 ring-line-strong focus:ring-2 focus:ring-maroon focus:outline-none" /><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted" data-i18n="f.kid">เด็ก</span></div>
+  <!-- ฟอร์มจอง (ป๊อปอัปจอง + หน้าติดต่อ) — สไตล์ .bf-* ใน glass.css โทนเดียวกับการ์ดจองหน้าเรือ -->
+  <form class="booking-form bf" novalidate>
+    <label class="bf-fld bf-wide"><span data-i18n="f.item">เรือ / กิจกรรมที่สนใจ</span><select name="item" class="bf-inp"></select></label>
+    <label class="bf-fld bf-wide prog-wrap hidden"><span data-i18n="f.program">โปรแกรม / เส้นทาง</span><select name="program" class="bf-inp"></select></label>
+    <label class="bf-fld"><span><span data-i18n="f.name">ชื่อ-นามสกุล</span> <b class="bf-req">*</b></span><input name="name" required autocomplete="name" class="bf-inp" data-i18n-ph="f.namePh" placeholder="เช่น สมชาย ใจดี" /></label>
+    <label class="bf-fld"><span><span data-i18n="f.phone">เบอร์โทร / LINE ID</span> <b class="bf-req">*</b></span><input name="phone" required autocomplete="tel" class="bf-inp" placeholder="08x-xxx-xxxx" /></label>
+    <label class="bf-fld"><span><span data-i18n="f.email">อีเมล</span> <small class="bf-opt" data-i18n="f.opt">(ไม่บังคับ)</small></span><input name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" class="bf-inp" placeholder="name@email.com" /></label>
+    <label class="bf-fld"><span><span>WhatsApp</span> <small class="bf-opt" data-i18n="f.opt">(ไม่บังคับ)</small></span><input name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" class="bf-inp" placeholder="+66 8x xxx xxxx" /></label>
+    <!-- honeypot: hidden from people, bots fill it → /api/leads drops the request -->
+    <input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="bf-hp" />
+    <label class="bf-fld"><span><span data-i18n="f.date">วันที่เดินทาง</span> <b class="bf-req">*</b></span><input name="date" type="date" required class="bf-inp" /></label>
+    <div class="bf-fld"><span data-i18n="f.guests">จำนวนคน</span>
+      <div class="bf-two">
+        <label class="bf-unit"><input name="adults" type="number" min="1" value="2" inputmode="numeric" class="bf-inp" /><span data-i18n="f.adult">ผู้ใหญ่</span></label>
+        <label class="bf-unit"><input name="kids" type="number" min="0" value="0" inputmode="numeric" class="bf-inp" /><span data-i18n="f.kid">เด็ก</span></label>
       </div>
     </div>
-    <div class="sm:col-span-2">
-      <label class="text-sm font-medium" data-i18n="f.slot">รอบเวลา</label>
-      <div class="mt-2 flex flex-wrap gap-2 slot-group">
-        <button type="button" data-slot="09:00–13:00" class="slot px-4 py-2 rounded-full ring-1 ring-sand-200 text-sm hover:ring-maroon/40 chip-active">09:00–13:00</button>
-        <button type="button" data-slot="14:00–18:00" class="slot px-4 py-2 rounded-full ring-1 ring-sand-200 text-sm hover:ring-maroon/40">14:00–18:00</button>
-        <button type="button" data-slot="10:00–18:00" class="slot px-4 py-2 rounded-full ring-1 ring-sand-200 text-sm hover:ring-maroon/40" data-i18n="f.fullday">เต็มวัน 10:00–18:00</button>
-        <button type="button" data-slot="Overnight" class="slot px-4 py-2 rounded-full ring-1 ring-sand-200 text-sm hover:ring-maroon/40" data-i18n="f.overnight">ค้างคืน</button>
+    <div class="bf-fld bf-wide"><span data-i18n="f.slot">รอบเวลา</span>
+      <div class="bf-slots slot-group">
+        <button type="button" data-slot="09:00–13:00" class="slot chip-active">09:00–13:00</button>
+        <button type="button" data-slot="14:00–18:00" class="slot">14:00–18:00</button>
+        <button type="button" data-slot="10:00–18:00" class="slot" data-i18n="f.fullday">เต็มวัน 10:00–18:00</button>
+        <button type="button" data-slot="Overnight" class="slot" data-i18n="f.overnight">ค้างคืน</button>
       </div>
     </div>
-    <div class="sm:col-span-2">
-      <label class="text-sm font-medium" data-i18n="f.note">หมายเหตุ / คำขอพิเศษ</label>
-      <textarea name="note" rows="3" class="mt-2 w-full bg-sand rounded-xl px-4 py-3 ring-1 ring-line-strong focus:ring-2 focus:ring-maroon focus:outline-none" data-i18n-ph="f.notePh" placeholder="เช่น ฉลองวันเกิด, ต้องการรถรับส่ง, แพ้อาหาร…"></textarea>
-    </div>
-    <p class="sm:col-span-2 text-sm text-muted" data-i18n="f.consent">ทีมขายจะติดต่อกลับทาง WhatsApp / LINE / โทรศัพท์ เพื่อเช็กคิวเรือและเสนอทริปตามคำขอนี้</p>
-    <label class="sm:col-span-2 flex items-start gap-2 text-sm text-muted -mt-2"><input type="checkbox" name="marketing" value="yes" class="mt-1 accent-maroon" /> <span data-i18n="f.marketing">รับข่าวสาร โปรโมชัน และคิวเรือว่างช่วงพิเศษ (ยกเลิกได้ทุกเมื่อ)</span></label>
-    <p role="alert" class="form-error field-error sm:col-span-2 hidden text-sm bg-sand px-4 py-2 border-l-2 border-[color:var(--color-feedback-error)]" data-i18n="f.err">กรุณากรอกชื่อ เบอร์โทร และวันที่เดินทาง</p>
-    <button type="submit" class="sm:col-span-2 bg-maroon hover:bg-maroon-800 text-white font-medium py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-card"><i data-lucide="send" class="w-4 h-4"></i><span data-i18n="f.submit">ส่งคำขอจอง</span></button>
+    <label class="bf-fld bf-wide"><span data-i18n="f.note">หมายเหตุ / คำขอพิเศษ</span><textarea name="note" rows="3" class="bf-inp" data-i18n-ph="f.notePh" placeholder="เช่น ฉลองวันเกิด, ต้องการรถรับส่ง, แพ้อาหาร…"></textarea></label>
+    <p class="bf-wide bf-note" data-i18n="f.consent">ทีมขายจะติดต่อกลับทาง WhatsApp / LINE / โทรศัพท์ เพื่อเช็กคิวเรือและเสนอทริปตามคำขอนี้</p>
+    <label class="bf-wide bf-check"><input type="checkbox" name="marketing" value="yes" /><span data-i18n="f.marketing">รับข่าวสาร โปรโมชัน และคิวเรือว่างช่วงพิเศษ (ยกเลิกได้ทุกเมื่อ)</span></label>
+    <p role="alert" class="form-error bf-wide bf-err hidden" data-i18n="f.err">กรุณากรอกชื่อ เบอร์โทร และวันที่เดินทาง</p>
+    <button type="submit" class="bf-wide bp-btn bp-btn-p"><i data-lucide="send"></i><span data-i18n="f.submit">ส่งคำขอจอง</span></button>
   </form>
 </template>
 

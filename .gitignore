@@ -22,3 +22,9 @@ mockup/*.html
 
 # one-off backup made by scripts/localize-covers.mjs
 data/posts.wp-urls.backup.json
+
+.env.bak*
+
+# local-only: Claude working files and large mockup exports
+Claude outputs/
+mockup/moonglider-web/

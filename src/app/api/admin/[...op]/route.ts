@@ -18,6 +18,7 @@ import { pageSpeed } from '@/lib/pagespeed';
 import { BookingConflict, customerEdit, customerErase, customerMerge, dealOp, dealsFor, wonGuard } from '@/lib/lead-guard';
 import { aiSave, aiStore, cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
 import { sitemapStats, submitSitemap } from '@/lib/sitemap-tools';
+import { listTrash, purgePost, restorePost, trashedIds, trashPost, TRASH_DAYS } from '@/lib/post-trash';
 import { deleteDraft, listDrafts, QuotaError, saveDraft, translate, usage as trUsage } from '@/lib/translate';
 import { audienceFile, cleanMarketing, conversionStatus, MKT_KEY } from '@/lib/marketing';
 
@@ -161,7 +162,7 @@ async function newLead(u: User, b: Record<string, unknown>) {
   if (!name || phone.replace(/\D/g, '').length < 6) throw new HttpError(400, 'ใส่ชื่อและเบอร์ติดต่อ');
   const boat = str(b.boat, 120), guests = Math.max(1, Math.min(200, Number(b.guests) || 2));
   const r = await createLead({
-    name, phone, email: str(b.email, 200) || null, item: boat ? 'boat:' + boat : null, date: /^\d{4}-\d{2}-\d{2}$/.test(str(b.date)) ? str(b.date) : null, adults: guests,
+    name, phone, email: str(b.email, 200) || null, whatsapp: str(b.whatsapp, 30) || null, item: boat ? 'boat:' + boat : null, date: /^\d{4}-\d{2}-\d{2}$/.test(str(b.date)) ? str(b.date) : null, adults: guests,
     message: str(b.note, 2000) || null, marketingConsent: !!b.consent, lang: str(b.lang) === 'en' ? 'en' : 'th', contactVia: CONTACT_FROM_CLIENT[str(b.contact)] ?? 'whatsapp', ctx: { source: str(b.src, 20) || 'wa' },
     ...(await clientInfo()),
   }, u);
@@ -330,6 +331,8 @@ async function boatOp(u: User, slug: string, method: string, b: Record<string, u
   if (!base) {
     const [{ n }] = await db.select({ n: boats.sortOrder }).from(boats).orderBy(boats.sortOrder).limit(1).then(r => r.length ? r : [{ n: 0 }]);
     const [row] = await db.insert(boats).values({ ...v, sortOrder: (n ?? 0) - 1 }).returning();
+    // a new boat on the slug of a deleted one: its old 301 to the fleet page would hide this boat's page
+    await db.delete(redirects).where(inArray(redirects.from, [`/yacht-charter/${slug}`, `/en/yacht-charter/${slug}`]));
     await audit(actor(u), { action: 'create', entity: 'boat', ref: slug, label: row.name, changes: [{ f: 'สถานะ', from: null, to: row.active ? 'แสดงบนเว็บ' : 'ซ่อน / ฉบับร่าง' }], ...info });
     clearSiteCache();
     return json({ boat: boatToClient(row) });
@@ -398,9 +401,14 @@ async function postOp(u: User, id: number, b: Record<string, unknown>) {
     published: str(a.status) === 'published',
   };
   if (JSON.stringify(v.blocks).length > 2_000_000) throw new HttpError(400, 'บทความใหญ่เกินไป (รูปที่อัปโหลดต้องอยู่ในคลังสื่อ)');
-  for (const k of ['slugTh', 'slugEn'] as const) if (v[k]) { const [dup] = await db.select({ id: posts.id }).from(posts).where(and(eq(posts[k], v[k]!), ne(posts.id, id))); if (dup) throw new HttpError(400, `URL "${v[k]}" ซ้ำกับบทความอื่น`); }
+  const trashed = await trashedIds();
+  if (trashed.has(id)) throw new HttpError(409, 'บทความนี้อยู่ในถังขยะ · กู้คืนก่อนจึงแก้ไขได้');
+  for (const k of ['slugTh', 'slugEn'] as const) if (v[k]) { const [dup] = await db.select({ id: posts.id }).from(posts).where(and(eq(posts[k], v[k]!), ne(posts.id, id))); if (dup) throw new HttpError(400, trashed.has(dup.id) ? `URL "${v[k]}" ซ้ำกับบทความในถังขยะ · ลบถาวรหรือเปลี่ยน URL` : `URL "${v[k]}" ซ้ำกับบทความอื่น`); }
   const [cur] = await db.select().from(posts).where(eq(posts.id, id));
   const [row] = cur ? await db.update(posts).set({ ...v, updatedAt: new Date() }).where(eq(posts.id, id)).returning() : await db.insert(posts).values(v).returning();
+  // a live article owns its URLs: drop redirects left on them (e.g. by deleting an older article with the same slug)
+  const own = [v.slugTh && `/blog/${v.slugTh}`, v.slugEn && `/en/blog/${v.slugEn}`].filter((x): x is string => !!x);
+  if (v.published && own.length) await db.delete(redirects).where(inArray(redirects.from, own));
   const ch = !cur ? [{ f: 'บทความ', from: null, to: title.th || title.en }] : [
     ...(cur.published !== v.published ? [{ f: 'สถานะ', from: cur.published ? 'เผยแพร่' : 'ร่าง', to: v.published ? 'เผยแพร่' : 'ร่าง' }] : []),
     ...(JSON.stringify(cur.title) !== JSON.stringify(title) ? [{ f: 'ชื่อเรื่อง', from: cur.title.th || cur.title.en, to: title.th || title.en }] : []),
@@ -413,6 +421,40 @@ async function postOp(u: User, id: number, b: Record<string, unknown>) {
   if (significant.length || b.explicit) await audit(actor(u), { action: !cur ? 'create' : cur.published !== v.published && v.published ? 'publish' : 'update', entity: 'article', ref: String(id), label: title.th || title.en || `#${id}`, changes: ch });
   if (cur?.published || v.published) clearSiteCache();
   return json({ post: postToClient(row) });
+}
+
+/** Delete an article: it goes to the trash first (กู้คืนได้ภายใน 30 วัน). If it was live, its URLs (and old WordPress URLs that
+ *  pointed to it) go to the blog list with 301, or 410 when chosen. `permanent: true` deletes an article that is already in the trash. */
+async function postDel(u: User, id: number, b: Record<string, unknown>) {
+  await need(u, 'content');
+  if (!Number.isInteger(id) || id < 1) throw new HttpError(400, 'รหัสบทความไม่ถูกต้อง');
+  const name = (p: { title: { th: string; en: string } }) => p.title.th || p.title.en || `บทความ ${id}`;
+  if (b.permanent) {
+    const r = await purgePost(id);
+    if (!r?.row) throw new HttpError(404, 'ไม่พบบทความในถังขยะ');
+    await audit(actor(u), { action: 'delete', entity: 'article', ref: String(id), label: name(r.row), changes: [{ f: 'บทความ', from: `${name(r.row)} (ในถังขยะ)`, to: null }], note: 'ลบถาวร' });
+    return json({ ok: true });
+  }
+  const [cur] = await db.select().from(posts).where(eq(posts.id, id));
+  if (!cur || (await trashedIds()).has(id)) throw new HttpError(404, 'ไม่พบบทความ');
+  const gone = b.mode === 'gone';
+  const made = await trashPost(cur, gone ? 'gone' : 'blog', { id: u.id, name: u.name });
+  await audit(actor(u), { action: 'delete', entity: 'article', ref: String(id), label: name(cur),
+    changes: [{ f: 'บทความ', from: `${cur.title.th || ''}${cur.title.th && cur.title.en ? ' / ' : ''}${cur.title.en || ''} (${cur.published ? 'เผยแพร่' : 'ร่าง'})`, to: 'ถังขยะ' },
+      ...(made.length ? [{ f: 'Redirect', from: null, to: `${made.length} URL → ${gone ? '410 (ลบแล้ว)' : 'หน้ารวมบทความ (301)'}` }] : [])], note: `ย้ายไปถังขยะ · ลบถาวรอัตโนมัติใน ${TRASH_DAYS} วัน` });
+  if (cur.published) clearSiteCache();
+  return json({ ok: true, redirects: made, trash: { id, at: new Date().toISOString(), by: u.id, name: u.name, published: cur.published, mode: gone ? 'gone' : 'blog' } });
+}
+/** ถังขยะ: list, restore */
+async function postTrash(u: User, id: number | null) {
+  await need(u, 'content');
+  if (id === null) return json({ days: TRASH_DAYS, trash: (await listTrash()).map(({ p, info }) => ({ ...postToClient(p), status: info.published ? 'published' : 'draft', trash: { at: info.at, by: info.by, name: info.name, published: info.published, mode: info.mode } })) });
+  const r = await restorePost(id);
+  if (!r?.row) throw new HttpError(404, 'ไม่พบบทความในถังขยะ');
+  await audit(actor(u), { action: 'update', entity: 'article', ref: String(id), label: r.row.title.th || r.row.title.en || `บทความ ${id}`,
+    changes: [{ f: 'บทความ', from: 'ถังขยะ', to: r.info.published ? 'เผยแพร่' : 'ร่าง' }, ...(r.info.redir.length ? [{ f: 'Redirect', from: null, to: `คืนค่าเดิม ${r.info.redir.length} URL` }] : [])], note: 'กู้คืนจากถังขยะ' });
+  if (r.info.published) clearSiteCache();
+  return json({ post: postToClient(r.row), redir: r.info.redir });
 }
 
 /* ---------------- router ---------------- */
@@ -457,6 +499,19 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       }
     }
     if (a === 'analytics' && b0 === 'pagespeed' && method === 'GET') { await need(me, 'seo'); const q = new URL(req.url).searchParams; return json(await pageSpeed(q.get('strategy') === 'desktop' ? 'desktop' : 'mobile', q.get('refresh') === '1')); }
+    if (a === 'analytics' && b0 === 'google' && c0 === 'config' && method === 'PUT') {
+      // วิเคราะห์เว็บไซต์ → เชื่อมต่อ API: ids + service account key (encrypted at rest; .env still wins)
+      await need(me, 'settings');
+      let r; try { r = await saveGoogleCfg({ ga4Id: body.ga4Id, propertyId: body.propertyId, gscSite: body.gscSite, sa: body.sa === null ? null : typeof body.sa === 'string' ? body.sa : undefined }, me.name); }
+      catch (e) { throw new HttpError(400, e instanceof GoogleError || e instanceof Error ? e.message : 'บันทึกไม่สำเร็จ'); }
+      const F: [keyof typeof r.after, string][] = [['ga4Id', 'GA4 Measurement ID'], ['propertyId', 'GA4 Property ID'], ['gscSite', 'Search Console พร็อพเพอร์ตี้']];
+      const changes = F.filter(([k]) => (r.before[k] ?? '') !== (r.after[k] ?? '')).map(([k, f]) => ({ f, from: String(r.before[k] ?? '') || null, to: String(r.after[k] ?? '') || null }));
+      if ((r.before.sa?.email ?? null) !== (r.after.sa?.email ?? null) || (body.sa && r.after.sa)) changes.push({ f: 'Service account', from: r.before.sa?.email ?? null, to: r.after.sa ? r.after.sa.email + ' (ไฟล์ใหม่)' : null });
+      if (changes.length) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'google', label: 'เชื่อมต่อ Google API', changes });
+      return json({ status: googleStatus() });
+    }
+    if (a === 'analytics' && b0 === 'google' && c0 === 'test' && method === 'POST') { await need(me, 'seo'); const steps = await testGoogle(); return json({ steps, status: googleStatus() }); }
+    if (a === 'analytics' && b0 === 'google' && c0 === 'status' && method === 'GET') { await need(me, 'seo'); await loadGoogleCfg(true); return json({ status: googleStatus() }); }
     if (a === 'analytics' && b0 === 'google' && method === 'GET') { await need(me, 'seo'); const q = new URL(req.url).searchParams, d = Number(q.get('days')); return json(await googleData([1, 7, 28, 90].includes(d) ? d : 1, q.get('refresh') === '1')); }
     if (a === 'analytics' && method === 'GET') { await need(me, 'seo'); const d = Number(new URL(req.url).searchParams.get('days')); return json(await analyticsData([1, 7, 28, 90].includes(d) ? d : 1)); }
     if (a === 'leads' && !b0 && method === 'GET') { await need(me, 'leads'); return json(await leadsFor(me)); }
@@ -478,7 +533,10 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
     }
     if (a === 'boats' && b0 && (method === 'PUT' || method === 'DELETE')) return await boatOp(me, decodeURIComponent(b0), method, body);
     if (a === 'seasons' && b0 && (method === 'PUT' || method === 'DELETE')) return await seasonOp(me, b0, method, body);
+    if (a === 'posts' && b0 === 'trash' && !c0 && method === 'GET') return await postTrash(me, null);
+    if (a === 'posts' && b0 && c0 === 'restore' && method === 'POST') return await postTrash(me, Number(b0));
     if (a === 'posts' && b0 && method === 'PUT') return await postOp(me, Number(b0), body);
+    if (a === 'posts' && b0 && method === 'DELETE') return await postDel(me, Number(b0), body);
     if (a === 'settings' && b0 === 'seo' && method === 'PUT') {
       // SEO centre: page meta, robots/canonical, robots.txt, llms.txt, sitemap, verification codes
       await need(me, 'seo');
@@ -488,6 +546,31 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       const changes = arr(body.changes).slice(0, 30).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { f: str(o.f, 120), from: str(o.from, 300), to: str(o.to, 300) }; });
       if (changes.length) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo', label: 'ตั้งค่า SEO', changes });
       return json({ seo: v });
+    }
+    if (a === 'seo' && b0 === 'sitemap' && method === 'GET') { await need(me, 'seo'); return json(await sitemapStats()); }
+    if (a === 'seo' && b0 === 'submit' && method === 'POST') {
+      // ศูนย์ SEO → Sitemap & Index: send the sitemap to Google (Search Console API) or Bing (IndexNow)
+      await need(me, 'seo');
+      const to = body.to === 'google' ? 'google' : 'bing', r = await submitSitemap(to);
+      await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo-submit', label: to === 'google' ? 'ส่ง sitemap ให้ Google' : 'ส่ง URL ให้ Bing (IndexNow)', changes: [{ f: 'ผล', from: null, to: r.msg.slice(0, 280) }] });
+      return json(r);
+    }
+    if (a === 'settings' && b0 === 'aisearch' && method === 'GET') { await need(me, 'seo'); return json(await aiStore()); }
+    if (a === 'settings' && b0 === 'aisearch' && method === 'PUT') {
+      // ศูนย์ SEO → AI Search: tracked questions and the results staff record by hand
+      await need(me, 'seo');
+      const v = await aiSave(body.value), note = str(body.note, 200);
+      if (note) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo-ai', label: 'AI Search', changes: [{ f: 'AI Search', from: null, to: note }] });
+      return json(v);
+    }
+    if (a === 'settings' && b0 === 'keywords' && method === 'GET') { await need(me, 'seo'); return json(await kwStore()); }
+    if (a === 'settings' && b0 === 'keywords' && method === 'PUT') {
+      // ศูนย์ SEO → คีย์เวิร์ด: rankings from a Search Console export (Queries.csv)
+      await need(me, 'seo');
+      const rows = cleanKwRows(body.rows); if (!rows.length) throw new HttpError(400, 'ไม่พบคีย์เวิร์ดในไฟล์');
+      const file = str(body.file, 120), v = await kwImport(rows, file, me.name);
+      await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo-keywords', label: 'นำเข้าอันดับคีย์เวิร์ด', changes: [{ f: 'คีย์เวิร์ด', from: v.prev ? `${v.prev.rows.length} คำ` : null, to: `${rows.length} คำ${file ? ` (${file})` : ''}` }] });
+      return json(v);
     }
     if (a === 'redirects' && (b0 === 'save' || b0 === 'delete') && method === 'POST') {
       // stored like the WordPress import: decoded path, no trailing slash — the form middleware looks up
@@ -499,19 +582,6 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       if (b0 === 'delete') {
         if (cur) { await db.delete(redirects).where(eq(redirects.from, from)); await audit(actor(me), { action: 'delete', entity: 'redirect', ref: from, label: `ลบ redirect ${from}`, changes: [{ f: from, from: `${cur.code} → ${cur.to}`, to: null }] }); }
         return json({ ok: true });
-    if (a === 'analytics' && b0 === 'google' && c0 === 'config' && method === 'PUT') {
-      // วิเคราะห์เว็บไซต์ → เชื่อมต่อ API: ids + service account key (encrypted at rest; .env still wins)
-      await need(me, 'settings');
-      let r; try { r = await saveGoogleCfg({ ga4Id: body.ga4Id, propertyId: body.propertyId, gscSite: body.gscSite, sa: body.sa === null ? null : typeof body.sa === 'string' ? body.sa : undefined }, me.name); }
-      catch (e) { throw new HttpError(400, e instanceof GoogleError || e instanceof Error ? e.message : 'บันทึกไม่สำเร็จ'); }
-      const F: [keyof typeof r.after, string][] = [['ga4Id', 'GA4 Measurement ID'], ['propertyId', 'GA4 Property ID'], ['gscSite', 'Search Console พร็อพเพอร์ตี้']];
-      const changes = F.filter(([k]) => (r.before[k] ?? '') !== (r.after[k] ?? '')).map(([k, f]) => ({ f, from: String(r.before[k] ?? '') || null, to: String(r.after[k] ?? '') || null }));
-      if ((r.before.sa?.email ?? null) !== (r.after.sa?.email ?? null) || (body.sa && r.after.sa)) changes.push({ f: 'Service account', from: r.before.sa?.email ?? null, to: r.after.sa ? r.after.sa.email + ' (ไฟล์ใหม่)' : null });
-      if (changes.length) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'google', label: 'เชื่อมต่อ Google API', changes });
-      return json({ status: googleStatus() });
-    }
-    if (a === 'analytics' && b0 === 'google' && c0 === 'test' && method === 'POST') { await need(me, 'seo'); const steps = await testGoogle(); return json({ steps, status: googleStatus() }); }
-    if (a === 'analytics' && b0 === 'google' && c0 === 'status' && method === 'GET') { await need(me, 'seo'); await loadGoogleCfg(true); return json({ status: googleStatus() }); }
       }
       const code = [301, 302, 410].includes(Number(body.code)) ? Number(body.code) : 301;
       const toRaw = str(body.to, 1000), to = code === 410 ? '' : /^https:\/\//.test(toRaw) ? toRaw : path(toRaw);
@@ -546,31 +616,6 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       if (JSON.stringify(v).length > 1_500_000) throw new HttpError(400, 'ข้อมูลกิจกรรมใหญ่เกินไป');
       await db.insert(settings).values({ key: ACTS_KEY, value: v }).onConflictDoUpdate({ target: settings.key, set: { value: v } });
       clearSiteCache();
-    }
-    if (a === 'seo' && b0 === 'sitemap' && method === 'GET') { await need(me, 'seo'); return json(await sitemapStats()); }
-    if (a === 'seo' && b0 === 'submit' && method === 'POST') {
-      // ศูนย์ SEO → Sitemap & Index: send the sitemap to Google (Search Console API) or Bing (IndexNow)
-      await need(me, 'seo');
-      const to = body.to === 'google' ? 'google' : 'bing', r = await submitSitemap(to);
-      await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo-submit', label: to === 'google' ? 'ส่ง sitemap ให้ Google' : 'ส่ง URL ให้ Bing (IndexNow)', changes: [{ f: 'ผล', from: null, to: r.msg.slice(0, 280) }] });
-      return json(r);
-    }
-    if (a === 'settings' && b0 === 'aisearch' && method === 'GET') { await need(me, 'seo'); return json(await aiStore()); }
-    if (a === 'settings' && b0 === 'aisearch' && method === 'PUT') {
-      // ศูนย์ SEO → AI Search: tracked questions and the results staff record by hand
-      await need(me, 'seo');
-      const v = await aiSave(body.value), note = str(body.note, 200);
-      if (note) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo-ai', label: 'AI Search', changes: [{ f: 'AI Search', from: null, to: note }] });
-      return json(v);
-    }
-    if (a === 'settings' && b0 === 'keywords' && method === 'GET') { await need(me, 'seo'); return json(await kwStore()); }
-    if (a === 'settings' && b0 === 'keywords' && method === 'PUT') {
-      // ศูนย์ SEO → คีย์เวิร์ด: rankings from a Search Console export (Queries.csv)
-      await need(me, 'seo');
-      const rows = cleanKwRows(body.rows); if (!rows.length) throw new HttpError(400, 'ไม่พบคีย์เวิร์ดในไฟล์');
-      const file = str(body.file, 120), v = await kwImport(rows, file, me.name);
-      await audit(actor(me), { action: 'update', entity: 'settings', ref: 'seo-keywords', label: 'นำเข้าอันดับคีย์เวิร์ด', changes: [{ f: 'คีย์เวิร์ด', from: v.prev ? `${v.prev.rows.length} คำ` : null, to: `${rows.length} คำ${file ? ` (${file})` : ''}` }] });
-      return json(v);
       const changes = arr(body.changes).slice(0, 30).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { f: str(o.f, 120), from: str(o.from, 300), to: str(o.to, 300) }; });
       if (changes.length) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'activities', label: str(body.label, 200) || 'แก้ไขกิจกรรม & ทัวร์', changes });
       return json({ acts: v });
