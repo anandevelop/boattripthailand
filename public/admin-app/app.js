@@ -4438,6 +4438,9 @@ function leadSteps(id) {
 }
 { const _bd = bookingDetail; bookingDetail = function (id) { _bd(id); try { leadSteps(id); } catch (e) { } }; }
 
+/* the server also stores profile photos in a "team" folder; without it the list view broke on ทั้งหมด */
+if (!MDIR.some(d => d[0] === 'team')) MDIR.splice(MDIR.length - 1, 0, ['team', 'รูปทีมงาน', 'users']);
+MEDIA.forEach(m => { if (!MDIR.some(d => d[0] === m.dir)) m.dir = 'new'; if (!RIGHTS[m.rights]) m.rights = 'unknown'; });
 /* ---------- คลังสื่อ v2: stats + clean-up in the header, one tab bar (folders + to-do), product-style cards ---------- */
 const MSRC = { own: 'อัปโหลด', brochure: 'โบรชัวร์', supplier: 'ซัพพลายเออร์' };
 const mIsUp = m => /^\/uploads\//.test(m.src);
