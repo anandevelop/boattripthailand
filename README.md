@@ -146,7 +146,7 @@ cat ~/actions_key            # → secret SSH_KEY แล้วลบไฟล์
 ssh-keyscan -p 22 <IP>       # → secret SSH_KNOWN_HOSTS (รันจากเครื่องตัวเอง)
 ```
 
-GitHub repo → Settings → Secrets and variables → Actions: `SSH_HOST` `SSH_USER` (deploy) `SSH_KEY` · ไม่บังคับ `DEPLOY_PATH` (ค่าเริ่มต้น /srv/boattripthailand) `SSH_PORT` `SSH_KNOWN_HOSTS` · Variables: `SITE_URL` (https://boattripthailand.com)
+GitHub repo → Settings → Secrets and variables → Actions: `SSH_HOST` `SSH_USER` (deploy) `SSH_KEY` · ไม่บังคับ `DEPLOY_PATH` (ค่าเริ่มต้น /srv/boattripthailand) `SSH_PORT` `SSH_KNOWN_HOSTS` · Variables: `SITE_URL` (ตอนนี้ https://new.boattripthailand.com · ย้ายไป https://boattripthailand.com เมื่อไหร่ก็แก้ตัวแปรนี้ + `APP_URL` ใน `.env` บนเซิร์ฟเวอร์ ไม่ต้องแก้โค้ด)
 
 **docker-compose.prod.yml** (ใช้บนเซิร์ฟเวอร์ผ่าน `COMPOSE_FILE` ใน `.env`): ปิดพอร์ตฐานข้อมูลจากภายนอก · เปิด Caddy (HTTPS) ตลอดโดยไม่ต้องใช้ `--profile` · จำกัด RAM app/db ตัวละ 1 GB · หมุน log 10 MB × 5 · ปรับ Postgres สำหรับ VPS 2–4 GB · ต้องใช้ Docker Compose v2.24 ขึ้นไป
 

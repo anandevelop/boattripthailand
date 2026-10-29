@@ -67,6 +67,11 @@ jobs:
             "DEPLOY_PATH='$DEPLOY_PATH' SHA='$SHA' bash -s" <<'REMOTE'
           set -euo pipefail
           cd "$DEPLOY_PATH"
+          if ! git_err=$(git rev-parse HEAD 2>&1); then
+            echo "::error::$DEPLOY_PATH on $(hostname) is not a usable git clone for user $(whoami): $git_err — clone the repo there (README → Auto-deploy) or set DEPLOY_PATH"
+            ls -la
+            exit 1
+          fi
           PREV=$(git rev-parse HEAD)
           echo "→ current $PREV · deploying $SHA"
 
