@@ -85,19 +85,21 @@ export async function createLead(input: LeadInput, actor?: User) {
   return result;
 }
 
-async function boatName(slug: string | null) {
+async function boatInfo(slug: string | null) {
   if (!slug) return null;
-  const [b] = await db.select({ name: boats.name }).from(boats).where(eq(boats.slug, slug));
-  return b?.name ?? slug;
+  const [b] = await db.select({ name: boats.name, images: boats.images }).from(boats).where(eq(boats.slug, slug));
+  // the card photo: the boat's hero picture, else its first one
+  return { name: b?.name ?? slug, img: b?.images.find(u => u.endsWith('-hero.webp')) ?? b?.images[0] ?? null };
 }
 
 export async function leadCardFor(l: Lead, cust: { name: string; phone: string; whatsapp?: string | null }, title?: string) {
-  const boat = (await boatName(l.boatSlug)) ?? (l.item?.split(':')[1] ?? 'ยังไม่ระบุ');
+  const bi = await boatInfo(l.boatSlug);
+  const boat = bi?.name ?? (l.item?.split(':')[1] ?? 'ยังไม่ระบุ');
   const sur = await surchargeWarning(l.boatSlug, l.tripDate);   // holiday surcharge: sales confirm the price with the owner
   const date = (l.tripDate ? new Date(l.tripDate + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '-') + (sur ? ` · ⚠️ ${sur}` : '');
   const first = cust.name.split(' ')[0];
   const waText = l.lang === 'en' ? `Hi ${first}, this is Boat Trip Thailand. Thanks for your request for ${boat}${l.tripDate ? ' on ' + l.tripDate : ''}. Let me check availability for you.` : `สวัสดีค่ะคุณ${first} จาก Boat Trip Thailand ได้รับคำขอเรื่อง ${boat}${l.tripDate ? ' วันที่ ' + date : ''} แล้วนะคะ ขอเช็กคิวเรือให้สักครู่ค่ะ`;
-  return leadCard({ id: l.id, ref: l.ref, name: cust.name, phone: cust.phone, whatsapp: cust.whatsapp, boat: boat + (l.program ? ` · ${l.program}` : ''), date, guests: `${l.adults} ผู้ใหญ่${l.children ? ` + ${l.children} เด็ก` : ''}`, source: (SOURCE_LABEL[l.source] ?? l.source) + (l.campaign ? ` · ${l.campaign}` : ''), score: l.score, scoreLabel: SCORE_LABEL(l.score).th, message: l.message, lang: l.lang, at: l.createdAt }, { title, appUrl: appUrl(), waText });
+  return leadCard({ id: l.id, ref: l.ref, name: cust.name, phone: cust.phone, whatsapp: cust.whatsapp, boat, program: l.program, img: bi?.img ?? null, date, guests: `${l.adults} ผู้ใหญ่${l.children ? ` + ${l.children} เด็ก` : ''}`, source: (SOURCE_LABEL[l.source] ?? l.source) + (l.campaign ? ` · ${l.campaign}` : ''), score: l.score, scoreLabel: SCORE_LABEL(l.score).th, message: l.message, lang: l.lang, at: l.createdAt }, { title, appUrl: appUrl(), waText });
 }
 
 export async function lineGroupId() {

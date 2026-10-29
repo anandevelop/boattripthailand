@@ -25,60 +25,58 @@ export const pushLine = (to: string, messages: LineMessage[]) => call('/message/
 export const replyLine = (replyToken: string, messages: LineMessage[]) => call('/message/reply', { replyToken, messages: messages.slice(0, 5) });
 export const text = (t: string): LineMessage => ({ type: 'text', text: t.slice(0, 4900) });
 
-/** Flex card sent to sales for every new lead — white receipt-style card: icon + title, label/value rows, one main button */
-export function leadCard(l: { id: string; ref: string; name: string; phone: string; whatsapp?: string | null; boat: string; date: string; guests: string; source: string; score: number; scoreLabel: string; message?: string | null; lang: string; at?: Date | string | null }, opts: { title?: string; appUrl: string; waText: string }): LineMessage {
-  const C = { ink: '#2b1d1f', muted: '#8f8486', line: '#ece6e7', maroon: '#70000e', soft: '#f7f3f1' };
+/**
+ * Flex card sent to sales for every new lead — "Noir": the boat photo on top with the status chip, time,
+ * boat name and program on a dark gradient; white body with label/value rows; one main button.
+ * `img` = the boat photo's site path (shown through /api/line/img as JPEG); without it a dark header is used.
+ */
+export function leadCard(l: { id: string; ref: string; name: string; phone: string; whatsapp?: string | null; boat: string; program?: string | null; img?: string | null; date: string; guests: string; source: string; score: number; scoreLabel: string; message?: string | null; lang: string; at?: Date | string | null }, opts: { title?: string; appUrl: string; waText: string }): LineMessage {
+  const ink = '#1d1617', muted = '#9a9091', line = '#efe9e6', maroon = '#70000e', sand = '#f6f1ec';
   const title = opts.title ?? 'ลีดใหม่ · ตอบภายใน 15 นาที';
-  const kind = /เลยเวลา/.test(title) ? 'late' : /ซ้ำ/.test(title) ? 'dup' : 'lead';
-  const accent = kind === 'late' ? '#c4262e' : kind === 'dup' ? '#6b5e60' : C.maroon;
-  const at = l.at ? new Date(l.at) : new Date();
-  const when = at.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(/\s*น\.?$/, '') + ' น.';
-  const wa = 'https://wa.me/' + (l.whatsapp || l.phone).replace(/\D/g, '').replace(/^0/, '66') + '?text=' + encodeURIComponent(opts.waText);
   const [head, ...rest] = title.split(' · ');
+  const kind = /เลยเวลา/.test(title) ? 'late' : /ซ้ำ/.test(title) ? 'dup' : 'lead';
+  const accent = kind === 'late' ? '#c4262e' : kind === 'dup' ? '#6b5e60' : maroon;
+  const at = l.at ? new Date(l.at) : new Date();
+  const when = at.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(/\s*น\.?$/, '') + ' น.';
+  const wa = 'https://wa.me/' + (l.whatsapp || l.phone).replace(/\D/g, '').replace(/^0/, '66') + '?text=' + encodeURIComponent(opts.waText);
+  const open = `${opts.appUrl}/admin/leads/${l.id}`;
 
-  const kv = (k: string, v: string, o: { strong?: boolean; big?: boolean; color?: string } = {}) => ({
-    type: 'box', layout: 'horizontal', spacing: 'lg', margin: o.big ? 'lg' : 'md', contents: [
-      { type: 'text', text: k, size: o.big ? 'md' : 'sm', color: o.big ? C.ink : C.muted, weight: o.big ? 'bold' : 'regular', flex: 0, gravity: 'top' },
-      { type: 'text', text: v || '-', size: o.big ? 'md' : 'sm', color: o.color ?? C.ink, weight: o.strong || o.big ? 'bold' : 'regular', align: 'end', wrap: true, flex: 1 },
-    ] });
-  const sep = { type: 'separator', margin: 'xl', color: C.line };
-  const btn = (label: string, action: Record<string, unknown>, bg: string, fg: string) => ({
-    type: 'box', layout: 'vertical', backgroundColor: bg, cornerRadius: '12px', paddingAll: '12px', action,
-    contents: [{ type: 'text', text: label, color: fg, size: 'sm', weight: 'bold', align: 'center' }] });
+  const T = (text: string, o: Record<string, unknown> = {}) => ({ type: 'text', text: text || '-', size: 'sm', color: ink, wrap: true, ...o });
+  const kv = (k: string, v: string, bold = false) => ({ type: 'box', layout: 'horizontal', margin: 'md', contents: [T(k, { color: muted, flex: 0 }), T(v, { align: 'end', weight: bold ? 'bold' : 'regular' })] });
+  const chip = (text: string, bg: string, border: string) => ({ type: 'box', layout: 'vertical', flex: 0, backgroundColor: bg, borderWidth: '1px', borderColor: border, cornerRadius: '999px', paddingStart: '11px', paddingEnd: '11px', paddingTop: '5px', paddingBottom: '5px', contents: [T(text, { size: 'xxs', color: '#ffffff', weight: 'bold', wrap: false })] });
+  const pill = (label: string, action: Record<string, unknown>, bg: string, fg: string, border?: string) => ({ type: 'box', layout: 'vertical', flex: 1, backgroundColor: bg, cornerRadius: '999px', paddingAll: '13px', action, ...(border ? { borderWidth: '1px', borderColor: border } : {}), contents: [T(label, { color: fg, weight: 'bold', align: 'center', wrap: false })] });
+
+  const chips = { type: 'box', layout: 'horizontal', contents: [chip(`●  ${head}`, accent + 'e6', '#ffffff59'), { type: 'filler' }, chip(when, '#ffffff38', '#ffffff73')] };
+  const names = [T(l.boat, { size: 'xxl', weight: 'bold', color: '#ffffff', margin: 'md' }), ...(l.program ? [T(l.program, { size: 'xs', color: '#ffffffcc', margin: 'xs' })] : [])];
+  const hero = l.img
+    ? { type: 'box', layout: 'vertical', paddingAll: '0px', contents: [
+        { type: 'image', url: `${opts.appUrl}/api/line/img?src=${encodeURIComponent(l.img)}`, size: 'full', aspectRatio: '4:3', aspectMode: 'cover' },
+        { type: 'box', layout: 'vertical', position: 'absolute', offsetTop: '14px', offsetStart: '14px', offsetEnd: '14px', contents: [chips] },
+        { type: 'box', layout: 'vertical', position: 'absolute', offsetBottom: '0px', offsetStart: '0px', offsetEnd: '0px', paddingAll: '20px', paddingTop: '64px',
+          background: { type: 'linearGradient', angle: '0deg', startColor: '#161112f2', endColor: '#16111200' }, contents: names },
+      ] }
+    : { type: 'box', layout: 'vertical', backgroundColor: '#161112', paddingAll: '20px', contents: [chips, ...names] };
 
   return {
     type: 'flex', altText: `${title}: ${l.name} · ${l.boat}`,
     contents: {
       type: 'bubble', size: 'mega',
-      body: { type: 'box', layout: 'vertical', paddingAll: '20px', contents: [
-        // icon + title + time · ref
-        { type: 'box', layout: 'horizontal', spacing: 'lg', contents: [
-          { type: 'box', layout: 'vertical', width: '44px', height: '44px', cornerRadius: '22px', flex: 0,
-            contents: [{ type: 'image', url: `${opts.appUrl}/brand/line/${kind}.png`, size: 'full', aspectMode: 'cover', aspectRatio: '1:1' }] },
-          { type: 'box', layout: 'vertical', justifyContent: 'center', contents: [
-            { type: 'text', text: head, weight: 'bold', size: 'lg', color: accent, wrap: true },
-            ...(rest.length ? [{ type: 'text', text: rest.join(' · '), size: 'xs', color: C.ink, wrap: true }] : []),
-            { type: 'text', text: `${when} · ${l.ref}`, size: 'xs', color: C.muted, margin: 'xs', wrap: true },
-          ] },
-        ] },
-        sep,
-        kv('ลูกค้า', l.name, { strong: true }),
-        kv('โทร', l.phone),
+      hero,
+      body: { type: 'box', layout: 'vertical', paddingAll: '22px', paddingTop: '14px', contents: [
+        ...(rest.length ? [kv('สถานะ', rest.join(' · '))] : []),
+        kv('วันที่', l.date, true), kv('จำนวน', l.guests),
+        { type: 'separator', margin: 'lg', color: line },
+        kv('ลูกค้า', l.name, true), kv('โทร', l.phone),
         ...(l.whatsapp && l.whatsapp.replace(/\D/g, '') !== l.phone.replace(/\D/g, '') ? [kv('WhatsApp', l.whatsapp)] : []),
-        kv('สนใจ', l.boat, { big: true, color: C.maroon }),
-        kv('วันที่', l.date, { strong: true }),
-        kv('จำนวน', l.guests),
-        ...(l.message ? [{ type: 'box', layout: 'vertical', backgroundColor: C.soft, cornerRadius: '10px', paddingAll: '10px', margin: 'lg',
-          contents: [{ type: 'text', text: l.message.slice(0, 300), size: 'sm', color: '#5d5153', wrap: true }] }] : []),
-        sep,
         kv('มาจาก', l.source),
-        kv('ภาษา', l.lang === 'en' ? 'English' : 'ไทย'),
+        ...(l.message ? [{ type: 'box', layout: 'vertical', margin: 'lg', paddingAll: '12px', backgroundColor: sand, cornerRadius: '12px', contents: [T(l.message.slice(0, 300), { color: '#5d5153' })] }] : []),
+        { type: 'text', text: l.ref, size: 'xxs', color: '#c2b9ba', margin: 'lg', align: 'end' },
       ] },
-      footer: { type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '16px', paddingTop: '0px', contents: [
-        btn('รับเรื่อง', { type: 'postback', label: 'รับเรื่อง', data: `claim:${l.id}`, displayText: `รับเรื่อง ${l.ref}` }, accent, '#ffffff'),
+      footer: { type: 'box', layout: 'vertical', paddingAll: '20px', paddingTop: '0px', spacing: 'sm', contents: [
+        pill('รับเรื่อง', { type: 'postback', label: 'รับเรื่อง', data: `claim:${l.id}`, displayText: `รับเรื่อง ${l.ref}` }, accent, '#ffffff'),
         { type: 'box', layout: 'horizontal', spacing: 'sm', contents: [
-          { ...btn('WhatsApp ลูกค้า', { type: 'uri', label: 'WhatsApp', uri: wa }, '#e7f7ee', '#128c4a'), flex: 1 },
-          { ...btn('เปิดในระบบ', { type: 'uri', label: 'เปิดในระบบ', uri: `${opts.appUrl}/admin/leads/${l.id}` }, '#f3eeef', C.ink), flex: 1 },
+          pill('WhatsApp', { type: 'uri', label: 'WhatsApp', uri: wa }, '#ffffff', '#128c4a', '#d9efe2'),
+          pill('เปิดในระบบ', { type: 'uri', label: 'เปิดในระบบ', uri: open }, '#ffffff', ink, line),
         ] },
       ] },
       styles: { footer: { separator: false } },
