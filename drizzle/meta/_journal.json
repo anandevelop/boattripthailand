@@ -64,6 +64,13 @@
       "when": 1792919400382,
       "tag": "0008_customer_whatsapp",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793263400289,
+      "tag": "0009_boat_galleries",
+      "breakpoints": true
     }
   ]
 }

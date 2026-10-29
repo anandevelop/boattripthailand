@@ -11,7 +11,9 @@ ARG NEXT_PUBLIC_WHATSAPP
 ARG NEXT_PUBLIC_LINE_URL
 ARG NEXT_PUBLIC_CONTACT_EMAIL
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+RUN npm run build \
+ # photos are copied straight from the source into their own cached layers of the run image (below)
+ && rm -rf public/boats public/img
 
 # ---------- run ----------
 FROM node:22-alpine AS run
@@ -19,6 +21,9 @@ WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
+# boat + site photos (~150 MB) in layers of their own: a deploy re-downloads them only when a photo changes
+COPY public/img ./public/img
+COPY public/boats ./public/boats
 COPY --from=build /app/.next ./.next
 COPY next.config.mjs tsconfig.json ./
 COPY --from=build /app/public ./public
@@ -31,7 +36,8 @@ COPY src/lib/crypto.ts ./src/lib/crypto.ts
 # images uploaded from /admin (a volume in docker-compose.yml, so they survive rebuilds)
 RUN mkdir -p /app/uploads && chown node:node /app/uploads \
  # files are read by the node user whatever their mode on the build machine
- && chmod -R a+rX /app/site /app/data /app/public /app/drizzle /app/scripts
+ && chmod -R a+rX /app/site /app/data /app/drizzle /app/scripts \
+ && find /app/public -mindepth 1 -maxdepth 1 ! -name img ! -name boats -exec chmod -R a+rX {} +
 # what is running, shown in /admin → ตั้งค่า → ระบบ (passed by the deploy; last, so they never bust the build cache)
 ARG APP_COMMIT=""
 ARG APP_COMMIT_TIME=""

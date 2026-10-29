@@ -3,7 +3,7 @@
  * Safe to re-run: boats, calendars, posts and redirects are upserted.
  *   npm run db:seed
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as s from '../src/db/schema';
@@ -40,7 +40,10 @@ async function main() {
   const { boats } = json('data/boats.json');
   let i = 0;
   for (const b of boats) {
-    const imgs = ['hero', 'a', 'b'].filter(k => existsSync(`public/boats/${b.slug}-${k}.webp`)).map(k => `/boats/${b.slug}-${k}.webp`);
+    const main = ['hero', 'a', 'b'].filter(k => existsSync(`public/boats/${b.slug}-${k}.webp`)).map(k => `/boats/${b.slug}-${k}.webp`);
+    // the rest of the gallery: public/boats/<slug>/04.webp, 05.webp …
+    const more = existsSync(`public/boats/${b.slug}`) ? readdirSync(`public/boats/${b.slug}`).filter(f => f.endsWith('.webp')).sort().map(f => `/boats/${b.slug}/${f}`) : [];
+    const imgs = [...main, ...more];
     const v = {
       slug: b.slug, name: b.title, subtitle: b.subtitle || null, type: b.type, ft: b.ft ? Number(b.ft) : null, pax: b.pax ? Number(b.pax) : null, marina: prettyMarina(b.marina) || null,
       featured: FEATURED.includes(b.slug), active: true, sortOrder: i, fromPrice: b.from_ ? Number(b.from_) : null,
