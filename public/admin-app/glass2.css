@@ -165,3 +165,27 @@ body[data-page=dashboard] #view .card > p.text-2xl { font-size:34px; letter-spac
   box-shadow:0 4px 12px -6px rgb(70 20 25 / .4), inset 0 0 0 1px rgb(255 255 255 / .9) !important; }
 #view .rounded-full:has(> button.rounded-full.bg-ink.text-white), #view .rounded-full:has(> button.rounded-full.h-8.bg-maroon.text-white) { background:rgb(29 18 20 / .05) !important; box-shadow:inset 0 1px 2px rgb(29 18 20 / .06) !important; }
 #drawer .lead-steps .tnum { color:var(--ok); }
+
+/* ---------- คลังสื่อ: product-style cards ---------- */
+.mgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(176px, 1fr)); gap:14px; }
+.mcard { position:relative; padding:8px 8px 12px; border-radius:20px; cursor:pointer; background:rgb(255 255 255 / .62); -webkit-backdrop-filter:var(--blur2); backdrop-filter:var(--blur2);
+  box-shadow:var(--edge), var(--lift); transition:transform .18s cubic-bezier(.3,.8,.3,1), box-shadow .18s; min-width:0; }
+.mcard:hover { transform:translateY(-2px); box-shadow:var(--edge), var(--lift-2); }
+.mcard.on { box-shadow:inset 0 0 0 2px var(--maroon), var(--lift); }
+.mimg { position:relative; aspect-ratio:1; border-radius:14px; overflow:hidden; background:#f3eeec; box-shadow:inset 0 0 0 1px rgb(29 18 20 / .05); }
+.mimg img { width:100%; height:100%; object-fit:cover; transition:transform .4s cubic-bezier(.3,.8,.3,1); }
+.mcard:hover .mimg img { transform:scale(1.03); }
+.msrc, .mwarn { position:absolute; bottom:8px; display:inline-flex; align-items:center; gap:5px; height:24px; padding:0 9px; border-radius:999px; font-size:11px; white-space:nowrap;
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+.msrc { right:8px; color:var(--ink-2); background:rgb(255 255 255 / .88); box-shadow:0 4px 10px -6px rgb(0 0 0 / .4); }
+.msrc::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.7; }
+.mwarn { top:8px; right:8px; bottom:auto; color:#fff; background:rgb(176 32 47 / .88); }
+.mchk { position:absolute; top:8px; left:8px; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; color:transparent; background:rgb(255 255 255 / .9);
+  box-shadow:0 2px 8px -2px rgb(0 0 0 / .3), inset 0 0 0 1px rgb(29 18 20 / .12); opacity:0; transition:opacity .15s; }
+.mchk svg { width:14px; height:14px; stroke-width:2.5; }
+.mcard:hover .mchk, .mcard.on .mchk { opacity:1; }
+.mcard.on .mchk { background:linear-gradient(180deg, var(--maroon-hi), var(--maroon)); color:#fff; box-shadow:0 4px 10px -4px rgb(112 0 14 / .7); }
+.mname { margin:10px 4px 0; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mmeta { margin:2px 4px 0; font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mun { color:var(--err); }
+@media (max-width:640px) { .mgrid { grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; } }

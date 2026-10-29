@@ -4438,6 +4438,52 @@ function leadSteps(id) {
 }
 { const _bd = bookingDetail; bookingDetail = function (id) { _bd(id); try { leadSteps(id); } catch (e) { } }; }
 
+/* ---------- คลังสื่อ v2: stats + clean-up in the header, one tab bar (folders + to-do), product-style cards ---------- */
+const MSRC = { own: 'อัปโหลด', brochure: 'โบรชัวร์', supplier: 'ซัพพลายเออร์' };
+const mIsUp = m => /^\/uploads\//.test(m.src);
+const mNoAlt = m => !m.alt.th.trim() || !m.alt.en.trim();
+function mTile2(m, U) {
+  const u = (U.get(m.src) || []).length, on = ML.sel.has(m.id), dir = MDIR.find(d => d[0] === m.dir)?.[1] || 'อื่นๆ';
+  const title = (m.alt.th || m.owner || m.name).trim();
+  return `<div class="mcard ${on ? 'on' : ''}" onclick="mDetail(${m.id})" title="${esc(m.name)}">
+    <div class="mimg"><img loading="lazy" src="${m.src}" alt="" style="object-position:${m.focal.x}% ${m.focal.y}%"/>
+      <button class="mchk" onclick="event.stopPropagation();mSel(${m.id})" aria-label="เลือก"><i data-lucide="check"></i></button>
+      ${mNoAlt(m) ? '<span class="mwarn" title="ยังไม่มี Alt text ครบ 2 ภาษา">ไม่มี alt</span>' : ''}
+      <span class="msrc">${MSRC[m.source] || 'ในเว็บ'}</span></div>
+    <p class="mname">${esc(title)}</p>
+    <p class="mmeta">${dir} · ${mIsUp(m) ? 'อัปโหลด' : 'ในเว็บ'} · ${u ? `ใช้ ${u}` : '<span class="mun">ไม่ได้ใช้</span>'}${m.rights === 'unknown' ? ' · <span title="ยังไม่ทราบสิทธิ์การใช้">©?</span>' : ''}</p></div>`;
+}
+/* only files we uploaded ourselves (images that shipped with the site stay) and that nothing uses */
+function mCleanUnused() {
+  const U = mUsage(), ids = MEDIA.filter(m => mIsUp(m) && !U.get(m.src)).map(m => m.id);
+  if (!ids.length) return toast('ไม่มีรูปที่อัปโหลดแล้วไม่ได้ใช้');
+  if (!confirm(`ลบรูปที่อัปโหลดแล้วยังไม่ได้ใช้ที่ไหน ${ids.length} รูป?\n\nลบถาวร · ระบบตรวจซ้ำที่เซิร์ฟเวอร์ ถ้ารูปไหนยังถูกใช้อยู่จะไม่ลบ`)) return;
+  ML.sel.clear(); ids.forEach(i => ML.sel.add(i)); mBulk('del');
+}
+{ const _vm = vMedia; vMedia = function () {
+  _vm();
+  const v = $('#view'), U = mUsage(); if (!v) return;
+  const up = MEDIA.filter(mIsUp), mb = up.reduce((s, m) => s + (MSIZE[m.src] || 0), 0) / 1048576;
+  const noalt = MEDIA.filter(mNoAlt).length, unused = MEDIA.filter(m => !U.get(m.src)).length, unusedUp = up.filter(m => !U.get(m.src)).length, norights = MEDIA.filter(m => !['own', 'ads'].includes(m.rights)).length;
+  const hd = v.firstElementChild, sub = hd?.querySelector('p.text-muted'), acts = hd?.lastElementChild;
+  if (sub) sub.textContent = `${MEDIA.length.toLocaleString()} ไฟล์ · อัปโหลดเอง ${up.length.toLocaleString()} ไฟล์ ${mb.toFixed(1)} MB · แปลงเป็น WebP อัตโนมัติ`;
+  if (acts && !acts.querySelector('[data-mclean]')) acts.insertAdjacentHTML('afterbegin',
+    `<button class="btn btn-o" onclick="ML.smart='noalt';ML.dir='all';ML.sel.clear();vMedia()" ${noalt ? '' : 'disabled'}><i data-lucide="type" class="w-3.5 h-3.5"></i>เติม alt ที่ขาด (${noalt})</button>
+     <button class="btn btn-o" data-mclean onclick="mCleanUnused()" ${unusedUp && !isRO() ? '' : 'disabled'} title="เฉพาะรูปที่อัปโหลดเองและไม่ได้ใช้ที่ไหน"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบรูปที่ไม่ได้ใช้ (${unusedUp})</button>`);
+  const aside = v.querySelector('aside'), wrap = aside?.parentElement;
+  if (aside) { aside.remove(); wrap.style.gridTemplateColumns = 'minmax(0,1fr)'; wrap.classList.add('mwrap'); }
+  const content = wrap?.firstElementChild;
+  if (content && !content.querySelector('.mtabs')) {
+    const T = [...MDIR.map(([k, l]) => ['d', k, l, k === 'all' ? MEDIA.length : MEDIA.filter(m => m.dir === k).length]), ['s', 'noalt', 'ไม่มี alt', noalt], ['s', 'unused', 'ไม่ได้ใช้', unused], ['s', 'norights', 'ยังไม่ยืนยันสิทธิ์', norights]];
+    content.insertAdjacentHTML('afterbegin', `<div class="tabbar mtabs flex gap-1 overflow-x-auto no-sb mb-3">${T.map(([t, k, l, n]) => {
+      const on = t === 'd' ? ML.dir === k && !ML.smart : ML.smart === k;
+      return `<button class="tab ${on ? 'on' : ''}" onclick="${t === 'd' ? `ML.dir='${k}';ML.smart=''` : `ML.smart='${k}';ML.dir='all'`};ML.sel.clear();vMedia()">${l} <span class="opacity-60 tnum">${n.toLocaleString()}</span></button>`; }).join('')}</div>`);
+  }
+  const g = content?.querySelector('.grid.grid-cols-3');
+  if (g && ML.view === 'grid') { g.className = 'mgrid'; g.innerHTML = mFilter(U).map(m => mTile2(m, U)).join(''); }
+  icons();
+}; PAGES.find(p => p[0] === 'media')[3] = vMedia; }
+
 /* ---------- sidebar groups: แดชบอร์ด · งานขาย · สินค้า & ราคา · เว็บไซต์ · การตลาด · ทีม & ระบบ ---------- */
 { const G = [[null, ['dashboard']], ['งานขาย', ['bookings', 'calendar', 'customers']], ['สินค้า & ราคา', ['boats', 'seasons', 'activities']],
     ['เว็บไซต์', ['content', 'articles', 'media']], ['การตลาด', ['seo', 'analytics', 'audiences']], ['ทีม & ระบบ', ['team', 'audit', 'settings', 'system']]];
