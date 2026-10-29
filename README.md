@@ -137,7 +137,7 @@ sudo -iu deploy
 ssh-keygen -t ed25519 -f ~/.ssh/github -N ''          # กุญแจให้เซิร์ฟเวอร์ดึงโค้ด → GitHub repo → Settings → Deploy keys (Read-only) วาง ~/.ssh/github.pub
 printf 'Host github.com\n  IdentityFile ~/.ssh/github\n' >> ~/.ssh/config
 git clone git@github.com:anandevelop/boattripthailand.git /srv/boattripthailand   # หรือโฟลเดอร์ที่ต้องการ
-cd /srv/boattripthailand && cp .env.example .env && nano .env   # ใส่ค่าจริง · ถ้าใช้ HTTPS ใส่ COMPOSE_PROFILES=https
+cd /srv/boattripthailand && cp .env.example .env && nano .env   # ใส่ค่าจริง + เปิดบรรทัด COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml
 docker compose up -d --build
 
 # กุญแจให้ GitHub Actions เข้าเซิร์ฟเวอร์
@@ -147,5 +147,7 @@ ssh-keyscan -p 22 <IP>       # → secret DEPLOY_KNOWN_HOSTS (รันจาก
 ```
 
 GitHub repo → Settings → Secrets and variables → Actions: `DEPLOY_HOST` `DEPLOY_USER` (deploy) `DEPLOY_SSH_KEY` `DEPLOY_PATH` (/srv/boattripthailand) · ไม่บังคับ `DEPLOY_PORT` `DEPLOY_KNOWN_HOSTS` · Variables: `SITE_URL` (https://boattripthailand.com)
+
+**docker-compose.prod.yml** (ใช้บนเซิร์ฟเวอร์ผ่าน `COMPOSE_FILE` ใน `.env`): ปิดพอร์ตฐานข้อมูลจากภายนอก · เปิด Caddy (HTTPS) ตลอดโดยไม่ต้องใช้ `--profile` · จำกัด RAM app/db ตัวละ 1 GB · หมุน log 10 MB × 5 · ปรับ Postgres สำหรับ VPS 2–4 GB · ต้องใช้ Docker Compose v2.24 ขึ้นไป
 
 ไฟล์สำรองก่อน deploy อยู่ที่ `~/backups` ของผู้ใช้ deploy (เก็บ 14 วัน)

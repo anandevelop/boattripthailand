@@ -1,0 +1,67 @@
+# Production overrides — layered on top of docker-compose.yml.
+#
+# On the server put this line in .env so every `docker compose ...` (incl. the
+# GitHub deploy) picks both files up automatically:
+#     COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml
+# or run by hand:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# What changes vs. dev:
+#   • db   — no port on the host (only the app can reach it), tuned for a small VPS
+#   • app  — production env, memory cap, graceful stop; still on 127.0.0.1:3009 for the deploy health check
+#   • caddy— always on (no `--profile https` needed), HTTP/3, healthcheck
+#   • all  — rotated logs so the disk never fills up
+# Needs Docker Compose v2.24+ (for !reset).
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  db:
+    ports: !reset []
+    shm_size: 256mb
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - max_connections=50
+      - -c
+      - log_min_duration_statement=1000
+    stop_grace_period: 30s
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  app:
+    environment:
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=768
+    init: true
+    stop_grace_period: 20s
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  caddy:
+    profiles: !reset []
+    ports: !override
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *logging
