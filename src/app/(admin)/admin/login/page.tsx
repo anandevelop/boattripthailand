@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
-import { ActionForm, Submit } from '@/components/admin/Forms';
-import { LoginFrame } from '@/components/admin/LoginFrame';
+import { I, Ico, LoginFrame, Steps } from '@/components/admin/LoginFrame';
+import { PasswordForm } from '@/components/admin/LoginForms';
 import { currentUser } from '@/lib/auth';
 import { loginAction } from '../actions';
 
@@ -9,14 +9,12 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   const sp = await searchParams;
   return (
     <LoginFrame>
-      <h1 className="text-[22px] font-medium">เข้าสู่ระบบ</h1><p className="text-muted mt-1">ใช้อีเมลทีมงาน @boattripthailand.com</p>
-      {sp.timeout && <p className="mt-4 rounded-xl bg-sand px-3 py-2 text-[12px] text-muted">ออกจากระบบอัตโนมัติเพราะไม่มีการใช้งาน 30 นาที</p>}
-      <ActionForm action={loginAction} className="mt-6 grid gap-3">
-        <label><span className="lbl">อีเมล</span><input className="inp" name="email" type="email" autoComplete="username" required autoFocus /></label>
-        <label><span className="lbl">รหัสผ่าน</span><input className="inp" name="password" type="password" autoComplete="current-password" required /></label>
-        <Submit className="btn btn-p !h-11 mt-1">เข้าสู่ระบบ</Submit>
-      </ActionForm>
-      <p className="text-[12px] text-muted mt-6">ลืมรหัสผ่าน ติดต่อ Super Admin ให้ตั้งรหัสชั่วคราวให้ที่หน้า “ทีม”</p>
+      <Steps step={1} />
+      <h1>ยินดีต้อนรับกลับ</h1>
+      <p className="lg-sub">เข้าสู่ระบบด้วยอีเมลทีมงาน</p>
+      {sp.timeout && <p className="lg-note">ออกจากระบบอัตโนมัติเพราะไม่มีการใช้งาน 30 นาที · เข้าสู่ระบบอีกครั้งได้เลย</p>}
+      <PasswordForm action={loginAction} />
+      <div className="lg-meta" id="forgot"><Ico d={I.lock} /><span>ผิดเกิน 5 ครั้ง บัญชีล็อก 15 นาที · ลืมรหัสผ่าน ให้ Super Admin ตั้งรหัสชั่วคราวให้ที่ ทีมงาน &amp; สิทธิ์</span></div>
     </LoginFrame>
   );
 }

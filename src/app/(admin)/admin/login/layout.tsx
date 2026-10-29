@@ -13,8 +13,10 @@ export default function LoginRoot({ children }: { children: React.ReactNode }) {
         <link rel="stylesheet" href="/admin-app/admin.css" />
         <link rel="stylesheet" href="/admin-app/tw.css" />
         <link rel="stylesheet" href="/admin-app/glass.css" />
+        <link rel="stylesheet" href="/admin-app/login.css" />
+        <meta name="theme-color" content="#5c0010" />
       </head>
-      <body className="bg-[#faf7f5]">{children}</body>
+      <body style={{ margin: 0, background: '#5c0010' }}>{children}</body>
     </html>
   );
 }

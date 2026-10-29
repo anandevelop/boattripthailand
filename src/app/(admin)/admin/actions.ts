@@ -10,9 +10,10 @@ export async function loginAction(_: State, fd: FormData): Promise<State> {
   if (!r.ok) return { error: r.error };
   redirect(r.mfa ? '/admin/login/2fa' : '/admin');
 }
+/** returns ok instead of redirecting: the 6 boxes turn green first, then the page opens /admin */
 export async function mfaAction(_: State, fd: FormData): Promise<State> {
   const r = await completeMfa(String(fd.get('code') || ''));
   if (!r.ok) return { error: r.error };
-  redirect('/admin');
+  return { ok: 'ok' };
 }
 export async function logoutAction() { await logout(); redirect('/admin/login'); }
