@@ -32,9 +32,10 @@ export async function loadGoogleCfg(force = false) {
   cfgAt = Date.now(); return CFG;
 }
 let lastSa = '';
-const prop = () => process.env.GA4_PROPERTY_ID || CFG.propertyId;
-const site = () => process.env.GSC_SITE_URL || CFG.gscSite;
-export const measurementId = async () => pub('NEXT_PUBLIC_GA_ID') || (await loadGoogleCfg()).ga4Id;
+// a value saved in /admin wins over .env (so the team can change it without touching the server); .env is the fallback
+const prop = () => CFG.propertyId || process.env.GA4_PROPERTY_ID || '';
+const site = () => CFG.gscSite || process.env.GSC_SITE_URL || '';
+export const measurementId = async () => (await loadGoogleCfg()).ga4Id || pub('NEXT_PUBLIC_GA_ID');
 type SA = { client_email: string; private_key: string };
 let saCache: SA | null | undefined;
 function serviceAccount(): SA | null {
@@ -88,8 +89,8 @@ export function googleStatus() {
   const sa = serviceAccount();
   return { key: !!sa, email: sa?.client_email ?? null, ga: { on: !!sa && !!prop(), property: prop() || null }, gsc: { on: !!sa && !!site(), site: site() || null },
     // where each value comes from, for /admin → เชื่อมต่อ API (.env wins, except the key: a key saved in /admin is used first)
-    src: { key: CFG.sa ? 'admin' : process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_APPLICATION_CREDENTIALS ? 'env' : '', property: process.env.GA4_PROPERTY_ID ? 'env' : CFG.propertyId ? 'admin' : '', envKey: !!(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').trim(), site: process.env.GSC_SITE_URL ? 'env' : CFG.gscSite ? 'admin' : '', ga4Id: pub('NEXT_PUBLIC_GA_ID') ? 'env' : CFG.ga4Id ? 'admin' : '' },
-    cfg: { ga4Id: pub('NEXT_PUBLIC_GA_ID') || CFG.ga4Id, propertyId: prop(), gscSite: site(), savedEmail: CFG.sa?.email ?? null, at: CFG.at ?? null, by: CFG.by ?? null } };
+    src: { key: CFG.sa ? 'admin' : process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_APPLICATION_CREDENTIALS ? 'env' : '', property: CFG.propertyId ? 'admin' : process.env.GA4_PROPERTY_ID ? 'env' : '', envKey: !!(process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').trim(), site: CFG.gscSite ? 'admin' : process.env.GSC_SITE_URL ? 'env' : '', ga4Id: CFG.ga4Id ? 'admin' : pub('NEXT_PUBLIC_GA_ID') ? 'env' : '' },
+    cfg: { ga4Id: CFG.ga4Id || pub('NEXT_PUBLIC_GA_ID'), propertyId: prop(), gscSite: site(), savedEmail: CFG.sa?.email ?? null, at: CFG.at ?? null, by: CFG.by ?? null } };
 }
 
 /* ---------- GA4 Data API ---------- */

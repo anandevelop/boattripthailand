@@ -5788,8 +5788,8 @@ seoSettings = function () {
 const GGC = { test: null, testing: false, saving: false, sa: '' };
 function ggSetup() {
   const s = GG.st || {}, C = s.cfg || {}, src = s.src || {}, canSet = can('settings') && !isRO();
-  const env = k => src[k] === 'env', lock = k => env(k) || !canSet ? 'disabled' : '';
-  const fld = (id, l, v, ph, help, k) => `<label class="grid gap-1.5 min-w-0"><span class="lbl !mb-0">${l}</span><input id="${id}" class="inp" ${lock(k)} value="${esc(v || '')}" placeholder="${ph}"/><span class="text-[11px] text-muted">${env(k) ? 'ตั้งใน .env บนเซิร์ฟเวอร์ (ใช้ค่านี้ก่อน)' : help}</span></label>`;
+  const env = k => src[k] === 'env', lock = k => !canSet ? 'disabled' : '';
+  const fld = (id, l, v, ph, help, k) => `<label class="grid gap-1.5 min-w-0"><span class="lbl !mb-0">${l}</span><input id="${id}" class="inp" ${lock(k)} value="${esc(v || '')}" placeholder="${ph}"/><span class="text-[11px] text-muted">${env(k) ? 'ค่าจาก .env บนเซิร์ฟเวอร์ · แก้แล้วกดบันทึกเพื่อใช้ค่าใหม่แทน' : help}</span></label>`;
   const T = GGC.test, row = x => `<li class="flex items-start gap-2 text-[12.5px]"><i data-lucide="${x.ok ? 'circle-check' : 'circle-x'}" class="w-4 h-4 shrink-0 mt-0.5" style="color:${x.ok ? '#1e7a46' : '#a3222c'}"></i><span><b class="font-medium">${esc(x.step)}</b> · <span class="${x.ok ? 'text-muted' : ''}" style="${x.ok ? '' : 'color:#a3222c'}">${esc(x.msg)}</span></span></li>`;
   const email = s.email || C.savedEmail;
   return `<div class="grid xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-4 items-start">
@@ -5809,7 +5809,7 @@ function ggSetup() {
         <li>Search Console › การตั้งค่า › ผู้ใช้และสิทธิ์ → เพิ่มอีเมลเดียวกัน (จำกัด · ถ้าจะกด “ส่งให้ Google” ในศูนย์ SEO ใช้แบบ เต็ม)</li>
         <li>วางไฟล์ JSON ที่ช่อง Service Account → บันทึก → ทดสอบการเชื่อมต่อ</li></ol>
       ${email ? `<div class="flex items-center gap-2 rounded-xl bg-sand px-3 py-2.5 mt-4 text-[12.5px] min-w-0"><i data-lucide="check" class="w-4 h-4 shrink-0" style="color:#1e7a46"></i><span class="font-mono truncate flex-1">${esc(email)}</span><button class="text-muted hover:text-maroon shrink-0" title="คัดลอกอีเมล" onclick="navigator.clipboard?.writeText(${esc(JSON.stringify(email))}).then(()=>toast('คัดลอกอีเมลแล้ว · วางในหน้าจัดการสิทธิ์ของ GA4 / Search Console'))"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button></div>` : ''}
-      <p class="text-[11.5px] text-muted mt-4">ตั้งผ่าน .env ได้ด้วย GOOGLE_SERVICE_ACCOUNT_JSON (JSON หรือ base64) · GA4_PROPERTY_ID · GSC_SITE_URL · NEXT_PUBLIC_GA_ID — ค่าใน .env ใช้ก่อนค่าที่บันทึกในหน้านี้ ยกเว้นกุญแจ service account: กุญแจที่บันทึกในหน้านี้ใช้ก่อน · ข้อมูลจาก Google เก็บไว้ 30 นาที กด “โหลดข้อมูลใหม่” เพื่อดึงใหม่${C.at ? ` · บันทึกล่าสุด ${fmtD(iso(new Date(C.at)))} โดย ${esc(C.by || '')}` : ''}</p></div></div>`;
+      <p class="text-[11.5px] text-muted mt-4">ตั้งผ่าน .env ได้ด้วย GOOGLE_SERVICE_ACCOUNT_JSON (JSON หรือ base64) · GA4_PROPERTY_ID · GSC_SITE_URL · NEXT_PUBLIC_GA_ID — ค่าที่บันทึกในหน้านี้ใช้ก่อน .env (ช่องไหนว่าง ใช้ค่าจาก .env) · ข้อมูลจาก Google เก็บไว้ 30 นาที กด “โหลดข้อมูลใหม่” เพื่อดึงใหม่${C.at ? ` · บันทึกล่าสุด ${fmtD(iso(new Date(C.at)))} โดย ${esc(C.by || '')}` : ''}</p></div></div>`;
 }
 function ggcFile(files) {
   const f = files?.[0]; if (!f) return;
