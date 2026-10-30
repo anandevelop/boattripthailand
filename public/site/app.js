@@ -1272,7 +1272,18 @@ function renderTypeBand() {
     </div>`;
 }
 
-function renderAll() { renderHeroText(); renderHero(); renderTypeBand(); renderStats(); renderSmartTeaser(); renderGroups(); renderCats(); renderActs(); renderBoatFilters(); renderBoats(); renderRoutes(); renderRecent(); renderSeoGuide(); renderHomeBlog(); renderFaq(); renderTeam(); renderTeamLive(); renderNavText(); updateCompareUI(); route(true); }
+const HOME_PARTS = () => [renderHeroText, renderHero, renderTypeBand, renderStats, renderSmartTeaser, renderGroups, renderCats, renderActs, renderBoatFilters, renderBoats, renderRoutes, renderRecent, renderSeoGuide, renderHomeBlog, renderFaq, renderTeam, renderTeamLive];
+function renderAll() { HOME_PARTS().forEach(f => f()); renderNavText(); updateCompareUI(); route(true); }
+/* first load on another page (a boat, the fleet, an article…): draw that page first, then the hidden home sections
+   a few at a time in later tasks, so the phone is not frozen while it builds a page nobody is looking at yet */
+function renderHomeLater() {
+  const parts = HOME_PARTS();
+  if (navigator.userAgent === 'BTT-SSR') { parts.forEach(f => f()); return; }   // server render: same HTML as before
+  // fxPark (fleet.js) takes the photos out of hidden views so they do not download before the home page is opened
+  const park = () => { try { typeof fxPark === 'function' && fxPark(); } catch (e) { } };
+  const step = () => { const t = Date.now(); while (parts.length && Date.now() - t < 25) { try { parts.shift()(); } catch (e) { console.error(e); } } park(); if (parts.length) setTimeout(step, 0); else icons(); };
+  setTimeout(step, 0);
+}
 
 /* =========================================================
    DESIGN SYSTEM PAGE  (#/design) — implementation guidance
@@ -2241,11 +2252,18 @@ function heroGo(i) {
   heroIdx = (i + HERO.length) % HERO.length;
   if (changed) heroRotate();
   $$('.hero-slide').forEach((im, k) => { im.classList.toggle('is-on', k === heroIdx); im.setAttribute('aria-hidden', k !== heroIdx); });
-  $$('.hero-dot').forEach((d, k) => { d.classList.remove('is-on'); d.style.width = k < heroIdx ? '100%' : '0'; if (k === heroIdx) { d.style.width = ''; void d.offsetWidth; d.classList.add('is-on'); } });
+  $$('.hero-dot').forEach((d, k) => { d.classList.remove('is-on'); d.style.width = k < heroIdx ? '100%' : '0'; if (k === heroIdx) { d.style.width = ''; heroDotOn(d); } });
   const b = bySlug(HERO[heroIdx]);
   $('#heroCap').innerHTML = `<a href="#/boat/${b.slug}" class="group inline-flex flex-col"><span class="text-[11px] uppercase tracking-[.18em] text-white/80">${typeLabel(b.type)} · ${String(heroIdx+1).padStart(2,'0')}/${String(HERO.length).padStart(2,'0')}</span><span class="font-display text-base sm:text-xl mt-1 group-hover:underline underline-offset-4">${niceTitle(b.title)}</span><span class="text-xs sm:text-sm text-white/85 mt-0.5">${t('price.from','เริ่มต้น')} ${baht(b.from_)}</span></a>`;
   clearTimeout(heroTimer);
-  if (!heroPaused && !matchMedia('(prefers-reduced-motion: reduce)').matches) heroTimer = setTimeout(() => heroGo(heroIdx + 1), 6000);
+  if (!heroPaused && !matchMedia('(prefers-reduced-motion: reduce)').matches) heroTimer = setTimeout(heroNext, 6000);
+}
+// next slide only while the home page is on screen (it keeps running hidden behind other pages otherwise)
+function heroNext() { if (currentView !== 'home' || document.hidden) { heroTimer = setTimeout(heroNext, 6000); return; } heroGo(heroIdx + 1); }
+// restart the dot's progress animation two frames later instead of forcing a layout of the whole page (offsetWidth)
+function heroDotOn(d) {
+  if (navigator.userAgent === 'BTT-SSR' || typeof requestAnimationFrame !== 'function') { d.classList.add('is-on'); return; }
+  requestAnimationFrame(() => requestAnimationFrame(() => { if (d.style.width === '') d.classList.add('is-on'); }));
 }
 
 /* ---------- Stats, smart teaser ---------- */
@@ -2781,7 +2799,7 @@ function renderNotFound() {
   icons();
 }
 
-function route(keepScroll) { bpSheetOff(); try { return route0(keepScroll); } finally { afterRoute(); pageView(); liveBeat(); } }
+function route(keepScroll) { bpSheetOff(); try { return route0(keepScroll); } finally { afterRoute(); pageView(); setTimeout(liveBeat, 0); } }   // heartbeat in its own task, after the page is drawn
 /* cookieless page-view counter (/api/t → /admin วิเคราะห์เว็บไซต์): page, traffic source, device and language only —
    no cookies, no visitor id. The source is decided on the first page of a browser session and kept for that session. */
 let PV_LAST = '';
@@ -2812,7 +2830,7 @@ function liveBeat() {
     if (!LIVE_ID) { LIVE_ID = Math.random().toString(36).slice(2, 12) + Date.now().toString(36); try { sessionStorage.setItem('btt_live', LIVE_ID); } catch { /* private mode */ } } }
   const w = innerWidth, touch = matchMedia('(pointer: coarse)').matches, h = typeof VHASH === 'string' ? VHASH : '';
   const b = h.startsWith('#/boat/') ? h.slice(7).split(/[?#/]/)[0] : '';
-  const f = !!(document.activeElement && document.activeElement.closest && document.activeElement.closest('#modalFormWrap, #inlineFormWrap')) || !!(document.getElementById('modalFormWrap') || {}).offsetParent;
+  const f = !!(document.activeElement && document.activeElement.closest && document.activeElement.closest('#modalFormWrap, #inlineFormWrap')) || !!(document.getElementById('bookingModal') && !document.getElementById('bookingModal').classList.contains('hidden'));   // a class check, not offsetParent (that forces a full layout)
   let s = 'direct'; try { s = sessionStorage.getItem('btt_src') || 'direct'; } catch { /* private mode */ }
   try { navigator.sendBeacon('/api/live', JSON.stringify({ v: LIVE_ID, p: location.pathname, s, d: w < 768 ? 'mobile' : touch && w < 1200 ? 'tablet' : 'desktop', l: LANG === 'en' ? 'en' : 'th', b, f })); } catch { /* never block the page */ }
 }
@@ -2852,4 +2870,7 @@ $('#cmdInput').addEventListener('keydown', e => { if (e.key==='ArrowDown') { e.p
 $$('[data-bimg]').forEach(img => { const [s,k] = img.dataset.bimg.split(':'); img.src = bimg(s,k); });
 $('#boatSort').onchange = e => { boatSort = e.target.value; renderBoats(); };
 const d = new Date(); d.setDate(d.getDate()+3); $('#qsDate').value = d.toISOString().split('T')[0]; $('#qsDate').min = new Date().toISOString().split('T')[0]; $('#qsDate').addEventListener('change', e => e.target.dataset.touched = 1); datePick($('#qsDate'));
-applyI18n(); renderAll(); inlineForm = buildForm($('#inlineFormWrap')); route(false); icons(); loadPixel();
+const HOME_FIRST = !/^#\/(boat|fleet|design|about|privacy|terms|cookies|blog|dest|404)/.test(VH.hash || '#/');
+applyI18n(); if (HOME_FIRST) renderAll(); else { renderNavText(); updateCompareUI(); }
+inlineForm = buildForm($('#inlineFormWrap')); route(false); icons(); loadPixel();
+if (!HOME_FIRST) renderHomeLater();
