@@ -184,7 +184,7 @@ const I18N = {
   en: {
     'topbar.tat':'TAT License No. ' + SET.tat,'topbar.loc':'Phuket · Krabi · Phang Nga',
     'nav.boats':'Charter','nav.tours':'Tours & Activities','nav.routes':'Top Routes','nav.lifestyle':'Stays & Lifestyle','nav.contact':'Contact',
-    'cta.quick':'Quick Book', 'mm.title':'Menu', 'mm.dests':'Destinations', 'mm.saved':'Saved boats', 'mm.call':'Call', 'mm.book':'Book a boat · reply in 30 min',
+    'cta.quick':'Quick Book', 'mm.dests':'Destinations', 'mm.call':'Call', 'mm.book':'Book a boat · reply in 30 min',
     'hero.badge':'Andaman high season is here · 1 Nov – 30 Apr','hero.title':'Sail the Andaman<br/>your own way',
     'hero.sub':'50+ private yachts, catamarans and speedboats — plus tours, shows and activities across Phuket, all in one place.',
     'hero.cta1':'View all boats','hero.cta2':'Explore activities',
@@ -1184,17 +1184,34 @@ document.addEventListener('keydown', e => { if (e.key==='Escape') closeModals();
 /* =========================================================
    NAV / LANG
    ========================================================= */
-/* phone menu = bottom sheet: burger / ✕ / backdrop / Esc / swipe down / any link closes it */
-function mmOpen() { mmMark(); $('#mobileMenu').classList.remove('hidden'); $('#mobileMenu').style.transform = ''; $('#menuBtn').setAttribute('aria-expanded', true); icons(); setTimeout(() => $('#mobileMenu .mm-x')?.focus({ preventScroll: true }), 50); }
-function mmClose() { const m = $('#mobileMenu'); if (m.classList.contains('hidden')) return; m.classList.add('hidden'); m.style.transform = ''; $('#menuBtn').setAttribute('aria-expanded', false); }
-function mmMark() { const h = VH.hash || '#/'; $$('#mobileMenu [data-mm]').forEach(a => { const k = a.dataset.mm, on = k === '#/fleet?fav' ? h.startsWith(k) : k === '#/fleet' ? h.startsWith('#/fleet') && !h.includes('fav') || h.startsWith('#/boat/') : h.startsWith(k); a.classList.toggle('on', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); }); }
+/* phone menu (mockup F): full-screen brand red · เช่าเรือ / ทัวร์ / ปลายทาง open to show their parts with live counts.
+   Closes with the ✕ (burger), Esc or any link. */
+let MM_OPEN = '';
+function mmSec(h) { return h.startsWith('#/dest') ? 'dest' : h.startsWith('#categories') ? 'tours' : h.startsWith('#/blog') || h.startsWith('#/about') ? '' : 'boats'; }
+function mmBuild() {
+  const box = $('#mmAcc'); if (!box) return;
+  const h = VH.hash || '#/', n = k => L(`${k} ลำ`, `${k} boat${k === 1 ? '' : 's'}`);
+  const tile = (href, title, sub, on, click = '') => `<a href="${href}" class="mm-t${on ? ' on' : ''}"${click ? ` onclick="${click}"` : ''}><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</a>`;
+  const all = (href, label) => `<a href="${href}" class="mm-all"><span>${esc(label)}</span><i data-lucide="arrow-right"></i></a>`;
+  const types = ['yacht', 'sail', 'power', 'speed', 'longtail'].map(k => [k, FLEET.filter(b => b.type === k).length]).filter(x => x[1]);
+  const curType = (h.match(/[?&]type=(\w+)/) || [])[1];
+  const boats = types.map(([k, c]) => tile(`#/fleet?type=${k}`, typeLabel(k), n(c), h.startsWith('#/fleet') && curType === k)).join('') + all('#/fleet', L(`ดูเรือทั้งหมด ${FLEET.length} ลำ`, `All ${FLEET.length} boats`));
+  const cats = GROUPS.flatMap(g => g.cats).map(c => [c, ACTS.filter(a => a.cat === c).length]).filter(x => x[1]).sort((x, y) => y[1] - x[1]).slice(0, 6);
+  const tours = cats.map(([c, k]) => tile('#categories', LANG === 'en' ? CATS[c].en : CATS[c].th, L(`${k} รายการ`, `${k} trips`), false, `mmCat('${c}')`)).join('') + all('#categories', L(`ดูทัวร์ & กิจกรรมทั้งหมด ${ACTS.length}`, `All ${ACTS.length} tours & activities`));
+  const dests = DPAGES.map(d => tile(`#/dest/${d.slug}`, dl(d.name), n(destBoats(d.slug).length), h === `#/dest/${d.slug}`)).join('') + all('#/destinations', L('ดูปลายทางทั้งหมด', 'All destinations'));
+  const sec = (id, label, body) => `<div class="mm-s${MM_OPEN === id ? ' open' : ''}" data-s="${id}"><button type="button" class="mm-h" aria-expanded="${MM_OPEN === id}" onclick="mmToggle('${id}')"><span>${label}</span><i data-lucide="chevron-down"></i></button><div class="mm-b"><div class="mm-g">${body}</div></div></div>`;
+  const link = (href, label, on) => `<div class="mm-s"><a href="${href}" class="mm-h${on ? ' on' : ''}"${on ? ' aria-current="page"' : ''}><span>${label}</span><i data-lucide="chevron-right"></i></a></div>`;
+  box.innerHTML = sec('boats', L('เช่าเรือ', 'Charter'), boats) + (cats.length ? sec('tours', L('ทัวร์ & กิจกรรม', 'Tours & Activities'), tours) : '') + (DPAGES.length ? sec('dest', L('ปลายทาง', 'Destinations'), dests) : '')
+    + link('#/blog', L('บทความ', 'Blog'), h.startsWith('#/blog')) + link('#/about', L('เกี่ยวกับเรา', 'About us'), h === '#/about');
+  box.querySelectorAll('a').forEach(a => a.addEventListener('click', mmClose));
+}
+function mmToggle(id) { MM_OPEN = MM_OPEN === id ? '' : id; $$('#mmAcc .mm-s[data-s]').forEach(s => { const on = s.dataset.s === MM_OPEN; s.classList.toggle('open', on); s.querySelector('.mm-h').setAttribute('aria-expanded', on); }); }
+function mmCat(c) { actAll = false; activeCat = c; const g = GROUPS.find(x => x.cats.includes(c)); activeGroup = g ? g.id : 'all'; try { renderCats(); renderActs(); } catch (e) { } }
+function mmOpen() { MM_OPEN = mmSec(VH.hash || '#/'); mmBuild(); $('#mobileMenu').classList.remove('hidden'); $('#mobileMenu').scrollTop = 0; $('#menuBtn').setAttribute('aria-expanded', true); icons(); }
+function mmClose() { const m = $('#mobileMenu'); if (m.classList.contains('hidden')) return; m.classList.add('hidden'); $('#menuBtn').setAttribute('aria-expanded', false); }
 $('#menuBtn').onclick = () => $('#mobileMenu').classList.contains('hidden') ? mmOpen() : mmClose();
 $$('#mobileMenu a').forEach(a => a.addEventListener('click', mmClose));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#mobileMenu').classList.contains('hidden')) { mmClose(); $('#menuBtn').focus(); } });
-{ let y0 = null, dy = 0; const m = $('#mobileMenu');
-  m.addEventListener('touchstart', e => { if (m.scrollTop > 0) return; y0 = e.touches[0].clientY; dy = 0; m.style.transition = 'none'; }, { passive: true });
-  m.addEventListener('touchmove', e => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); m.style.transform = dy ? `translateY(${dy}px)` : ''; }, { passive: true });
-  m.addEventListener('touchend', () => { if (y0 == null) return; y0 = null; m.style.transition = ''; if (dy > 90) mmClose(); else m.style.transform = ''; }); }
 window.addEventListener('scroll', () => $('#navbar').classList.toggle('is-compact', scrollY > 24), { passive:true });
 function setLang(l) {
   bpSheetOff(); LANG = l; document.documentElement.lang = l; locFleet();

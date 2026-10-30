@@ -97,27 +97,25 @@
 
   </div>
 
-  <!-- mobile menu: bottom sheet (thumb reach) · the page stays visible, dimmed, above it -->
-  <div id="mobileMenu" class="hidden lg:hidden" role="dialog" aria-modal="true" aria-labelledby="mmTitle">
-    <div class="mm-grab" aria-hidden="true"></div>
-    <div class="mm-hd"><b id="mmTitle" data-i18n="mm.title">เมนู</b><button type="button" class="mm-x" onclick="mmClose()" aria-label="Close"><i data-lucide="x"></i></button></div>
-    <nav class="mm-grid" aria-label="Mobile">
-      <a href="#/fleet" class="m-item" data-mm="#/fleet"><i data-lucide="sailboat"></i><span data-i18n="nav.boats">เช่าเรือ</span></a>
-      <a href="#categories" class="m-item" data-mm="#categories"><i data-lucide="compass"></i><span data-i18n="nav.tours">ทัวร์ & กิจกรรม</span></a>
-      <a href="#/destinations" class="m-item" data-mm="#/dest"><i data-lucide="map-pin"></i><span data-i18n="mm.dests">ปลายทาง</span></a>
-      <a href="#/blog" class="m-item" data-mm="#/blog"><i data-lucide="book-open"></i><span class="navGuideM">บทความ</span></a>
-      <a href="#/about" class="m-item" data-mm="#/about"><i data-lucide="users"></i><span class="navAbout">เกี่ยวกับเรา</span></a>
-      <a href="#/fleet?fav" class="m-item" data-mm="#/fleet?fav"><i data-lucide="heart"></i><span data-i18n="mm.saved">เรือที่บันทึก</span></a>
+  <!-- mobile menu (mockup F): full-screen brand red · sections open to show boat types / tours / destinations (filled by mmBuild in app.js) -->
+  <div id="mobileMenu" class="hidden lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+    <nav id="mmAcc" class="mm-acc" aria-label="Mobile">
+      <a href="#/fleet" class="mm-h"><span data-i18n="nav.boats">เช่าเรือ</span></a>
+      <a href="#categories" class="mm-h"><span data-i18n="nav.tours">ทัวร์ & กิจกรรม</span></a>
+      <a href="#/destinations" class="mm-h"><span data-i18n="mm.dests">ปลายทาง</span></a>
+      <a href="#/blog" class="mm-h"><span class="navGuideM">บทความ</span></a>
+      <a href="#/about" class="mm-h"><span class="navAbout">เกี่ยวกับเรา</span></a>
     </nav>
-    <div class="mm-contact">
-      <a href="tel:+66611725854" data-set="tel"><i data-lucide="phone"></i><span data-i18n="mm.call">โทร</span></a>
-      <a href="https://lin.ee/kkzkoX7" data-set="lineUrl" target="_blank" rel="noopener" class="mm-line"><i data-lucide="message-circle"></i>LINE</a>
-      <a href="https://wa.me/66611725854" data-set="wa" target="_blank" rel="noopener" class="mm-wa"><i data-lucide="message-circle"></i>WhatsApp</a>
+    <div class="mm-foot">
+      <div class="mm-contact">
+        <a href="tel:+66611725854" data-set="tel"><i data-lucide="phone"></i><span data-i18n="mm.call">โทร</span></a>
+        <a href="https://lin.ee/kkzkoX7" data-set="lineUrl" target="_blank" rel="noopener"><i data-lucide="message-circle"></i>LINE</a>
+        <a href="https://wa.me/66611725854" data-set="wa" target="_blank" rel="noopener"><i data-lucide="message-circle"></i>WhatsApp</a>
+      </div>
+      <button type="button" class="mm-cta" onclick="mmClose();openBooking()"><i data-lucide="zap"></i><span data-i18n="mm.book">จองเรือ · ตอบใน 30 นาที</span></button>
+      <div id="teamLiveM" class="mm-live"></div>
     </div>
-    <button type="button" class="mm-cta" onclick="mmClose();openBooking()"><i data-lucide="zap"></i><span data-i18n="mm.book">จองเรือ · ตอบใน 30 นาที</span></button>
-    <div id="teamLiveM" class="mm-live"></div>
   </div>
-  <div id="mmBack" class="lg:hidden" onclick="mmClose()" aria-hidden="true"></div>
 </header>
 
 <main id="main" tabindex="-1">

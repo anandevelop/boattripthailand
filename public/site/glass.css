@@ -745,35 +745,40 @@ details.fq { border-radius: 22px !important; } .fq { background: rgb(255 255 255
   #fxGrid > .fx-card:nth-child(n+7) { content-visibility:auto; contain-intrinsic-size:auto 520px; }
 }
 
-/* ---------- phone menu: bottom sheet (#mobileMenu) + dimmed page behind it (#mmBack) ---------- */
-#mobileMenu { position:fixed; left:0; right:0; bottom:0; z-index:3; max-height:calc(100dvh - 88px); overflow-y:auto; overscroll-behavior:contain;
-  background:#fff !important; -webkit-backdrop-filter:none; backdrop-filter:none; border-radius:28px 28px 0 0 !important;
-  box-shadow:0 -12px 40px rgb(20 10 10 / .22) !important; padding:10px 16px calc(18px + env(safe-area-inset-bottom)); transition:transform .25s ease; }
-#mobileMenu:not(.hidden) { animation:mmUp .32s cubic-bezier(.2,.8,.2,1) both; }
-@keyframes mmUp { from { transform:translateY(100%); } to { transform:none; } }
-#mmBack { position:fixed; inset:0; z-index:2; background:rgb(20 10 10 / .45); animation:mmFade .25s ease both; }
-#mobileMenu.hidden + #mmBack { display:none; }
-@keyframes mmFade { from { opacity:0; } to { opacity:1; } }
+/* ---------- phone menu (mockup F): full-screen brand red under the white navbar ---------- */
+#mobileMenu { position:fixed; inset:0; z-index:3; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column;
+  background:#70000e !important; color:#fff; -webkit-backdrop-filter:none; backdrop-filter:none; border-radius:0 !important; box-shadow:none !important;
+  padding:92px 22px calc(22px + env(safe-area-inset-bottom)); }
+#mobileMenu.hidden { display:none; }
+#mobileMenu:not(.hidden) { animation:mmIn .28s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes mmIn { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:none; } }
 #navPill { z-index:4; }
+html:has(#mobileMenu:not(.hidden)) #navPill { background:#fff !important; }   /* glass would turn pink over the red */
 html:has(#mobileMenu:not(.hidden)) { overflow:hidden; }
 html:has(#mobileMenu:not(.hidden)) #navbar { z-index:52; }   /* above the boat page's price bar (#bpMbar, 50) and the cookie bar; menu closes before any dialog opens */
-html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !important; }   /* both sit at the bottom too */
-.mm-grab { width:40px; height:5px; border-radius:9px; background:#ddd3d0; margin:0 auto 12px; }
-.mm-hd { display:flex; align-items:center; justify-content:space-between; margin:0 2px 12px; }
-.mm-hd b { font-size:17px; font-weight:500; }
-.mm-x { width:36px; height:36px; border-radius:50%; background:#f6f1ec; display:grid; place-items:center; }
-.mm-x svg { width:17px; height:17px; }
-.mm-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
-.mm-grid a { min-height:88px; border-radius:18px; background:#f6f1ec; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
-  padding:10px 6px; font-size:13.5px; line-height:1.25; text-align:center; color:#231416; transition:background .2s, transform .15s; }
-.mm-grid a:active { transform:scale(.97); }
-.mm-grid a svg { width:24px; height:24px; stroke-width:1.75; color:#70000e; }
-.mm-grid a.on { background:#70000e; color:#fff; }
-.mm-grid a.on svg { color:#fff; }
-.mm-contact { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin:12px 0 10px; }
-.mm-contact a { height:46px; border-radius:14px; box-shadow:inset 0 0 0 1px #ece5e1; display:flex; align-items:center; justify-content:center; gap:7px; font-size:13.5px; color:#231416; }
+html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !important; }
+.mm-s { border-bottom:1px solid rgb(255 255 255 / .16); }
+.mm-s:last-child { border-bottom:0; }
+.mm-h { width:100%; min-height:60px; display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:20px; color:#fff; text-align:left; }
+.mm-h svg { width:18px; height:18px; opacity:.7; transition:transform .25s; }
+.mm-s.open .mm-h svg { transform:rotate(180deg); }
+.mm-h.on span { text-decoration:underline; text-underline-offset:6px; text-decoration-thickness:1px; }
+.mm-b { display:grid; grid-template-rows:0fr; transition:grid-template-rows .3s ease; }
+.mm-s.open .mm-b { grid-template-rows:1fr; }
+.mm-b > .mm-g { overflow:hidden; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.mm-s.open .mm-g { padding:2px 0 16px; }
+.mm-t { min-height:56px; border-radius:14px; background:rgb(255 255 255 / .09); display:flex; flex-direction:column; justify-content:center; padding:8px 12px; color:#fff; }
+.mm-t b { font-weight:400; font-size:14px; line-height:1.25; } .mm-t small { font-size:11.5px; opacity:.6; margin-top:2px; }
+.mm-t.on { background:#fff; color:#70000e; } .mm-t:active { background:rgb(255 255 255 / .16); }
+.mm-all { grid-column:1 / -1; height:46px; border-radius:14px; background:#fff; color:#70000e; display:flex; align-items:center; justify-content:space-between; padding:0 14px; font-size:14px; font-weight:500; }
+.mm-all svg { width:18px; height:18px; }
+.mm-foot { margin-top:auto; padding-top:20px; }
+.mm-contact { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:10px; }
+.mm-contact a { height:46px; border-radius:14px; box-shadow:inset 0 0 0 1px rgb(255 255 255 / .28); display:flex; align-items:center; justify-content:center; gap:7px; font-size:13.5px; color:#fff; }
 .mm-contact svg { width:18px; height:18px; stroke-width:1.75; }
-.mm-contact .mm-line { color:#06a24a; } .mm-contact .mm-wa { color:#128c4a; }
-.mm-cta { width:100%; height:52px; border-radius:99px; background:#70000e; color:#fff; display:flex; align-items:center; justify-content:center; gap:9px; font-size:15px; font-weight:500; }
+.mm-cta { width:100%; height:52px; border-radius:99px; background:#fff; color:#70000e; display:flex; align-items:center; justify-content:center; gap:9px; font-size:15px; font-weight:500; }
 .mm-cta svg { width:18px; height:18px; }
-.mm-live { display:flex; justify-content:center; margin-top:12px; font-size:12px; color:#7b6f70; }
+.mm-live { display:flex; justify-content:center; margin-top:12px; font-size:12px; }
+.mm-live, .mm-live * { color:rgb(255 255 255 / .75) !important; }
+.mm-live img { --tw-ring-color:#70000e; }
+.mm-live .live-dot { background:#4ade80 !important; color:#4ade80 !important; }
