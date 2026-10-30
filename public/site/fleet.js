@@ -136,7 +136,7 @@ renderFleetPage = function () {
   drawFleet();
 };
 function fxBuild(v) {
-  const amb = bimg('leopard-90-ft', 'hero') || bimg(FLEET[0].slug, 'hero');
+  const amb = bimg('leopard-90-ft', 'hero', 320) || bimg(FLEET[0].slug, 'hero', 320);
   v.innerHTML = `
   <div class="fx-amb" aria-hidden="true">${amb ? `<img src="${amb}" alt="">` : ''}</div>
   <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-10 pb-16">
@@ -240,7 +240,7 @@ function fxCard(b, mode, i, list) {
     : !fxActive() && b.fxRank >= 0 && b.fxRank < 3 ? `<span class="fx-badge fx-gd">${FXI('star')}${t('hot')}</span>` : '';
   const alts = pick ? list.filter(x => x !== b).slice(0, 2) : [];
   return `<article class="fx-card ${pick ? 'fx-pick' : ''}">
-    <div class="fx-ph"><a class="fx-ph-link img-fallback" href="#/boat/${b.slug}" aria-label="${L('ดูรายละเอียด', 'View')} ${name}"><img loading="${i < 3 ? 'eager' : 'lazy'}" decoding="async" width="796" height="597" src="${bimg(b.slug, 'hero')}" alt="${name} – ${typeLabel(b.type)} ${L('เช่าเหมาลำ ภูเก็ต', 'private charter, Phuket')}"><span class="fx-more fx-gd">${L('ดูรายละเอียด', 'Details')} ${FXI('arrow-right')}</span></a>
+    <div class="fx-ph"><a class="fx-ph-link img-fallback" href="#/boat/${b.slug}" aria-label="${L('ดูรายละเอียด', 'View')} ${name}"><img loading="${i < 3 && (VH.hash || '').startsWith('#/fleet') ? 'eager' : 'lazy'}" decoding="async" width="796" height="597" src="${bimg(b.slug, 'hero')}" alt="${name} – ${typeLabel(b.type)} ${L('เช่าเหมาลำ ภูเก็ต', 'private charter, Phuket')}"><span class="fx-more fx-gd">${L('ดูรายละเอียด', 'Details')} ${FXI('arrow-right')}</span></a>
       <div class="fx-tl">${badge}</div>
       <div class="fx-tr"><button class="fx-cmp fx-gd" data-cmp="${b.slug}" aria-pressed="${CMP.includes(b.slug)}" onclick="toggleCompare('${b.slug}')"><span class="n">${FXI('plus')}${L('เทียบ', 'Compare')}</span><span class="y">${FXI('check')}${L('เทียบแล้ว', 'Comparing')}</span></button><button class="fx-fav fx-gd" data-fav="${b.slug}" aria-pressed="${FAV.includes(b.slug)}" onclick="toggleFav('${b.slug}')" aria-label="${L('บันทึก', 'Save')} ${name}">${FXI('heart')}</button></div>
       <a class="fx-nm" href="#/boat/${b.slug}"><small>${typeLabel(b.type)}</small><b>${name}</b></a></div>
@@ -1300,7 +1300,7 @@ let FX_POST = null;
         const own = o => String(o?.[k] || '').trim();
         const T = !own(b.i18n?.seoTitle) && fxTpl(FX_SC.tpl?.boat?.[k], v), D = !own(b.i18n?.seoDesc) && fxTpl(FX_SC.dtpl?.boat?.[k], v);
         fxMetaSet(T, D);
-        if (FX_SC.ogImg !== false) { const h = bimg(b.slug, 'hero') || (b.imgs || [])[0]; if (h) { const u = /^https?:/.test(h) ? h : SITE_ORIGIN + h; setMeta('og:image', u, 'property'); setMeta('twitter:image', u); setMeta('og:image:alt', v.name, 'property'); } }
+        if (FX_SC.ogImg !== false) { const h = bimg(b.slug, 'hero', 0) || (b.imgs || [])[0]; if (h) { const u = /^https?:/.test(h) ? h : SITE_ORIGIN + h; setMeta('og:image', u, 'property'); setMeta('twitter:image', u); setMeta('og:image:alt', v.name, 'property'); } }
       }
     }
     if (id && id.startsWith('a-') && FX_POST && String(FX_POST.id) === id.slice(2)) {

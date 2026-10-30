@@ -396,9 +396,12 @@ const DEST_MAP = { 'Phi Phi':'Phi Phi','Racha Yai':'Racha','Phang Nga Bay':'Phan
 const FEATURED = ['leopard-90-ft','splo-74-ft','vtech-68-ft','the-origin-90-ft','cognac-75-ft','siam-princess-70-ft','lobster-78-ft','leopard-40-ft','coco-40-ft','dean-44-ft','r5-47-ft','nanea-40-ft'];
 const prettyMarina = s => (s||'').toLowerCase().replace(/(^|[\s(\/-])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase()).replace(/\bRpm\b/,'RPM').replace(/Puhket/,'Phuket').replace('One°15','ONE°15');
 const infoGet = (b, ...keys) => { for (const k of keys) { const r = b.info.find(x => x[0].toLowerCase()===k.toLowerCase()); if (r && r[1] && r[1] !== 'N/A') return r[1]; } return null; };
-const bimg = (slug, k) => (BIMG[slug] || {})[k] || '';
+/* photos at the size they are shown: /r/<w>/… is resized on the server (cards don't need the 1920 px originals). w = 0 → original */
+const RS_W = [160, 320, 768, 1280, 1600];
+const rs = (u, w = 768) => { if (!u || !w || !/^\/(boats|img|uploads)\//.test(u)) return u || ''; return '/r/' + (RS_W.find(x => x >= w) || 1600) + u; };
+const bimg = (slug, k, w = 768) => rs((BIMG[slug] || {})[k] || '', w);
 /** photos of a boat in admin order; falls back to the 3 brochure images */
-const gallery = slug => { const g = (window.GALLERY || {})[slug]; return g && g.length ? g : ['hero', 'a', 'b'].map(k => bimg(slug, k)).filter(Boolean); };
+const gallery = slug => { const g = (window.GALLERY || {})[slug]; return g && g.length ? g : ['hero', 'a', 'b'].map(k => bimg(slug, k, 0)).filter(Boolean); };
 FLEET.forEach((b, i) => {
   b.idx = i;
   const blob = JSON.stringify(b.tables).toLowerCase() + ' ' + JSON.stringify(b.time_slots).toLowerCase();
@@ -640,12 +643,12 @@ function tableHTML0(tb, ti, b) {
 function bentoHTML(b) {
   const g = gallery(b.slug), n = g.length, name = niceTitle(b.title);
   const tile = (i, cls, extra = '') => g[i] ? `<button type="button" class="bt ${cls} img-fallback group" onclick="openLightbox('${b.slug}',${i})" aria-label="${t('viewPhotos')} ${i + 1}">
-      <img src="${g[i]}" alt="${name} — photo ${i + 1}" loading="lazy" class="gal-img"/>${extra}</button>` : '';
+      <img src="${rs(g[i])}" alt="${name} — photo ${i + 1}" loading="lazy" class="gal-img"/>${extra}</button>` : '';
   const all = `<span class="bt-all"><i data-lucide="layout-grid"></i>${L('ดูรูปทั้งหมด', 'All photos')} ${n}</span>`;
   const sub = [typeLabel(b.type), b.pax ? `${b.pax} ${t('guests')}` : ''].filter(Boolean).join(' · ');
   return `<div class="bento bento-n${Math.min(n, 5)}">
     <div class="bt bt-main img-fallback">
-      <button type="button" class="absolute inset-0 w-full h-full group" onclick="openLightbox('${b.slug}',0)" aria-label="${t('viewPhotos')}"><img src="${g[0] || ''}" alt="${name}" fetchpriority="high" class="gal-img"/></button>
+      <button type="button" class="absolute inset-0 w-full h-full group" onclick="openLightbox('${b.slug}',0)" aria-label="${t('viewPhotos')}"><img src="${rs(g[0] || '', 1600)}" srcset="${g[0] ? `${rs(g[0])} 768w, ${rs(g[0], 1280)} 1280w, ${rs(g[0], 1600)} 1600w` : ''}" sizes="(min-width:1024px) 60vw, 100vw" alt="${name}" fetchpriority="high" class="gal-img"/></button>
       ${b.hot ? `<span class="bt-chip"><i data-lucide="star"></i>${L('ยอดนิยม', 'Popular')}</span>` : ''}
       <div class="bt-acts">
         <button type="button" class="bt-round" onclick="shareBoat('${b.slug}')" aria-label="${L('แชร์', 'Share')}"><i data-lucide="share-2"></i></button>
@@ -659,7 +662,7 @@ function bentoHTML(b) {
     ${tile(1, 'bt-1')}${tile(2, 'bt-2')}${tile(3, 'bt-3')}${tile(4, 'bt-4', n > 5 ? all : '')}
   </div>
   ${n > 1 ? `<button type="button" class="bt-mall" onclick="openLightbox('${b.slug}',0)">
-    <span class="bt-stack">${g.slice(1, 3).map(s => `<img src="${s}" alt="" loading="lazy"/>`).join('')}</span>
+    <span class="bt-stack">${g.slice(1, 3).map(s => `<img src="${rs(s, 160)}" alt="" loading="lazy"/>`).join('')}</span>
     <span class="min-w-0"><b>${L('ดูรูปทั้งหมด', 'View all')} ${n} ${L('รูป', 'photos')}</b><span>${L('แตะเพื่อดูภาพเต็มจอ', 'Tap to view full screen')}</span></span>
     <i data-lucide="chevron-right"></i></button>` : ''}`;
 }
@@ -785,7 +788,7 @@ function renderDetail(slug) {
   const panel = (id, h, sub, body, cls = '') => `<section class="bp-panel ${cls}" id="${id}"><h2>${h}</h2>${sub ? `<p class="bp-sub">${sub}</p>` : ''}${body}</section>`;
   const opts = b.tables.map((tb, ti) => `<optgroup label="${bpGroupLabel(b, ti)}">${progs.filter(p => p.ti === ti).map(p => `<option value="${p.i}">${p.name}</option>`).join('')}</optgroup>`).join('');
   v.innerHTML = `<div class="bp">
-  <div class="bp-ambient" aria-hidden="true">${g[0] ? `<img src="${g[0]}" alt="" decoding="async"/>` : ''}</div>
+  <div class="bp-ambient" aria-hidden="true">${g[0] ? `<img src="${rs(g[0], 320)}" alt="" decoding="async"/>` : ''}</div>
   <div class="bp-wrap">
     <nav aria-label="Breadcrumb" class="bp-crumb"><a href="#/">${t('home')}</a><i data-lucide="chevron-right"></i><a href="#/fleet">${t('fleet')}</a><i data-lucide="chevron-right"></i><span aria-current="page">${name}</span></nav>
     ${bentoHTML(b)}
@@ -838,7 +841,7 @@ function renderDetail(slug) {
 
         ${similar.length ? `<section class="bp-simwrap" aria-label="${t('similar')}">
           <div class="bp-simhead"><div><h2>${L('เรือขนาดใกล้เคียง', 'Similar boats')}</h2><p class="bp-sub m-0">${L(`เผื่อวันที่ต้องการ ${name} ไม่ว่าง`, `In case ${name} is booked on your date`)}</p></div><a href="#/fleet">${t('viewAll')} →</a></div>
-          <div class="bp-sims">${similar.map(s => `<a href="#/boat/${s.slug}" class="bp-sim"><div class="ph img-fallback"><img src="${gallery(s.slug)[0] || bimg(s.slug, 'a')}" alt="${niceTitle(s.title)}" loading="lazy"/></div><div class="bd"><b>${niceTitle(s.title)}</b><span>${[typeLabel(s.type), s.pax ? `${s.pax} ${t('guests')}` : '', s.marinaP].filter(Boolean).join(' · ')}</span>${s.from_ ? `<div class="pr">${t('price.from', 'เริ่มต้น')} <strong class="tabular-nums">${baht(s.from_)}</strong></div>` : ''}</div></a>`).join('')}</div>
+          <div class="bp-sims">${similar.map(s => `<a href="#/boat/${s.slug}" class="bp-sim"><div class="ph img-fallback"><img src="${rs(gallery(s.slug)[0]) || bimg(s.slug, 'a')}" alt="${niceTitle(s.title)}" loading="lazy"/></div><div class="bd"><b>${niceTitle(s.title)}</b><span>${[typeLabel(s.type), s.pax ? `${s.pax} ${t('guests')}` : '', s.marinaP].filter(Boolean).join(' · ')}</span>${s.from_ ? `<div class="pr">${t('price.from', 'เริ่มต้น')} <strong class="tabular-nums">${baht(s.from_)}</strong></div>` : ''}</div></a>`).join('')}</div>
         </section>` : ''}
       </div>
 
@@ -979,7 +982,7 @@ function drawLightbox() {
   const g = gallery(lbSlug); lbIdx = (lbIdx+g.length)%g.length;
   const im = $('#lbImg'); im.classList.remove('is-in'); im.src = g[lbIdx]; im.alt = (bySlug(lbSlug)?.title || '') + ' — photo ' + (lbIdx+1); void im.offsetWidth; im.classList.add('is-in');
   $('#lbCount').textContent = `${lbIdx+1} / ${g.length}`;
-  $('#lbThumbs').innerHTML = g.map((src,i)=>`<button onclick="lbIdx=${i};drawLightbox()" class="lb-th ${i===lbIdx?'is-on':''}" aria-label="Photo ${i+1}" aria-current="${i===lbIdx}"><img src="${src}" alt=""/></button>`).join('');
+  $('#lbThumbs').innerHTML = g.map((src,i)=>`<button onclick="lbIdx=${i};drawLightbox()" class="lb-th ${i===lbIdx?'is-on':''}" aria-label="Photo ${i+1}" aria-current="${i===lbIdx}"><img src="${rs(src, 160)}" alt=""/></button>`).join('');
   $('#lbThumbs .is-on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 
@@ -1225,7 +1228,7 @@ function renderHomeContent() {
   ['tag', 'title', 'sub', 'cta'].forEach(k => { const el = promo.querySelector(`[data-i18n="promo.${k}"],[data-home="promo.${k}"]`); if (el) { el.removeAttribute('data-i18n'); el.setAttribute('data-home', 'promo.' + k); el.textContent = homeTxt(P[k]); } });
   promo.querySelector('[data-home="promo.cta"]')?.setAttribute('onclick', boat ? `location.hash='#/boat/${boat.slug}'` : `location.hash='#/fleet'`);
   const img = promo.querySelector('img[data-bimg]');
-  if (img && boat) { img.dataset.bimg = boat.slug + ':hero'; img.setAttribute('src', bimg(boat.slug, 'hero')); img.setAttribute('alt', niceTitle(boat.title)); }
+  if (img && boat) { img.dataset.bimg = boat.slug + ':hero'; img.setAttribute('src', bimg(boat.slug, 'hero', 1280)); img.setAttribute('alt', niceTitle(boat.title)); }
   const price = P.price || boat?.from_; $('#promoPrice').textContent = price ? baht(price) : '';
 }
 function fitHeroHl() {}
@@ -1249,7 +1252,7 @@ const TYPE_ICON = {
 function renderTypeBand() {
   const el = $('#typeBand'); if (!el) return;
   const k = LANG === 'en' ? 1 : 0;
-  const bg = bimg('ocean-pearl-42-ft','hero');
+  const bg = bimg('ocean-pearl-42-ft','hero', 320);
   el.innerHTML = `
     <img src="${bg}" alt="" aria-hidden="true" loading="lazy" class="absolute inset-0 w-full h-full object-cover scale-[1.15] blur-[6px]"/>
     <div class="absolute inset-0 bg-[#0b1a24]/65" aria-hidden="true"></div>
@@ -2037,7 +2040,7 @@ function updateCompareUI() {
   const tray = $('#cmpTray');
   tray.classList.toggle('translate-y-[150%]', !CMP.length); tray.classList.toggle('invisible', !CMP.length);
   tray.setAttribute('aria-hidden', !CMP.length);
-  $('#cmpItems').innerHTML = CMP.map(s => { const b = bySlug(s); return `<div class="flex items-center gap-2 bg-white/10 pr-2"><img src="${bimg(s,'a')}" alt="" class="w-10 h-8 object-cover"/><span class="text-xs truncate max-w-[110px]">${b.title}</span><button onclick="toggleCompare('${s}')" aria-label="${L('นำออก','Remove')} ${b.title}" class="text-white/80 hover:text-white"><i data-lucide="x" class="w-3.5 h-3.5"></i></button></div>`; }).join('');
+  $('#cmpItems').innerHTML = CMP.map(s => { const b = bySlug(s); return `<div class="flex items-center gap-2 bg-white/10 pr-2"><img src="${bimg(s,'a',160)}" alt="" class="w-10 h-8 object-cover"/><span class="text-xs truncate max-w-[110px]">${b.title}</span><button onclick="toggleCompare('${s}')" aria-label="${L('นำออก','Remove')} ${b.title}" class="text-white/80 hover:text-white"><i data-lucide="x" class="w-3.5 h-3.5"></i></button></div>`; }).join('');
   $('#cmpGo').disabled = CMP.length < 2;
   $('#cmpGo').textContent = `${L('เปรียบเทียบ','Compare')} (${CMP.length})`;
   icons();
@@ -2190,7 +2193,7 @@ function paintCmd(q = $('#cmdInput').value.trim().toLowerCase(), total) {
     const b = it.b;
     return `<li role="option" id="cmd-${i}" aria-selected="${on}" data-i="${i}" class="cmd-row relative flex items-center gap-3 px-2 py-2 rounded cursor-pointer ${on ? 'bg-maroon-50' : 'hover:bg-sand'}">
       ${on ? '<span class="absolute left-0 top-2 bottom-2 w-0.5 bg-maroon rounded-circle"></span>' : ''}
-      <img src="${bimg(b.slug,'hero')}" alt="" class="w-16 h-11 rounded object-cover shrink-0"/>
+      <img src="${bimg(b.slug,'hero',160)}" alt="" class="w-16 h-11 rounded object-cover shrink-0"/>
       <span class="min-w-0 flex-1"><span class="block text-sm truncate">${markQ(niceTitle(b.title), q)}</span>
         <span class="block text-xs text-muted truncate">${typeLabel(b.type)} · ${b.pax || '—'} ${t('guests')} · ${markQ(b.marinaP, q)}</span></span>
       <span class="text-right shrink-0"><span class="block text-[10px] uppercase tracking-[.12em] text-muted">${t('price.from','เริ่มต้น')}</span><span class="block text-sm tabular-nums">${b.from_ ? baht(b.from_) : '—'}</span></span>
@@ -2213,7 +2216,7 @@ const HERO = ['leopard-90-ft','splo-74-ft','siam-princess-70-ft','the-origin-90-
 let heroIdx = 0, heroTimer;
 function renderHero() {
   const el = $('#heroStage'); if (!el) return;
-  el.innerHTML = HERO.map((s, i) => { const b = bySlug(s); return `<img src="${bimg(s,'hero')}" alt="${niceTitle(b.title)} – ${typeLabel(b.type)} charter in Phuket" ${i?'loading="lazy"':'fetchpriority="high"'} class="hero-slide absolute inset-0 w-full h-full object-cover" aria-hidden="${i!==0}"/>`; }).join('');
+  el.innerHTML = HERO.map((s, i) => { const b = bySlug(s); return `<img src="${bimg(s,'hero',1600)}" srcset="${bimg(s,'hero',768)} 768w, ${bimg(s,'hero',1280)} 1280w, ${bimg(s,'hero',1600)} 1600w" sizes="100vw" alt="${niceTitle(b.title)} – ${typeLabel(b.type)} charter in Phuket" ${i?'loading="lazy"':'fetchpriority="high"'} class="hero-slide absolute inset-0 w-full h-full object-cover" aria-hidden="${i!==0}"/>`; }).join('');
   $('#heroDots').innerHTML = HERO.map((s, i) => `<button onclick="heroGo(${i})" aria-label="${L('สไลด์','Slide')} ${i+1}: ${niceTitle(bySlug(s).title)}" class="w-7 h-1 rounded-full bg-white/35 relative overflow-hidden"><span class="hero-dot absolute inset-y-0 left-0 bg-white rounded-full"></span></button>`).join('');
   bindHeroSwipe();
   heroGo(heroIdx || 0);
@@ -2456,7 +2459,7 @@ function copyTel(tel, name) { const done = () => toast(L(`คัดลอกเ�
 function renderTeam() {
   const el = $('#team'); if (!el) return;
   const k = LANG === 'en' ? 1 : 0, on = teamIsOnline();
-  const faces = TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="" class="tm-face"/>`).join('');
+  const faces = TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="" loading="lazy" decoding="async" class="tm-face"/>`).join('');
   // styles: .tm-* in glass.css (liquid glass, same tone as the boat page)
   el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 lg:py-20">
     <div class="tm-head reveal">
@@ -2501,7 +2504,7 @@ function renderTeam() {
 function renderTeamLive() {
   const ict = new Date(Date.now() + (new Date().getTimezoneOffset() + 420) * 60000), h = ict.getHours() + ict.getMinutes() / 60;
   const on = h >= 9 && h < 21;
-  const faces = TEAM.map((m, i) => `<img src="${TEAM_IMG[m.id]}" alt="" class="w-6 h-6 rounded-circle object-cover ring-2 ring-white ${i ? '-ml-2' : ''}"/>`).join('');
+  const faces = TEAM.map((m, i) => `<img src="${TEAM_IMG[m.id]}" alt="" loading="lazy" decoding="async" class="w-6 h-6 rounded-circle object-cover ring-2 ring-white ${i ? '-ml-2' : ''}"/>`).join('');
   const label = on ? L('ทีมออนไลน์ · ตอบใน 30 นาที','Team online · replies in 30 min') : L('กลับมา 09:00 น. · ฝากข้อความได้','Back at 09:00 · leave a message');
   const dot = `<span class="live-dot w-1.5 h-1.5 rounded-circle ${on ? 'bg-maroon text-maroon' : 'bg-line-strong text-line-strong'}"></span>`;
   $('#teamLive').innerHTML = `<span class="flex">${faces}</span>${dot}<span class="text-xs text-muted whitespace-nowrap">${label}</span>`;
@@ -2604,7 +2607,7 @@ function postBlock(b, i) {
   }
   return '';
 }
-const miniBoat = b => `<a href="#/boat/${b.slug}" class="post-boat"><img src="${bimg(b.slug, 'a')}" alt="${esc(niceTitle(b.title))}" loading="lazy"/><span class="min-w-0"><b>${niceTitle(b.title)}</b><small>${typeLabel(b.type)} · ${b.pax || '-'} ${t('guests')}</small><em>${t('price.from', 'เริ่มต้น')} ${b.from_ ? baht(b.from_) : '—'}</em></span><i data-lucide="arrow-right" class="w-4 h-4 shrink-0 text-maroon"></i></a>`;
+const miniBoat = b => `<a href="#/boat/${b.slug}" class="post-boat"><img src="${bimg(b.slug, 'a', 320)}" alt="${esc(niceTitle(b.title))}" loading="lazy"/><span class="min-w-0"><b>${niceTitle(b.title)}</b><small>${typeLabel(b.type)} · ${b.pax || '-'} ${t('guests')}</small><em>${t('price.from', 'เริ่มต้น')} ${b.from_ ? baht(b.from_) : '—'}</em></span><i data-lucide="arrow-right" class="w-4 h-4 shrink-0 text-maroon"></i></a>`;
 const PLACE_KW = [['phi phi', 'พีพี'], ['phang nga', 'พังงา', 'james bond', 'เจมส์บอนด์'], ['racha', 'ราชา'], ['coral', 'เฮ', 'คอรัล'], ['khai', 'เกาะไข่'], ['maiton', 'ไม้ท่อน'], ['similan', 'สิมิลัน'], ['krabi', 'กระบี่', 'hong', 'ห้อง'], ['sunset', 'ซันเซ็ต', 'พระอาทิตย์ตก']];
 function relatedBoats(p) {
   const text = (pT(p, 'title') + ' ' + p.title.en + ' ' + p.title.th).toLowerCase(), hit = PLACE_KW.find(g => g.some(w => text.includes(w)));
@@ -2704,7 +2707,7 @@ function renderDestIndex() {
     <h1 class="font-display text-3xl sm:text-4xl leading-tight mt-3">${L('เช่าเรือไปเกาะไหนดี', 'Where to go by private boat')}</h1>
     <div class="grid sm:grid-cols-2 gap-5 mt-8">${DPAGES.map(d => { const bs = destBoats(d.slug), from = Math.min(...bs.filter(b => b.from_).map(b => b.from_));
       return `<a href="#/dest/${d.slug}" class="group relative block aspect-[16/10] rounded-[18px] overflow-hidden img-fallback">
-        <img src="${d.hero}" alt="${dl(d.name)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700"/>
+        <img src="${rs(d.hero)}" alt="${dl(d.name)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700"/>
         <span class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent"></span>
         <span class="absolute inset-x-0 bottom-0 p-6 text-white"><span class="block font-display text-2xl leading-tight">${dl(d.name)}</span>
           <span class="block text-xs text-white/80 mt-1">${bs.length ? `${L('เริ่ม', 'from')} ${baht(from)} · ${bs.length} ${L('ลำ', 'boats')}` : ''}</span></span>
@@ -2723,7 +2726,7 @@ function renderDest(slug) {
   const title = k === 'en' ? `${d.name.en} private boat charter` : `เช่าเรือไป${d.name.th}`;
   v.innerHTML = `
   <section class="relative overflow-hidden on-dark bg-ink">
-    <img src="${d.hero}" alt="" class="absolute inset-0 w-full h-full object-cover"/>
+    <img src="${rs(d.hero, 1600)}" srcset="${rs(d.hero)} 768w, ${rs(d.hero, 1280)} 1280w, ${rs(d.hero, 1600)} 1600w" sizes="100vw" alt="" class="absolute inset-0 w-full h-full object-cover"/>
     <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" aria-hidden="true"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-16 lg:pb-24 text-white">
       <nav aria-label="Breadcrumb" class="text-xs text-white/75 flex items-center gap-1.5"><a href="#/" class="hover:text-white">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><a href="#/destinations" class="hover:text-white">${L('จุดหมาย', 'Destinations')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span class="text-white" aria-current="page">${d.name[k]}</span></nav>

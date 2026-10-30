@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  * 4. /boats and /img: the same URL, a lighter file — AVIF (or WebP for PNG/JPG) when the browser accepts it.
  *    The twins sit next to each image (x.webp.avif, x.png.webp), made by `node scripts/optimize-images.mjs`; an empty twin = no gain.
  */
-export const config = { runtime: 'nodejs', matcher: ['/boats/:path*', '/img/:path*', '/((?!_next/|api/|admin|boats/|brand/|img/|site/|site-data.js|uploads/|feeds/|icon|favicon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|js|css|map)$).*)'] };
+export const config = { runtime: 'nodejs', matcher: ['/boats/:path*', '/img/:path*', '/((?!_next/|api/|admin|boats/|brand/|img/|r/|site/|site-data.js|uploads/|feeds/|icon|favicon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|js|css|map)$).*)'] };
 
 let cache: { at: number; map: Map<string, { to: string; code: number }> } | null = null;
 async function redirectMap() {

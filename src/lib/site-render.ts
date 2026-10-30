@@ -26,7 +26,7 @@ function loadAssets() {
   // fleet.js (หน้าเรือทั้งหมด) runs right after app.js, in the browser and here
   const version = String(Math.floor(Math.max(statSync(appPath).mtimeMs, statSync(path.join(ROOT, 'public/site/fleet.js')).mtimeMs)));
   if (assets && assets.version === version) return assets;
-  assets = { shell: read('site/shell.html').replaceAll('__V__', version).replaceAll('https://boattripthailand.com', SITE), app: new vm.Script(read('public/site/app.js'), { filename: 'app.js' }), fleet: new vm.Script(read('public/site/fleet.js'), { filename: 'fleet.js' }), lucide: new vm.Script(read('public/site/lucide.min.js'), { filename: 'lucide.js' }), version };
+  assets = { shell: read('site/shell.html').replaceAll('__V__', version).replaceAll('https://boattripthailand.com', SITE), app: new vm.Script(read('public/site/app.js'), { filename: 'app.js' }), fleet: new vm.Script(read('public/site/fleet.js'), { filename: 'fleet.js' }), lucide: new vm.Script(read('public/site/lucide.full.min.js'), { filename: 'lucide.js' }), version };
   return assets;
 }
 
@@ -85,7 +85,8 @@ export async function siteDataBundle() {
   const TEAM_IMG = Object.fromEntries(['kwang', 'save', 'prang'].map(n => [n, `/img/team/${n}.webp`]));
   const POSTS: PostIdx[] = ps.map(postIdx);
   const data = { __SET__: publicSettings(cfg[0]?.value), __HOME__: home, __ACTS__: acts.filter(a => a.active !== false), __SEO__: publicSeo(seo), FLEET, EXTRA: extra, SEASONS, BIMG, GALLERY, SHOWIMG, TEAM_IMG, POSTS, DEST_PAGES: DESTINATIONS.map(({ match, ...d }) => ({ ...d, hero: ver(d.hero), match: match.source })) };
-  const js = Object.entries(data).map(([k, v]) => `window.${k}=${JSON.stringify(v).replace(/</g, '\\u003c')};`).join('\n');
+  // big blocks as JSON.parse('…'): browsers parse a JSON string much faster than the same data written as a JS object literal
+  const js = Object.entries(data).map(([k, v]) => { const j = JSON.stringify(v); return `window.${k}=${(j.length > 8000 ? `JSON.parse(${JSON.stringify(j)})` : j).replace(/</g, '\\u003c')};`; }).join('\n');
   dataCache = { at: Date.now(), data, js, version: createHash('sha1').update(js).digest('hex').slice(0, 12) };
   return dataCache;
 }

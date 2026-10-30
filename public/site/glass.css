@@ -733,3 +733,10 @@ details.fq { border-radius: 22px !important; } .fq { background: rgb(255 255 255
 @media (min-width:640px) { .lang-chip { display:none; } }
 #navRow > a:first-child .font-display { white-space:nowrap; }
 @media (max-width:420px) { #navbar .nv-ico, #menuBtn { width:36px; height:36px; } .lang-chip { padding:0 9px 0 8px; gap:4px; } }
+
+/* ---------- speed: below-the-fold blocks are laid out only when they come near the screen ---------- */
+@supports (content-visibility:auto) {
+  #view-home > #typeBand, #view-home > #routes, #view-home > #promo, #view-home > #categories, #view-home > #activities,
+  #view-home > #seoGuide, #view-home > #homeBlog, #view-home > #faq, #view-home > #booking, footer { content-visibility:auto; contain-intrinsic-size:auto 900px; }
+  #fxGrid > .fx-card:nth-child(n+7) { content-visibility:auto; contain-intrinsic-size:auto 520px; }
+}

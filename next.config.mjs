@@ -24,6 +24,7 @@ const config = {
       // site scripts/styles carry ?v= but CSS edits do not change it: an hour, then refreshed in the background
       { source: '/site/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=604800' }] },
       { source: '/site/vendor/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
+      { source: '/site/fonts/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }, { key: 'Access-Control-Allow-Origin', value: '*' }] },
     ];
   },
 };
