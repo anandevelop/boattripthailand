@@ -1286,17 +1286,26 @@ function renderTypeBand() {
       <p class="text-[11px] uppercase tracking-[.32em] text-white/70 reveal">${L('ค้นหาตาม','Search by')}</p>
       <h2 id="typeBandTitle" class="font-display text-3xl sm:text-4xl mt-3 reveal">${L('ประเภทเรือ','Boat type')}</h2>
       <p class="text-sm text-white/75 mt-4 max-w-xl mx-auto reveal">${L(`รู้แล้วว่าอยากได้เรือแบบไหน? เลือกจากเรือส่วนตัว ${FLEET.length} ลำของเรา ทั่วภูเก็ต กระบี่ และพังงา`,`Know what you're looking for? Browse our ${FLEET.length} private boats across Phuket, Krabi and Phang Nga.`)}</p>
-      <ul class="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10">
+      <ul id="tbRow" class="tb-row mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10">
         ${TYPES.map((ty,i) => { const n = FLEET.filter(b => b.type === ty).length; return `<li class="reveal" style="transition-delay:${i*70}ms">
-          <a href="#/fleet" onclick="fleetState.f='${ty}'" class="tb-item group block">
+          <a href="#/fleet?type=${ty}" class="tb-item group block">
             <span class="tb-ico block mx-auto">${TYPE_ICON[ty]}</span>
             <span class="block mt-4 text-lg font-medium">${typeLabel(ty)}</span>
             <span class="block text-sm text-white/70 mt-1">${n} ${L('ลำ','boats')} · ${L('เริ่ม','from')} ${baht(minFrom(ty))}</span>
           </a></li>`; }).join('')}
       </ul>
+      <div class="tb-bar" aria-hidden="true"><i id="tbThumb"></i></div>
       <a href="#/fleet" class="mt-12 inline-flex items-center gap-2 h-11 px-6 bg-white text-ink hover:bg-white/90 transition text-[13px]">${L('ดูเรือทั้งหมด','View all boats')} <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
     </div>`;
 }
+/* phone: the type cards scroll sideways; the small bar under them shows where you are (like an app's shortcut row) */
+function tbBar() {
+  const r = document.getElementById('tbRow'), t = document.getElementById('tbThumb'); if (!r || !t) return;
+  const max = r.scrollWidth - r.clientWidth, w = max > 0 ? Math.max(18, r.clientWidth / r.scrollWidth * 100) : 100;
+  t.style.width = w + '%'; t.style.transform = `translateX(${max > 0 ? r.scrollLeft / max * (100 - w) / w * 100 : 0}%)`;
+  if (!r.dataset.bar) { r.dataset.bar = 1; r.addEventListener('scroll', () => requestAnimationFrame(tbBar), { passive: true }); addEventListener('resize', tbBar); }
+}
+{ const _tb = renderTypeBand; renderTypeBand = function () { _tb(); if (typeof requestAnimationFrame === 'function' && navigator.userAgent !== 'BTT-SSR') requestAnimationFrame(tbBar); }; }
 
 const HOME_PARTS = () => [renderHeroText, renderHero, renderTypeBand, renderStats, renderSmartTeaser, renderGroups, renderCats, renderActs, renderBoatFilters, renderBoats, renderRoutes, renderRecent, renderSeoGuide, renderHomeBlog, renderFaq, renderTeam, renderTeamLive];
 function renderAll() { HOME_PARTS().forEach(f => f()); renderNavText(); updateCompareUI(); route(true); }
