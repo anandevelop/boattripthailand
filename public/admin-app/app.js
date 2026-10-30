@@ -4633,6 +4633,20 @@ function sysInfoCopy() {
   icons();
 }; }
 
+/* ---------- จัดการเรือ: photo count column (red under 8 photos) ---------- */
+{ const _b = vBoats; vBoats = function () {
+  _b();
+  const tbl = $('#view table'); if (!tbl) return;
+  const hs = [...tbl.querySelectorAll('thead th')], at = hs.findIndex(th => th.textContent.trim() === 'แนะนำ'); if (at < 0) return;
+  hs[at].insertAdjacentHTML('beforebegin', '<th class="text-center">รูป</th>');
+  tbl.querySelectorAll('tbody tr').forEach(tr => {
+    const s = tr.querySelector('[onclick^="boatEdit"]')?.getAttribute('onclick').match(/'([^']+)'/)?.[1], b = s && bySlug(s); if (!b) return;
+    const n = (b.imgs || []).filter(Boolean).length, few = n < 8;
+    tr.children[at]?.insertAdjacentHTML('beforebegin', `<td class="text-center"><span class="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[12px] tnum ${few ? 'bg-[#fdecea] text-[#b42318]' : 'bg-sand text-muted'}" title="${n} รูป${few ? ' · ควรมีอย่างน้อย 8 รูป' : ''}"><i data-lucide="image" class="w-3.5 h-3.5"></i>${n}</span></td>`);
+  });
+  icons();
+}; PAGES.find(p => p[0] === 'boats')[3] = vBoats; }
+
 /* ---------- sidebar groups: แดชบอร์ด · งานขาย · สินค้า & ราคา · เว็บไซต์ · การตลาด · ทีม & ระบบ ---------- */
 { const G = [[null, ['dashboard']], ['งานขาย', ['bookings', 'calendar', 'customers']], ['สินค้า & ราคา', ['boats', 'seasons', 'activities']],
     ['เว็บไซต์', ['content', 'articles', 'media']], ['การตลาด', ['seo', 'analytics', 'audiences']], ['ทีม & ระบบ', ['team', 'audit', 'settings', 'system']]];
