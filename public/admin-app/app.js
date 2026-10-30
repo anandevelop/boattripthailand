@@ -6263,6 +6263,99 @@ setTimeout(trCheck, 1500);
 { const _tc = trCard; trCard = function () { const h = _tc(), w = trWarn(TRU.d); return w ? h.replace('<div class="mt-4">', `<p class="mt-3 text-[12.5px] rounded-lg px-3 py-2 bg-[#fff7f6] text-[#a3222c] ring-1 ring-[#f3c7c2]">${w}</p><div class="mt-4">`) : h; }; }
 { const _gb = ggBody; ggBody = function () { const h = _gb(); return GA.tab === 'api' ? h + trCard() : h; }; }
 
+/* ---------- ออนไลน์ตอนนี้: counted by the site itself (/api/live) → dashboard card + วิเคราะห์เว็บไซต์ › ตอนนี้ ---------- */
+const LIVEV = { d: null, t: 0, loading: false, timer: 0 };
+const LV_SRC = { direct: 'เข้าเว็บตรง', google: 'Google', 'google-ads': 'Google Ads', bing: 'Bing', facebook: 'Facebook', 'facebook-ads': 'Facebook Ads', instagram: 'Instagram', line: 'LINE', tiktok: 'TikTok', youtube: 'YouTube', ai: 'AI (ChatGPT ฯลฯ)', email: 'อีเมล', referral: 'เว็บอื่น', other: 'อื่นๆ' };
+const LV_DEV = { mobile: 'มือถือ', desktop: 'คอมพิวเตอร์', tablet: 'แท็บเล็ต' };
+const LV_COL = ['#70000e', '#a3313f', '#c98a8f', '#e2b5ba', '#efdcde', '#f6ecec'];
+function lvLoad() {
+  if (LIVEV.loading) return; LIVEV.loading = true;
+  fetch('/api/admin/live', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : null).then(d => { if (d) { LIVEV.d = d; LIVEV.t = Date.now(); } })
+    .catch(() => {}).finally(() => { LIVEV.loading = false; lvPaint(); });
+}
+function lvTick() {
+  clearTimeout(LIVEV.timer);
+  const on = (CUR === 'dashboard') || (CUR === 'analytics' && GA.tab === 'live');
+  if (!on) return;
+  if (!document.hidden) lvLoad();
+  LIVEV.timer = setTimeout(lvTick, CUR === 'analytics' ? 10_000 : 20_000);
+}
+function lvPaint() {
+  const card = $('#lvCard'); if (card) card.outerHTML = lvCard();
+  const body = $('#lvBody'); if (body) body.outerHTML = lvBody();
+  icons();
+}
+function lvPageName(p) {
+  if (p === '/' || p === '/en') return p === '/en' ? 'หน้าแรก (EN)' : 'หน้าแรก';
+  const q = p.replace(/^\/en(?=\/)/, ''), en = q !== p;
+  const m = q.match(/^\/yacht-charter\/([^/]+)/); if (m) { const b = bySlug(m[1]); return (b ? b.name : m[1]) + (en ? ' (EN)' : ''); }
+  const L = { '/yacht-charter': 'เรือทั้งหมด', '/blog': 'บทความ', '/destinations': 'ปลายทาง', '/about': 'เกี่ยวกับเรา', '/contact': 'ติดต่อเรา', '/activities': 'ทัวร์ & กิจกรรม' };
+  return (L[q] || q) + (en ? ' (EN)' : '');
+}
+function lvBars(v, h = 34, gap = 2) {
+  const mx = Math.max(1, ...v);
+  return `<div class="flex items-end" style="height:${h}px;gap:${gap}px">${v.map((x, i) => `<i title="${x} คน" style="flex:1;min-height:3px;height:${Math.max(4, x / mx * 100)}%;border-radius:3px 3px 0 0;background:#70000e;opacity:${i === v.length - 1 ? 1 : .82}"></i>`).join('')}</div>`;
+}
+function lvSplit(title, list, names) {
+  const tot = list.reduce((s, x) => s + x.n, 0) || 1;
+  return `<div class="mt-4"><p class="text-[12px] text-muted mb-1.5">${title}</p>${list.length ? `<div class="flex h-2.5 rounded-full overflow-hidden" style="gap:2px">${list.map((x, i) => `<i style="width:${x.n / tot * 100}%;background:${LV_COL[Math.min(i, 5)]}"></i>`).join('')}</div>
+    <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[12px]">${list.map((x, i) => `<span class="inline-flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-[3px]" style="background:${LV_COL[Math.min(i, 5)]}"></i>${esc(names[x.key] || x.key)} <b class="tnum">${x.n}</b></span>`).join('')}</div>` : '<p class="text-[12px] text-muted">—</p>'}</div>`;
+}
+const lvDot = t => `<span class="inline-flex items-center gap-1.5 text-[12px] font-medium" style="color:#1e7a46"><i class="w-2 h-2 rounded-full" style="background:#22a55a;box-shadow:0 0 0 4px #22a55a33"></i>${t}</span>`;
+function lvCard() {
+  const d = LIVEV.d;
+  return `<a id="lvCard" href="#/analytics" onclick="GA.tab='live'" class="card p-5 mb-4 flex flex-wrap items-center hover:ring-1 hover:ring-maroon/30" style="column-gap:32px;row-gap:12px;background:linear-gradient(135deg,#fff,#fff6f6)">
+    <div style="min-width:150px"><div class="flex items-center" style="gap:12px"><p class="text-[12px] text-muted">ออนไลน์ตอนนี้</p>${lvDot('สด')}</div>
+      <p class="leading-none font-medium tnum mt-2" style="font-size:30px">${d ? d.now : '—'} <span style="font-size:15px">คน</span></p></div>
+    <p class="text-[12.5px] text-muted">${d ? `กำลังดูหน้าเรือ <b class="text-ink tnum">${d.onBoat}</b> · กำลังกรอกฟอร์มจอง <b class="text-ink tnum">${d.form}</b><br>สูงสุดวันนี้ <b class="text-ink tnum">${d.peak.n}</b> คน (${new Date(d.peak.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.)` : 'กำลังโหลด…'}</p>
+    <div class="flex-1 min-w-[200px]">${d ? lvBars(d.minutes) : ''}<p class="text-[10.5px] text-muted mt-1 flex justify-between"><span>30 นาทีก่อน</span><span>ตอนนี้</span></p></div>
+    <span class="text-[12.5px] text-maroon font-medium whitespace-nowrap">ดูรายละเอียด ›</span></a>`;
+}
+function lvBody() {
+  const d = LIVEV.d;
+  if (!d) return `<div id="lvBody" class="card p-10 text-center text-muted">กำลังโหลด…</div>`;
+  const pages = d.pages.length ? d.pages.map(p => `<li class="grid items-center gap-3 py-2.5 border-b border-line last:border-0" style="grid-template-columns:1fr 110px 28px"><span class="min-w-0"><span class="block truncate text-[13.5px]">${esc(lvPageName(p.path))}${p.form ? ` <span class="pill" style="background:#fff4e5;color:#9a5b00">กรอกฟอร์ม ${p.form}</span>` : ''}</span><span class="block truncate text-[11.5px] text-muted">${esc(p.path)}</span></span>
+      <span class="h-[7px] rounded-full bg-sand overflow-hidden"><i class="block h-full rounded-full bg-maroon" style="width:${p.n / d.pages[0].n * 100}%"></i></span><b class="text-right tnum">${p.n}</b></li>`).join('') : '<li class="py-8 text-center text-muted text-[13px]">ยังไม่มีใครเปิดเว็บใน 5 นาทีล่าสุด</li>';
+  const boats = d.boats.length ? d.boats.map(x => { const b = bySlug(x.slug);
+    const sub = [x.th && x.en ? `${x.th} ไทย · ${x.en} EN` : x.en ? 'EN' : 'ไทย', x.src ? 'จาก ' + (LV_SRC[x.src] || x.src) : '', x.form ? 'กำลังกรอกฟอร์มจอง' : ''].filter(Boolean).join(' · ');
+    return `<a href="#/boats/${esc(x.slug)}" onclick="event.preventDefault();boatEdit('${esc(x.slug)}')" class="flex items-center gap-3 py-2.5 border-b border-line last:border-0 hover:bg-sand/40 rounded-lg">${typeof thumb === 'function' ? thumb(x.slug, 'w-14 h-10') : ''}<span class="min-w-0 flex-1"><b class="block truncate font-medium text-[13.5px]">${esc(b ? b.name : x.slug)}</b><span class="block truncate text-[11.5px] text-muted">${esc(sub)}</span></span><span class="pill tnum" style="background:#fbeff0;color:#70000e">${x.n}</span></a>`; }).join('')
+    : '<p class="py-8 text-center text-muted text-[13px]">ยังไม่มีใครดูหน้าเรือ</p>';
+  return `<div id="lvBody" class="grid xl:grid-cols-[1.25fr_1fr] gap-4 items-start">
+    <div class="card p-5 min-w-0"><div class="flex flex-wrap items-center justify-between gap-2">${lvDot('สด · อัปเดตทุก 10 วินาที')}<span class="text-[12px] text-muted">นับคนที่เปิดเว็บอยู่ใน ${d.windowMin} นาทีล่าสุด</span></div>
+      <div class="flex items-end gap-3 mt-3"><p class="leading-none font-medium tnum" style="font-size:60px">${d.now}</p><p class="text-[13.5px] text-muted pb-2">คนอยู่บนเว็บตอนนี้ · กำลังดูหน้าเรือ ${d.onBoat} · กรอกฟอร์ม ${d.form}<br>สูงสุดวันนี้ ${d.peak.n} คน (${new Date(d.peak.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.)</p></div>
+      <div class="mt-5 pb-1 border-b border-line">${lvBars(d.minutes, 120, 4)}</div><p class="text-[11px] text-muted mt-1 flex justify-between"><span>30 นาทีก่อน</span><span>15 นาที</span><span>ตอนนี้</span></p>
+      ${lvSplit('อุปกรณ์', d.device, LV_DEV)}${lvSplit('มาจาก', d.source, LV_SRC)}${lvSplit('ภาษา', d.lang, { th: 'ไทย', en: 'English' })}</div>
+    <div class="grid gap-4 min-w-0">
+      <div class="card p-5"><p class="font-medium flex justify-between">กำลังดูหน้าไหน <span class="text-[12px] text-muted font-normal">${d.pages.length} หน้า</span></p><ul class="mt-2">${pages}</ul></div>
+      <div class="card p-5"><p class="font-medium flex justify-between">เรือที่กำลังมีคนดู <span class="text-[12px] text-muted font-normal">เตรียมรับลีดได้</span></p><div class="mt-2">${boats}</div></div>
+    </div>
+    <p class="xl:col-span-2 text-[11.5px] text-muted">นับจากเว็บเราเอง ไม่ใช้คุกกี้ ไม่เก็บ IP · หน้าเว็บส่งสัญญาณทุก 30 วินาทีขณะเปิดแท็บอยู่ · ไม่ได้ใช้ ${d.windowMin} นาที = ไม่นับ · บอทไม่นับ · ตัวเลขเริ่มนับใหม่เมื่อเซิร์ฟเวอร์รีสตาร์ท/deploy</p>
+  </div>`;
+}
+{ const _vd = vDashboard; vDashboard = function () {
+  _vd();
+  const v = $('#view'); const grid = v && [...v.children].find(x => x.classList?.contains('grid'));
+  if (grid && !$('#lvCard')) grid.insertAdjacentHTML('beforebegin', lvCard());
+  if (!LIVEV.d || Date.now() - LIVEV.t > 15_000) lvLoad();
+  lvTick(); icons();
+}; PAGES.find(p => p[0] === 'dashboard')[3] = vDashboard; }
+{ const _va = vAnalytics; vAnalytics = function () {
+  const live = GA.tab === 'live'; if (live) GA.tab = 'site';
+  try { _va(); } finally { if (live) GA.tab = 'live'; }
+  const bar = $('#view .flex.gap-1.overflow-x-auto');
+  if (bar && !bar.querySelector('[data-lv]')) {
+    if (live) bar.querySelectorAll('.tab.on').forEach(t => t.classList.remove('on'));
+    bar.insertAdjacentHTML('afterbegin', `<button data-lv class="tab inline-flex items-center gap-1.5 ${live ? 'on' : ''}" onclick="GA.tab='live';vAnalytics()"><i class="w-2 h-2 rounded-full" style="background:#22a55a"></i>ตอนนี้</button>`);
+  }
+  if (live) {
+    [...$$('#view .rounded-xl')].find(x => x.className.includes('fff8e6'))?.remove();
+    const f = $('#view .fade'); if (f) f.innerHTML = lvBody();
+    if (!LIVEV.d || Date.now() - LIVEV.t > 8_000) lvLoad();
+    lvTick();
+  }
+  icons();
+}; PAGES.find(p => p[0] === 'analytics')[3] = vAnalytics; }
+
 /* ---------- start: the server already checked the session ---------- */
 (function start() {
   const me = Object.assign({}, TEAM.find(t => t.id === BOOT.me.id) || BOOT.me, { perms: BOOT.me.perms });

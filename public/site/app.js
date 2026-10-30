@@ -2778,7 +2778,7 @@ function renderNotFound() {
   icons();
 }
 
-function route(keepScroll) { bpSheetOff(); try { return route0(keepScroll); } finally { afterRoute(); pageView(); } }
+function route(keepScroll) { bpSheetOff(); try { return route0(keepScroll); } finally { afterRoute(); pageView(); liveBeat(); } }
 /* cookieless page-view counter (/api/t → /admin วิเคราะห์เว็บไซต์): page, traffic source, device and language only —
    no cookies, no visitor id. The source is decided on the first page of a browser session and kept for that session. */
 let PV_LAST = '';
@@ -2799,6 +2799,24 @@ function pageView() {
   if (p === PV_LAST) return; PV_LAST = p;
   const [s, f] = pvSource(), w = innerWidth, touch = matchMedia('(pointer: coarse)').matches;
   try { navigator.sendBeacon('/api/t', JSON.stringify({ p, s, f, d: w < 768 ? 'mobile' : touch && w < 1200 ? 'tablet' : 'desktop', l: LANG === 'en' ? 'en' : 'th' })); } catch { /* never block the page */ }
+}
+/* "ออนไลน์ตอนนี้" (/api/live → /admin): a heartbeat every 30 s while this tab is visible. The id is random and lives
+   only in this tab (sessionStorage) — no cookie, nothing that identifies a person. A tab silent for 5 min stops counting. */
+let LIVE_ID = '';
+function liveBeat() {
+  if (navigator.userAgent === 'BTT-SSR' || typeof navigator.sendBeacon !== 'function' || document.hidden || new URLSearchParams(location.search).has('preview')) return;
+  if (!LIVE_ID) { try { LIVE_ID = sessionStorage.getItem('btt_live') || ''; } catch { /* private mode */ }
+    if (!LIVE_ID) { LIVE_ID = Math.random().toString(36).slice(2, 12) + Date.now().toString(36); try { sessionStorage.setItem('btt_live', LIVE_ID); } catch { /* private mode */ } } }
+  const w = innerWidth, touch = matchMedia('(pointer: coarse)').matches, h = typeof VHASH === 'string' ? VHASH : '';
+  const b = h.startsWith('#/boat/') ? h.slice(7).split(/[?#/]/)[0] : '';
+  const f = !!(document.activeElement && document.activeElement.closest && document.activeElement.closest('#modalFormWrap, #inlineFormWrap')) || !!(document.getElementById('modalFormWrap') || {}).offsetParent;
+  let s = 'direct'; try { s = sessionStorage.getItem('btt_src') || 'direct'; } catch { /* private mode */ }
+  try { navigator.sendBeacon('/api/live', JSON.stringify({ v: LIVE_ID, p: location.pathname, s, d: w < 768 ? 'mobile' : touch && w < 1200 ? 'tablet' : 'desktop', l: LANG === 'en' ? 'en' : 'th', b, f })); } catch { /* never block the page */ }
+}
+if (navigator.userAgent !== 'BTT-SSR' && typeof setInterval === 'function' && typeof document.addEventListener === 'function') {
+  setInterval(liveBeat, 30_000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) liveBeat(); });
+  document.addEventListener('focusin', e => { if (e.target && e.target.closest && e.target.closest('#modalFormWrap, #inlineFormWrap') && !liveBeat.f) { liveBeat.f = 1; liveBeat(); } });
 }
 function route0(keepScroll) {
   if (window.fbq && route.done) fbq('track', 'PageView'); route.done = 1; attrPage();
