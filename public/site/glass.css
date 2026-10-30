@@ -724,3 +724,12 @@ details.fq { border-radius: 22px !important; } .fq { background: rgb(255 255 255
 .bf-hint { display: block; margin: 6px 0 0 6px; font-size: 12.5px; line-height: 1.45; color: var(--color-feedback-error, #b42318); }
 .bf-fix { padding: 0 2px; font: inherit; font-weight: 500; color: #70000e; text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; cursor: pointer; }
 .bf-hp { position: absolute !important; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* ---------- phone navbar: language chip (globe + the language it switches to) · ≥640px uses the ไทย | EN switch ---------- */
+.lang-chip { display:inline-flex; align-items:center; gap:5px; height:34px; padding:0 11px 0 9px; margin-right:2px; border-radius:980px;
+  background:#fff; color:#231416; box-shadow:inset 0 0 0 1px rgb(0 0 0 / .09), 0 1px 2px rgb(0 0 0 / .05); font-size:12.5px; font-weight:600; letter-spacing:.03em; line-height:1; }
+.lang-chip:active { transform:scale(.96); }
+.lang-chip:focus-visible { outline:2px solid #70000e; outline-offset:2px; }
+@media (min-width:640px) { .lang-chip { display:none; } }
+#navRow > a:first-child .font-display { white-space:nowrap; }
+@media (max-width:420px) { #navbar .nv-ico, #menuBtn { width:36px; height:36px; } .lang-chip { padding:0 9px 0 8px; gap:4px; } }

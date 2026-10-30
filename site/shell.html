@@ -69,7 +69,8 @@
         <button onclick="openCmd()" class="nv-ico h-10 w-10 grid place-items-center text-ink hover:bg-black/[.05] transition" aria-label="Search (Ctrl K)"><i data-lucide="search" class="w-[18px] h-[18px]" stroke-width="2"></i><span id="navSearchLbl" class="sr-only">ค้นหา</span></button>
         <!-- favourites -->
         <a href="#/fleet?fav" class="nv-ico relative h-10 w-10 grid place-items-center text-ink hover:bg-black/[.05] transition" aria-label="Favourites"><i data-lucide="heart" class="w-[18px] h-[18px]" stroke-width="2"></i><span class="fav-count hidden absolute top-1 right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-maroon text-white text-[9px] leading-[15px] text-center"></span></a>
-        <!-- language -->
+        <!-- language · phones: one chip with the language to switch to (the full ไทย | EN switch is in the menu) -->
+        <button id="langChip" class="lang-chip" data-lang="en" lang="en" aria-label="Switch to English"><i data-lucide="globe" class="w-4 h-4" stroke-width="2"></i><span>EN</span></button>
         <div id="langSeg" class="lang-seg hidden sm:flex items-center" role="group" aria-label="Language">
           <button class="lang-btn chip-active" data-lang="th" aria-label="ภาษาไทย"><span>ไทย</span></button>
           <button class="lang-btn text-muted" data-lang="en" aria-label="English"><span>EN</span></button>

@@ -96,6 +96,14 @@ function seoAlternates() {
 function afterRoute() {
   realLinks(); seoAlternates(); document.documentElement.lang = LANG;
   document.querySelectorAll('.lang-btn').forEach(b => { const on = b.dataset.lang === LANG; b.classList.toggle('chip-active', on); b.classList.toggle('text-muted', !on); b.setAttribute('aria-pressed', on); });
+  syncLangChip();
+}
+/* phone navbar: the chip shows the language it switches TO */
+function syncLangChip() {
+  const c = document.getElementById('langChip'); if (!c) return;
+  const to = LANG === 'th' ? 'en' : 'th';
+  c.dataset.lang = to; c.setAttribute('lang', to); c.setAttribute('aria-label', to === 'en' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย');
+  const s = c.querySelector('span'); if (s) s.textContent = to.toUpperCase();
 }
 
 if (typeof MutationObserver !== 'undefined') {
@@ -1179,9 +1187,10 @@ window.addEventListener('scroll', () => $('#navbar').classList.toggle('is-compac
 function setLang(l) {
   bpSheetOff(); LANG = l; document.documentElement.lang = l; locFleet();
   $$('.lang-btn').forEach(b => { const on = b.dataset.lang===l; b.classList.toggle('chip-active', on); b.classList.toggle('text-muted', !on); b.setAttribute('aria-pressed', on); });
-  applyI18n(); renderAll(); inlineForm = buildForm($('#inlineFormWrap')); dpRelabel();
+  syncLangChip(); applyI18n(); renderAll(); inlineForm = buildForm($('#inlineFormWrap')); dpRelabel();
 }
 $$('.lang-btn').forEach(b => b.onclick = () => { if (b.dataset.lang !== LANG) { const l = b.dataset.lang; history.pushState(null, '', hashToPath(VH.hash, l)); setLang(l); toast(t('toastLang')); } });
+if ($('#langChip')) $('#langChip').onclick = () => { const l = LANG === 'th' ? 'en' : 'th'; history.pushState(null, '', hashToPath(VH.hash, l)); setLang(l); toast(t('toastLang')); };
 
 const HERO_ROT = HOME ? { th: HOME.hero.words.map(w => w.th || w.en), en: HOME.hero.words.map(w => w.en || w.th) }
   : { th:['ในแบบของคุณ','กับคนที่คุณรัก','กับเพื่อนทั้งแก๊ง','แบบส่วนตัว'], en:['your way','with family','with friends','in private'] };
