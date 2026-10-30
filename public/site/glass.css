@@ -744,3 +744,36 @@ details.fq { border-radius: 22px !important; } .fq { background: rgb(255 255 255
   #view-home > #seoGuide, #view-home > #homeBlog, #view-home > #faq, #view-home > #booking, footer { content-visibility:auto; contain-intrinsic-size:auto 900px; }
   #fxGrid > .fx-card:nth-child(n+7) { content-visibility:auto; contain-intrinsic-size:auto 520px; }
 }
+
+/* ---------- phone menu: bottom sheet (#mobileMenu) + dimmed page behind it (#mmBack) ---------- */
+#mobileMenu { position:fixed; left:0; right:0; bottom:0; z-index:3; max-height:calc(100dvh - 88px); overflow-y:auto; overscroll-behavior:contain;
+  background:#fff !important; -webkit-backdrop-filter:none; backdrop-filter:none; border-radius:28px 28px 0 0 !important;
+  box-shadow:0 -12px 40px rgb(20 10 10 / .22) !important; padding:10px 16px calc(18px + env(safe-area-inset-bottom)); transition:transform .25s ease; }
+#mobileMenu:not(.hidden) { animation:mmUp .32s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes mmUp { from { transform:translateY(100%); } to { transform:none; } }
+#mmBack { position:fixed; inset:0; z-index:2; background:rgb(20 10 10 / .45); animation:mmFade .25s ease both; }
+#mobileMenu.hidden + #mmBack { display:none; }
+@keyframes mmFade { from { opacity:0; } to { opacity:1; } }
+#navPill { z-index:4; }
+html:has(#mobileMenu:not(.hidden)) { overflow:hidden; }
+html:has(#mobileMenu:not(.hidden)) #navbar { z-index:52; }   /* above the boat page's price bar (#bpMbar, 50) and the cookie bar; menu closes before any dialog opens */
+html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !important; }   /* both sit at the bottom too */
+.mm-grab { width:40px; height:5px; border-radius:9px; background:#ddd3d0; margin:0 auto 12px; }
+.mm-hd { display:flex; align-items:center; justify-content:space-between; margin:0 2px 12px; }
+.mm-hd b { font-size:17px; font-weight:500; }
+.mm-x { width:36px; height:36px; border-radius:50%; background:#f6f1ec; display:grid; place-items:center; }
+.mm-x svg { width:17px; height:17px; }
+.mm-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+.mm-grid a { min-height:88px; border-radius:18px; background:#f6f1ec; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  padding:10px 6px; font-size:13.5px; line-height:1.25; text-align:center; color:#231416; transition:background .2s, transform .15s; }
+.mm-grid a:active { transform:scale(.97); }
+.mm-grid a svg { width:24px; height:24px; stroke-width:1.75; color:#70000e; }
+.mm-grid a.on { background:#70000e; color:#fff; }
+.mm-grid a.on svg { color:#fff; }
+.mm-contact { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin:12px 0 10px; }
+.mm-contact a { height:46px; border-radius:14px; box-shadow:inset 0 0 0 1px #ece5e1; display:flex; align-items:center; justify-content:center; gap:7px; font-size:13.5px; color:#231416; }
+.mm-contact svg { width:18px; height:18px; stroke-width:1.75; }
+.mm-contact .mm-line { color:#06a24a; } .mm-contact .mm-wa { color:#128c4a; }
+.mm-cta { width:100%; height:52px; border-radius:99px; background:#70000e; color:#fff; display:flex; align-items:center; justify-content:center; gap:9px; font-size:15px; font-weight:500; }
+.mm-cta svg { width:18px; height:18px; }
+.mm-live { display:flex; justify-content:center; margin-top:12px; font-size:12px; color:#7b6f70; }

@@ -184,7 +184,7 @@ const I18N = {
   en: {
     'topbar.tat':'TAT License No. ' + SET.tat,'topbar.loc':'Phuket · Krabi · Phang Nga',
     'nav.boats':'Charter','nav.tours':'Tours & Activities','nav.routes':'Top Routes','nav.lifestyle':'Stays & Lifestyle','nav.contact':'Contact',
-    'cta.quick':'Quick Book',
+    'cta.quick':'Quick Book', 'mm.title':'Menu', 'mm.dests':'Destinations', 'mm.saved':'Saved boats', 'mm.call':'Call', 'mm.book':'Book a boat · reply in 30 min',
     'hero.badge':'Andaman high season is here · 1 Nov – 30 Apr','hero.title':'Sail the Andaman<br/>your own way',
     'hero.sub':'50+ private yachts, catamarans and speedboats — plus tours, shows and activities across Phuket, all in one place.',
     'hero.cta1':'View all boats','hero.cta2':'Explore activities',
@@ -1174,7 +1174,7 @@ function openBooking(preset='', program='') {
   const qd = $('#qsDate').value; if (qd) modalForm.date.value = qd;
   modalForm.adults.value = guests;
   $('#bookingModal').classList.remove('hidden'); document.body.style.overflow='hidden';
-  $('#mobileMenu').classList.add('hidden');
+  mmClose();
   setTimeout(()=>modalForm.name.focus(), 50);
 }
 function closeModals() { bpSheetOff(); ['#bookingModal','#lightbox','#smartModal','#cmpModal','#cmdModal'].forEach(id=>$(id).classList.add('hidden')); document.body.style.overflow=''; }
@@ -1184,8 +1184,17 @@ document.addEventListener('keydown', e => { if (e.key==='Escape') closeModals();
 /* =========================================================
    NAV / LANG
    ========================================================= */
-$('#menuBtn').onclick = () => { const open = $('#mobileMenu').classList.toggle('hidden') === false; $('#menuBtn').setAttribute('aria-expanded', open); if (open) icons(); };
-$$('#mobileMenu a').forEach(a => a.onclick = () => { $('#mobileMenu').classList.add('hidden'); $('#menuBtn').setAttribute('aria-expanded', false); });
+/* phone menu = bottom sheet: burger / ✕ / backdrop / Esc / swipe down / any link closes it */
+function mmOpen() { mmMark(); $('#mobileMenu').classList.remove('hidden'); $('#mobileMenu').style.transform = ''; $('#menuBtn').setAttribute('aria-expanded', true); icons(); setTimeout(() => $('#mobileMenu .mm-x')?.focus({ preventScroll: true }), 50); }
+function mmClose() { const m = $('#mobileMenu'); if (m.classList.contains('hidden')) return; m.classList.add('hidden'); m.style.transform = ''; $('#menuBtn').setAttribute('aria-expanded', false); }
+function mmMark() { const h = VH.hash || '#/'; $$('#mobileMenu [data-mm]').forEach(a => { const k = a.dataset.mm, on = k === '#/fleet?fav' ? h.startsWith(k) : k === '#/fleet' ? h.startsWith('#/fleet') && !h.includes('fav') || h.startsWith('#/boat/') : h.startsWith(k); a.classList.toggle('on', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); }); }
+$('#menuBtn').onclick = () => $('#mobileMenu').classList.contains('hidden') ? mmOpen() : mmClose();
+$$('#mobileMenu a').forEach(a => a.addEventListener('click', mmClose));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#mobileMenu').classList.contains('hidden')) { mmClose(); $('#menuBtn').focus(); } });
+{ let y0 = null, dy = 0; const m = $('#mobileMenu');
+  m.addEventListener('touchstart', e => { if (m.scrollTop > 0) return; y0 = e.touches[0].clientY; dy = 0; m.style.transition = 'none'; }, { passive: true });
+  m.addEventListener('touchmove', e => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); m.style.transform = dy ? `translateY(${dy}px)` : ''; }, { passive: true });
+  m.addEventListener('touchend', () => { if (y0 == null) return; y0 = null; m.style.transition = ''; if (dy > 90) mmClose(); else m.style.transform = ''; }); }
 window.addEventListener('scroll', () => $('#navbar').classList.toggle('is-compact', scrollY > 24), { passive:true });
 function setLang(l) {
   bpSheetOff(); LANG = l; document.documentElement.lang = l; locFleet();
