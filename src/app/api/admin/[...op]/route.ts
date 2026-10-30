@@ -386,6 +386,8 @@ async function seasonOp(u: User, id: string, method: string, b: Record<string, u
   return json({ ok: true });
 }
 
+const postState = (p: { published: boolean; publishAt: Date | null }) => p.published ? 'เผยแพร่' : p.publishAt
+  ? 'ตั้งเวลา ' + p.publishAt.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'ร่าง';
 async function postOp(u: User, id: number, b: Record<string, unknown>) {
   await need(u, 'content');
   if (!Number.isInteger(id) || id < 1) throw new HttpError(400, 'รหัสบทความไม่ถูกต้อง');
@@ -393,13 +395,19 @@ async function postOp(u: User, id: number, b: Record<string, unknown>) {
   const bi = (v: unknown, max = 2000) => { const o = (v ?? {}) as Record<string, unknown>; return { th: str(o.th, max), en: str(o.en, max) }; };
   const slug = bi(a.slug, 300), title = bi(a.title, 300);
   const blocks = (a.blocks ?? {}) as Record<string, unknown>;
+  // ตั้งเวลาเผยแพร่: status "scheduled" + date + time (Bangkok). A time already passed publishes now.
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(str(a.date)) ? str(a.date) : '', hm = /^([01]\d|2[0-3]):[0-5]\d$/.test(str(a.time)) ? str(a.time) : '10:00';
+  let at: Date | null = str(a.status) === 'scheduled' && day ? new Date(`${day}T${hm}:00+07:00`) : null;
+  if (at && (isNaN(+at) || +at <= Date.now() + 30_000)) at = null;
   const v = {
     id, slugTh: slug.th || null, slugEn: slug.en || null, category: str(a.cat, 40) || 'guide', date: new Date((/^\d{4}-\d{2}-\d{2}$/.test(str(a.date)) ? str(a.date) : new Date().toISOString().slice(0, 10)) + 'T03:00:00Z'),
     cover: /^(\/|https:\/\/)/.test(str(a.cover, 2000)) ? str(a.cover, 2000) : null, title, excerpt: bi(a.excerpt, 1000), seoTitle: bi(a.seoT, 200), seoDesc: bi(a.seoD, 400),
     keywords: [str((a.kw as Record<string, unknown>)?.th, 120), str((a.kw as Record<string, unknown>)?.en, 120)].join(', '),
     blocks: { th: arr(blocks.th).slice(0, 400), en: arr(blocks.en).slice(0, 400) } as Exclude<typeof posts.$inferInsert['blocks'], undefined>,
-    published: str(a.status) === 'published',
+    published: str(a.status) === 'published' || (str(a.status) === 'scheduled' && !at),
+    publishAt: at,
   };
+  if (at) v.date = at;
   if (JSON.stringify(v.blocks).length > 2_000_000) throw new HttpError(400, 'บทความใหญ่เกินไป (รูปที่อัปโหลดต้องอยู่ในคลังสื่อ)');
   const trashed = await trashedIds();
   if (trashed.has(id)) throw new HttpError(409, 'บทความนี้อยู่ในถังขยะ · กู้คืนก่อนจึงแก้ไขได้');
@@ -410,7 +418,7 @@ async function postOp(u: User, id: number, b: Record<string, unknown>) {
   const own = [v.slugTh && `/blog/${v.slugTh}`, v.slugEn && `/en/blog/${v.slugEn}`].filter((x): x is string => !!x);
   if (v.published && own.length) await db.delete(redirects).where(inArray(redirects.from, own));
   const ch = !cur ? [{ f: 'บทความ', from: null, to: title.th || title.en }] : [
-    ...(cur.published !== v.published ? [{ f: 'สถานะ', from: cur.published ? 'เผยแพร่' : 'ร่าง', to: v.published ? 'เผยแพร่' : 'ร่าง' }] : []),
+    ...(cur.published !== v.published || +(cur.publishAt ?? 0) !== +(v.publishAt ?? 0) ? [{ f: 'สถานะ', from: postState(cur), to: postState(v) }] : []),
     ...(JSON.stringify(cur.title) !== JSON.stringify(title) ? [{ f: 'ชื่อเรื่อง', from: cur.title.th || cur.title.en, to: title.th || title.en }] : []),
     ...(cur.slugTh !== v.slugTh || cur.slugEn !== v.slugEn ? [{ f: 'URL', from: `${cur.slugTh ?? ''} / ${cur.slugEn ?? ''}`, to: `${v.slugTh ?? ''} / ${v.slugEn ?? ''}` }] : []),
     ...(JSON.stringify(cur.blocks) !== JSON.stringify(v.blocks) ? [{ f: 'เนื้อหา', from: '—', to: 'แก้ไขแล้ว' }] : []),

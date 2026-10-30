@@ -715,7 +715,7 @@ function vArticles() {
       ${rows.map(a => { const t = a.title.th || a.title.en, au = TEAM.find(x => x.id === a.author) || { name: a.wpAuthor || 'ทีม Boat Trip Thailand' };
         return `<tr class="click" onclick="go('articles/${a.id}')"><td><div class="flex items-center gap-3 min-w-[280px]"><img src="${THUMBS[a.cover]}" class="w-16 h-11 rounded-lg object-cover shrink-0"/><div class="min-w-0"><p class="truncate max-w-[340px]">${esc(t)}</p><p class="text-[11px] text-muted truncate max-w-[340px]">${a.title.th && a.title.en ? esc(a.title.en) : (a.title.th ? 'ยังไม่มีชื่อภาษาอังกฤษ' : 'ยังไม่มีชื่อภาษาไทย')}</p></div></div></td>
           <td class="text-muted whitespace-nowrap">${ACAT_A[a.cat]}</td><td><div class="flex gap-1">${trBadge(a)}</div></td><td><span class="pill ${ART_ST[a.status][1]}">${ART_ST[a.status][0]}</span></td>
-          <td><div class="flex items-center gap-2"><img src="${TEAM_IMG[a.author] || initialsAva(au.name)}" class="w-6 h-6 rounded-full object-cover"/>${au.name}</div></td><td class="text-muted whitespace-nowrap">${fmtD(a.date)}</td><td class="text-right tnum">${a.views ? a.views.toLocaleString() : '—'}</td></tr>`; }).join('') || `<tr><td colspan="7" class="text-center text-muted py-10">ไม่พบบทความ</td></tr>`}
+          <td><div class="flex items-center gap-2"><img src="${TEAM_IMG[a.author] || initialsAva(au.name)}" class="w-6 h-6 rounded-full object-cover"/>${au.name}</div></td><td class="text-muted whitespace-nowrap">${fmtD(a.date)}${a.status === 'scheduled' ? ' · ' + (a.time || '10:00') + ' น.' : ''}</td><td class="text-right tnum">${a.views ? a.views.toLocaleString() : '—'}</td></tr>`; }).join('') || `<tr><td colspan="7" class="text-center text-muted py-10">ไม่พบบทความ</td></tr>`}
       </tbody></table></div>
     </div>`;
   icons();
@@ -791,7 +791,7 @@ function vArticleEdit(id) {
       <div class="sm:ml-auto flex flex-wrap items-center gap-2"><span class="pill ${ART_ST[a.status][1]}">${ART_ST[a.status][0]}</span>
         <button class="btn btn-o" onclick="artPreview(${a.id},'${k}')"><i data-lucide="eye" class="w-3.5 h-3.5"></i>Preview ${k.toUpperCase()}</button>
         <button class="btn btn-o" onclick="toast('บันทึกร่างแล้ว')">บันทึกร่าง</button>
-        <button class="btn btn-p" onclick="artPublish(${a.id})"><i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>${a.status === 'published' ? 'อัปเดต' : 'เผยแพร่'}</button></div>
+        <button class="btn btn-p" data-artpub onclick="artPublish(${a.id})"><i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>${artPubLabel(a)}</button></div>
     </div>
     <div class="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-4 items-start">
       <div class="grid gap-4 min-w-0">
@@ -818,7 +818,7 @@ function vArticleEdit(id) {
         <div class="card p-5 grid gap-3">
           <p class="font-medium">การเผยแพร่</p>
           <label><span class="lbl">สถานะ</span><select class="inp" onchange="artById(${a.id}).status=this.value;vArticleEdit(${a.id})">${Object.entries(ART_ST).map(([s, [l]]) => `<option value="${s}" ${a.status === s ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-          <label><span class="lbl">วันที่เผยแพร่</span><input type="date" class="inp" value="${a.date}" onchange="artById(${a.id}).date=this.value"/></label>
+          <label><span class="lbl">วันที่เผยแพร่</span><input type="date" class="inp" value="${a.date}" onchange="artById(${a.id}).date=this.value;artWhenNote(${a.id})"/></label>${artTimeField(a)}
           <label><span class="lbl">ผู้เขียน</span><select class="inp" onchange="artById(${a.id}).author=this.value">${TEAM.map(t => `<option value="${t.id}" ${t.id === a.author ? 'selected' : ''}>${t.name}</option>`).join('')}</select></label>
           <div class="rounded-xl bg-sand p-3 text-[12px] grid gap-1.5">${LANGS.map(([c, C, l]) => { const live = ['orig', 'ok'].includes(a.tr[c]); return `<div class="flex items-center gap-2"><i data-lucide="${live ? 'circle-check' : 'circle-dashed'}" class="w-3.5 h-3.5 ${live ? 'text-[#1e7a46]' : 'text-muted'}"></i>${l}: ${live ? 'พร้อมแสดงบนเว็บ' : a.tr[c] === 'mt' ? 'รอตรวจคำแปล' : 'ยังไม่มีเนื้อหา'}</div>`; }).join('')}</div>
         </div>
@@ -3879,7 +3879,7 @@ function boatPdfCreate() {
 /* ---------- articles: autosave a few seconds after typing stops ---------- */
 const coverUrl = a => THUMBS[a.cover] || (/^(\/|https:)/.test(a.cover || '') ? a.cover : '');
 const blocksFor = (a, k) => { const B = a.blocks?.[k]; return B && B.length ? B : (a.body?.[k] && typeof parseBlocks === 'function' ? parseBlocks(a.body[k]) : []); };
-const postPayload = a => trHold(a, { id: a.id, cat: a.cat, status: a.status, date: a.date, cover: coverUrl(a), title: a.title, slug: a.slug, excerpt: a.excerpt, seoT: a.seoT, seoD: a.seoD, kw: a.kw, blocks: { th: blocksFor(a, 'th'), en: blocksFor(a, 'en') } });   // trHold: machine-translation drafts are not published
+const postPayload = a => trHold(a, { id: a.id, cat: a.cat, status: a.status, date: a.date, time: a.time || '', cover: coverUrl(a), title: a.title, slug: a.slug, excerpt: a.excerpt, seoT: a.seoT, seoD: a.seoD, kw: a.kw, blocks: { th: blocksFor(a, 'th'), en: blocksFor(a, 'en') } });   // trHold: machine-translation drafts are not published
 const ASYNC = new Map(), ASEEN = new Map(), AFLY = new Set();
 const allArts = () => (typeof ART_ALL !== 'undefined' && ART_ALL.length ? ART_ALL : ART);
 allArts().forEach(a => ASYNC.set(a.id, JSON.stringify(postPayload(a))));
@@ -3909,7 +3909,31 @@ function artPreview(id, k) {
 }
 setInterval(() => artTick(false), 2000);
 setInterval(() => artTick(true), 15000);
-{ const _ap = artPublish; artPublish = function (id) { _ap(id); const a = artById(id); if (a) { if (a.status === 'scheduled') toast('ตั้งเวลาเผยแพร่ยังไม่รองรับ · บทความจะแสดงเมื่อกดเผยแพร่ในวันนั้น'); pushArt(a, JSON.stringify(postPayload(a)), true); } }; }
+/* ---------- ตั้งเวลาเผยแพร่: status “ตั้งเวลา” + date + time (เวลาไทย) · the server puts it live at that minute (job 'publish') ---------- */
+function bkkNow() { return new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 16); }   // 'YYYY-MM-DDTHH:MM' in Bangkok (function: hoisted, used while drawing)
+function artFuture(a) { return !!a.date && `${a.date}T${a.time || '10:00'}` > bkkNow(); }
+function artWhenTxt(a) { return `${fmtD(a.date)} เวลา ${a.time || '10:00'} น.`; }
+function artTimeField(a) {
+  if (a.status === 'published') return '';
+  return `<label><span class="lbl">เวลาเผยแพร่ (เวลาไทย)</span><input type="time" class="inp" value="${a.time || '10:00'}" onchange="artById(${a.id}).time=this.value;artWhenNote(${a.id})"/></label><p id="artWhen" class="text-[11.5px] -mt-1">${artWhenMsg(a)}</p>`;
+}
+function artWhenMsg(a) {
+  if (a.status === 'scheduled') return (artFuture(a) ? `<span class="text-[#1e7a46]">ขึ้นเว็บอัตโนมัติ ${artWhenTxt(a)}</span>` : '<span class="text-[#b4501a]">เวลานี้ผ่านไปแล้ว · บันทึกแล้วจะขึ้นเว็บทันที</span>')
+    + ` · <button type="button" class="underline text-muted" onclick="artUnschedule(${a.id})">ยกเลิกตั้งเวลา</button>`;
+  return artFuture(a) ? `<span class="text-muted">กด “ตั้งเวลาเผยแพร่” แล้วจะขึ้นเว็บอัตโนมัติ ${artWhenTxt(a)}</span>` : '';
+}
+function artPubLabel(a) { return a.status === 'published' ? 'อัปเดต' : artFuture(a) ? 'ตั้งเวลาเผยแพร่' : 'เผยแพร่'; }
+function artWhenNote(id) { const a = artById(id), n = $('#artWhen'), b = $('[data-artpub]'); if (!a) return; if (n) n.innerHTML = artWhenMsg(a); if (b) { b.innerHTML = `<i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>${artPubLabel(a)}`; icons(); } }
+{ const _ap = artPublish; artPublish = function (id) {
+  const a = artById(id); if (!a) return; const wasLive = a.status === 'published';
+  _ap(id);
+  if (a.status === 'scheduled' || a.status === 'published') {
+    a.status = !wasLive && artFuture(a) ? 'scheduled' : 'published';
+    if (a.status === 'scheduled') { toast(`ตั้งเวลาแล้ว · ขึ้นเว็บอัตโนมัติ ${artWhenTxt(a)}`); vArticleEdit(id); }
+  }
+  pushArt(a, JSON.stringify(postPayload(a)), true);
+}; }
+function artUnschedule(id) { const a = artById(id); if (!a) return; a.status = 'draft'; pushArt(a, JSON.stringify(postPayload(a)), true); toast('ยกเลิกการตั้งเวลาแล้ว · กลับเป็นร่าง'); vArticleEdit(id); }
 { const _ve = vArticleEdit; vArticleEdit = function (id) { _ve(id); const h = $('#view h2'); if (h && can('content')) h.insertAdjacentHTML('afterend', '<p id="artSaveInd" class="text-[11px] text-muted mt-1">บันทึกอัตโนมัติ</p>');
   if (can('content')) $(`#view button[onclick^="artPreview(${+id},"]`)?.insertAdjacentHTML('beforebegin', `<button class="btn btn-g !px-2 text-[#b42318]" title="ย้ายไปถังขยะ" onclick="artDel(${+id})"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`); icons(); }; }
 /* delete an article: a live one sends its URLs (and old WordPress links to it) to the blog list, or answers 410 */
@@ -4527,6 +4551,35 @@ function mAiBtn() {
   const b = $('[data-mai]'); if (!b) return;
   if (MAI) { b.disabled = true; b.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i>AI กำลังเขียน ${MAI.done}/${MAI.total}`; icons(); }
 }
+/* AI เขียน alt อัตโนมัติตอนอัปโหลด: new photos with an empty alt go to Gemini (6 per request) in the background,
+   only empty fields are filled, saved like a manual edit. On/off switch on คลังสื่อ (remembered in this browser, on by default).
+   Quota / not connected → stops quietly for this session; the "AI เขียน alt ที่ขาด" button still works later. */
+const MAI_AUTO_KEY = 'btt_ai_alt_auto';
+function mAiAutoOn() { try { return localStorage.getItem(MAI_AUTO_KEY) !== '0'; } catch (e) { return true; } }
+function mAiAutoSet(on) { try { localStorage.setItem(MAI_AUTO_KEY, on ? '1' : '0'); } catch (e) { } toast(on ? 'เปิดแล้ว · รูปที่อัปโหลดใหม่ AI จะเขียน alt ให้' : 'ปิดแล้ว · ใส่ alt เองหรือกดปุ่ม AI เขียน alt ที่ขาด'); }
+let MAI_Q = [], MAI_RUN = false, MAI_STOP = '';
+function mAiAuto(srcs) {
+  if (!mAiAutoOn() || !can('content') || isRO() || MAI_STOP) return;
+  MAI_Q.push(...srcs);
+  if (!MAI_RUN) setTimeout(mAiAutoRun, 1500);   // after the page has attached the photos (boat / article name become hints)
+}
+async function mAiAutoRun() {
+  if (MAI_RUN) return; MAI_RUN = true; let filled = 0, pics = 0;
+  try {
+    while (MAI_Q.length && !MAI_STOP) {
+      const batch = [];
+      while (MAI_Q.length && batch.length < 6) { const src = MAI_Q.shift(), m = MEDIA.find(x => x.src === src); if (m && mNoAlt(m) && mAiOk(m) && !batch.includes(m)) batch.push(m); }
+      if (!batch.length) continue;
+      try {
+        const out = await mAiCall(batch);
+        for (const a of out) { const m = MEDIA.find(x => x.src === a.url); if (!m) continue; let n = 0;
+          if (!m.alt.th.trim() && a.th) { m.alt.th = a.th; n++; } if (!m.alt.en.trim() && a.en) { m.alt.en = a.en; n++; } if (n) { filled += n; pics++; } }
+        mTick();
+      } catch (e) { if (e.stop) { MAI_STOP = e.message; MAI_Q = []; if (e.message !== 'login') toastErr('AI เขียน alt อัตโนมัติหยุดไว้ก่อน: ' + e.message); } }
+    }
+  } finally { MAI_RUN = false; }
+  if (pics) { toast(`AI เขียน alt ให้รูปที่อัปโหลด ${pics} รูปแล้ว · ตรวจแก้ได้ในคลังสื่อ`); if (CUR === 'media' && !$('#drawer')) vMedia(); }
+}
 /* drawer: one image — writes both languages (replaces what is there) */
 async function mAiOne(id) {
   const m = mById(id), b = $('[data-mai1]'); if (!m || !mAiOk(m)) return toast('รูปนี้ส่งให้ AI ไม่ได้');
@@ -4545,6 +4598,7 @@ async function mAiOne(id) {
   const old = [...$$('#view button')].find(x => x.textContent.includes('เติม alt ที่ขาด'));
   if (old) {
     const n = MEDIA.filter(m => mNoAlt(m) && mAiOk(m)).length;
+    old.insertAdjacentHTML('beforebegin', `<label class="flex items-center gap-2 text-[12px] text-muted whitespace-nowrap" title="รูปที่อัปโหลดใหม่ ให้ AI เขียน alt ไทย/อังกฤษให้อัตโนมัติ (Gemini ฟรี · ไม่ส่งรูปทีมงาน)"><span class="tgl"><input type="checkbox" ${mAiAutoOn() ? 'checked' : ''} onchange="mAiAutoSet(this.checked)"/><span></span></span>AI alt ตอนอัปโหลด</label>`);
     old.outerHTML = `<button class="btn btn-o" data-mai onclick="mAiFill()" ${n && !isRO() ? '' : 'disabled'} title="Gemini ฟรี · เติมเฉพาะช่องที่ว่าง · ไม่ส่งรูปทีมงาน"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i>AI เขียน alt ที่ขาด (${n})</button>`;
     mAiBtn(); icons();
   }
@@ -4699,7 +4753,7 @@ readFiles = function (fl, cb) {
       if (j.errors?.length) toastErr(j.errors.join(' · ')); else if (!r.ok) toastErr(j.error || 'อัปโหลดไม่สำเร็จ');
       (j.items || []).forEach(it => got.push(mFromServer(it).src));
     }
-    if (got.length) cb(got);
+    if (got.length) { cb(got); mAiAuto(got); }
   })().catch(() => toastErr('อัปโหลดไม่สำเร็จ · ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'));
 };
 mUpload = function (srcs) {

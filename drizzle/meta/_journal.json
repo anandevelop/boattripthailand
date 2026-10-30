@@ -71,6 +71,13 @@
       "when": 1793263400289,
       "tag": "0009_boat_galleries",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793350000000,
+      "tag": "0010_post_schedule",
+      "breakpoints": true
     }
   ]
 }

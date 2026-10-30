@@ -104,7 +104,9 @@ export async function auditList(limit = 1500) {
 
 export function postToClient(p: Post) {
   const has = (k: 'th' | 'en') => !!(p.title[k] && p.blocks[k]?.length);
-  return { id: p.id, cat: p.category, status: p.published ? 'published' : 'draft', date: isoDate(p.date), author: '', cover: p.cover ?? '', boats: [] as string[], views: 0, tags: [] as string[],
+  // scheduled: date + time are when it goes live (Bangkok time)
+  const when = !p.published && p.publishAt ? p.publishAt : null, bkk = (d: Date) => new Date(+d + 7 * 3600_000).toISOString();
+  return { id: p.id, cat: p.category, status: p.published ? 'published' : when ? 'scheduled' : 'draft', date: when ? bkk(when).slice(0, 10) : isoDate(p.date), time: when ? bkk(when).slice(11, 16) : '', author: '', cover: p.cover ?? '', boats: [] as string[], views: 0, tags: [] as string[],
     tr: { th: has('th') ? 'ok' : 'none', en: has('en') ? 'ok' : 'none' }, title: p.title, slug: { th: p.slugTh ?? '', en: p.slugEn ?? '' }, excerpt: p.excerpt, seoT: p.seoTitle, seoD: p.seoDesc,
     kw: { th: p.keywords?.split(', ')[0] ?? '', en: p.keywords?.split(', ')[1] ?? '' }, blocks: p.blocks, wp: { th: '', en: '' } };
 }

@@ -194,6 +194,8 @@ export const posts = pgTable('posts', {
   keywords: text('keywords'),
   blocks: jsonb('blocks').$type<{ th: Block[]; en: Block[] }>().notNull(),
   published: boolean('published').notNull().default(true),
+  // ตั้งเวลาเผยแพร่: set while the article waits (published = false); the 'publish' job flips it when the time comes
+  publishAt: timestamp('publish_at', { withTimezone: true }),
   updatedAt: now('updated_at'),
 });
 export type Bi = { th: string; en: string };

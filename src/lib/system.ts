@@ -11,6 +11,7 @@ import { lineEnabled, pushLine, text } from './line';
 import { maintenance } from './maintenance';
 import { UPLOAD_DIR } from './media';
 import { listTrash } from './post-trash';
+import { publishDue } from './post-schedule';
 import { clearSiteCache } from './site-render';
 
 /**
@@ -255,6 +256,7 @@ export const JOBS: Job[] = [
   { id: 'trash', name: 'ล้างถังขยะบทความเกิน 30 วัน', every: 'ทุกวัน 03:30', due: daily(3.5), run: async () => { const n = (await listTrash()).length; return `ในถังขยะ ${n} บทความ`; } },
   { id: 'audit', name: 'ตรวจสายบันทึกกิจกรรม', every: 'ทุกวัน 04:00', due: daily(4), run: async () => { const r = await verifyAuditChain(); if (r.bad.length) throw new Error(`พบ ${r.bad.length} รายการถูกแก้ย้อนหลัง จาก ${r.total}`); return `${r.total.toLocaleString()} รายการ · ไม่พบการแก้ไขย้อนหลัง`; } },
   { id: 'sessions', name: 'ล้างเซสชันที่หมดอายุ', every: 'ทุกชั่วโมง', due: every(3600_000), run: async () => { await purgeExpiredSessions(); return 'เรียบร้อย'; } },
+  { id: 'publish', name: 'เผยแพร่บทความที่ตั้งเวลาไว้', every: 'ทุก 1 นาที', due: every(60_000), run: publishDue, quiet: true },
   { id: 'sla', name: 'เตือนลีดที่ยังไม่ตอบ (SLA)', every: 'ทุก 1 นาที', due: every(60_000), run: async () => { await checkSla(); return 'เรียบร้อย'; }, quiet: true },
   { id: 'web', name: 'วัดเว็บ (ออนไลน์ + เวลาโหลด)', every: 'ทุก 1 นาที', due: every(60_000), run: webCheck, quiet: true },
 ];
