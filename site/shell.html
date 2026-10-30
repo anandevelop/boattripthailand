@@ -107,14 +107,15 @@
       <a href="#/about" class="mm-h"><span class="navAbout">เกี่ยวกับเรา</span></a>
     </nav>
     <div class="mm-foot">
-      <div class="mm-contact">
-        <a href="tel:+66611725854" data-set="tel"><i data-lucide="phone"></i><span data-i18n="mm.call">โทร</span></a>
-        <a href="https://lin.ee/kkzkoX7" data-set="lineUrl" target="_blank" rel="noopener"><i data-lucide="message-circle"></i>LINE</a>
-        <a href="https://wa.me/66611725854" data-set="wa" target="_blank" rel="noopener"><i data-lucide="message-circle"></i>WhatsApp</a>
+      <div class="mm-row">
+        <a href="tel:+66611725854" data-set="tel" class="mm-ic" aria-label="โทร"><i data-lucide="phone"></i></a>
+        <a href="https://lin.ee/kkzkoX7" data-set="lineUrl" target="_blank" rel="noopener" class="mm-ic" aria-label="LINE"><i data-lucide="message-circle"></i></a>
+        <a href="https://wa.me/66611725854" data-set="wa" target="_blank" rel="noopener" class="mm-ic" aria-label="WhatsApp"><i data-lucide="message-circle"></i></a>
+        <button type="button" class="mm-cta" onclick="mmClose();openBooking()"><i data-lucide="zap"></i><span data-i18n="mm.book">จองเรือ</span></button>
       </div>
-      <button type="button" class="mm-cta" onclick="mmClose();openBooking()"><i data-lucide="zap"></i><span data-i18n="mm.book">จองเรือ · ตอบใน 30 นาที</span></button>
       <div id="teamLiveM" class="mm-live"></div>
     </div>
+  </div>
   </div>
 </header>
 

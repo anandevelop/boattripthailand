@@ -184,7 +184,7 @@ const I18N = {
   en: {
     'topbar.tat':'TAT License No. ' + SET.tat,'topbar.loc':'Phuket · Krabi · Phang Nga',
     'nav.boats':'Charter','nav.tours':'Tours & Activities','nav.routes':'Top Routes','nav.lifestyle':'Stays & Lifestyle','nav.contact':'Contact',
-    'cta.quick':'Quick Book', 'mm.dests':'Destinations', 'mm.call':'Call', 'mm.book':'Book a boat · reply in 30 min',
+    'cta.quick':'Quick Book', 'mm.dests':'Destinations', 'mm.book':'Book a boat',
     'hero.badge':'Andaman high season is here · 1 Nov – 30 Apr','hero.title':'Sail the Andaman<br/>your own way',
     'hero.sub':'50+ private yachts, catamarans and speedboats — plus tours, shows and activities across Phuket, all in one place.',
     'hero.cta1':'View all boats','hero.cta2':'Explore activities',
