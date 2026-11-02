@@ -691,7 +691,7 @@ function bpHeadHTML(b) {
   const name = niceTitle(b.title), g = (...k) => infoGet(b, ...k), num = x => (String(x || '').match(/\d+/) || [])[0];
   const bn = g('Boat Name'), cab = num(g('Cabin', 'Cabins', 'Bedroom'));
   const nice = x => String(x).toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase());
-  const sub = [typeLabel(b.type), bn && bn.toLowerCase() !== name.toLowerCase() ? L(`ชื่อเรือ ${nice(bn)}`, `named ${nice(bn)}`) : '', b.pax ? L(`สูงสุด ${b.pax} คน`, `up to ${b.pax} guests`) : '', cab ? L(`${cab} ห้องนอน`, `${cab} cabin${cab > 1 ? 's' : ''}`) : '', b.marinaP ? L(`ออกจาก ${b.marinaP}`, `from ${b.marinaP}`) : ''].filter(Boolean).join(' · ');
+  const sub = [typeLabel(b.type), b.pax ? L(`สูงสุด ${b.pax} คน`, `up to ${b.pax} guests`) : '', cab ? L(`${cab} ห้องนอน`, `${cab} cabin${cab > 1 ? 's' : ''}`) : '', b.marinaP ? L(`ออกจาก ${b.marinaP}`, `from ${b.marinaP}`) : ''].filter(Boolean).join(' · ');
   return `<header class="bp-head">
       <div class="min-w-0"><h1 class="font-display">${name}</h1><p>${sub}</p></div>
       <div class="bp-hacts">
