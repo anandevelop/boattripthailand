@@ -2582,7 +2582,7 @@ let currentSlug = null, currentView = 'home';
 function showView(name) {
   currentView = name;
   $$('#navLinks .nav-a').forEach(a => a.classList.remove('is-active'));
-  { const m = { fleet:'#navFleet', boat:'#navFleet', about:'#navLinks a[href="#/about"]', blog:'#navGuide' }[name]; m && $(m)?.classList.add('is-active'); }
+  { const m = { fleet:'#navFleet', boat:'#navFleet', about:'#navLinks a[href="#/about"]', blog:'#navGuide', dest:'#navDest' }[name]; m && $(m)?.classList.add('is-active'); }
   setTimeout(renderTeam, 0);
   ['home','fleet','boat','about','legal','design','blog','dest','nf'].forEach(n => $('#view-'+n).classList.toggle('hidden', n !== name));
   $('#floatCta').classList.toggle('!hidden', name === 'boat' || name === 'home');
