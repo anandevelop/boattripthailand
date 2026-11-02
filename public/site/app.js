@@ -2752,23 +2752,88 @@ const destBoats = slug => { const key = (DEST_KEY[slug] || '').toLowerCase(), d 
 const dl = o => (o ? o[LANG === 'en' ? 'en' : 'th'] : '');
 
 function renderDestIndex() {
-  const v = $('#view-dest');
+  const v = $('#view-dest'), k = LANG === 'en' ? 'en' : 'th';
+  const fact = (d, i) => (d.facts[k][i] || ['', ''])[1];
+  const D = DPAGES.map(d => { const bs = destBoats(d.slug), re = d.match ? new RegExp(d.match, 'i') : null;
+    // ราคาเริ่มต้นของโปรแกรมที่ไปปลายทางนี้จริง (ไม่ใช่ราคาต่ำสุดของเรือ) · ถ้าเรือไม่มีแถวโปรแกรมที่ตรง ใช้ราคาเริ่มต้นของเรือ
+    const fr = bs.map(b => { let m = 0; if (re) { try { bpProgs(b).filter(p => re.test(p.raw + ' ' + (p.tb.caption || ''))).forEach(p => { const x = bpPrice(b, p); if (x && x.n && (!m || x.n < m)) m = x.n; }); } catch (e) {} } return m || b.from_; }).filter(Boolean);
+    const mc = {}; bs.forEach(b => { const m = b.marinaP; if (m && !/^phuket$/i.test(m.trim())) mc[m] = (mc[m] || 0) + 1; });
+    const mar = Object.keys(mc).sort((a, b) => mc[b] - mc[a]);
+    const tys = TYPES.map(ty => [ty, bs.filter(b => b.type === ty).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]);
+    const ti = d.facts[k].findIndex(f => /เวลาเดินทาง|Travel time/i.test(f[0])), bi = d.facts[k].findIndex(f => /เหมาะกับ|Best for/i.test(f[0]));
+    return { d, bs, from: fr.length ? Math.min(...fr) : 0, mar, tys, time: ti >= 0 ? fact(d, ti) : '', best: bi >= 0 ? fact(d, bi) : '' }; });
+  const total = new Set(D.flatMap(x => x.bs.map(b => b.slug))).size;
+  const mins = D.filter(x => x.from).map(x => x.from), minFrom = mins.length ? Math.min(...mins) : 0;
+  const near = DPAGES.find(d => d.slug === 'khai-island'), far = DPAGES.find(d => d.slug === 'phi-phi');
+  const STYLE = [
+    ['khai-island', L('มีเวลาครึ่งวัน', 'Only half a day'), L('นั่งเรือไม่นาน แวะได้ 2–3 เกาะ เหมาะครอบครัวและเด็กเล็ก', 'Short rides, 2–3 islands, great for families')],
+    ['phi-phi', L('อยากเห็นวิวดังที่สุด', 'The famous views'), L('อ่าวปิเละ อ่าวมาหยา เกาะไผ่ · ทริปเต็มวัน', 'Pileh Lagoon, Maya Bay, Bamboo Island · full day')],
+    ['phang-nga-bay', L('เขาหินปูน น้ำเรียบ', 'Limestone & calm water'), L('พายแคนูลอดถ้ำ ไปได้เกือบทั้งปี ดีสำหรับคนเมาเรือ', 'Sea-cave canoeing, most of the year, easy on seasickness')],
+    ['racha-island', L('ดำน้ำ น้ำใส', 'Snorkelling & clear water'), L('น้ำใสที่สุดใกล้ภูเก็ต ทรายขาว ใช้เวลาเล่นน้ำได้นาน', 'Clearest water near Phuket, more time in the water')],
+  ].filter(s => DPAGES.some(d => d.slug === s[0]));
+  const FAQ = [
+    [L('เช่าเรือจากภูเก็ตไปเกาะไหนดี', 'Which island should I visit by boat from Phuket?'), L(`มี ${DPAGES.length} ปลายทางหลัก ถ้ามีเวลาครึ่งวันหรือมากับเด็ก เลือก${near ? near.name.th : 'เกาะใกล้ภูเก็ต'} ถ้าอยากเห็นวิวดังและมีเวลาทั้งวัน เลือก${far ? far.name.th : 'เกาะพีพี'} ถ้ากลัวเมาเรือ อ่าวพังงาน้ำเรียบที่สุด และถ้าเน้นดำน้ำ เลือกเกาะราชา`, `There are ${DPAGES.length} main destinations. Half a day or travelling with kids: the Khai islands. The famous views with a full day: Phi Phi. Worried about seasickness: Phang Nga Bay is the calmest. Snorkelling: Racha.`)],
+    [L('ช่วงไหนทะเลดีที่สุด', 'When are the seas calmest?'), L('พฤศจิกายน–เมษายน ทะเลอันดามันสงบที่สุด ช่วงมรสุม (พ.ค.–ต.ค.) อ่าวพังงาและเกาะใกล้ฝั่งยังไปได้บ่อยกว่าทะเลเปิด ทีมงานเช็กคลื่นลมให้ก่อนออกเรือ', 'November–April. In the monsoon (May–Oct) Phang Nga Bay and the near-shore islands are usually still possible; we check conditions before every trip.')],
+    [L('ราคาเรือเป็นต่อคนหรือต่อลำ', 'Is the price per person or per boat?'), L('ราคาเป็นต่อลำ (เรือส่วนตัว) ขึ้นกับเรือ ระยะเวลา และฤดูกาล ส่วนค่าธรรมเนียมอุทยานจ่ายตามจริงต่อคน ทีมงานแจ้งยอดรวมก่อนยืนยัน', 'Per boat (private charter), depending on the boat, duration and season. National park fees are paid per person at cost — we confirm the total before you book.')],
+    [L('ไปหลายเกาะในวันเดียวได้ไหม', 'Can I visit several islands in one day?'), L('ได้ เรือหลายลำมีโปรแกรมรวมหลายเกาะ เช่น เกาะไข่ + เกาะไม้ท่อน หรือบอกทีมงานให้จัดเส้นทางตามที่ต้องการ', 'Yes — many boats have multi-island programs (e.g. Khai + Maiton), or ask us to plan a custom route.')],
+  ];
   v.innerHTML = `
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-10 pb-14 lg:pb-20">
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-10 pb-14 lg:pb-20 dx">
     <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-1.5"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span class="text-ink" aria-current="page">${L('จุดหมาย', 'Destinations')}</span></nav>
-    <p class="text-[11px] uppercase tracking-[.28em] text-muted mt-8">Island Hopping</p>
-    <h1 class="font-display text-3xl sm:text-4xl leading-tight mt-3">${L('เช่าเรือไปเกาะไหนดี', 'Where to go by private boat')}</h1>
-    <div class="grid sm:grid-cols-2 gap-5 mt-8">${DPAGES.map(d => { const bs = destBoats(d.slug), from = Math.min(...bs.filter(b => b.from_).map(b => b.from_));
-      return `<a href="#/dest/${d.slug}" class="group relative block aspect-[16/10] rounded-[18px] overflow-hidden img-fallback">
-        <img src="${rs(d.hero)}" alt="${dl(d.name)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700"/>
-        <span class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent"></span>
-        <span class="absolute inset-x-0 bottom-0 p-6 text-white"><span class="block font-display text-2xl leading-tight">${dl(d.name)}</span>
-          <span class="block text-xs text-white/80 mt-1">${bs.length ? `${L('เริ่ม', 'from')} ${baht(from)} · ${bs.length} ${L('ลำ', 'boats')}` : ''}</span></span>
-      </a>`; }).join('')}</div>
+    <div class="dx-head">
+      <div><p class="dx-eye">Island Hopping · Phuket</p>
+        <h1 class="font-display dx-h1">${L(`เช่าเรือเที่ยวเกาะ ภูเก็ต · ${DPAGES.length} ปลายทางยอดนิยม`, `Phuket island trips by private boat · ${DPAGES.length} top destinations`)}</h1>
+        <p class="dx-lead">${L('เลือกเกาะที่อยากไป แล้วดูเรือที่มีโปรแกรมไปเกาะนั้นได้ทันที', 'Pick an island, then see every boat with a program there.')}</p></div>
+      <button type="button" onclick="openBooking()" class="dx-ghost">${L('ไม่แน่ใจ? ให้ทีมช่วยเลือก', 'Not sure? Ask our team')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+    </div>
+    <div class="dx-sum">
+      <div class="dx-sum-t"><p class="dx-eye">${L('สรุปสั้น', 'In short')}</p>
+        <p>${L(`จากภูเก็ตไปได้ ${DPAGES.length} กลุ่มเกาะหลัก ใกล้สุดคือ${near ? near.name.th : 'เกาะใกล้ภูเก็ต'} ไปครึ่งวันได้ ส่วน${far ? far.name.th : 'เกาะพีพี'}อยู่ไกลกว่า นิยมไปเต็มวัน ทะเลสงบที่สุดช่วงพฤศจิกายน–เมษายน ราคาเป็นต่อลำ ขึ้นกับเรือ ระยะเวลา และฤดูกาล`, `From Phuket there are ${DPAGES.length} main island groups. The Khai islands are closest and work as a half day; Phi Phi is further and usually a full day. Seas are calmest November–April. Prices are per boat and depend on the boat, duration and season.`)}</p></div>
+      <dl class="dx-facts">
+        <div><dt>${L('ปลายทาง', 'Destinations')}</dt><dd>${DPAGES.length} ${L('กลุ่มเกาะ', 'island groups')}</dd></div>
+        <div><dt>${L('เรือที่มีโปรแกรม', 'Boats with programs')}</dt><dd>${total} ${L('ลำ', 'boats')}</dd></div>
+        <div><dt>${L('ช่วงทะเลสงบ', 'Calmest seas')}</dt><dd>${L('พ.ย.–เม.ย.', 'Nov–Apr')}</dd></div>
+        <div><dt>${L('ราคาเริ่มต้น', 'From')}</dt><dd>${minFrom ? baht(minFrom) + L(' / ลำ', ' / boat') : '—'}</dd></div>
+      </dl>
+    </div>
+    <div class="dx-grid">${D.map(({ d, bs, from, time }) => `<a href="#/dest/${d.slug}" class="dx-card img-fallback">
+        <img src="${rs(d.hero, 1280)}" srcset="${rs(d.hero)} 768w, ${rs(d.hero, 1280)} 1280w" sizes="(min-width:768px) 50vw, 100vw" alt="${L('เช่าเรือไป', 'Private boat to ')}${dl(d.name)}" loading="lazy"/>
+        <span class="dx-shade"></span>
+        ${bs.length ? `<span class="dx-badge">${bs.length} ${L('ลำ', 'boats')}</span>` : ''}
+        <span class="dx-cap"><span><b class="font-display">${dl(d.name)}</b><span>${[time, from ? `${L('เริ่ม', 'from')} ${baht(from)}` : ''].filter(Boolean).join(' · ')}</span></span><span class="dx-go"><i data-lucide="arrow-right" class="w-5 h-5"></i></span></span>
+      </a>`).join('')}</div>
+
+    <h2 class="font-display dx-h2">${L('เปรียบเทียบปลายทาง', 'Compare destinations')}</h2>
+    <div class="dx-tw"><table class="dx-t">
+      <thead><tr><th scope="col">${L('ปลายทาง', 'Destination')}</th><th scope="col">${L('เวลาเดินทาง', 'Travel time')}</th><th scope="col">${L('เหมาะกับ', 'Best for')}</th><th scope="col">${L('เรือที่ไป', 'Boats')}</th><th scope="col">${L('ราคาเริ่มต้น', 'From')}</th><th scope="col">${L('ประเภทเรือหลัก', 'Main boat types')}</th></tr></thead>
+      <tbody>${D.map(({ d, bs, from, time, best, tys }) => `<tr><th scope="row"><a href="#/dest/${d.slug}">${dl(d.name)}</a></th><td>${time || '—'}</td><td>${best || '—'}</td><td>${bs.length}</td><td>${from ? baht(from) : '—'}</td><td>${tys.slice(0, 2).map(([ty]) => typeLabel(ty)).join(', ') || '—'}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="dx-note">${L('จำนวนเรือนับจากเรือที่มีโปรแกรมไปปลายทางนั้น เรือ 1 ลำไปได้หลายปลายทาง · ราคาต่อลำ ไม่รวมค่าอุทยาน', 'Boat counts include every boat with a program there; one boat can serve several destinations · prices per boat, park fees not included')}</p>
+
+    <h2 class="font-display dx-h2">${L('เลือกปลายทางตามสไตล์ทริป', 'Choose by trip style')}</h2>
+    <div class="dx-styles">${STYLE.map(([slug, a, b]) => { const d = DPAGES.find(x => x.slug === slug); return `<a href="#/dest/${slug}" class="dx-style"><b>${a}</b><span>${b}</span><em>${dl(d.name)}<i data-lucide="arrow-right" class="w-4 h-4"></i></em></a>`; }).join('')}</div>
+
+    <h2 class="font-display dx-h2">${L('ออกเรือจากท่าไหน', 'Where boats depart')}</h2>
+    <div class="dx-mar">${D.filter(x => x.mar.length).map(({ d, mar }) => `<div><b>${dl(d.name)}</b><span>${mar.slice(0, 4).join(' · ')}${mar.length > 4 ? ` ${L(`+ อีก ${mar.length - 4} ท่า`, `+ ${mar.length - 4} more`)}` : ''}</span></div>`).join('')}</div>
+    <p class="dx-note">${L('แต่ละลำมีท่าประจำ ทีมงานแจ้งท่าและเวลานัดให้ตอนยืนยัน', 'Each boat has its home marina — we confirm the pier and meeting time when you book.')}</p>
+
+    <div class="dx-faq"><h2 class="font-display dx-h2">${L('คำถามเรื่องปลายทาง', 'Destination FAQ')}</h2>
+      <div>${FAQ.map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${q}<i data-lucide="plus" class="w-4 h-4 text-maroon shrink-0"></i></summary><p>${a}</p></details>`).join('')}</div></div>
+
+    <div class="dx-cta"><div><p class="font-display">${L('ยังเลือกเกาะไม่ได้?', 'Still deciding?')}</p><span>${L('บอกวันที่ จำนวนคน และสิ่งที่อยากทำ ทีมแนะนำเกาะและเรือให้ฟรี ตอบภายใน 30 นาที', 'Tell us your date, group size and what you want to do — we suggest the island and boat for free, usually within 30 minutes.')}</span></div>
+      <button type="button" onclick="openBooking()">${L('ถามทีมงาน', 'Ask our team')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
   </section>`;
-  document.title = L('จุดหมายเช่าเรือจากภูเก็ต พีพี อ่าวพังงา ราชา เกาะไข่ | Boat Trip Thailand', 'Phuket Boat Trip Destinations – Phi Phi, Phang Nga, Racha, Khai | Boat Trip Thailand');
-  setMeta('description', L('เลือกจุดหมายเช่าเรือส่วนตัวจากภูเก็ต ทั้งเกาะพีพี อ่าวพังงา เกาะราชา และเกาะไข่ พร้อมเรือและราคาตามฤดูกาล', 'Choose a private boat destination from Phuket — Phi Phi, Phang Nga Bay, Racha and Khai islands — with boats and seasonal prices.'));
+  const title = L('เช่าเรือเที่ยวเกาะภูเก็ต พีพี อ่าวพังงา ราชา เกาะไข่ | Boat Trip Thailand', 'Phuket Island Trips by Private Boat – Phi Phi, Phang Nga, Racha, Khai | Boat Trip Thailand');
+  const desc = L(`เลือกปลายทางเช่าเรือส่วนตัวจากภูเก็ต ${DPAGES.length} กลุ่มเกาะ เปรียบเทียบเวลาเดินทาง เรือที่ไป ${total} ลำ ราคาเริ่มต้น และท่าเรือ`, `Choose a private boat destination from Phuket — compare travel time, ${total} boats, starting prices and marinas for Phi Phi, Phang Nga Bay, Racha and Khai.`);
+  document.title = title; setMeta('description', desc);
+  setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property'); if (DPAGES[0]) setMeta('og:image', SITE_ORIGIN + DPAGES[0].hero, 'property');
   $('#canonical').href = SITE_ORIGIN + hashToPath('#/destinations');
+  $('#ldjson').textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
+    { '@type': 'CollectionPage', name: title, description: desc, url: SITE_ORIGIN + hashToPath('#/destinations'),
+      mainEntity: { '@type': 'ItemList', itemListElement: D.map(({ d, bs, from }, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'TouristDestination', name: d.name[k], url: SITE_ORIGIN + hashToPath('#/dest/' + d.slug), image: SITE_ORIGIN + d.hero, description: d.seoDesc[k], ...(from ? { offers: { '@type': 'AggregateOffer', priceCurrency: 'THB', lowPrice: from, offerCount: bs.length } } : {}) } })) } },
+    { '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: t('home'), item: SITE_ORIGIN + hashToPath('#/') }, { '@type': 'ListItem', position: 2, name: L('จุดหมาย', 'Destinations'), item: SITE_ORIGIN + hashToPath('#/destinations') }] },
+  ] });
   icons();
 }
 
