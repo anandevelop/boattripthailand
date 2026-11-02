@@ -678,7 +678,7 @@ function bpAnswerHTML(b, progs) {
   const low = kind => { let m = null; progs.filter(p => p.kind === kind).forEach(p => { const x = bpPrice(b, p); if (x && x.n && (!m || x.n < m.n)) m = { n: x.n, h: p.hrs }; }); return m; };
   const hf = low('half'), fl = low('full'), sz = DSZ && DSZ.key && !['all', 'special'].includes(DSZ.key) && SKEY[DSZ.key] ? SKEY[DSZ.key][LANG === 'en' ? 'en' : 'th'] : '';
   const ens = /ensuite|en-suite/i.test(cab || '');
-  const inc = b.includes.slice(0, 6).map(moneyText).filter(x => !/full use/i.test(x));
+  const inc = b.includes.slice(0, 6).map(moneyText).filter(x => !/full use|ใช้งานเรือ.*เต็มรูปแบบ/i.test(x));
   const th = [
     `${name} เป็น${typeLabel(b.type)}${b.ft ? ` ${b.ft} ฟุต` : ''}`,
     b.pax ? `รับได้สูงสุด ${b.pax} คน${rule ? ` (ราคารวม ${rule.from - 1} คน)` : ''}` : '',
@@ -691,7 +691,7 @@ function bpAnswerHTML(b, progs) {
   const prEn = [hf && `half day${hf.h ? ` (${hf.h} hrs)` : ''} from ${baht(hf.n)}`, fl && `full day${fl.h ? ` (${fl.h} hrs)` : ''} from ${baht(fl.n)}`].filter(Boolean);
   const en = `${name} is a ${b.ft ? b.ft + ' ft ' : ''}${typeLabel(b.type).toLowerCase()}${b.pax ? ` for up to ${b.pax} guests${rule ? ` (${rule.from - 1} included in the price)` : ''}` : ''}${cabN ? ` with ${cabN} cabin${cabN > 1 ? 's' : ''}${ens ? ', all ensuite' : ''}` : ''}${mar ? `, departing from ${mar}` : ''}. ${prEn.length ? `Whole-boat price: ${prEn.join(' and ')}${sz ? ` (${sz})` : ''}.` : b.from_ ? `Whole-boat price from ${baht(b.from_)}.` : ''}${crew || inc.length ? ` Includes ${[crew ? `captain and ${crew} crew` : '', ...inc.filter(x => !(crew && /กัปตัน|captain/i.test(x)))].filter(Boolean).join(', ')}.` : ''}`;
   // หัวข้อมีชื่อเรือ (SEO/AEO: บอก Google และ AI ว่าย่อหน้านี้ตอบเรื่องเรือลำไหน) · section ใช้ h2 เป็นชื่อ ไม่ต้องมี aria-label ซ้ำ
-  return `<section class="bp-ans"><h2>${L(`ข้อมูลสำคัญของ ${name}`, `${name} at a glance`)}</h2><p>${L(th + prTh + incTh, en)}</p></section>`;
+  return `<p class="bp-lead">${L(th + prTh + incTh, en)}</p>`;
 }
 function shareBoat(slug) {
   const url = SITE_ORIGIN + hashToPath('#/boat/' + slug);
@@ -822,16 +822,15 @@ function renderDetail(slug) {
     ${bentoHTML(b)}
     <div class="bp-grid">
       <div class="min-w-0">
-        ${bpAnswerHTML(b, progs)}
         <div class="secwrap" id="secwrap">
           <div class="sec-fade l"><button type="button" onclick="secScroll(-1)" aria-label="${L('เลื่อนซ้าย', 'Scroll left')}"><i data-lucide="chevron-left"></i></button></div>
           <div class="sec-fade r"><button type="button" onclick="secScroll(1)" aria-label="${L('เลื่อนขวา', 'Scroll right')}"><i data-lucide="chevron-right"></i></button></div>
           <nav class="secnav" id="secnav" aria-label="${L('ส่วนของหน้า', 'Page sections')}">${secs.map(([id, l], i) => `<a href="#${id}" class="${i ? '' : 'on'}" onclick="event.preventDefault();secGo('${id}')">${l}</a>`).join('')}</nav>
         </div>
 
-        ${panel('overview', L('ภาพรวม', 'Overview'), [typeLabel(b.type), b.ft ? L(`ขนาด ${b.ft} ฟุต`, `${b.ft} ft`) : '', refit ? L(`รีฟิตปี ${refit}`, `refit ${refit}`) : '', b.pax ? L(`รับได้สูงสุด ${b.pax} คน`, `up to ${b.pax} guests`) : ''].filter(Boolean).join(' · '),
-          `${facts.length ? `<div class="bp-facts">${facts.map(([ic, h, s]) => `<div class="bp-fact"><i data-lucide="${ic}"></i><b>${h}</b><span>${s}</span></div>`).join('')}</div>` : ''}
-          <p class="bp-about">${L(`เหมาลำทั้งลำพร้อมกัปตันและลูกเรือ ออกจาก ${b.marinaP || 'ท่าเรือ'}${b.includes.length ? ` · รวม ${b.includes.slice(0, 5).map(moneyText).join(', ')}` : ''}`, `Private charter with captain and crew from ${b.marinaP || 'the marina'}${b.includes.length ? ` · includes ${b.includes.slice(0, 5).map(moneyText).join(', ')}` : ''}`)}</p>`)}
+        ${panel('overview', L(`ข้อมูลสำคัญของ ${name}`, `${name} at a glance`), [typeLabel(b.type), b.ft ? L(`ขนาด ${b.ft} ฟุต`, `${b.ft} ft`) : '', refit ? L(`รีฟิตปี ${refit}`, `refit ${refit}`) : '', b.pax ? L(`รับได้สูงสุด ${b.pax} คน`, `up to ${b.pax} guests`) : ''].filter(Boolean).join(' · '),
+          `${bpAnswerHTML(b, progs)}
+          ${facts.length ? `<div class="bp-facts">${facts.map(([ic, h, s]) => `<div class="bp-fact"><i data-lucide="${ic}"></i><b>${h}</b><span>${s}</span></div>`).join('')}</div>` : ''}`)}
 
         ${progs.length ? `<section class="bp-panel" id="programs">
           <div class="bp-phead"><div><h2>${t('programs2')}</h2><p class="bp-sub m-0">${t('vatNote')}</p></div><div class="bp-seg" id="bpSeason" role="group" aria-label="${L('ฤดูกาล', 'Season')}"></div></div>

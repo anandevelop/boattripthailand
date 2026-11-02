@@ -922,3 +922,5 @@ html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !im
   .bp-ans h2 { font-size:19px; }
   .bp-ans p { font-size:14.5px; line-height:1.8; }
 }
+.bp-lead { margin:14px 0 18px; font-size:15.5px; line-height:1.85; color:#3d3133; }
+@media (max-width:767px) { .bp-lead { font-size:14.5px; line-height:1.8; margin:12px 0 14px; } }
