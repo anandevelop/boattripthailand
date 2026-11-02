@@ -656,6 +656,37 @@ function bentoHTML(b) {
     <span class="min-w-0"><b>${L('ดูรูปทั้งหมด', 'View all')} ${n} ${L('รูป', 'photos')}</b><span>${L('แตะเพื่อดูภาพเต็มจอ', 'Tap to view full screen')}</span></span>
     <i data-lucide="chevron-right"></i></button>` : ''}`;
 }
+/* ตารางข้อมูลเรือ: ข้อมูลจากโบรชัวร์เป็นภาษาอังกฤษ → แปลชื่อหัวข้อและหน่วยเมื่อเปิดหน้าไทย (ชื่อเรือ/รุ่น/ยี่ห้อ คงไว้) */
+const INFO_TH = { 'boat name': 'ชื่อเรือ', size: 'ความยาว', length: 'ความยาว', 'l.o.a': 'ความยาว', loa: 'ความยาว', year: 'ปีที่ต่อ', 'year built': 'ปีที่ต่อ', 'first launch': 'ปีที่ปล่อยลงน้ำ',
+  'year refit': 'ปีที่รีฟิต', 'last refit': 'ปีที่รีฟิต', refit: 'ปีที่รีฟิต', refitted: 'ปีที่รีฟิต', 'entirely renovated': 'ปรับปรุงใหม่ทั้งลำ', 'entirely renovated in': 'ปรับปรุงใหม่ทั้งลำ',
+  cabin: 'ห้องนอน', cabins: 'ห้องนอน', bedroom: 'ห้องนอน', 'shower & toilet': 'ห้องอาบน้ำและห้องน้ำ', toilet: 'ห้องน้ำ', bathroom: 'ห้องน้ำ', bath: 'ห้องน้ำ', bathtub: 'อ่างอาบน้ำ',
+  capacity: 'จำนวนผู้โดยสาร', 'max guest': 'จำนวนผู้โดยสารสูงสุด', crew: 'ลูกเรือ', crews: 'ลูกเรือ', overnight: 'ค้างคืนได้', 'over night': 'ค้างคืนได้', 'overnight capacity': 'ค้างคืนได้',
+  'cruising speed': 'ความเร็วล่องเรือ', cruising: 'ความเร็วล่องเรือ', 'cruise speed': 'ความเร็วล่องเรือ', 'speed cruise': 'ความเร็วล่องเรือ', 'speed cruising': 'ความเร็วล่องเรือ',
+  'max speed': 'ความเร็วสูงสุด', 'top speed': 'ความเร็วสูงสุด', engines: 'เครื่องยนต์', engine: 'เครื่องยนต์', 'engine(s)': 'เครื่องยนต์', type: 'ประเภท', model: 'รุ่น', brand: 'ยี่ห้อ', builder: 'ผู้ต่อเรือ',
+  facilities: 'สิ่งอำนวยความสะดวก', feature: 'จุดเด่น', 'air condition': 'เครื่องปรับอากาศ', 'air-conditions': 'เครื่องปรับอากาศ', 'water maker': 'เครื่องผลิตน้ำจืด',
+  'hydraulic swim platform': 'แพลตฟอร์มลงน้ำไฮดรอลิก', beam: 'ความกว้าง', draft: 'ระดับกินน้ำลึก', 'water capacity': 'ถังน้ำจืด', 'fuel capacity': 'ถังน้ำมัน', marina: 'ท่าเรือ' };
+const INFO_KEEP = /^(boat name|model|brand|builder)$/i;
+function infoValTH(k, v) {
+  if (LANG === 'en' || INFO_KEEP.test(k)) return v;
+  let s = String(v);
+  s = s.replace(/(\d+)?\s*x?\s*guest cabins?/ig, (m, n) => `ห้องแขก${n ? ' ' + n : ''}`).replace(/(\d+)?\s*x?\s*crew cabins?/ig, (m, n) => `ห้องลูกเรือ${n ? ' ' + n : ''}`)
+    .replace(/^(\d+)\s+all ensuite\b/i, '$1 ห้อง มีห้องน้ำในตัวทุกห้อง')
+    .replace(/(\d+)\s*crews?\b/ig, 'ลูกเรือ $1 คน')
+    .replace(/(\d[\d.\s\-–]*?)\s*(passengers?|guests?|pax|persons?|people)\b/ig, (m, n) => n.trim() + ' คน')
+    .replace(/\(max\)/ig, '(สูงสุด)')
+    .replace(/(\d[\d.\s\-–]*?)\s*knots?\.?/ig, (m, n) => n.trim() + ' น็อต')
+    .replace(/(\d[\d.]*)\s*ft\b\.?/ig, '$1 ฟุต')
+    .replace(/(\d[\d.]*)\s*hp\b\.?/ig, '$1 แรงม้า')
+    .replace(/(\d[\d.]*)\s*L\b/g, '$1 ลิตร').replace(/(\d[\d.]*)\s*M\b/g, '$1 ม.')
+    .replace(/\ball ensuite\b/ig, 'มีห้องน้ำในตัวทุกห้อง').replace(/\((\d+) ensuite\)/ig, '(ห้องน้ำในตัว $1 ห้อง)')
+    .replace(/\bmaster\b/ig, 'มาสเตอร์').replace(/\bbunk bed\b/ig, 'เตียงสองชั้น').replace(/\btwin\b/ig, 'เตียงแฝด')
+    .replace(/(\d+)\s*cabins?\b/ig, '$1 ห้องนอน').replace(/(\d+)\s*baths?\b/ig, '$1 ห้องน้ำ')
+    .replace(/\(full refit\)/ig, '(รีฟิตทั้งลำ)').replace(/^refit\s+/i, 'รีฟิต ').replace(/^new\s+/i, 'ใหม่ ')
+    .replace(/^(have|yes)$/i, 'มี').replace(/^speed boat$/i, 'สปีดโบ๊ท').replace(/^sailing catamaran$/i, 'เรือใบคาตามารัน')
+    .replace(/auto pilot technology/i, 'ระบบนำร่องอัตโนมัติ').replace(/joystick controller/i, 'จอยสติ๊กบังคับเรือ').replace(/\bdual\b/i, 'คู่');
+  return s;
+}
+const infoKeyTH = k => LANG === 'en' ? k : (INFO_TH[String(k).toLowerCase().trim()] || k);
 function bpHeadHTML(b) {
   const name = niceTitle(b.title), g = (...k) => infoGet(b, ...k), num = x => (String(x || '').match(/\d+/) || [])[0];
   const bn = g('Boat Name'), cab = num(g('Cabin', 'Cabins', 'Bedroom'));
@@ -853,7 +884,7 @@ function renderDetail(slug) {
           <div class="bp-accs">${[[t('vanTitle'), vanHTML(), 'bus'], [t('extraTitle'), extraHTML(), 'party-popper'], [t('payTitle'), payHTML(), 'credit-card']].map(([h, body, ic]) => `<details class="bp-acc"><summary><span><i data-lucide="${ic}"></i>${h}</span><i data-lucide="plus" class="bp-plus"></i></summary><div class="bp-acc-b">${body}</div></details>`).join('')}</div>`)}
 
         ${panel('boatInfoSec', t('boatInfo'), L('จากโบรชัวร์ทางการของเรือ', 'From the official boat brochure'),
-          `<table class="bp-spec"><tbody>${b.info.filter(([, val]) => val && val !== 'N/A').map(([k, val]) => `<tr><td>${k}</td><td>${val}</td></tr>`).join('')}${b.marinaP ? `<tr><td>Marina</td><td>${b.marinaP}</td></tr>` : ''}</tbody></table>`)}
+          `<table class="bp-spec"><tbody>${b.info.filter(([, val]) => val && val !== 'N/A').map(([k, val]) => `<tr><td>${infoKeyTH(k)}</td><td>${infoValTH(k, val)}</td></tr>`).join('')}${b.marinaP ? `<tr><td>${L('ท่าเรือ', 'Marina')}</td><td>${b.marinaP}</td></tr>` : ''}</tbody></table>`)}
 
         ${panel('marinaSec', L('ท่าเรือ', 'Marina'), L('จุดนัดพบก่อนออกเรือ', 'Where you board'),
           `<div class="bp-marina">
