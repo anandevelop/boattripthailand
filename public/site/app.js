@@ -662,7 +662,7 @@ function bpHeadHTML(b) {
   const nice = x => String(x).toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase());
   const sub = [typeLabel(b.type), bn && bn.toLowerCase() !== name.toLowerCase() ? L(`ชื่อเรือ ${nice(bn)}`, `named ${nice(bn)}`) : '', b.pax ? L(`สูงสุด ${b.pax} คน`, `up to ${b.pax} guests`) : '', cab ? L(`${cab} ห้องนอน`, `${cab} cabin${cab > 1 ? 's' : ''}`) : '', b.marinaP ? L(`ออกจาก ${b.marinaP}`, `from ${b.marinaP}`) : ''].filter(Boolean).join(' · ');
   return `<header class="bp-head">
-      <div class="min-w-0"><h1 class="font-display">${L(`เช่า${typeLabel(b.type)} ${name} ภูเก็ต`, `${name} ${typeLabel(b.type).toLowerCase()} charter Phuket`)}</h1><p>${sub}</p></div>
+      <div class="min-w-0"><h1 class="font-display">${name}</h1><p>${sub}</p></div>
       <div class="bp-hacts">
         <button type="button" class="bp-pill" onclick="shareBoat('${b.slug}')"><i data-lucide="share-2"></i><span>${L('แชร์', 'Share')}</span></button>
         <button type="button" class="bp-pill" data-fav="${b.slug}" onclick="toggleFav('${b.slug}')" aria-pressed="${FAV.includes(b.slug)}" aria-label="${L('บันทึก', 'Save')} ${name}"><i data-lucide="heart"></i><span>${L('บันทึก', 'Save')}</span></button>
