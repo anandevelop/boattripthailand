@@ -856,7 +856,6 @@ function bpHeadHTML(b) {
       <div class="bp-hacts">
         <button type="button" class="bp-pill" onclick="shareBoat('${b.slug}')"><i data-lucide="share-2"></i><span>${L('แชร์', 'Share')}</span></button>
         <button type="button" class="bp-pill" data-fav="${b.slug}" onclick="toggleFav('${b.slug}')" aria-pressed="${FAV.includes(b.slug)}" aria-label="${L('บันทึก', 'Save')} ${name}"><i data-lucide="heart"></i><span>${L('บันทึก', 'Save')}</span></button>
-        <button type="button" class="bp-pill bt-cmp" data-cmp="${b.slug}" onclick="toggleCompare('${b.slug}');CMP.includes('${b.slug}')&&toast(CMP.length>1?'${L('พร้อมเทียบแล้ว · กดปุ่มเปรียบเทียบด้านล่าง', 'Ready · tap Compare below')}':'${L('เพิ่มในรายการเทียบแล้ว · เปิดเรือลำอื่นแล้วกดเทียบอีกลำ', 'Added · open another boat and tap compare')}')" aria-pressed="${CMP.includes(b.slug)}" aria-label="${L('เปรียบเทียบกับลำอื่น', 'Compare with other boats')}" title="${L('เปรียบเทียบ', 'Compare')}"><i data-lucide="git-compare"></i><span>${L('เปรียบเทียบ', 'Compare')}</span></button>
       </div>
     </header>`;
 }
@@ -1396,7 +1395,7 @@ function openBooking(preset='', program='') {
   mmClose();
   setTimeout(()=>modalForm.name.focus(), 50);
 }
-function closeModals() { bpSheetOff(); ['#bookingModal','#lightbox','#smartModal','#cmpModal','#cmdModal'].forEach(id=>$(id).classList.add('hidden')); document.body.style.overflow=''; }
+function closeModals() { bpSheetOff(); ['#bookingModal','#lightbox','#smartModal','#cmdModal'].forEach(id=>$(id).classList.add('hidden')); document.body.style.overflow=''; }
 $$('[data-close]').forEach(el => el.onclick = closeModals);
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeModals(); if (!$('#lightbox').classList.contains('hidden')) { if (e.key==='ArrowRight') { lbIdx++; drawLightbox(); } if (e.key==='ArrowLeft') { lbIdx--; drawLightbox(); } } });
 
@@ -2346,42 +2345,10 @@ function renderRecent() {
     <div class="mt-4 flex gap-4 overflow-x-auto no-scrollbar snap-x pb-2">${list.map(b => `<a href="#/boat/${b.slug}" class="snap-start shrink-0 w-56 group"><div class="aspect-[16/10] overflow-hidden img-fallback"><img loading="lazy" src="${bimg(b.slug,'hero')}" alt="${b.title}" class="w-full h-full object-cover group-hover:scale-[1.03] transition duration-500"/></div><p class="mt-2 text-sm font-medium truncate">${b.title}</p><p class="text-xs text-muted">${t('price.from','เริ่มต้น')} ${b.from_?baht(b.from_):'—'}</p></a>`).join('')}</div></div>`;
 }
 
-/* ---------- Compare ---------- */
-function toggleCompare(slug) {
-  if (CMP.includes(slug)) CMP = CMP.filter(s => s !== slug);
-  else { if (CMP.length >= 3) { toast(L('เปรียบเทียบได้สูงสุด 3 ลำ','Compare up to 3 boats')); return; } CMP.push(slug); }
-  updateCompareUI();
-}
-function updateCompareUI() {
-  $$('[data-cmp]').forEach(b => { const on = CMP.includes(b.dataset.cmp); b.setAttribute('aria-pressed', on); b.classList.toggle('text-maroon', on); b.classList.toggle('ring-maroon', on); });
-  const tray = $('#cmpTray');
-  tray.classList.toggle('translate-y-[150%]', !CMP.length); tray.classList.toggle('invisible', !CMP.length);
-  tray.setAttribute('aria-hidden', !CMP.length);
-  $('#cmpItems').innerHTML = CMP.map(s => { const b = bySlug(s); return `<div class="flex items-center gap-2 bg-white/10 pr-2"><img src="${bimg(s,'a',160)}" alt="" class="w-10 h-8 object-cover"/><span class="text-xs truncate max-w-[110px]">${b.title}</span><button onclick="toggleCompare('${s}')" aria-label="${L('นำออก','Remove')} ${b.title}" class="text-white/80 hover:text-white"><i data-lucide="x" class="w-3.5 h-3.5"></i></button></div>`; }).join('');
-  $('#cmpGo').disabled = CMP.length < 2;
-  $('#cmpGo').textContent = `${L('เปรียบเทียบ','Compare')} (${CMP.length})`;
-  icons();
-}
-function openCompare() {
-  const bs = CMP.map(bySlug);
-  const rows = [
-    [L('ประเภท','Type'), b => typeLabel(b.type)],
-    [L('ความยาว','Length'), b => b.ft ? b.ft + ' ft' : '—'],
-    [L('ความจุ','Capacity'), b => b.pax ? b.pax + ' ' + t('guests') : '—'],
-    [L('ห้องนอน','Cabins'), b => infoGet(b,'Cabin','Cabins','Bedroom') || '—'],
-    [L('ความเร็ว','Cruising speed'), b => infoGet(b,'Cruising Speed','Cruising','Cruise Speed','Speed Cruise') || '—'],
-    [L('ค้างคืนได้','Overnight'), b => b.overnight ? '✓' : '—'],
-    [L('ท่าเรือ','Marina'), b => b.marinaP],
-    [L('รวมในราคา','Inclusions'), b => b.includes.length + ' ' + L('รายการ','items')],
-    [L('ราคาเริ่มต้น','From'), b => b.from_ ? baht(b.from_) : '—'],
-  ];
-  const best = (fn, hi) => { const v = bs.map(fn); const ok = v.filter(x => x != null); if (!ok.length) return -1; const t = hi ? Math.max(...ok) : Math.min(...ok); return v.indexOf(t); };
-  const bestPax = best(b => b.pax, true), bestPrice = best(b => b.from_, false), bestFt = best(b => b.ft, true);
-  $('#cmpBody').innerHTML = `<div class="overflow-x-auto"><table class="w-full text-sm min-w-[560px]"><thead><tr><th class="w-36"></th>${bs.map(b => `<th class="p-3 text-left align-top font-normal"><a href="#/boat/${b.slug}" onclick="closeModals()" class="block group"><div class="aspect-[16/10] overflow-hidden img-fallback"><img src="${bimg(b.slug,'hero')}" alt="${b.title}" class="w-full h-full object-cover"/></div><p class="font-display mt-2 group-hover:text-maroon">${b.title}</p><p class="text-xs text-muted">${b.subtitle}</p></a></th>`).join('')}</tr></thead>
-    <tbody>${rows.map(([lab, fn], ri) => `<tr class="border-t border-sand-200"><td class="p-3 text-muted text-xs uppercase tracking-wider">${lab}</td>${bs.map((b, i) => { const hl = (ri===2&&i===bestPax)||(ri===8&&i===bestPrice)||(ri===1&&i===bestFt); return `<td class="p-3 ${hl?'text-maroon font-medium':''}">${fn(b)}${hl&&bs.length>1?` <span class="text-[10px] uppercase tracking-wider align-middle">· ${ri===8?L('คุ้มสุด','best value'):L('มากสุด','most')}</span>`:''}</td>`; }).join('')}</tr>`).join('')}
-    <tr class="border-t border-sand-200"><td></td>${bs.map(b => `<td class="p-3"><button onclick="closeModals();openBooking('boat:${b.slug}')" class="w-full px-4 py-2.5 bg-maroon text-white hover:bg-maroon-800">${t('book')}</button></td>`).join('')}</tr></tbody></table></div>`;
-  $('#cmpModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; icons();
-}
+/* ---------- Compare: removed (no tray / table on the site any more); kept as no-ops so old calls do nothing ---------- */
+function toggleCompare() {}
+function updateCompareUI() {}
+function openCompare() {}
 
 /* ---------- Smart Match (rule-based recommender) ---------- */
 const SM = { step: 0, guests: 6, occasion: 'friends', vibe: 'relax', budget: 80000, dest: '', overnight: false };

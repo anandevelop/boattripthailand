@@ -415,21 +415,6 @@
 </div>
 
 <!-- ============ COMPARE ============ -->
-<div id="cmpTray" aria-hidden="true" class="invisible fixed bottom-4 left-1/2 -translate-x-1/2 translate-y-[150%] z-40 transition-transform duration-300 bg-maroon-900 text-white shadow-float px-3 py-2.5 flex items-center gap-3 max-w-[calc(100vw-2rem)]">
-  <i data-lucide="git-compare" class="w-4 h-4 shrink-0"></i>
-  <div id="cmpItems" class="flex gap-2 overflow-x-auto no-scrollbar"></div>
-  <button id="cmpGo" onclick="openCompare()" class="shrink-0 bg-white text-ink text-xs uppercase tracking-[.12em] px-3 py-2 disabled:opacity-60">Compare</button>
-</div>
-<div id="cmpModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-label="Compare boats">
-  <div class="absolute inset-0 bg-maroon-900/50 backdrop-blur-sm" data-close></div>
-  <div class="relative h-full overflow-y-auto flex items-end sm:items-center justify-center sm:p-6">
-    <div class="modal-enter relative w-full sm:max-w-4xl bg-white shadow-float">
-      <div class="flex items-center justify-between px-6 pt-5"><p class="text-xs uppercase tracking-[.2em] text-maroon">Compare</p><button data-close class="w-9 h-9 grid place-items-center hover:bg-sand" aria-label="Close"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-      <div id="cmpBody" class="p-3 sm:p-6"></div>
-    </div>
-  </div>
-</div>
-
 <!-- ============ COMMAND PALETTE ============ -->
 <div id="cmdModal" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true" aria-label="Search">
   <div class="absolute inset-0 bg-maroon-900/30 backdrop-blur-md" data-close></div>
