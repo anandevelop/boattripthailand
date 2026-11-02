@@ -852,7 +852,7 @@ function bpHeadHTML(b) {
   const nice = x => String(x).toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase());
   const sub = [typeLabel(b.type), b.pax ? L(`สูงสุด ${b.pax} คน`, `up to ${b.pax} guests`) : '', cab ? L(`${cab} ห้องนอน`, `${cab} cabin${cab > 1 ? 's' : ''}`) : '', b.marinaP ? L(`ออกจาก ${b.marinaP}`, `from ${b.marinaP}`) : ''].filter(Boolean).join(' · ');
   return `<header class="bp-head">
-      <div class="min-w-0"><h1 class="font-display">${name}</h1><p>${sub}</p></div>
+      <div class="min-w-0"><h1 class="font-display">${name}</h1></div>
       <div class="bp-hacts">
         <button type="button" class="bp-pill" onclick="shareBoat('${b.slug}')"><i data-lucide="share-2"></i><span>${L('แชร์', 'Share')}</span></button>
         <button type="button" class="bp-pill" data-fav="${b.slug}" onclick="toggleFav('${b.slug}')" aria-pressed="${FAV.includes(b.slug)}" aria-label="${L('บันทึก', 'Save')} ${name}"><i data-lucide="heart"></i><span>${L('บันทึก', 'Save')}</span></button>
@@ -956,7 +956,7 @@ function bpFacts(b) {
   const night = num(g('Over Night', 'Overnight', 'Overnight Capacity'));
   if (b.pax) out.push(['users', `${b.pax} ${L('คน', 'guests')}`, night ? L(`รอบกลางวัน (ค้างคืน ${night} คน)`, `Day trips (overnight ${night})`) : L('รอบกลางวัน', 'Day trips')]);
   const cab = g('Cabin', 'Cabins', 'Bedroom');
-  if (cab) { const n = num(cab); out.push(['bed-double', n ? `${n} ${L('ห้องนอน', n > 1 ? 'cabins' : 'cabin')}` : cab, n ? cab.replace(/^\s*\d+\s*(cabins?|bedrooms?|rooms?)?\s*/i, '') || L('ห้องนอน', 'Cabins') : L('ห้องนอน', 'Cabins')]); }
+  if (cab) { const n = num(cab); out.push(['bed-double', n ? `${n} ${L('ห้องนอน', n > 1 ? 'cabins' : 'cabin')}` : cab, n ? infoValTH('Cabin', cab.replace(/^\s*\d+\s*(cabins?|bedrooms?|rooms?)?\s*/i, '')).replace(/^ห้อง มี/, 'มี') || L('ห้องนอน', 'Cabins') : L('ห้องนอน', 'Cabins')]); }
   const crew = g('Crew', 'Crews');
   if (crew) out.push(['life-buoy', num(crew) ? L(`ลูกเรือ ${num(crew)} คน`, `${num(crew)} crew`) : crew, L('กัปตันและลูกเรือดูแลตลอดทริป', 'Captain and crew on board')]);
   const yr = g('Year', 'Year Built', 'First Launch'), rf = g('Year Refit', 'Last Refit', 'Refit', 'Refitted');
@@ -1018,7 +1018,7 @@ function renderDetail(slug) {
           <nav class="secnav" id="secnav" aria-label="${L('ส่วนของหน้า', 'Page sections')}">${secs.map(([id, l], i) => `<a href="#${id}" class="${i ? '' : 'on'}" onclick="event.preventDefault();secGo('${id}')">${l}</a>`).join('')}</nav>
         </div>
 
-        ${panel('overview', L(`ข้อมูลสำคัญของ ${name}`, `${name} at a glance`), [typeLabel(b.type), b.ft ? L(`ขนาด ${b.ft} ฟุต`, `${b.ft} ft`) : '', refit ? L(`รีฟิตปี ${refit}`, `refit ${refit}`) : '', b.pax ? L(`รับได้สูงสุด ${b.pax} คน`, `up to ${b.pax} guests`) : ''].filter(Boolean).join(' · '),
+        ${panel('overview', L(`ข้อมูลสำคัญของ ${name}`, `${name} at a glance`), '',
           `${bpAnswerHTML(b, progs)}
           ${facts.length ? `<div class="bp-facts">${facts.map(([ic, h, s]) => `<div class="bp-fact"><i data-lucide="${ic}"></i><b>${h}</b><span>${s}</span></div>`).join('')}</div>` : ''}`)}
 
