@@ -944,22 +944,6 @@ html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !im
   .bp-facts .bp-fact b { font-size: 14px; margin-top: 5px; }
   .bp-facts .bp-fact span { font-size: 11px; }
 }
-/* หน้าเรือ: สรุปแบ่ง 3 ส่วน — ประโยคแนะนำ · ราคา · รวมในราคา */
-.bp-lead { margin-bottom: 12px; }
-.bp-kv { margin: 0 0 16px; display: grid; gap: 0; border-top: 1px solid rgb(35 20 22 / .08); }
-.bp-kv > div { display: grid; grid-template-columns: 120px 1fr; gap: 6px 16px; padding: 10px 0; border-bottom: 1px solid rgb(35 20 22 / .08); align-items: baseline; }
-.bp-kv dt { font-size: 12.5px; color: var(--bp-muted, #6b5e60); }
-.bp-kv dd { margin: 0; font-size: 14px; color: #231416; }
-.bp-kv dd b { font-weight: 500; }
-.bp-kv dd small { margin-left: 6px; font-size: 11.5px; color: var(--bp-muted, #6b5e60); }
-.bp-sep { margin: 0 8px; color: #c9b9b6; }
-.bp-inc { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
-.bp-inc li { font-size: 12.5px; padding: 3px 10px; border-radius: 99px; background: rgb(255 255 255 / .7); box-shadow: inset 0 0 0 1px rgb(35 20 22 / .08); }
-@media (max-width: 767px) {
-  .bp-kv > div { grid-template-columns: 1fr; gap: 6px; }
-  .bp-kv dd { font-size: 13.5px; }
-  .bp-inc li { font-size: 12px; }
-}
 /* หน้าเรือ (มือถือ): แกลเลอรีมุมเหลี่ยมด้านใน โค้งเฉพาะขอบนอก ไม่มีขอบขาว/เงา — แบบเดียวกับคอม */
 @media (max-width:720px) {
   .bento.bento-v2 { gap:4px; border-radius:20px; overflow:hidden; }

@@ -875,15 +875,13 @@ function bpAnswerHTML(b, progs) {
     cabN ? `มี ${cabN} ห้องนอน${ens ? 'พร้อมห้องน้ำในตัว' : ''}` : '',
     mar ? `ออกจาก ${mar}` : '',
   ].filter(Boolean).join(' ');
-  // 3 parts so it reads at a glance: one sentence about the boat, then price and inclusions as labelled rows
-  const en1 = `${name} is a ${b.ft ? b.ft + ' ft ' : ''}${typeLabel(b.type).toLowerCase()}${b.pax ? ` for up to ${b.pax} guests${rule ? ` (${rule.from - 1} included in the price)` : ''}` : ''}${cabN ? ` with ${cabN} cabin${cabN > 1 ? 's' : ''}${ens ? ', all ensuite' : ''}` : ''}${mar ? `, departing from ${mar}` : ''}.`;
-  const prices = [hf && L(`ครึ่งวัน${hf.h ? ` ${hf.h} ชม.` : ''} เริ่ม <b>${baht(hf.n)}</b>`, `Half day${hf.h ? ` (${hf.h} hrs)` : ''} from <b>${baht(hf.n)}</b>`),
-    fl && L(`เต็มวัน${fl.h ? ` ${fl.h} ชม.` : ''} เริ่ม <b>${baht(fl.n)}</b>`, `Full day${fl.h ? ` (${fl.h} hrs)` : ''} from <b>${baht(fl.n)}</b>`)].filter(Boolean);
-  if (!prices.length && b.from_) prices.push(L(`เริ่ม <b>${baht(b.from_)}</b>`, `From <b>${baht(b.from_)}</b>`));
-  const incl = [crew ? L(`กัปตันและลูกเรือ ${crew} คน`, `Captain & ${crew} crew`) : '', ...inc.filter(x => !(crew && /กัปตัน|captain/i.test(x)))].filter(Boolean);
-  const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
-  return `<p class="bp-lead">${L(th, en1)}</p>
-          <dl class="bp-kv">${prices.length ? row(L('ราคาเช่าทั้งลำ', 'Whole-boat price'), `${prices.join('<span class="bp-sep">·</span>')}${sz ? ` <small>${sz}</small>` : ''}`) : ''}${incl.length ? row(L('รวมในราคา', 'Included'), `<ul class="bp-inc">${incl.map(x => `<li>${x}</li>`).join('')}</ul>`) : ''}</dl>`;
+  const pr = [hf && `ครึ่งวัน${hf.h ? ` ${hf.h} ชม.` : ''} เริ่ม ${baht(hf.n)}`, fl && `เต็มวัน${fl.h ? ` ${fl.h} ชม.` : ''} เริ่ม ${baht(fl.n)}`].filter(Boolean);
+  const prTh = pr.length ? ` ราคาเช่าทั้งลำ ${pr.join(' และ')}${sz ? ` (${sz})` : ''}` : (b.from_ ? ` ราคาเช่าทั้งลำเริ่ม ${baht(b.from_)}` : '');
+  const incTh = inc.length || crew ? ` รวม${crew ? `กัปตัน ลูกเรือ ${crew} คน` : ''}${inc.length ? `${crew ? ', ' : ''}${inc.filter(x => !(crew && /กัปตัน|captain/i.test(x))).join(', ')}` : ''}` : '';
+  const prEn = [hf && `half day${hf.h ? ` (${hf.h} hrs)` : ''} from ${baht(hf.n)}`, fl && `full day${fl.h ? ` (${fl.h} hrs)` : ''} from ${baht(fl.n)}`].filter(Boolean);
+  const en = `${name} is a ${b.ft ? b.ft + ' ft ' : ''}${typeLabel(b.type).toLowerCase()}${b.pax ? ` for up to ${b.pax} guests${rule ? ` (${rule.from - 1} included in the price)` : ''}` : ''}${cabN ? ` with ${cabN} cabin${cabN > 1 ? 's' : ''}${ens ? ', all ensuite' : ''}` : ''}${mar ? `, departing from ${mar}` : ''}. ${prEn.length ? `Whole-boat price: ${prEn.join(' and ')}${sz ? ` (${sz})` : ''}.` : b.from_ ? `Whole-boat price from ${baht(b.from_)}.` : ''}${crew || inc.length ? ` Includes ${[crew ? `captain and ${crew} crew` : '', ...inc.filter(x => !(crew && /กัปตัน|captain/i.test(x)))].filter(Boolean).join(', ')}.` : ''}`;
+  // หัวข้อมีชื่อเรือ (SEO/AEO: บอก Google และ AI ว่าย่อหน้านี้ตอบเรื่องเรือลำไหน) · section ใช้ h2 เป็นชื่อ ไม่ต้องมี aria-label ซ้ำ
+  return `<p class="bp-lead">${L(th + prTh + incTh, en)}</p>`;
 }
 function shareBoat(slug) {
   const url = SITE_ORIGIN + hashToPath('#/boat/' + slug);
