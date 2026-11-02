@@ -42,7 +42,7 @@ function homeTxt(o, lang = LANG) {
   if (SET.logo) each('logo', i => i.setAttribute('src', SET.logo));
   if (SET.favicon) each('favicon', l => l.setAttribute('href', SET.favicon));
 })();
-const PAGE_MAP = { '/about-us': '#/about', '/privacy-policy': '#/privacy', '/terms-and-conditions': '#/terms', '/cookie-preferences': '#/cookies', '/design-system': '#/design', '/destinations': '#/destinations', '/blog': '#/blog', '/yacht-charter': '#/fleet' };
+const PAGE_MAP = { '/about-us': '#/about', '/privacy-policy': '#/privacy', '/terms-and-conditions': '#/terms', '/cookie-preferences': '#/cookies', '/design-system': '#/design', '/destinations': '#/destinations', '/tours': '#/tours', '/blog': '#/blog', '/yacht-charter': '#/fleet' };
 const HASH_MAP = Object.fromEntries(Object.entries(PAGE_MAP).map(([p, h]) => [h.slice(1), p]));
 
 function pathToHash(path, search, frag) {
@@ -54,7 +54,7 @@ function pathToHash(path, search, frag) {
   else if (p.startsWith('/blog/')) h = '#/blog/' + p.slice(6);
   else if (p.startsWith('/destinations/')) h = '#/dest/' + p.slice(14);
   else h = PAGE_MAP[p] || '#/404';
-  if (search && search.length > 1 && /^#\/(fleet|blog)$/.test(h)) h += search;
+  if (search && search.length > 1 && /^#\/(fleet|blog|tours)$/.test(h)) h += search;
   return h;
 }
 function postFor(s) { return (window.POSTS || []).find(x => x.slug.th === s || x.slug.en === s); }
@@ -383,6 +383,97 @@ function renderActs() {
     </article>`).join('');
   const more = $('#actMore');
   if (more) { more.hidden = list.length <= lim; more.innerHTML = actAll ? `${L('แสดงน้อยลง','Show less')} <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>` : `${L('ดูทั้งหมด','View all')} ${list.length} ${t('items')} <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>`; }
+  icons();
+}
+
+/* =========================================================
+   TOURS & ACTIVITIES  (#/tours · /tours?cat=<id>) — every activity from /admin (ACTS), detail in the existing popup
+   styles: .tr-* in glass.css
+   ========================================================= */
+let TR_Q = '';
+const trCatName = c => LANG === 'en' ? CATS[c].en : CATS[c].th;
+const trCats = () => GROUPS.flatMap(g => g.cats).filter(c => ACTS.some(a => a.cat === c));
+function trPrice(a) {
+  const sf = stayFrom(a), lang = LANG === 'en' ? 'en' : 'th';
+  return a.price ? `${L('เริ่ม', 'From')} <b>${baht(a.price)}</b>` : sf ? `${L('เริ่ม', 'From')} <b>${baht(sf)}</b><small>${a.rates.unit[lang]}</small>` : `<span class="tr-ask">${L('สอบถามราคา', 'Price on request')}</span>`;
+}
+function trCard(a, i) {
+  const name = LANG === 'en' ? a.en : a.th, imgs = actImgs(a), SEA = ['seatour', 'tourth', 'water'], seaBoats = FLEET.filter(b => bimg(b.slug, 'a'));
+  const img = imgs.length ? `<img src="${rs(imgs[0])}" alt="${esc(name)} – ${esc(a.loc || 'Phuket')}" loading="lazy"/>`
+    : SEA.includes(a.cat) && seaBoats.length ? `<img src="${bimg(seaBoats[(i * 7) % seaBoats.length].slug, i % 2 ? 'b' : 'a')}" alt="${esc(name)}" loading="lazy"/>`
+    : `<span class="act-ph"></span><i data-lucide="${CATS[a.cat].icon}" class="tr-phi" stroke-width="1"></i>`;
+  const meta = [LANG === 'en' ? a.loc : (a.locTh || a.loc), LANG === 'en' ? a.dur : (a.durTh ?? a.dur)].filter(Boolean).join(' · ');
+  return `<button type="button" class="tr-card" onclick="${a.desc ? `openAct('${a.pic}')` : `openBooking('act:${esc(a.en)}')`}">
+      <span class="tr-img img-fallback">${img}</span>
+      <span class="tr-eye">${trCatName(a.cat)}</span>
+      <span class="tr-nm">${esc(name)}</span>
+      ${meta ? `<span class="tr-meta">${esc(meta)}</span>` : ''}
+      <span class="tr-pr">${trPrice(a)}</span>
+    </button>`;
+}
+function trGo(c) { navTo(c ? `#/tours?cat=${c}` : '#/tours'); }
+function trSearch(v) { TR_Q = v; const box = $('#trList'); if (box) { box.innerHTML = trListHTML(); icons(); } }
+function trListHTML() {
+  const cat = (VH.hash.match(/[?&]cat=(\w+)/) || [])[1], q = TR_Q.trim().toLowerCase();
+  if (q) {
+    const hit = ACTS.filter(a => [a.th, a.en, a.loc, a.locTh, CATS[a.cat]?.th, CATS[a.cat]?.en, a.tag?.th, a.tag?.en].filter(Boolean).join(' ').toLowerCase().includes(q));
+    return `<p class="tr-res">${L(`พบ ${hit.length} รายการ สำหรับ “${esc(TR_Q)}”`, `${hit.length} results for “${esc(TR_Q)}”`)}</p>
+      ${hit.length ? `<div class="tr-grid">${hit.map(trCard).join('')}</div>` : `<p class="tr-empty">${L('ไม่พบรายการ ลองคำอื่น หรือถามทีมงานได้เลย', 'Nothing found — try another word or ask our team.')}</p>`}`;
+  }
+  if (cat && CATS[cat]) {
+    const list = ACTS.filter(a => a.cat === cat);
+    return `<section class="tr-sec"><div class="tr-sh"><h2 class="font-display">${trCatName(cat)} <span>${list.length} ${L('รายการ', 'items')}</span></h2></div>
+      <div class="tr-grid">${list.map(trCard).join('')}</div></section>`;
+  }
+  return trCats().map((c, ci) => { const list = ACTS.filter(a => a.cat === c);
+    return `<section class="tr-sec"><div class="tr-sh"><h2 class="font-display">${trCatName(c)} <span>${list.length} ${L('รายการ', 'items')}</span></h2>${list.length > 2 ? `<a href="#/tours?cat=${c}" class="tr-more${list.length > 3 ? '' : ' tr-more-m'}">${L(`ดูทั้งหมด ${list.length}`, `All ${list.length}`)}<i data-lucide="arrow-right" class="w-4 h-4"></i></a>` : ''}</div>
+      <div class="tr-grid tr-3">${list.slice(0, 3).map(trCard).join('')}</div></section>${ci === 1 ? trPackHTML() : ''}`; }).join('');
+}
+function trPackHTML() {
+  return `<section class="tr-pack"><div><p class="tr-k">${L('จองรวมกับเช่าเรือ', 'Combine with a boat')}</p>
+    <p class="tr-pt font-display">${L('เช่าเรือตอนเช้า ดูโชว์ตอนค่ำ', 'Sail in the morning, a show at night')}</p>
+    <p class="tr-ps">${L('ทีมงานจัดเวลาและการเดินทางให้ในคำขอเดียว ไม่ต้องจองหลายที่', 'We line up the times and transfers in one request — no booking in several places.')}</p></div>
+    <button type="button" class="tr-btn" onclick="openBooking()">${L('ขอแพ็กเกจเรือ + ทัวร์', 'Ask for a boat + tour package')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button></section>`;
+}
+const TR_FAQ = () => [
+  [L('จองทัวร์อย่างเดียวได้ไหม', 'Can I book a tour on its own?'), L('ได้ ส่งคำขอได้ทุกรายการ ทีมงานจะยืนยันรอบเวลาและราคาให้ก่อน', 'Yes — send a request for any item and our team confirms the time and price first.')],
+  [L('จองทัวร์รวมกับเช่าเรือได้ไหม', 'Can I combine a tour with a boat charter?'), L('ได้ บอกเรือและทัวร์ที่สนใจในคำขอเดียว ทีมงานจะจัดเวลาให้ต่อกันพอดี', 'Yes — tell us the boat and the tours in one request and we fit the times together.')],
+  [L('ราคารวมรถรับส่งไหม', 'Is hotel transfer included?'), L('ขึ้นกับแต่ละรายการ ทีมงานจะแจ้งเงื่อนไขรถรับส่งตอนยืนยัน', 'It depends on the item — we confirm the transfer terms when we reply.')],
+  [L('ต้องจ่ายเงินบนเว็บไหม', 'Do I pay on the website?'), L('ไม่ต้อง ส่งคำขอฟรี ทีมงานติดต่อกลับทาง LINE, WhatsApp หรือโทร พร้อมราคาที่ยืนยันแล้ว', 'No — the request is free; we reply on LINE, WhatsApp or phone with a confirmed price.')],
+];
+function renderTours() {
+  const v = $('#view-tours'); if (!v) return;
+  const cat = (VH.hash.match(/[?&]cat=(\w+)/) || [])[1], cats = trCats(), on = c => (c || '') === (CATS[cat] ? cat : '');
+  const item = (c, label, n) => `<a href="${c ? `#/tours?cat=${c}` : '#/tours'}" class="tr-cat${on(c) ? ' on' : ''}"${on(c) ? ' aria-current="page"' : ''}><span>${label}</span><small>${n}</small></a>`;
+  const nav = item('', L('ทั้งหมด', 'All'), ACTS.length) + cats.map(c => item(c, trCatName(c), ACTS.filter(a => a.cat === c).length)).join('');
+  const ph = c => /phuket|ภูเก็ต/i.test(trCatName(c)), h1 = CATS[cat] ? (ph(cat) ? trCatName(cat) : L(`${trCatName(cat)} ภูเก็ต`, `${trCatName(cat)} in Phuket`)) : L('ทัวร์ & กิจกรรมในภูเก็ต', 'Phuket tours & activities');
+  TR_Q = '';
+  v.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-10 pb-14 lg:pb-20 tr">
+    <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-1.5"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i>${CATS[cat] ? `<a href="#/tours" class="hover:text-maroon">${L('ทัวร์ & กิจกรรม', 'Tours & activities')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span class="text-ink" aria-current="page">${trCatName(cat)}</span>` : `<span class="text-ink" aria-current="page">${L('ทัวร์ & กิจกรรม', 'Tours & activities')}</span>`}</nav>
+    <div class="tr-head">
+      <div><h1 class="font-display tr-h1">${h1} <span>· ${CATS[cat] ? ACTS.filter(a => a.cat === cat).length : ACTS.length} ${L('รายการ', 'items')}</span></h1>
+        <p class="tr-lead">${L('โชว์ ทัวร์เกาะ กิจกรรมทางน้ำ สปา และที่พัก จองพร้อมเช่าเรือได้ในคำขอเดียว', 'Shows, island tours, water activities, spas and stays — book them with your boat in one request.')}</p></div>
+      <label class="tr-search"><i data-lucide="search" class="w-4 h-4"></i><input type="search" placeholder="${L('ค้นหาทัวร์ เช่น FantaSea', 'Search, e.g. FantaSea')}" aria-label="${L('ค้นหาทัวร์', 'Search tours')}" oninput="trSearch(this.value)"/></label>
+    </div>
+    <div class="tr-body">
+      <aside class="tr-side" aria-label="${L('หมวดหมู่', 'Categories')}"><p class="tr-k">${L('หมวดหมู่', 'Categories')}</p><nav class="tr-cats">${nav}</nav></aside>
+      <div class="tr-main" id="trList">${trListHTML()}</div>
+    </div>
+    ${CATS[cat] ? trPackHTML() : ''}
+    <section class="tr-faq"><h2 class="font-display">${L('คำถามที่พบบ่อย', 'FAQ')}</h2>
+      <div>${TR_FAQ().map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${q}<i data-lucide="plus" class="w-4 h-4 text-maroon shrink-0"></i></summary><p>${a}</p></details>`).join('')}</div></section>
+  </div>`;
+  const title = CATS[cat] ? `${h1} | Boat Trip Thailand` : L(`ทัวร์ & กิจกรรมในภูเก็ต ${ACTS.length} รายการ · โชว์ ทัวร์เกาะ สปา | Boat Trip Thailand`, `Phuket Tours & Activities – ${ACTS.length} shows, island tours & spas | Boat Trip Thailand`);
+  const desc = L(`รวมทัวร์และกิจกรรมในภูเก็ต ${ACTS.length} รายการ เช่น ภูเก็ตแฟนตาซี ไซมอน คาบาเรต์ ทัวร์ทะเล กิจกรรมทางน้ำ สปา และที่พัก จองพร้อมเช่าเรือส่วนตัวได้ในคำขอเดียว`, `${ACTS.length} Phuket tours and activities — Phuket FantaSea, Simon Cabaret, island tours, water sports, spas and stays — bookable together with a private boat in one request.`);
+  document.title = title; setMeta('description', desc); setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property');
+  const url = SITE_ORIGIN + hashToPath(CATS[cat] ? `#/tours?cat=${cat}` : '#/tours');
+  $('#canonical').href = url;
+  const list = CATS[cat] ? ACTS.filter(a => a.cat === cat) : ACTS;
+  $('#ldjson').textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
+    { '@type': 'CollectionPage', name: title, description: desc, url, mainEntity: { '@type': 'ItemList', numberOfItems: list.length, itemListElement: list.map((a, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'TouristTrip', name: LANG === 'en' ? a.en : a.th, description: (a.tag && a.tag[LANG === 'en' ? 'en' : 'th']) || undefined, touristType: CATS[a.cat].en, ...(a.price ? { offers: { '@type': 'Offer', price: a.price, priceCurrency: 'THB' } } : {}) } })) } },
+    { '@type': 'FAQPage', mainEntity: TR_FAQ().map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: t('home'), item: SITE_ORIGIN + hashToPath('#/') }, { '@type': 'ListItem', position: 2, name: L('ทัวร์ & กิจกรรม', 'Tours & activities'), item: SITE_ORIGIN + hashToPath('#/tours') }, ...(CATS[cat] ? [{ '@type': 'ListItem', position: 3, name: trCatName(cat), item: url }] : [])] },
+  ] });
   icons();
 }
 
@@ -1433,7 +1524,7 @@ document.addEventListener('keydown', e => { if (e.key==='Escape') closeModals();
 /* phone menu (mockup F): full-screen brand red · เช่าเรือ / ทัวร์ / ปลายทาง open to show their parts with live counts.
    Closes with the ✕ (burger), Esc or any link. */
 let MM_OPEN = '';
-function mmSec(h) { return h.startsWith('#/dest') ? 'dest' : h.startsWith('#categories') ? 'tours' : h.startsWith('#/blog') || h.startsWith('#/about') ? '' : 'boats'; }
+function mmSec(h) { return h.startsWith('#/dest') ? 'dest' : h.startsWith('#categories') || h.startsWith('#/tours') ? 'tours' : h.startsWith('#/blog') || h.startsWith('#/about') ? '' : 'boats'; }
 function mmBuild() {
   const box = $('#mmAcc'); if (!box) return;
   const h = VH.hash || '#/', n = k => L(`${k} ลำ`, `${k} boat${k === 1 ? '' : 's'}`);
@@ -1443,7 +1534,7 @@ function mmBuild() {
   const curType = (h.match(/[?&]type=(\w+)/) || [])[1];
   const boats = types.map(([k, c]) => tile(`#/fleet?type=${k}`, typeLabel(k), n(c), h.startsWith('#/fleet') && curType === k)).join('') + all('#/fleet', L(`ดูเรือทั้งหมด ${FLEET.length} ลำ`, `All ${FLEET.length} boats`));
   const cats = GROUPS.flatMap(g => g.cats).map(c => [c, ACTS.filter(a => a.cat === c).length]).filter(x => x[1]).sort((x, y) => y[1] - x[1]).slice(0, 6);
-  const tours = cats.map(([c, k]) => tile('#categories', LANG === 'en' ? CATS[c].en : CATS[c].th, L(`${k} รายการ`, `${k} trips`), false, `mmCat('${c}')`)).join('') + all('#categories', L(`ดูทัวร์ & กิจกรรมทั้งหมด ${ACTS.length}`, `All ${ACTS.length} tours & activities`));
+  const tours = cats.map(([c, k]) => tile(`#/tours?cat=${c}`, LANG === 'en' ? CATS[c].en : CATS[c].th, L(`${k} รายการ`, `${k} trips`), h === `#/tours?cat=${c}`)).join('') + all('#/tours', L(`ดูทัวร์ & กิจกรรมทั้งหมด ${ACTS.length}`, `All ${ACTS.length} tours & activities`));
   const dests = DPAGES.map(d => tile(`#/dest/${d.slug}`, dl(d.name), n(destBoats(d.slug).length), h === `#/dest/${d.slug}`)).join('') + all('#/destinations', L('ดูปลายทางทั้งหมด', 'All destinations'));
   const sec = (id, label, body) => `<div class="mm-s${MM_OPEN === id ? ' open' : ''}" data-s="${id}"><button type="button" class="mm-h" aria-expanded="${MM_OPEN === id}" onclick="mmToggle('${id}')"><span>${label}</span><i data-lucide="chevron-down"></i></button><div class="mm-b"><div class="mm-g">${body}</div></div></div>`;
   const link = (href, label, on) => `<div class="mm-s"><a href="${href}" class="mm-h${on ? ' on' : ''}"${on ? ' aria-current="page"' : ''}><span>${label}</span><i data-lucide="chevron-right"></i></a></div>`;
@@ -2848,9 +2939,9 @@ let currentSlug = null, currentView = 'home';
 function showView(name) {
   currentView = name;
   $$('#navLinks .nav-a').forEach(a => a.classList.remove('is-active'));
-  { const m = { fleet:'#navFleet', boat:'#navFleet', about:'#navLinks a[href="#/about"]', blog:'#navGuide', dest:'#navDest' }[name]; m && $(m)?.classList.add('is-active'); }
+  { const m = { fleet:'#navFleet', boat:'#navFleet', about:'#navLinks a[href="#/about"]', blog:'#navGuide', dest:'#navDest', tours:'#navTours' }[name]; m && $(m)?.classList.add('is-active'); }
   setTimeout(renderTeam, 0);
-  ['home','fleet','boat','about','legal','design','blog','dest','nf'].forEach(n => $('#view-'+n).classList.toggle('hidden', n !== name));
+  ['home','fleet','boat','about','legal','design','blog','dest','tours','nf'].forEach(n => $('#view-'+n)?.classList.toggle('hidden', n !== name));
   $('#floatCta').classList.toggle('!hidden', name === 'boat' || name === 'home');
 }
 /* =========================================================
@@ -3210,12 +3301,13 @@ function route0(keepScroll) {
   const h = VH.hash || '#/';
   if (!keepScroll) routeProgress();
   if (h.startsWith('#/boat/')) trackRecent(decodeURIComponent(h.slice(7)));
-  if (!/^#\/(boat|fleet|design|about|privacy|terms|cookies|blog|dest|404)/.test(h)) setTimeout(renderRecent, 0);
+  if (!/^#\/(boat|fleet|design|about|privacy|terms|cookies|blog|dest|tours|404)/.test(h)) setTimeout(renderRecent, 0);
   if (h.startsWith('#/boat/')) { currentSlug = decodeURIComponent(h.slice(7)); showView('boat'); renderDetail(currentSlug); applySeo('boat', bySlug(currentSlug)); if (!keepScroll) scrollTo(0,0); return; }
   if (h === '#/design') { showView('design'); renderDesign(); document.title = 'Design System — Boat Trip Thailand'; setMeta('robots','noindex, follow'); if (!keepScroll) scrollTo(0,0); return; }
   if (/^#\/(privacy|terms|cookies)$/.test(h)) { const k = h.slice(2); showView('legal'); renderLegal(k); applySeo(k); renderCookieBar(); if (!keepScroll) scrollTo(0,0); return; }
   if (h.startsWith('#/dest/')) { showView('dest'); renderDest(decodeURIComponent(h.slice(7))); if (!keepScroll) scrollTo(0,0); return; }
   if (h === '#/destinations') { showView('dest'); renderDestIndex(); if (!keepScroll) scrollTo(0,0); return; }
+  if (h === '#/tours' || h.startsWith('#/tours?')) { showView('tours'); renderTours(); if (!keepScroll) scrollTo(0,0); return; }
   if (h === '#/404') { showView('nf'); renderNotFound(); if (!keepScroll) scrollTo(0,0); return; }
   if (h.startsWith('#/blog/')) { showView('blog'); renderPost(decodeURIComponent(h.slice(7))); if (!keepScroll) scrollTo(0,0); return; }
   if (h === '#/blog' || h.startsWith('#/blog?')) { showView('blog'); renderBlog(); seoBlog(); if (!keepScroll) scrollTo(0,0); return; }
