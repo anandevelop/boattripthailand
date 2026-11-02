@@ -4,7 +4,7 @@
    ===================================================================== */
 const SITECFG = {
   tab: 'brand',
-  name: tr('Boat Trip Thailand', 'Boat Trip Thailand'), tagline: tr('เช่าเรือยอชต์ส่วนตัว ภูเก็ต', 'Private yacht charter in Phuket'),
+  name: tr('Boat Trip Thailand', 'Boat Trip Thailand'), tagline: tr('เช่าเรือยอร์ชส่วนตัว ภูเก็ต', 'Private yacht charter in Phuket'),
   logo: '', logoDark: '', favicon: '', ogDefault: '', color: '#70000e',
   phone: '+66 61 172 5854', email: 'booking@boattripthailand.com', wa: '+66 61 172 5854', line: '@boattripthailand', lineUrl: 'https://line.me/R/ti/p/@boattripthailand',
   address: tr('ภูเก็ต ประเทศไทย', 'Phuket, Thailand'), map: '', hours: tr('ทุกวัน 08:00–20:00', 'Daily 08:00–20:00'),

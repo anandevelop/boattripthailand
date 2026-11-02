@@ -20,7 +20,7 @@ const TEL = 'tel:' + SET.phone.replace(/[^\d+]/g, ''), WA_URL = 'https://wa.me/'
 const HOME = window.__HOME__ || null;
 /* pick the language (Thai when a translation is missing) and fill {boats} {maxpax} {from} {from:type} */
 function homeTxt(o, lang = LANG) {
-  const raw = o ? String((lang === 'en' ? o.en : o.th) || o.th || o.en || '') : '';
+  const raw = o ? String((lang === 'en' ? o.en : o.th) || o.th || o.en || '').replace(lang === 'en' ? /$^/ : /ยอชต์/g, 'ยอร์ช') : '';
   return raw.replace(/\{(boats|maxpax|from)(?::([a-z]+))?\}/g, (m, k, ty) => {
     if (k === 'boats') return FLEET.length;
     if (k === 'maxpax') return Math.max(0, ...FLEET.map(b => b.pax || 0));
@@ -232,8 +232,8 @@ const TH_CACHE = {};
 const t = (k, th) => LANG === 'en' ? (I18N.en[k] ?? th ?? k) : (th ?? TH_DYN[k] ?? k);
 const TH_DYN = {
   'all':'ทั้งหมด','type.speed':'สปีดโบ๊ท','type.overnight':'ค้างคืน','hot':'ยอดนิยม',
-  'type.sail':'เรือใบคาตามารัน','type.power':'พาวเวอร์คาตามารัน','type.longtail':'เรือหางยาว','type.yacht':'เรือยอชต์',
-  'home':'หน้าแรก','fleet':'เรือทั้งหมด','fleetTitle':'เรือทั้งหมดของเรา','fleetSub':'เรือยอชต์ คาตามารัน สปีดโบ๊ท และเรือหางยาวหรู {n} ลำ ทั่วภูเก็ต — ข้อมูลครบตามโบรชัวร์ทางการ',
+  'type.sail':'เรือใบคาตามารัน','type.power':'พาวเวอร์คาตามารัน','type.longtail':'เรือหางยาว','type.yacht':'เรือยอร์ช',
+  'home':'หน้าแรก','fleet':'เรือทั้งหมด','fleetTitle':'เรือทั้งหมดของเรา','fleetSub':'เรือยอร์ช คาตามารัน สปีดโบ๊ท และเรือหางยาวหรู {n} ลำ ทั่วภูเก็ต — ข้อมูลครบตามโบรชัวร์ทางการ',
   'searchBoat':'ค้นหาชื่อเรือ ท่าเรือ เกาะ…','allLoc':'ทุกพื้นที่','anyPax':'ทุกขนาดกลุ่ม','sort.default':'เรียง: ค่าเริ่มต้น','sort.pax':'ความจุ',
   'boats.emptyTxt':'ไม่พบเรือที่ตรงกับตัวกรอง','boatsUnit':'ลำ','select':'เลือก','notFound':'ไม่พบเรือลำนี้','viewPhotos':'ดูรูปทั้งหมด',
   'programs2':'โปรแกรม & ราคา','vatNote':'ราคาตามโบรชัวร์ รวม VAT 7% · อาจมีการเปลี่ยนแปลง','timeSlots':'รอบเวลา','includes2':'ราคานี้รวม','complimentary':'บริการฟรี / สิ่งอำนวยความสะดวก','notIncluded':'ไม่รวมในราคา',
@@ -414,15 +414,174 @@ FLEET.forEach((b, i) => {
 });
 /* translations staff save in /admin (boats.data.i18n): show the current language, brochure text as fallback.
    Display fields only — tables / time_slots stay in English because filters and pricing read them. */
-const i18nPick = (o, src) => (o && String(o[LANG === 'en' ? 'en' : 'th'] || '').trim()) || src;
+/* ---------- Thai for brochure lists (รวม / ไม่รวม / ของแถม / หมายเหตุ) ----------
+   Brochure text is English. Staff translations (/admin) win when they are fully Thai; otherwise this table
+   turns the English source into Thai. Keys are lower-case with numbers written as # ({1}, {2}… in the Thai). */
+const TH_BOAT = {
+  '#v ac outlet': 'ปลั๊กไฟ {1}V', '#v ac outlets': 'ปลั๊กไฟ {1}V',
+  'air condition': 'เครื่องปรับอากาศ', 'air conditioner': 'เครื่องปรับอากาศ', 'air-condition': 'เครื่องปรับอากาศ', 'air-conditions': 'เครื่องปรับอากาศ', 'air condition (saloon)': 'เครื่องปรับอากาศ (ห้องรับแขก)',
+  'air condition, wifi, tv and netflix': 'เครื่องปรับอากาศ, Wi-Fi, ทีวีและ Netflix',
+  'full air conditioning': 'เครื่องปรับอากาศทั้งลำ', 'fully airconditioned': 'เครื่องปรับอากาศทั้งลำ', 'fully air conditioned': 'เครื่องปรับอากาศทั้งลำ',
+  'beach chair & service fees at banana beach at coral island': 'เก้าอี้ชายหาดและค่าบริการที่หาดบานาน่า เกาะเฮ',
+  'brown oak floor': 'พื้นไม้โอ๊คสีน้ำตาล', 'wooden floor': 'พื้นไม้', 'white oak woodwork interior': 'ตกแต่งภายในด้วยไม้โอ๊คขาว',
+  'chalong marina shuttle bus service (pier access)': 'รถชัตเทิลรับส่งภายในท่าเรือฉลอง',
+  'electric drop-down terrace': 'ระเบียงริมน้ำแบบพับไฟฟ้า', 'electric drop-down terraces on both sides': 'ระเบียงริมน้ำแบบพับไฟฟ้าทั้งสองข้าง', 'electric sea terraces on both sides': 'ระเบียงริมน้ำแบบพับไฟฟ้าทั้งสองข้าง',
+  'expansive adjustable aft lounging area': 'พื้นที่นั่งเล่นท้ายเรือกว้าง ปรับได้',
+  'exterior breakfast point with electric hobs and grill': 'มุมอาหารเช้าด้านนอก พร้อมเตาไฟฟ้าและเตาย่าง',
+  'exterior galley and breakfast point with electric hobs and grill': 'ครัวและมุมอาหารเช้าด้านนอก พร้อมเตาไฟฟ้าและเตาย่าง',
+  'exterior galley with electric hob and wash basin': 'ครัวด้านนอก พร้อมเตาไฟฟ้าและอ่างล้าง', 'outdoor galley with electric hob': 'ครัวด้านนอก พร้อมเตาไฟฟ้า',
+  'interior galley': 'ครัวในตัวเรือ', 'galley': 'ห้องครัว',
+  'floating pool & slider': 'สระลอยน้ำและสไลเดอร์', 'slider & floating pool': 'สไลเดอร์และสระลอยน้ำ', 'floating pool': 'สระลอยน้ำ',
+  'flybridge': 'ฟลายบริดจ์ (ดาดฟ้าชั้นบน)', 'saloon': 'ห้องรับแขก (ซาลอน)', 'spacious front sundeck': 'ดาดฟ้าอาบแดดหัวเรือกว้างขวาง',
+  'fusion premium audio system': 'ระบบเสียง Fusion พรีเมียม', 'premium audio system': 'ระบบเสียงพรีเมียม', 'sound system': 'ระบบเสียง',
+  'soundsystem with bluetooth': 'ระบบเสียง เชื่อมต่อบลูทูธ', 'party soundsystem with bluetooth': 'ระบบเสียงปาร์ตี้ เชื่อมต่อบลูทูธ', 'party lighting system': 'ระบบไฟปาร์ตี้',
+  'in-out door sound system': 'ระบบเสียงทั้งในและนอกห้อง', 'indoor & outdoor soundsystem': 'ระบบเสียงทั้งในและนอกห้อง', 'indoor & outdoor sound system': 'ระบบเสียงทั้งในและนอกห้อง',
+  'professional soundsystem (# speakers)': 'ระบบเสียงมืออาชีพ ({1} ลำโพง)', 'jbl speaker / bluetooth': 'ลำโพง JBL / บลูทูธ',
+  'generator': 'เครื่องปั่นไฟ', 'microwave oven': 'ไมโครเวฟ', 'refrigerator': 'ตู้เย็น', 'portable refrigerator': 'ตู้เย็นพกพา', 'refrigerator & microwave oven': 'ตู้เย็นและไมโครเวฟ',
+  'i aqua sea scooter': 'สกู๊ตเตอร์ใต้น้ำ iAqua', 'i aqua sea scooter x #': 'สกู๊ตเตอร์ใต้น้ำ iAqua {1} ตัว', 'sea scooter x #': 'สกู๊ตเตอร์ใต้น้ำ {1} ตัว',
+  'kids sand toys': 'ของเล่นทรายสำหรับเด็ก', "children's sand digging toys": 'ของเล่นขุดทรายสำหรับเด็ก',
+  'local beer # cans': 'เบียร์ไทย {1} กระป๋อง', 'singha beer x # cans': 'เบียร์สิงห์ {1} กระป๋อง', 'beer x #': 'เบียร์ {1} กระป๋อง', 'beers': 'เบียร์',
+  'prosecco wine # bottles': 'ไวน์ Prosecco {1} ขวด', 'bottle wine x #': 'ไวน์ {1} ขวด', 'sparking wine x #': 'สปาร์กลิงไวน์ {1} ขวด', 'champagne': 'แชมเปญ',
+  'onboard wi-fi (limited to some location)': 'Wi-Fi บนเรือ (ใช้ได้บางพื้นที่)', 'wi-fi': 'Wi-Fi', 'wifi': 'Wi-Fi', 'wi-fi internet': 'อินเทอร์เน็ต Wi-Fi',
+  'wi-fi internet, tvs with netflix': 'อินเทอร์เน็ต Wi-Fi และทีวีพร้อม Netflix', 'tv and netflix': 'ทีวีและ Netflix', 'tv with netflix': 'ทีวีพร้อม Netflix', 'tvs with netflix': 'ทีวีพร้อม Netflix',
+  'one bedroom set up': 'จัดห้องนอน 1 ห้อง', '# cabin usage': 'ใช้ห้องนอน {1} ห้อง', 'cabin usage': 'ใช้ห้องนอนได้',
+  'one-time mouthpiece': 'ท่อหายใจแบบใช้ครั้งเดียว', 'open-heel fins': 'ตีนกบแบบเปิดส้น',
+  'paddle board': 'แพดเดิลบอร์ด', 'paddle boards': 'แพดเดิลบอร์ด', 'paddle board x #': 'แพดเดิลบอร์ด {1} ลำ', 'paddle boards x #': 'แพดเดิลบอร์ด {1} ลำ', 'paddle': 'ไม้พาย',
+  'sup board x #': 'บอร์ด SUP {1} ลำ', 'sup paddle board x #': 'บอร์ด SUP {1} ลำ', 'sup paddle boards x #': 'บอร์ด SUP {1} ลำ', 'sup paddle board': 'บอร์ด SUP', 'sup paddle boards': 'บอร์ด SUP', 'sub board': 'บอร์ด SUP',
+  'swim float & paddle board': 'ห่วงลอยน้ำและแพดเดิลบอร์ด', 'pool float & paddle board': 'ห่วงลอยน้ำและแพดเดิลบอร์ด', 'swim float': 'ห่วงลอยน้ำ', 'swim floats': 'ห่วงลอยน้ำ',
+  'swimming platform': 'แพลตฟอร์มลงเล่นน้ำ', 'towable water toys': 'ของเล่นน้ำแบบลากจูง', 'sea toys': 'ของเล่นทางน้ำ', 'water toys': 'ของเล่นทางน้ำ',
+  '# kayak': 'คายัค {1} ลำ', 'kayak x #': 'คายัค {1} ลำ', 'kayaks': 'คายัค', 'clear kayak': 'คายัคใส', 'kayaking at phangnga bay tours': 'พายคายัคในทริปอ่าวพังงา',
+  '#hp center console tender': 'เรือเล็ก (เทนเดอร์) {1} แรงม้า', 'tender boat': 'เรือเล็ก (เทนเดอร์)', 'longtail boat': 'เรือหางยาว',
+  'dinghy': 'เรือเล็กรับส่งขึ้นฝั่ง', 'dingy': 'เรือเล็กรับส่งขึ้นฝั่ง', 'dinghy travel': 'เรือเล็กรับส่งขึ้นฝั่ง', 'dingy travel': 'เรือเล็กรับส่งขึ้นฝั่ง',
+  'banana boat x #': 'บานาน่าโบ๊ท {1} ลำ', 'jet ski x # (can only be used at certain itineraries)': 'เจ็ตสกี {1} คัน (ใช้ได้บางเส้นทาง)', 'kneeboard x #': 'นีบอร์ด {1} อัน', 'wakeboard x #': 'เวคบอร์ด {1} อัน',
+  'towable donut x #': 'ห่วงโดนัทลากจูง {1} ลูก', 'towable sofa x #': 'โซฟาลากจูง {1} ตัว', 'trampoline': 'ตาข่ายแทรมโพลีน',
+  'inflatable slider': 'สไลเดอร์เป่าลม', 'inflatable water slider x #': 'สไลเดอร์เป่าลม {1} อัน', 'water slider x #': 'สไลเดอร์ลงน้ำ {1} อัน', 'slide': 'สไลเดอร์ลงน้ำ', 'slider': 'สไลเดอร์ลงน้ำ',
+  'inflatable floating toys': 'ของเล่นเป่าลมลอยน้ำ', 'inflatable toys x #': 'ของเล่นเป่าลม {1} ชิ้น', 'inflatable pool x #': 'สระว่ายน้ำเป่าลม {1} สระ', 'inflatable yacht pool x #': 'สระว่ายน้ำเป่าลม {1} สระ', 'inflatable yacht pool': 'สระว่ายน้ำเป่าลม',
+  'infoliating dock bord': 'แพลอยน้ำ', 'floating rubber sheet': 'แผ่นยางลอยน้ำ', 'floating foam sticks x #': 'โฟมลอยน้ำ {1} ชิ้น',
+  'accident insurance': 'ประกันอุบัติเหตุ', 'insurance': 'ประกันภัย', 'life insurance': 'ประกันชีวิต', 'travel insurance': 'ประกันการเดินทาง',
+  'passenger accident insurance': 'ประกันอุบัติเหตุผู้โดยสาร', 'passenger insurance': 'ประกันผู้โดยสาร', 'tourist accident insurance': 'ประกันอุบัติเหตุผู้โดยสาร', 'travel accident insurance': 'ประกันอุบัติเหตุการเดินทาง',
+  'amenities': 'ของใช้ส่วนตัว', 'at island activities fee': 'ค่ากิจกรรมบนเกาะ', 'at island activities': 'กิจกรรมบนเกาะ', 'island activities': 'กิจกรรมบนเกาะ',
+  'bbq station': 'เตาบาร์บีคิว', 'bbq griller': 'เตาบาร์บีคิว',
+  'bar with alcoholic, drinks (can buy drinks on board)': 'บาร์เครื่องดื่มแอลกอฮอล์ (ซื้อบนเรือได้)', 'extensive bar menu with bartender': 'เมนูบาร์หลากหลาย พร้อมบาร์เทนเดอร์',
+  'beach mat x #': 'เสื่อชายหาด {1} ผืน', 'beach mat': 'เสื่อชายหาด', 'beach mats': 'เสื่อชายหาด', 'beach chair (coral island only)': 'เก้าอี้ชายหาด (เฉพาะเกาะเฮ)',
+  'beach towel': 'ผ้าเช็ดตัวชายหาด', 'beach towels': 'ผ้าเช็ดตัวชายหาด', 'bean bag': 'บีนแบ็ก', 'been bag': 'บีนแบ็ก', 'cabana seat': 'ที่นั่งคาบานา', 'lounge seat': 'ที่นั่งเลานจ์',
+  'breakfast, lunch dinner (at overnight tours)': 'อาหารเช้า กลางวัน และเย็น (ทริปค้างคืน)', 'breakfast, lunch, dinner (at overnight tours)': 'อาหารเช้า กลางวัน และเย็น (ทริปค้างคืน)', 'breakfast, lunch, dinner (overnight tours)': 'อาหารเช้า กลางวัน และเย็น (ทริปค้างคืน)',
+  'captain & deckhand & hostess': 'กัปตัน ลูกเรือ และสจ๊วต', 'captain, crew and hostess': 'กัปตัน ลูกเรือ และสจ๊วต', 'captain, crew and hostess #': 'กัปตัน ลูกเรือ และสจ๊วต {1} คน', 'captain, deckhand, host/hostess': 'กัปตัน ลูกเรือ และสจ๊วต',
+  'professional captain & crews': 'กัปตันและลูกเรือมืออาชีพ', 'professional captain and crew': 'กัปตันและลูกเรือมืออาชีพ', 'well-trained captain and crews': 'กัปตันและลูกเรือที่ผ่านการฝึกอบรม',
+  'professional captain & # crew': 'กัปตันมืออาชีพและลูกเรือ {1} คน', 'professional captain and # crew': 'กัปตันมืออาชีพและลูกเรือ {1} คน',
+  'professional captain, crew, and hostess or tour guide': 'กัปตัน ลูกเรือมืออาชีพ และสจ๊วตหรือไกด์', 'professional crew': 'ลูกเรือมืออาชีพ', 'professional crews': 'ลูกเรือมืออาชีพ', 'professional craws': 'ลูกเรือมืออาชีพ',
+  'host / guide (english speaking)': 'ไกด์ (พูดภาษาอังกฤษ)', 'hostess & service team': 'สจ๊วตและทีมบริการ', 'hostess (english speaking)': 'สจ๊วต (พูดภาษาอังกฤษ)', 'hostess': 'สจ๊วต',
+  'resident dj': 'ดีเจประจำเรือ', 'dj booth': 'บูธดีเจ', 'private tour': 'ทริปส่วนตัว', 'well-prepared yacht': 'เรือที่เตรียมพร้อมก่อนออกทริป',
+  'full use of yacht': 'ใช้งานเรือได้ทั้งลำ', 'full use of the yacht': 'ใช้งานเรือได้ทั้งลำ',
+  'coffee and tea': 'กาแฟและชา', 'afternoon tea': 'ชายามบ่าย', 'drinking water': 'น้ำดื่ม', 'dinking water': 'น้ำดื่ม', 'water': 'น้ำดื่ม',
+  'soft drink': 'น้ำอัดลม', 'soft drinks': 'น้ำอัดลม', 'soft drink & drinking water': 'น้ำอัดลมและน้ำดื่ม', 'soft drink and drink water': 'น้ำอัดลมและน้ำดื่ม', 'soft drink and drinking water': 'น้ำอัดลมและน้ำดื่ม',
+  'soft drink, coffee & tea': 'น้ำอัดลม กาแฟ และชา', 'soft drinks & ice': 'น้ำอัดลมและน้ำแข็ง', 'soft drinks and ice': 'น้ำอัดลมและน้ำแข็ง', 'soft drinks (post mix system)': 'น้ำอัดลม (ระบบตู้กด)',
+  'soft drinks (water, coke, sprite, fanta, orange juice, tonic, soda)': 'เครื่องดื่ม (น้ำดื่ม โค้ก สไปรท์ แฟนต้า น้ำส้ม โทนิค โซดา)',
+  'water, soft drink, coffee & tea': 'น้ำดื่ม น้ำอัดลม กาแฟ และชา', 'water & alcohol drink': 'น้ำดื่มและเครื่องดื่มแอลกอฮอล์', 'water & non alcohol drink': 'น้ำดื่มและเครื่องดื่มไม่มีแอลกอฮอล์',
+  'non alcohol drinks': 'เครื่องดื่มไม่มีแอลกอฮอล์', 'non-alcohol beverages': 'เครื่องดื่มไม่มีแอลกอฮอล์', 'alcoholic beverages': 'เครื่องดื่มแอลกอฮอล์',
+  'welcome drink': 'เครื่องดื่มต้อนรับ', 'welcome drinks': 'เครื่องดื่มต้อนรับ', 'welcome drink & welcome snacks': 'เครื่องดื่มและขนมต้อนรับ', 'welcome drink & snacks': 'เครื่องดื่มและขนมต้อนรับ', 'welcome drink (mocktail)': 'เครื่องดื่มต้อนรับ (ม็อกเทล)',
+  'ice and light snacks': 'น้ำแข็งและขนมเบาๆ', 'snacks': 'ขนม', 'snacks (chips, peanuts, chocolates)': 'ขนม (มันฝรั่งทอด ถั่ว ช็อกโกแลต)',
+  'fruits & snacks': 'ผลไม้และขนม', 'snack & fruit': 'ขนมและผลไม้', 'seasonal fruit, snacks': 'ผลไม้ตามฤดูกาลและขนม', 'snack & fruit water': 'ขนม ผลไม้ และน้ำดื่ม',
+  'fresh coconut': 'มะพร้าวสด', 'fresh fruit': 'ผลไม้สด', 'fresh seasonal fruits': 'ผลไม้สดตามฤดูกาล', 'fruit': 'ผลไม้', 'fruits': 'ผลไม้',
+  'seasonal fruit': 'ผลไม้ตามฤดูกาล', 'seasonal fruits': 'ผลไม้ตามฤดูกาล', 'tropical fruits': 'ผลไม้เมืองร้อน',
+  'food': 'อาหาร', 'food (full day trip)': 'อาหาร (ทริปเต็มวัน)', 'food (half day)': 'อาหาร (ทริปครึ่งวัน)', 'one buffet meal': 'อาหารบุฟเฟต์ 1 มื้อ',
+  'meal': 'อาหาร', 'meals': 'อาหาร', 'meal (overnight trip only)': 'อาหาร (เฉพาะทริปค้างคืน)', 'meal (full day trip only)': 'อาหาร (เฉพาะทริปเต็มวัน)', 'meal charge (overnight program)': 'ค่าอาหาร (โปรแกรมค้างคืน)',
+  'lunch': 'อาหารกลางวัน', 'lunch/ meal': 'อาหารกลางวัน', 'meal/ lunch': 'อาหารกลางวัน', 'lunch (full day only)': 'อาหารกลางวัน (เฉพาะทริปเต็มวัน)',
+  'lunch (at day tours)': 'อาหารกลางวัน (ทริปกลางวัน)', 'lunch (day tours)': 'อาหารกลางวัน (ทริปกลางวัน)', 'lunch at the restaurant (a la carte)': 'อาหารกลางวันที่ร้านอาหาร (สั่งตามเมนู)',
+  'lunch or dinner (starting at # thb / person)': 'อาหารกลางวันหรือเย็น (เริ่ม {1} บาท/คน)',
+  'lunch, beverages, and any other provisions not specified in the charter agreement': 'อาหารกลางวัน เครื่องดื่ม และสิ่งอื่นที่ไม่ได้ระบุในสัญญาเช่าเรือ',
+  'no lunch inclusive at half day charters': 'ทริปครึ่งวันไม่รวมอาหารกลางวัน', 'outdoor cinema (overnight tours only)': 'โรงหนังกลางแจ้ง (เฉพาะทริปค้างคืน)', 'outdoor shower': 'ฝักบัวด้านนอก',
+  'bbq (extras # thb/person min order # person)': 'บาร์บีคิว (เพิ่ม {1} บาท/คน ขั้นต่ำ {2} คน)',
+  'first aid': 'ชุดปฐมพยาบาล', 'frist aid': 'ชุดปฐมพยาบาล',
+  'fishing ring x #': 'ห่วงตกปลา {1} ชุด', 'fishing rod x #': 'เบ็ดตกปลา {1} คัน', 'fishing rods': 'เบ็ดตกปลา', 'fishing equipment': 'อุปกรณ์ตกปลา', 'fishing tool': 'อุปกรณ์ตกปลา',
+  'fishing equipment (on request)': 'อุปกรณ์ตกปลา (แจ้งล่วงหน้า)', 'hand line fishing': 'ตกปลาแบบเอ็นมือ',
+  'fishing rod: # thb per person': 'เบ็ดตกปลา {1} บาท/คน', 'fishing rod: # bath per person': 'เบ็ดตกปลา {1} บาท/คน',
+  'fuel': 'น้ำมันเชื้อเพลิง', 'fuel for above destinations': 'น้ำมันเชื้อเพลิงตามเส้นทางข้างต้น',
+  'land transfer': 'รถรับส่ง', 'land transfer round trip': 'รถรับส่งไป-กลับ', 'round-trip transfer service': 'รถรับส่งไป-กลับ',
+  'minivan transfer to the marina': 'รถตู้รับส่งไปท่าเรือ', 'taxi transfer to the marina': 'แท็กซี่ไปท่าเรือ',
+  'life jacket': 'เสื้อชูชีพ', 'life jackets': 'เสื้อชูชีพ', 'life jacket, mask & snorkel': 'เสื้อชูชีพ หน้ากากและท่อหายใจ', 'life jacket, mask + snorkel': 'เสื้อชูชีพ หน้ากากและท่อหายใจ',
+  'mask and snorkel': 'หน้ากากและท่อหายใจ', 'mask snorkel': 'หน้ากากและท่อหายใจ', 'snorkeling mask': 'หน้ากากดำน้ำ', 'snorkels': 'ท่อหายใจ',
+  'snorkeling gear': 'อุปกรณ์ดำน้ำตื้น', 'snorkelling gear': 'อุปกรณ์ดำน้ำตื้น', 'snorkeling equipment': 'อุปกรณ์ดำน้ำตื้น', 'snorkeling equipment & fin slipper': 'อุปกรณ์ดำน้ำตื้นและตีนกบ',
+  'towel': 'ผ้าเช็ดตัว', 'towels': 'ผ้าเช็ดตัว', 'towel & refreshing towel': 'ผ้าเช็ดตัวและผ้าเย็น', 'towels, life jackets': 'ผ้าเช็ดตัว เสื้อชูชีพ', 'towel and new mouthpiece': 'ผ้าเช็ดตัวและท่อหายใจใหม่',
+  'vat #%': 'VAT {1}%', 'vat #% (value added tax)': 'VAT {1}%', 'relocation fee': 'ค่าย้ายท่าเรือ', 'fee relocation fee': 'ค่าย้ายท่าเรือ',
+  'marine national park fee island fee': 'ค่าอุทยานแห่งชาติทางทะเลและค่าขึ้นเกาะ', 'marine national park fee': 'ค่าอุทยานแห่งชาติทางทะเล', 'marine national park': 'ค่าอุทยานแห่งชาติทางทะเล',
+  'national park fee': 'ค่าอุทยานแห่งชาติ', 'national park fees': 'ค่าอุทยานแห่งชาติ', 'national park fees (if any)': 'ค่าอุทยานแห่งชาติ (ถ้ามี)',
+  'national park fee or island entry fee': 'ค่าอุทยานแห่งชาติหรือค่าขึ้นเกาะ', 'island and national park entrance fees': 'ค่าขึ้นเกาะและค่าอุทยานแห่งชาติ',
+  'island fee': 'ค่าขึ้นเกาะ', 'fee island fee': 'ค่าขึ้นเกาะ', 'island entry fee': 'ค่าขึ้นเกาะ', 'island entry fees': 'ค่าขึ้นเกาะ', 'island admission fees': 'ค่าขึ้นเกาะ',
+  'island admission (if applicable)': 'ค่าขึ้นเกาะ (ถ้ามี)', 'island admission fees (if applicable)': 'ค่าขึ้นเกาะ (ถ้ามี)', 'island entry fees (if any)': 'ค่าขึ้นเกาะ (ถ้ามี)',
+  'island fee marina fee': 'ค่าขึ้นเกาะและค่าท่าเรือ', 'port admission fees (if applicable)': 'ค่าธรรมเนียมท่าเรือ (ถ้ามี)',
+  'island tractor cost at racha island': 'ค่ารถแทรกเตอร์ขึ้นฝั่งที่เกาะราชา', 'long tail boat fee for landing island': 'ค่าเรือหางยาวรับส่งขึ้นเกาะ', 'long tail boat fee for landing island slide': 'ค่าเรือหางยาวรับส่งขึ้นเกาะ',
+  'beach chair and service fee at coral island': 'เก้าอี้ชายหาดและค่าบริการที่เกาะเฮ',
+  'beverage or extra services are available with extra charge (pre-order only)': 'เครื่องดื่มหรือบริการเพิ่มเติม มีค่าใช้จ่ายเพิ่ม (สั่งล่วงหน้าเท่านั้น)',
+  'extra alcohol beverages are available onboard for purchase': 'มีเครื่องดื่มแอลกอฮอล์จำหน่ายบนเรือ', 'crew gratuity': 'ทิปลูกเรือ', 'guide': 'ไกด์', 'tour guide': 'ไกด์',
+  'optional activities such as canoeing, jet ski, scuba diving, and other water sports are not included in the charter rate': 'กิจกรรมเสริม เช่น พายแคนู เจ็ตสกี ดำน้ำลึก และกีฬาทางน้ำอื่นๆ ไม่รวมในราคาเช่าเรือ',
+  'other personal consumption': 'ค่าใช้จ่ายส่วนตัวอื่นๆ', 'relocation fuel surcharge for pick-up and drop-off at alternative marinas': 'ค่าน้ำมันเพิ่มกรณีรับ-ส่งที่ท่าเรืออื่น',
+  'slider, swimming pool, clear boat (extra : #thb)': 'สไลเดอร์ สระว่ายน้ำ และเรือใส (เพิ่ม {1} บาท)', 'slider, swimming pool: # thb': 'สไลเดอร์และสระว่ายน้ำ {1} บาท', 'water activities': 'กิจกรรมทางน้ำ',
+  /* notes */
+  'above # person we charge # thb per/ person and per-day': 'เกิน {1} คน คิดเพิ่ม {2} บาท/คน/วัน', 'additional person adult # thb per/person': 'ผู้ใหญ่เพิ่ม {1} บาท/คน',
+  'an extra charge of # thb net per person applies from the # to the # passenger. including children aged above # years': 'ผู้โดยสารคนที่ {2}–{3} คิดเพิ่ม {1} บาทสุทธิ/คน (นับเด็กอายุเกิน {4} ปี)',
+  'an extra charge of net # thb per person applies from the # to the # passenger. including children aged above # years': 'ผู้โดยสารคนที่ {2}–{3} คิดเพิ่ม {1} บาทสุทธิ/คน (นับเด็กอายุเกิน {4} ปี)',
+  'an extra charge of net # thb per person per day applies from the # to the # passenger. including children aged above # years': 'ผู้โดยสารคนที่ {2}–{3} คิดเพิ่ม {1} บาทสุทธิ/คน/วัน (นับเด็กอายุเกิน {4} ปี)',
+  'an extra charge of net # thb per person': 'ผู้โดยสารเพิ่ม คิด {1} บาทสุทธิ/คน', 'an extra charge of net # thb per person, including children aged above # years': 'ผู้โดยสารเพิ่ม คิด {1} บาทสุทธิ/คน (นับเด็กอายุเกิน {2} ปี)',
+  'an extra charge of net # thb per person. at half day charters an extra charge of net # thb per person': 'ผู้โดยสารเพิ่ม คิด {1} บาทสุทธิ/คน (ทริปครึ่งวัน {2} บาทสุทธิ/คน)',
+  'any activities, transportation, or services not explicitly mentioned in the charter package': 'กิจกรรม การเดินทาง หรือบริการที่ไม่ได้ระบุในแพ็กเกจ',
+  'extra destination /hour has surcharge # thb (maximum boat usage # hour)': 'เพิ่มจุดหมายหรือชั่วโมง คิดเพิ่ม {1} บาท (ใช้เรือได้สูงสุด {2} ชั่วโมง)',
+  'food & beverages packages are available with extra charge': 'มีแพ็กเกจอาหารและเครื่องดื่ม (มีค่าใช้จ่ายเพิ่ม)',
+  'food :adults # thb per person, children # thb per person': 'อาหาร: ผู้ใหญ่ {1} บาท/คน เด็ก {2} บาท/คน', 'food adults: thb # per person, children: thb # per person': 'อาหาร: ผู้ใหญ่ {1} บาท/คน เด็ก {2} บาท/คน',
+  'food meal :# thb per person': 'อาหาร {1} บาท/คน', 'food normal # thb per/person': 'อาหารปกติ {1} บาท/คน',
+  'food normal # thb per/person, seafood meal: # bath per person': 'อาหารปกติ {1} บาท/คน อาหารทะเล {2} บาท/คน',
+  'food and drink are allowed to bring onboard without extra charge': 'นำอาหารและเครื่องดื่มขึ้นเรือได้ ไม่มีค่าใช้จ่ายเพิ่ม',
+  'for guests #-# persons, including children aged above # years, an additional charge of thb # per person applies': 'ผู้โดยสารคนที่ {1}–{2} (นับเด็กอายุเกิน {3} ปี) คิดเพิ่ม {4} บาท/คน',
+  'for the exclusive half-day program focusing solely on khai island, a longtail boat service supplement of # thb will be applied': 'โปรแกรมครึ่งวันเฉพาะเกาะไข่ มีค่าเรือหางยาวเพิ่ม {1} บาท',
+  'if bringing outside food onboard, there will be a surcharge of # thb per pax': 'นำอาหารจากข้างนอกขึ้นเรือ คิดเพิ่ม {1} บาท/คน',
+  'if you bring food, there will be a charge': 'นำอาหารขึ้นเรือมีค่าใช้จ่ายเพิ่ม', 'if you use a bbq grill, there will be a charge': 'ใช้เตาบาร์บีคิวมีค่าใช้จ่ายเพิ่ม',
+  'in case of late arrival of registration, the ending time of the sailing program will remain the same as of the confirmation of the booking': 'หากมาถึงช้า เวลาสิ้นสุดทริปยังเป็นไปตามที่ยืนยันการจองไว้',
+  'including children aged above # years': 'นับเด็กอายุเกิน {1} ปี', 'including meal for overnight trip': 'รวมอาหารสำหรับทริปค้างคืน',
+  'maximum capacity # guest in # cabin (overnight)': 'ค้างคืนได้สูงสุด {1} คน ใน {2} ห้องนอน',
+  'meal charge (overnight program) # thb per adult / # thb per child for per day': 'ค่าอาหาร (โปรแกรมค้างคืน) ผู้ใหญ่ {1} บาท / เด็ก {2} บาท ต่อวัน',
+  'operating time adjustable on variation that suite you': 'ปรับเวลาออกเรือได้ตามความสะดวก', 'overnight charter rate for up to # passengers': 'ราคาทริปค้างคืนสำหรับสูงสุด {1} คน',
+  'overnight charter is for #-# guest': 'ราคาทริปค้างคืนสำหรับ {1}–{2} คน', 'the overnight charter price is for #-# guest': 'ราคาทริปค้างคืนสำหรับ {1}–{2} คน',
+  'the overnight price is for #-# guest in three cabins': 'ราคาทริปค้างคืนสำหรับ {1}–{2} คน ใน 3 ห้องนอน',
+  'please remind the customer to be on time at the taxi or marina as the yacht will return at the agreed tour time': 'กรุณามาถึงรถหรือท่าเรือตรงเวลา เพราะเรือจะกลับตามเวลาที่ตกลงไว้',
+  'the day charter is for #-# guest': 'ราคาทริปกลางวันสำหรับ {1}–{2} คน', 'the day charter price is for #-# guest': 'ราคาทริปกลางวันสำหรับ {1}–{2} คน', 'the day charter is for # guest': 'ราคาทริปกลางวันสำหรับ {1} คน',
+  'the half day charter is without lunch': 'ทริปครึ่งวันไม่รวมอาหารกลางวัน', 'the half day tour does not include lunch': 'ทริปครึ่งวันไม่รวมอาหารกลางวัน',
+  'this is inclusive of usage of bbq grill, cutleries, plates, bowl as per standard': 'รวมการใช้เตาบาร์บีคิว ช้อนส้อม จาน และชามตามมาตรฐาน',
+};
+/* long notes: matched by how they start */
+const TH_BOAT_PRE = [
+  ['low season (march, april, may, june, september, october, november)', 'Low Season (มี.ค. เม.ย. พ.ค. มิ.ย. ก.ย. ต.ค. พ.ย.): ฟรีสไลเดอร์หรือสระว่ายน้ำ 1 อย่าง พร้อมแชมเปญ 1 ขวด'],
+  ['high season (july, august, december, january, february, and during songkran', 'High Season (ก.ค. ส.ค. ธ.ค. ม.ค. ก.พ. และช่วงสงกรานต์ วันแรงงาน วันชาติจีน ตรุษจีน): ฟรีแชมเปญ 1 ขวด ไม่มีสไลเดอร์และสระว่ายน้ำฟรี'],
+  ['the insurance covers only accidents', 'ประกันคุ้มครองเฉพาะอุบัติเหตุต่อร่างกายที่เกี่ยวกับทริปโดยตรง ไม่คุ้มครองโทรศัพท์หรือกล้องที่สูญหายหรือเสียหาย'],
+];
+const thNorm = s => String(s).toLowerCase().replace(/[’‘]/g, "'").replace(/×/g, 'x').replace(/[–—]/g, '-')
+  .replace(/(\d)(st|nd|rd|th)\b/g, '$1').replace(/\bx\s*(\d)/g, 'x $1').replace(/(\d)\s*-\s*(\d)/g, '$1-$2').replace(/(\d)(guest|person)/g, '$1 $2')
+  .replace(/(\S)\(/g, '$1 (').replace(/\s+/g, ' ').replace(/[\s.]+$/, '').trim();
+function thBoatText(src) {
+  if (!src) return '';
+  const n = thNorm(src);
+  if (TH_BOAT[n]) return TH_BOAT[n];
+  const nums = []; const k = n.replace(/\d[\d,]*(?:\.\d+)?/g, m => { nums.push(m); return '#'; });
+  const v = TH_BOAT[k];
+  if (v) return v.replace(/\{(\d)\}/g, (m, i) => nums[i - 1] ?? '');
+  const p = TH_BOAT_PRE.find(([a]) => n.startsWith(a));
+  return p ? p[1] : '';
+}
+/* a staff translation still holding English words (an early machine draft like "Marine ค่าอุทยานแห่งชาติ") is not trusted */
+const thMixed = s => /[A-Za-z]{3,}/.test(String(s).replace(/\b(VAT|JBL|Wi-?Fi|Netflix|SUP|BBQ|DJ|TV|THB|iAqua|Prosecco|Fusion|Singha|Coral|Coke|Sprite|Fanta|GPS)\b/gi, ''));
+const thPickItem = (o, src) => { const t = o && String(o.th || '').trim(); if (t && !thMixed(t)) return t; return thBoatText(src) || t || src; };
+/* Thai spelling used across the site: เรือยอร์ช (older saved text may still say ยอร์ช) */
+const fixTh = v => LANG === 'en' || typeof v !== 'string' ? v : v.replace(/ยอชต์/g, 'ยอร์ช');
+const i18nPick = (o, src) => fixTh((o && String(o[LANG === 'en' ? 'en' : 'th'] || '').trim()) || src);
 function locFleet() {
-  const list = (arr, src) => Array.isArray(arr) && arr.length === src.length ? src.map((x, i) => i18nPick(arr[i], x)) : src;
+  const th = LANG !== 'en';
+  const list = (arr, src) => { const ok = Array.isArray(arr) && arr.length === src.length; return src.map((x, i) => th ? fixTh(thPickItem(ok ? arr[i] : null, x)) : (ok ? i18nPick(arr[i], x) : x)); };
   FLEET.forEach(b => {
-    const i = b.i18n; if (!i) return;
+    const i = b.i18n || {};
     const s = b._src || (b._src = { title: b.title, subtitle: b.subtitle, includes: b.includes, complimentary: b.complimentary, not_included: b.not_included, notes: b.notes });
     b.title = i18nPick(i.name, s.title); b.subtitle = i18nPick(i.subtitle, s.subtitle);
     b.includes = list(i.includes, s.includes); b.complimentary = list(i.complimentary, s.complimentary); b.not_included = list(i.not_included, s.not_included);
-    const n = i18nPick(i.notes, ''); b.notes = n ? n.split('\n').map(x => x.trim()).filter(Boolean) : s.notes;
+    const n = i18nPick(i.notes, '');
+    b.notes = n && !(th && thMixed(n)) ? n.split('\n').map(x => x.trim()).filter(Boolean) : th ? s.notes.map(x => fixTh(thBoatText(x) || x)) : s.notes;
   });
 }
 locFleet();
@@ -709,7 +868,7 @@ function bpAnswerHTML(b, progs) {
   const low = kind => { let m = null; progs.filter(p => p.kind === kind).forEach(p => { const x = bpPrice(b, p); if (x && x.n && (!m || x.n < m.n)) m = { n: x.n, h: p.hrs }; }); return m; };
   const hf = low('half'), fl = low('full'), sz = DSZ && DSZ.key && !['all', 'special'].includes(DSZ.key) && SKEY[DSZ.key] ? SKEY[DSZ.key][LANG === 'en' ? 'en' : 'th'] : '';
   const ens = /ensuite|en-suite/i.test(cab || '');
-  const inc = b.includes.slice(0, 6).map(moneyText).filter(x => !/full use|ใช้งานเรือ.*เต็มรูปแบบ/i.test(x));
+  const inc = b.includes.slice(0, 6).map(moneyText).filter(x => !/full use|ใช้งานเรือ.*เต็มรูปแบบ|ใช้งานเรือได้ทั้งลำ/i.test(x));
   const th = [
     `${name} เป็น${typeLabel(b.type)}${b.ft ? ` ${b.ft} ฟุต` : ''}`,
     b.pax ? `รับได้สูงสุด ${b.pax} คน${rule ? ` (ราคารวม ${rule.from - 1} คน)` : ''}` : '',
@@ -824,9 +983,9 @@ function bpMarina(b) {
   const has = (a, re) => a.some(x => re.test(x)), out = [];
   out.push(['map-pin', `<b>${b.marinaP || L('ท่าเรือ', 'Marina')}</b><small>${L('ทีมขายส่งพิกัดให้ทาง WhatsApp / LINE', 'Our team sends the pin on WhatsApp / LINE')}</small>`]);
   out.push(['clock', L('มาถึงท่าก่อนเวลาออกเรือ 15–20 นาที', 'Arrive 15–20 minutes before departure')]);
-  if (has(b.not_included, /transfer|van|pick ?up/i)) out.push(['car', L('รถรับส่งจากโรงแรมไม่รวมในราคา สอบถามทีมขายได้', 'Hotel transfer not included · ask our team')]);
-  else if (has(b.includes, /transfer|van|pick ?up/i)) out.push(['car', L('รวมรถรับส่งตามเงื่อนไขของเรือ', 'Transfer included (see conditions)')]);
-  if (has(b.not_included, /park|island fee/i)) out.push(['ticket', L('ค่าอุทยาน / ค่าขึ้นเกาะ ชำระตามจริงวันเดินทาง', 'Park / island fees paid on the day')]);
+  if (has(b._src?.not_included || b.not_included, /transfer|van|pick ?up/i)) out.push(['car', L('รถรับส่งจากโรงแรมไม่รวมในราคา สอบถามทีมขายได้', 'Hotel transfer not included · ask our team')]);
+  else if (has(b._src?.includes || b.includes, /transfer|van|pick ?up/i)) out.push(['car', L('รวมรถรับส่งตามเงื่อนไขของเรือ', 'Transfer included (see conditions)')]);
+  if (has(b._src?.not_included || b.not_included, /park|island fee/i)) out.push(['ticket', L('ค่าอุทยาน / ค่าขึ้นเกาะ ชำระตามจริงวันเดินทาง', 'Park / island fees paid on the day')]);
   return out;
 }
 
@@ -1381,7 +1540,7 @@ function renderHomeAnswer() {
     <div class="hx-ans-t">
       <p class="hx-eye">${L('สรุปสั้น', 'In short')}</p>
       <h2 class="font-display hx-h2">${L('เช่าเรือส่วนตัวในภูเก็ต ราคาเท่าไหร่ ต้องรู้อะไรบ้าง', 'Private boat charter in Phuket: prices and what to know')}</h2>
-      <p class="hx-p">${lo ? L(`เช่าเรือส่วนตัวกับ Boat Trip Thailand เริ่มต้น ${baht(lo.from)} ต่อลำ (${typeLabel(lo.ty)})`, `Private charters with Boat Trip Thailand start at ${baht(lo.from)} per boat (${typeLabel(lo.ty)})`) : ''}${hi ? L(` ไปจนถึงเรือยอชต์ลำใหญ่ที่เริ่มราว ${baht(hi.top)}`, `, up to large yachts from around ${baht(hi.top)}`) : ''}${L(' ราคาเป็นต่อลำ ไม่ใช่ต่อคน รวมกัปตันและลูกเรือ ขึ้นกับเรือ ระยะเวลา และฤดูกาล ทะเลสงบที่สุดช่วงพฤศจิกายน–เมษายน', ' — prices are per boat, not per person, with captain and crew, and depend on the boat, duration and season. Seas are calmest November–April.')}</p>
+      <p class="hx-p">${lo ? L(`เช่าเรือส่วนตัวกับ Boat Trip Thailand เริ่มต้น ${baht(lo.from)} ต่อลำ (${typeLabel(lo.ty)})`, `Private charters with Boat Trip Thailand start at ${baht(lo.from)} per boat (${typeLabel(lo.ty)})`) : ''}${hi ? L(` ไปจนถึงเรือยอร์ชลำใหญ่ที่เริ่มราว ${baht(hi.top)}`, `, up to large yachts from around ${baht(hi.top)}`) : ''}${L(' ราคาเป็นต่อลำ ไม่ใช่ต่อคน รวมกัปตันและลูกเรือ ขึ้นกับเรือ ระยะเวลา และฤดูกาล ทะเลสงบที่สุดช่วงพฤศจิกายน–เมษายน', ' — prices are per boat, not per person, with captain and crew, and depend on the boat, duration and season. Seas are calmest November–April.')}</p>
       <p class="hx-p">${L(`มีเรือให้เลือก ${ships} ลำ ไปเกาะพีพี อ่าวพังงา เกาะราชา และเกาะไข่ ส่งคำขอฟรี ไม่ต้องจ่ายบนเว็บ ทีมงานเช็กเรือว่างและยืนยันราคาให้`, `${ships} boats to Phi Phi, Phang Nga Bay, Racha and the Khai islands. Requests are free with no payment online — our team checks availability and confirms the price.`)}</p>
       <div class="hx-links"><a href="#/fleet">${L(`ดูเรือทั้งหมด ${ships} ลำ`, `All ${ships} boats`)}<i data-lucide="arrow-right" class="w-4 h-4"></i></a><a href="#/destinations">${L('ดูปลายทาง', 'Destinations')}<i data-lucide="arrow-right" class="w-4 h-4"></i></a></div>
     </div>
@@ -1472,7 +1631,7 @@ function renderAbout() {
       <div>
         <p class="text-xs uppercase tracking-[.2em] text-maroon">${L('เกี่ยวกับเรา','About us')} · Sea by Soul</p>
         <h1 class="font-display font-medium text-3xl sm:text-4xl leading-tight mt-3">${L('ทีม Yacht Charter ภูเก็ต ที่อยากให้ทุกทริปทะเลเป็นความทรงจำที่ดี','A Phuket yacht charter team that wants every day at sea to be a good memory')}</h1>
-        <p class="text-muted mt-5 leading-relaxed">${L(`Boat Trip Thailand ให้บริการเช่าเรือยอชต์ คาตามารัน สปีดโบ๊ท และเรือหางยาวแบบส่วนตัว ${FLEET.length} ลำ จาก ${marinas.length} ท่าเรือทั่วภูเก็ต ไปเกาะพีพี อ่าวพังงา เกาะราชา กระบี่ และอีกมากมาย`, `Boat Trip Thailand arranges private yacht, catamaran, speedboat and long-tail charters — ${FLEET.length} boats from ${marinas.length} piers and marinas across Phuket, to Phi Phi, Phang Nga Bay, Racha, Krabi and beyond.`)}</p>
+        <p class="text-muted mt-5 leading-relaxed">${L(`Boat Trip Thailand ให้บริการเช่าเรือยอร์ช คาตามารัน สปีดโบ๊ท และเรือหางยาวแบบส่วนตัว ${FLEET.length} ลำ จาก ${marinas.length} ท่าเรือทั่วภูเก็ต ไปเกาะพีพี อ่าวพังงา เกาะราชา กระบี่ และอีกมากมาย`, `Boat Trip Thailand arranges private yacht, catamaran, speedboat and long-tail charters — ${FLEET.length} boats from ${marinas.length} piers and marinas across Phuket, to Phi Phi, Phang Nga Bay, Racha, Krabi and beyond.`)}</p>
         <p class="text-muted mt-3 leading-relaxed">${L('เราทำงานกับเจ้าของเรือและกัปตันโดยตรง จึงให้ข้อมูลเรือ ราคา และเงื่อนไขได้ตรงไปตรงมา ตั้งแต่ทริปครึ่งวันสำหรับครอบครัว ไปจนถึงงานปาร์ตี้และงานองค์กรบนเรือลำใหญ่','We work directly with boat owners and captains, so we can be straight with you about boats, prices and terms — from a half-day family trip to a party or corporate event on a large catamaran.')}</p>
         <div class="mt-7 flex flex-wrap gap-3">
           <a href="#/fleet" class="inline-flex items-center gap-2 bg-maroon text-white px-6 py-3 text-sm hover:bg-maroon-800 transition">${L('ดูเรือทั้งหมด','Browse the fleet')}<i data-lucide="arrow-right" class="w-4 h-4"></i></a>
@@ -1480,7 +1639,7 @@ function renderAbout() {
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
-        <div class="col-span-2 aspect-[16/9] rounded-[24px] overflow-hidden img-fallback"><img src="${imgs[0]}" alt="${L('เรือยอชต์ Leopard 90 ft ในทะเลอันดามัน','Leopard 90 ft yacht on the Andaman Sea')}" class="w-full h-full object-cover" loading="lazy"/></div>
+        <div class="col-span-2 aspect-[16/9] rounded-[24px] overflow-hidden img-fallback"><img src="${imgs[0]}" alt="${L('เรือยอร์ช Leopard 90 ft ในทะเลอันดามัน','Leopard 90 ft yacht on the Andaman Sea')}" class="w-full h-full object-cover" loading="lazy"/></div>
         <div class="aspect-[4/3] rounded-[18px] overflow-hidden img-fallback"><img src="${imgs[1]}" alt="${L('เรือคาตามารัน Lobster 78 ft','Lobster 78 ft catamaran')}" class="w-full h-full object-cover" loading="lazy"/></div>
         <div class="aspect-[4/3] rounded-[18px] overflow-hidden img-fallback"><img src="${imgs[2]}" alt="${L('เรือใบ Coco 40 ft','Coco 40 ft sailing catamaran')}" class="w-full h-full object-cover" loading="lazy"/></div>
       </div>
@@ -2147,7 +2306,8 @@ const SZ_CSS = `.sz-strip-wrap{min-width:0}.sz-strip{position:relative;height:10
 
 FLEET.forEach(b => { b.fromAll = b.from_; const v = nowFrom(b); if (v) b.from_ = v; b.szNow = seasonView(b, todayISO()); });
 function extraRule(b) {
-  for (const n of b.notes) {
+  // read the English brochure notes too: on Thai pages b.notes is the translated text
+  for (const n of [...(b.notes || []), ...(b._src?.notes || []), ...String(b.i18n?.notes?.en || '').split('\n')]) {
     const m = n.match(/extra charge of (?:net )?([\d,]+)\s*THB[^.]*?from the (\d+)/i);
     if (m) return { fee: +m[1].replace(/,/g, ''), from: +m[2] };
   }
@@ -2227,7 +2387,7 @@ function openCompare() {
 const SM = { step: 0, guests: 6, occasion: 'friends', vibe: 'relax', budget: 80000, dest: '', overnight: false };
 const SM_OPTS = {
   occasion: [['family','ครอบครัว','Family','baby'],['friends','เพื่อน / ปาร์ตี้','Friends & party','party-popper'],['romantic','คู่รัก / ขอแต่งงาน','Couples & proposals','heart'],['corporate','องค์กร / อีเวนต์','Corporate & events','briefcase']],
-  vibe: [['relax','ชิล ล่องเรือใบ','Relax & sail','sailboat'],['speed','เร็ว เที่ยวหลายเกาะ','Fast island hopping','zap'],['luxury','หรูหรา เรือยอชต์','Luxury yacht','gem'],['value','คุ้มค่าที่สุด','Best value','piggy-bank']],
+  vibe: [['relax','ชิล ล่องเรือใบ','Relax & sail','sailboat'],['speed','เร็ว เที่ยวหลายเกาะ','Fast island hopping','zap'],['luxury','หรูหรา เรือยอร์ช','Luxury yacht','gem'],['value','คุ้มค่าที่สุด','Best value','piggy-bank']],
   dest: [['','ที่ไหนก็ได้','Anywhere'],['Phi Phi','Phi Phi'],['Phang Nga','Phang Nga Bay'],['Racha','Racha'],['Khai','Khai'],['Coral','Coral'],['Krabi','Krabi']],
 };
 function smartScore(b) {
@@ -2243,7 +2403,7 @@ function smartScore(b) {
   if (v === 'relax' && (b.type === 'sail' || b.type === 'power')) { s += 25; why.push(L('คาตามารันนิ่ง นั่งสบาย','Stable, spacious catamaran')); }
   if (v === 'speed' && b.type === 'speed') { s += 25; why.push(L('สปีดโบ๊ทเร็ว ไปได้หลายเกาะ','Fast boat for island hopping')); }
   if (v === 'speed' && b.type === 'power') s += 10;
-  if (v === 'luxury' && b.type === 'yacht') { s += 20; why.push(L('เรือยอชต์ส่วนตัวระดับพรีเมียม','Premium private yacht')); if ((b.ft||0) >= 60) s += 8; }
+  if (v === 'luxury' && b.type === 'yacht') { s += 20; why.push(L('เรือยอร์ชส่วนตัวระดับพรีเมียม','Premium private yacht')); if ((b.ft||0) >= 60) s += 8; }
   if (v === 'value' && b.from_) { const rank = FLEET.filter(x => x.from_ && x.from_ < b.from_).length / FLEET.length; s += Math.round(25 * (1 - rank)); if (rank < .3) why.push(L('ราคาคุ้มค่าในกลุ่มเดียวกัน','Great value for money')); }
   const o = SM.occasion;
   if (o === 'romantic' && (b.pax || 99) <= 20 && b.type !== 'longtail') { s += 10; why.push(L('ขนาดกะทัดรัด เป็นส่วนตัว','Intimate & private')); }
@@ -2462,22 +2622,22 @@ const SEO_META = HOME ? {
   th: { get title() { return homeTxt(HOME.seo.title, 'th'); }, get desc() { return homeTxt(HOME.seo.desc, 'th'); } },
   en: { get title() { return homeTxt(HOME.seo.title, 'en'); }, get desc() { return homeTxt(HOME.seo.desc, 'en'); } },
 } : {
-  th: { title: 'Yacht Charter ภูเก็ต – เช่าเรือยอชต์ 70 ลำ | Boat Trip Thailand',
-        desc: 'Yacht Charter ภูเก็ต เช่าเรือยอชต์ส่วนตัว คาตามารัน สปีดโบ๊ท 70 ลำ ไปพีพี อ่าวพังงา เกาะราชา เริ่ม ฿16,000 รวมกัปตัน ลูกเรือ และประกันภัย จองตรงกับทีมงาน' },
+  th: { title: 'Yacht Charter ภูเก็ต – เช่าเรือยอร์ช 70 ลำ | Boat Trip Thailand',
+        desc: 'Yacht Charter ภูเก็ต เช่าเรือยอร์ชส่วนตัว คาตามารัน สปีดโบ๊ท 70 ลำ ไปพีพี อ่าวพังงา เกาะราชา เริ่ม ฿16,000 รวมกัปตัน ลูกเรือ และประกันภัย จองตรงกับทีมงาน' },
   en: { title: 'Yacht Charter Phuket – 70 Private Boats | Boat Trip Thailand',
         get desc() { return `Yacht charter in Phuket with 70 private yachts, catamarans and speedboats. Phi Phi, Phang Nga Bay and Racha from ${baht(16000)} incl. crew & insurance. Book direct.`; } },
 };
 const FAQ = HOME && HOME.faq.length ? HOME.faq.map(([q, a]) => ({ q: [homeTxt(q, 'th'), homeTxt(q, 'en')], a: [() => homeTxt(a, 'th'), () => homeTxt(a, 'en')] })) : [
   { q:['Yacht charter ภูเก็ตราคาเท่าไหร่?','How much does a yacht charter in Phuket cost?'],
-    a:[()=>`ราคาขึ้นกับขนาดเรือ เส้นทาง และฤดูกาล ในโบรชัวร์ของเรา เรือคาตามารันเริ่มต้น ${baht(minFrom('sail'))} สปีดโบ๊ทเริ่ม ${baht(minFrom('speed'))} และเรือยอชต์ส่วนตัวเริ่ม ${baht(minFrom('yacht'))} ต่อทริป (ทั้งลำ) ราคารวมกัปตัน ลูกเรือ ประกันภัย และ VAT 7%`,
+    a:[()=>`ราคาขึ้นกับขนาดเรือ เส้นทาง และฤดูกาล ในโบรชัวร์ของเรา เรือคาตามารันเริ่มต้น ${baht(minFrom('sail'))} สปีดโบ๊ทเริ่ม ${baht(minFrom('speed'))} และเรือยอร์ชส่วนตัวเริ่ม ${baht(minFrom('yacht'))} ต่อทริป (ทั้งลำ) ราคารวมกัปตัน ลูกเรือ ประกันภัย และ VAT 7%`,
         ()=>`Prices depend on boat size, route and season. In our brochure, sailing catamarans start at ${baht(minFrom('sail'))}, speedboats at ${baht(minFrom('speed'))} and private motor yachts at ${baht(minFrom('yacht'))} per charter (whole boat), including captain, crew, insurance and 7% VAT.`] },
   { q:['ราคา yacht charter รวมอะไรบ้าง?','What is included in a yacht charter?'],
     a:[()=>'โดยทั่วไปรวมกัปตันและลูกเรือ น้ำมันเชื้อเพลิง อุปกรณ์ดำน้ำตื้น แพดเดิลบอร์ด น้ำดื่ม ผลไม้ ผ้าเย็น ประกันภัย และ VAT 7% ส่วนค่าอุทยานแห่งชาติ ค่าขึ้นเกาะ และรถรับส่ง ขึ้นอยู่กับแต่ละลำ — ดูรายละเอียดได้ในหน้าเรือแต่ละลำ',
         ()=>'Most charters include captain and crew, fuel, snorkelling gear, paddle boards, drinking water, fruit, towels, insurance and 7% VAT. National-park fees, island landing fees and transfers vary by boat — each boat page lists exactly what is and isn’t included.'] },
-  { q:['ช่วงไหนเหมาะกับการเช่าเรือยอชต์ในภูเก็ตที่สุด?','When is the best time for a yacht charter in Phuket?'],
+  { q:['ช่วงไหนเหมาะกับการเช่าเรือยอร์ชในภูเก็ตที่สุด?','When is the best time for a yacht charter in Phuket?'],
     a:[()=>'High Season (พ.ย.–เม.ย.) ทะเลอันดามันสงบและฟ้าใส เหมาะที่สุดสำหรับไปพีพีและเกาะราชา ช่วง Low Season (พ.ค.–ต.ค.) ราคาดีกว่าและยังออกเรือได้เกือบทุกวัน โดยเลือกเส้นทางที่กำบังลม เช่น อ่าวพังงา',
         ()=>'High season (November–April) brings calm, clear Andaman seas — ideal for Phi Phi and Racha. Low season (May–October) offers better rates and most days are still sailable on sheltered routes such as Phang Nga Bay.'] },
-  { q:['เช่าเรือยอชต์ได้กี่คน?','How many guests can join a yacht charter?'],
+  { q:['เช่าเรือยอร์ชได้กี่คน?','How many guests can join a yacht charter?'],
     a:[()=>`ตั้งแต่ 2 คนบนเรือส่วนตัวขนาดเล็ก ไปจนถึง ${Math.max(...FLEET.map(b=>b.pax||0))} คนบนเรือคาตามารันขนาดใหญ่ ใช้ Smart Match หรือตัวกรองจำนวนคนในหน้าเรือทั้งหมดเพื่อหาลำที่พอดีกับกลุ่มของคุณ`,
         ()=>`From 2 guests on a small private boat up to ${Math.max(...FLEET.map(b=>b.pax||0))} on our largest catamaran. Use Smart Match or the guest filter on the fleet page to find the right size.`] },
   { q:['ต้องจองล่วงหน้ากี่วัน และยกเลิกได้ไหม?','How far ahead should I book, and can I cancel?'],
@@ -2489,7 +2649,7 @@ const FAQ = HOME && HOME.faq.length ? HOME.faq.map(([q, a]) => ({ q: [homeTxt(q,
 ];
 const minFrom = ty => Math.min(...FLEET.filter(b => b.type === ty && b.from_).map(b => b.from_));
 const TYPE_DESC = {
-  yacht: ['เรือยอชต์มอเตอร์ส่วนตัวขนาด 42–90 ฟุต ห้องแอร์ ห้องนอน และดาดฟ้าอาบแดด เหมาะกับคู่รัก ครอบครัว และงานฉลอง', 'Private motor yachts of 42–90 ft with air-conditioned saloons, cabins and sun decks — perfect for couples, families and celebrations.'],
+  yacht: ['เรือยอร์ชมอเตอร์ส่วนตัวขนาด 42–90 ฟุต ห้องแอร์ ห้องนอน และดาดฟ้าอาบแดด เหมาะกับคู่รัก ครอบครัว และงานฉลอง', 'Private motor yachts of 42–90 ft with air-conditioned saloons, cabins and sun decks — perfect for couples, families and celebrations.'],
   sail: ['เรือใบคาตามารัน 2 ลำตัว นิ่งและกว้าง เมาเรือน้อย มีตาข่ายหัวเรือและสระลอยน้ำ คุ้มค่าที่สุดสำหรับกลุ่ม', 'Twin-hull sailing catamarans: stable, spacious and gentle on the stomach, with bow nets and floating pools — the best value for groups.'],
   power: ['พาวเวอร์คาตามารัน เร็วกว่าเรือใบแต่ยังนิ่ง เหมาะกับทริปเกาะไกลอย่างพีพีและกระบี่ในวันเดียว', 'Power catamarans: faster than sail yet just as stable — ideal for distant day trips to Phi Phi and Krabi.'],
   speed: ['สปีดโบ๊ทส่วนตัวความเร็ว 25–43 นอต ไปได้หลายเกาะในวันเดียว ราคาเริ่มต้นเป็นมิตร', 'Private speedboats cruising at 25–43 knots — hop several islands in one day at a friendly price.'],
@@ -2509,7 +2669,7 @@ function renderSeoGuide() {
       <header class="lg:sticky lg:top-24 self-start reveal min-w-0">
         <p class="text-xs uppercase tracking-[.2em] text-maroon">${L('คู่มือเช่าเรือ','Charter guide')}</p>
         <h2 id="seoGuideTitle" class="font-display text-2xl sm:text-3xl mt-2">${L('Yacht Charter ภูเก็ต: ทุกอย่างที่ควรรู้ก่อนเช่าเรือ','Yacht charter in Phuket: everything to know before you book')}</h2>
-        <p class="text-sm text-muted mt-4 leading-relaxed">${L(`Boat Trip Thailand ให้บริการ yacht charter ในภูเก็ต กระบี่ และพังงา ด้วยเรือส่วนตัว ${FLEET.length} ลำ ตั้งแต่สปีดโบ๊ทไปจนถึงซูเปอร์ยอชต์ 90 ฟุต ทุกทริปมีกัปตัน ลูกเรือ และประกันภัย ราคาอ้างอิงจากโบรชัวร์ทางการ และเราได้รับใบอนุญาตประกอบธุรกิจนำเที่ยว ททท. เลขที่ ${SET.tat}`, `Boat Trip Thailand runs yacht charters across Phuket, Krabi and Phang Nga with ${FLEET.length} private boats — from speedboats to a 90 ft superyacht. Every trip includes captain, crew and insurance, rates come straight from our official brochure, and we are a TAT-licensed operator (No. ${SET.tat}).`)}</p>
+        <p class="text-sm text-muted mt-4 leading-relaxed">${L(`Boat Trip Thailand ให้บริการ yacht charter ในภูเก็ต กระบี่ และพังงา ด้วยเรือส่วนตัว ${FLEET.length} ลำ ตั้งแต่สปีดโบ๊ทไปจนถึงซูเปอร์ยอร์ช 90 ฟุต ทุกทริปมีกัปตัน ลูกเรือ และประกันภัย ราคาอ้างอิงจากโบรชัวร์ทางการ และเราได้รับใบอนุญาตประกอบธุรกิจนำเที่ยว ททท. เลขที่ ${SET.tat}`, `Boat Trip Thailand runs yacht charters across Phuket, Krabi and Phang Nga with ${FLEET.length} private boats — from speedboats to a 90 ft superyacht. Every trip includes captain, crew and insurance, rates come straight from our official brochure, and we are a TAT-licensed operator (No. ${SET.tat}).`)}</p>
         <nav aria-label="${L('สารบัญ','On this page')}" class="mt-6 text-sm space-y-2">
           ${[['types',L('ประเภทเรือสำหรับ yacht charter','Types of yacht charter')],['prices',L('ราคา yacht charter ภูเก็ต','Yacht charter prices')],['routes',L('เส้นทางยอดนิยม','Popular routes')],['how',L('วิธีจองใน 4 ขั้นตอน','How to book in 4 steps')],['faq',L('คำถามที่พบบ่อย','FAQ')]].map(([id,l])=>`<a href="#guide-${id}" onclick="event.preventDefault();document.getElementById('guide-${id}').scrollIntoView({behavior:'smooth'})" class="flex items-center gap-2 text-muted hover:text-maroon"><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>${l}</a>`).join('')}
         </nav>
@@ -2615,7 +2775,7 @@ const TEAM = [
 function waLink(m) {
   const b = currentView === 'boat' && bySlug(currentSlug);
   const msg = b ? L(`สวัสดีครับ/ค่ะ คุณ${m.name} สนใจเช่าเรือ ${niceTitle(b.title)}`, `Hi ${m.name}, I'm interested in chartering ${niceTitle(b.title)}.`)
-                : L(`สวัสดีครับ/ค่ะ คุณ${m.name} สนใจเช่าเรือยอชต์`, `Hi ${m.name}, I'd like to plan a yacht charter.`);
+                : L(`สวัสดีครับ/ค่ะ คุณ${m.name} สนใจเช่าเรือยอร์ช`, `Hi ${m.name}, I'd like to plan a yacht charter.`);
   return `https://wa.me/${m.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`;
 }
 function teamIsOnline() { const ict = new Date(Date.now() + (new Date().getTimezoneOffset() + 420) * 60000), h = ict.getHours() + ict.getMinutes() / 60; return h >= 9 && h < 21; }
@@ -2741,7 +2901,7 @@ function renderBlog() {
     <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-10">
       <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-1.5"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span class="text-ink" aria-current="page">${L('บทความ', 'Blog')}</span></nav>
       <div class="mt-5 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div><h1 class="font-display text-3xl sm:text-4xl leading-tight">${L('บทความ & คู่มือเช่าเรือ', 'Guides & stories from the Andaman')}</h1><p class="text-sm text-muted mt-2 max-w-2xl">${L(`เคล็ดลับเช่าเรือยอชต์ภูเก็ต เส้นทางเกาะ และไอเดียทริป ${all.length} บทความจากทีมงานของเรา`, `${all.length} articles on chartering in Phuket, island routes and trip ideas from our team`)}</p></div>
+        <div><h1 class="font-display text-3xl sm:text-4xl leading-tight">${L('บทความ & คู่มือเช่าเรือ', 'Guides & stories from the Andaman')}</h1><p class="text-sm text-muted mt-2 max-w-2xl">${L(`เคล็ดลับเช่าเรือยอร์ชภูเก็ต เส้นทางเกาะ และไอเดียทริป ${all.length} บทความจากทีมงานของเรา`, `${all.length} articles on chartering in Phuket, island routes and trip ideas from our team`)}</p></div>
         <label class="flex items-center gap-2 h-11 px-4 rounded-full ring-1 ring-sand-200 bg-white md:w-80 focus-within:ring-maroon/40"><i data-lucide="search" class="w-4 h-4 text-muted"></i><input id="blogQ" class="bg-transparent w-full text-sm outline-none" placeholder="${L('ค้นหาบทความ…', 'Search articles…')}" value="${esc(BL.q)}"/></label>
       </div>
       <div class="mt-6 flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">${[['', L('ทั้งหมด', 'All'), all.length, 'layout-grid'], ...Object.entries(BCAT).filter(([k]) => cnt(k)).map(([k, c]) => [k, c[plang()], cnt(k), c.icon])].map(([k, l, n, ic]) => `<button class="blog-chip ${BL.cat === k ? 'is-on' : ''}" onclick="BL.cat='${k}';BL.shown=13;renderBlog()"><i data-lucide="${ic}" class="w-4 h-4" stroke-width="1.5"></i>${l}<span class="opacity-50 tabular-nums">${n}</span></button>`).join('')}</div>
@@ -2812,7 +2972,7 @@ function renderPost(slug) {
         <div class="post-body" itemprop="articleBody">${B.map(postBlock).join('')}</div>
         <div class="mt-12 rounded-[22px] p-6 sm:p-8 text-white relative overflow-hidden" style="background:radial-gradient(120% 120% at 0% 0%,#8a1a26,#3a0007)">
           <p class="text-[11px] uppercase tracking-[.18em] text-white/70">${L('พร้อมออกทะเลแล้วหรือยัง', 'Ready to set sail?')}</p>
-          <p class="font-display text-2xl sm:text-[28px] leading-tight mt-2">${rb.route ? L(`เช่าเรือส่วนตัวไป${rb.route}`, `Private boats to ${rb.route}`) : L('เช่าเรือยอชต์ส่วนตัวในภูเก็ต', 'Charter a private yacht in Phuket')}</p>
+          <p class="font-display text-2xl sm:text-[28px] leading-tight mt-2">${rb.route ? L(`เช่าเรือส่วนตัวไป${rb.route}`, `Private boats to ${rb.route}`) : L('เช่าเรือยอร์ชส่วนตัวในภูเก็ต', 'Charter a private yacht in Phuket')}</p>
           <p class="text-white/75 text-sm mt-2 max-w-lg">${L('บอกวันที่และจำนวนคน ทีมงานจะแนะนำเรือที่เหมาะและส่งใบเสนอราคาให้ภายในไม่กี่ชั่วโมง', 'Tell us your date and group size — we will suggest the right boat and send a quote within hours.')}</p>
           <div class="mt-5 flex flex-wrap gap-2"><button onclick="openBooking()" class="h-11 px-6 rounded-full bg-white text-ink text-sm">${L('ขอใบเสนอราคา', 'Get a quote')}</button><a href="#/fleet" class="h-11 px-6 rounded-full ring-1 ring-white/50 text-sm inline-flex items-center">${L('ดูเรือทั้งหมด', 'Browse boats')}</a></div></div>
         <div class="mt-8 flex flex-wrap items-center gap-2 text-sm"><span class="text-muted mr-1">${L('แชร์', 'Share')}</span>
@@ -2842,7 +3002,7 @@ function seoPost(p) {
   $('#ldjson').textContent = JSON.stringify(ld);
   seoFinal('a-' + p.id);
 }
-function seoBlog() { const k = plang(), title = L('บทความ คู่มือเช่าเรือยอชต์ภูเก็ต & เส้นทางเกาะ | Boat Trip Thailand', 'Phuket Yacht Charter Guides & Island Routes | Boat Trip Thailand'); document.title = title; setMeta('description', L('รวมบทความเช่าเรือยอชต์ภูเก็ต ราคา เส้นทางเกาะ ช่วงเวลาที่ดีที่สุด และไอเดียจัดทริปบนเรือ', 'Phuket yacht charter guides: prices, island routes, best time to go and ideas for your day at sea.')); setMeta('og:title', title, 'property'); $('#canonical').href = SITE + (k === 'en' ? '/en' : '') + '/blog'; setMeta('robots', BL.q ? 'noindex, follow' : 'index, follow'); }
+function seoBlog() { const k = plang(), title = L('บทความ คู่มือเช่าเรือยอร์ชภูเก็ต & เส้นทางเกาะ | Boat Trip Thailand', 'Phuket Yacht Charter Guides & Island Routes | Boat Trip Thailand'); document.title = title; setMeta('description', L('รวมบทความเช่าเรือยอร์ชภูเก็ต ราคา เส้นทางเกาะ ช่วงเวลาที่ดีที่สุด และไอเดียจัดทริปบนเรือ', 'Phuket yacht charter guides: prices, island routes, best time to go and ideas for your day at sea.')); setMeta('og:title', title, 'property'); $('#canonical').href = SITE + (k === 'en' ? '/en' : '') + '/blog'; setMeta('robots', BL.q ? 'noindex, follow' : 'index, follow'); }
 { const _sb = seoBlog; seoBlog = function () { _sb(); if (!BL.q) seoFinal('s-blog'); }; }   // search results stay noindex
 /* home: latest articles strip */
 function renderHomeBlog() {

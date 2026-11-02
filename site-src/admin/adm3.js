@@ -123,14 +123,14 @@ const WEB = {
   tab: 'hero',
   hero: { kicker: tr('Yacht Charter ภูเก็ต', 'Yacht Charter Phuket'), title: tr('ล่องทะเลอันดามัน', 'Sail the Andaman'), sub: tr('เรือส่วนตัว 70 ลำ · ภูเก็ต กระบี่ พังงา', '70 private boats · Phuket, Krabi, Phang Nga'),
     words: [tr('ในแบบของคุณ', 'your way'), tr('กับคนที่คุณรัก', 'with family'), tr('กับเพื่อนทั้งแก๊ง', 'with friends'), tr('แบบส่วนตัว', 'in private')], cta1: tr('ดูเรือทั้งหมด', 'Browse the fleet'), cta2: tr('ให้เราช่วยเลือก', 'Smart Match') },
-  promo: { tag: tr('OVERNIGHT CHARTER', 'OVERNIGHT CHARTER'), title: tr('นอนกลางทะเล ตื่นมากับพระอาทิตย์ขึ้นที่อันดามัน', 'Sleep at sea, wake up to an Andaman sunrise'), sub: tr('แพ็กเกจ 2 วัน 1 คืน บนเรือยอชต์ VTECH 68 ฟุต รวมอาหารทุกมื้อ', '2-day, 1-night package on the VTECH 68 ft yacht, all meals included'), cta: tr('ดูแพ็กเกจ', 'View package') },
+  promo: { tag: tr('OVERNIGHT CHARTER', 'OVERNIGHT CHARTER'), title: tr('นอนกลางทะเล ตื่นมากับพระอาทิตย์ขึ้นที่อันดามัน', 'Sleep at sea, wake up to an Andaman sunrise'), sub: tr('แพ็กเกจ 2 วัน 1 คืน บนเรือยอร์ช VTECH 68 ฟุต รวมอาหารทุกมื้อ', '2-day, 1-night package on the VTECH 68 ft yacht, all meals included'), cta: tr('ดูแพ็กเกจ', 'View package') },
   faq: [[tr('Yacht charter ภูเก็ตราคาเท่าไหร่?', 'How much does a yacht charter in Phuket cost?'), tr('ราคาขึ้นกับขนาดเรือ เส้นทาง และฤดูกาล…', 'Prices depend on boat size, route and season…')],
     [tr('ราคา yacht charter รวมอะไรบ้าง?', 'What is included in a yacht charter?'), tr('โดยทั่วไปรวมกัปตันและลูกเรือ น้ำมัน…', 'Usually captain and crew, fuel…')],
-    [tr('ช่วงไหนเหมาะกับการเช่าเรือยอชต์ในภูเก็ตที่สุด?', 'When is the best time for a yacht charter in Phuket?'), tr('High Season (พ.ย.–เม.ย.) ทะเลสงบ…', 'High Season (Nov–Apr) brings calm seas…')],
-    [tr('เช่าเรือยอชต์ได้กี่คน?', 'How many guests can join?'), tr('ตั้งแต่ 2 คน ไปจนถึง 145 คน…', 'From 2 up to 145 guests…')],
+    [tr('ช่วงไหนเหมาะกับการเช่าเรือยอร์ชในภูเก็ตที่สุด?', 'When is the best time for a yacht charter in Phuket?'), tr('High Season (พ.ย.–เม.ย.) ทะเลสงบ…', 'High Season (Nov–Apr) brings calm seas…')],
+    [tr('เช่าเรือยอร์ชได้กี่คน?', 'How many guests can join?'), tr('ตั้งแต่ 2 คน ไปจนถึง 145 คน…', 'From 2 up to 145 guests…')],
     [tr('ต้องจองล่วงหน้ากี่วัน และยกเลิกได้ไหม?', ''), tr('แนะนำจองล่วงหน้า 3–7 วัน…', '')],
     [tr('ออกเรือจากท่าไหน?', 'Which pier do we depart from?'), tr('เรือของเราออกจาก Royal Phuket Marina…', 'Our boats depart from Royal Phuket Marina…')]],
-  seo: { title: tr('Yacht Charter ภูเก็ต – เช่าเรือยอชต์ 70 ลำ | Boat Trip Thailand', 'Yacht Charter Phuket – 70 Private Boats | Boat Trip Thailand'), desc: tr('Yacht Charter ภูเก็ต เช่าเรือยอชต์ส่วนตัว คาตามารัน สปีดโบ๊ท 70 ลำ ไปพีพี อ่าวพังงา เกาะราชา…', 'Yacht charter in Phuket with 70 private yachts, catamarans and speedboats…') },
+  seo: { title: tr('Yacht Charter ภูเก็ต – เช่าเรือยอร์ช 70 ลำ | Boat Trip Thailand', 'Yacht Charter Phuket – 70 Private Boats | Boat Trip Thailand'), desc: tr('Yacht Charter ภูเก็ต เช่าเรือยอร์ชส่วนตัว คาตามารัน สปีดโบ๊ท 70 ลำ ไปพีพี อ่าวพังงา เกาะราชา…', 'Yacht charter in Phuket with 70 private yachts, catamarans and speedboats…') },
   pages: [['เกี่ยวกับเรา', '/about-us'], ['นโยบายความเป็นส่วนตัว', '/privacy-policy'], ['ข้อกำหนดและเงื่อนไข', '/terms-and-conditions'], ['การตั้งค่าคุกกี้', '/cookie-preferences'], ['คู่มือเช่าเรือ (SEO)', '/#guide']].map(([n, u], k) => ({ n, u, th: 100, en: k === 4 ? 70 : 100 })),
 };
 const webFields = () => [...Object.values(WEB.hero).flat(), ...Object.values(WEB.promo), ...WEB.faq.flat(), WEB.seo.title, WEB.seo.desc];

@@ -16,7 +16,7 @@ const TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 
 const fmtD = s => { const d = new Date(s + 'T00:00:00'); return `${d.getDate()} ${TH_M[d.getMonth()]} ${String(d.getFullYear() + 543).slice(2)}`; };
 const niceTitle = t => t.split(' ').map(w => /^ft$/i.test(w) ? 'ft' : /^[\d.]+$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 const priceNum = v => { const m = String(v || '').replace(/\s/g, '').match(/([\d,]{4,})T?HB/i); return m ? +m[1].replace(/,/g, '') : null; };
-const TYPE_TH = { yacht: 'เรือยอชต์', sail: 'เรือใบคาตามารัน', power: 'พาวเวอร์คาตามารัน', speed: 'สปีดโบ๊ท', longtail: 'เรือหางยาว' };
+const TYPE_TH = { yacht: 'เรือยอร์ช', sail: 'เรือใบคาตามารัน', power: 'พาวเวอร์คาตามารัน', speed: 'สปีดโบ๊ท', longtail: 'เรือหางยาว' };
 const prettyMarina = s => (s || '').toLowerCase().replace(/(^|[\s(\/-])([a-zà-ÿ])/g, (m, a, b) => a + b.toUpperCase()).replace(/\bRpm\b/, 'RPM').replace(/Puhket/, 'Phuket').replace('One°15', 'ONE°15').replace('Marine Panwa', 'Marina Panwa');
 FLEET.forEach(b => { b.name = niceTitle(b.title); b.marinaP = prettyMarina(b.marina); b.active = true; b.featured = ['leopard-90-ft', 'splo-74-ft', 'vtech-68-ft', 'the-origin-90-ft', 'cognac-75-ft', 'siam-princess-70-ft'].includes(b.slug); });
 const bySlug = s => FLEET.find(b => b.slug === s);

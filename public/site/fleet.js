@@ -143,7 +143,7 @@ function fxBuild(v) {
     <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-1.5"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span class="text-ink" aria-current="page">${t('fleet')}</span></nav>
     <div class="fx-head">
       <div><h1 id="fxH1">${t('fleet')}<sup class="tnum">${FLEET.length}</sup></h1>
-        <p class="fx-sub">${L('เรือยอชต์ คาตามารัน สปีดโบ๊ท และเรือหางยาวหรูแบบเหมาลำทั่วภูเก็ต · เลือกวันที่ จำนวนคน และที่อยากไป ระบบจะแสดงราคาจริงของวันนั้นให้', 'Private yachts, catamarans, speedboats and luxury long-tails across Phuket. Pick a date, your group size and where you want to go — we show the real price for that day.')}</p></div>
+        <p class="fx-sub">${L('เรือยอร์ช คาตามารัน สปีดโบ๊ท และเรือหางยาวหรูแบบเหมาลำทั่วภูเก็ต · เลือกวันที่ จำนวนคน และที่อยากไป ระบบจะแสดงราคาจริงของวันนั้นให้', 'Private yachts, catamarans, speedboats and luxury long-tails across Phuket. Pick a date, your group size and where you want to go — we show the real price for that day.')}</p></div>
       <div class="fx-stats"><div><b class="tnum">${new Set(FLEET.map(b => typeof MARINA_CANON === 'function' ? MARINA_CANON(b.marina) : b.marinaP)).size}</b>${L('ท่าเรือ', 'piers & marinas')}</div><div><b class="tnum">${fxMaxPax()}</b>${L('คนต่อลำสูงสุด', 'guests on our largest boat')}</div><div><b>TAT</b>${fxEsc(SET.tat || '34/03754')}</div></div>
     </div>
 
@@ -1253,8 +1253,8 @@ function renderContact() {
     </aside>
   </section>`;
   try { buildForm($('#ctFormWrap')); } catch (e) { }
-  document.title = L('ติดต่อเรา – Boat Trip Thailand | เช่าเรือยอชต์ภูเก็ต', 'Contact – Boat Trip Thailand | Yacht Charter Phuket');
-  const desc = L(`ติดต่อ Boat Trip Thailand ทางโทรศัพท์ ${phone} LINE ${lineId} WhatsApp หรืออีเมล ทุกวัน 09:00–21:00 น. ขอใบเสนอราคาเช่าเรือยอชต์ คาตามารัน สปีดโบ๊ท ภูเก็ต ตอบภายใน 30 นาที`, `Contact Boat Trip Thailand by phone ${phone}, LINE ${lineId}, WhatsApp or email, daily 09:00–21:00. Request a quote for yacht, catamaran and speedboat charters in Phuket — reply within 30 minutes.`);
+  document.title = L('ติดต่อเรา – Boat Trip Thailand | เช่าเรือยอร์ชภูเก็ต', 'Contact – Boat Trip Thailand | Yacht Charter Phuket');
+  const desc = L(`ติดต่อ Boat Trip Thailand ทางโทรศัพท์ ${phone} LINE ${lineId} WhatsApp หรืออีเมล ทุกวัน 09:00–21:00 น. ขอใบเสนอราคาเช่าเรือยอร์ช คาตามารัน สปีดโบ๊ท ภูเก็ต ตอบภายใน 30 นาที`, `Contact Boat Trip Thailand by phone ${phone}, LINE ${lineId}, WhatsApp or email, daily 09:00–21:00. Request a quote for yacht, catamaran and speedboat charters in Phuket — reply within 30 minutes.`);
   setMeta('description', desc); setMeta('og:title', document.title, 'property'); setMeta('og:description', desc, 'property'); setMeta('og:url', SITE + '/contact', 'property');
   const c = document.getElementById('canonical'); if (c) c.href = SITE + (LANG === 'en' ? '/en' : '') + '/contact';
   icons();

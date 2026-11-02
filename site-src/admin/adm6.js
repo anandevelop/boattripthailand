@@ -7,9 +7,9 @@ const SITE = 'boattripthailand.com';
 const SX = {}; /* per-page overrides: robots, canonical, og, schema */
 const sx = id => SX[id] ??= { index: true, follow: true, canon: '', ogT: tr(), schema: '' };
 const STATIC_SEO = {
-  fleet: { t: tr('เช่าเรือยอชต์ภูเก็ต 70 ลำ เทียบราคา เลือกเรือ | Boat Trip Thailand', 'Phuket Yacht Charter – Compare 70 Boats | Boat Trip Thailand'), d: tr('รวมเรือยอชต์ คาตามารัน สปีดโบ๊ท ให้เช่าในภูเก็ต กรองตามจำนวนคน งบ และเส้นทาง พร้อมราคาเริ่มต้นทุกลำ', 'Browse yachts, catamarans and speedboats for charter in Phuket. Filter by group size, budget and route with starting prices for every boat.') },
+  fleet: { t: tr('เช่าเรือยอร์ชภูเก็ต 70 ลำ เทียบราคา เลือกเรือ | Boat Trip Thailand', 'Phuket Yacht Charter – Compare 70 Boats | Boat Trip Thailand'), d: tr('รวมเรือยอร์ช คาตามารัน สปีดโบ๊ท ให้เช่าในภูเก็ต กรองตามจำนวนคน งบ และเส้นทาง พร้อมราคาเริ่มต้นทุกลำ', 'Browse yachts, catamarans and speedboats for charter in Phuket. Filter by group size, budget and route with starting prices for every boat.') },
   activities: { t: tr('กิจกรรม ทัวร์ และโชว์ในภูเก็ต | Boat Trip Thailand', ''), d: tr('รวมกิจกรรม ทัวร์ทะเล และโชว์ในภูเก็ต จองพร้อมเช่าเรือได้ในที่เดียว', '') },
-  blog: { t: tr('บทความ คู่มือเช่าเรือ และเส้นทางเกาะ | Boat Trip Thailand', 'Boat Trip Guides & Island Routes | Boat Trip Thailand'), d: tr('คู่มือเช่าเรือยอชต์ภูเก็ต เส้นทางเกาะ และไอเดียจัดงานบนเรือ', 'Phuket yacht charter guides, island routes and ideas for events at sea.') },
+  blog: { t: tr('บทความ คู่มือเช่าเรือ และเส้นทางเกาะ | Boat Trip Thailand', 'Boat Trip Guides & Island Routes | Boat Trip Thailand'), d: tr('คู่มือเช่าเรือยอร์ชภูเก็ต เส้นทางเกาะ และไอเดียจัดงานบนเรือ', 'Phuket yacht charter guides, island routes and ideas for events at sea.') },
   about: { t: tr('เกี่ยวกับเรา | Boat Trip Thailand', 'About Us | Boat Trip Thailand'), d: tr('', '') },
   privacy: { t: tr('นโยบายความเป็นส่วนตัว | Boat Trip Thailand', 'Privacy Policy | Boat Trip Thailand'), d: tr('', '') },
   terms: { t: tr('ข้อกำหนดและเงื่อนไข | Boat Trip Thailand', 'Terms & Conditions | Boat Trip Thailand'), d: tr('', '') },
@@ -63,7 +63,7 @@ function auditAll() { const P = seoPages().filter(p => !p.draft && !p.hidden); P
 /* ---------- sample data (clearly labelled) ---------- */
 const GSC = { on: false, days: Array.from({ length: 28 }, (_, i) => Math.round(60 + 25 * Math.sin(i / 3) + i * 2.2 + rnd() * 18)) };
 const KW = [
-  ['yacht charter phuket', 'en', '/en/', 7, 2], ['เช่าเรือยอชต์ภูเก็ต', 'th', '/', 4, 1], ['phuket yacht charter', 'en', '/en/blog/phuket-yacht-charter-guide', 12, -3],
+  ['yacht charter phuket', 'en', '/en/', 7, 2], ['เช่าเรือยอร์ชภูเก็ต', 'th', '/', 4, 1], ['phuket yacht charter', 'en', '/en/blog/phuket-yacht-charter-guide', 12, -3],
   ['เช่าเรือภูเก็ต', 'th', '/yacht-charter', 9, 0], ['catamaran charter phuket', 'en', '/en/yacht-charter', 15, 4], ['เกาะใกล้ภูเก็ต', 'th', '/blog/เกาะใกล้ภูเก็ต-1-วัน', 18, 6],
   ['private boat phi phi', 'en', '/en/yacht-charter', 24, -2], ['ทริปเกาะพีพี เรือส่วนตัว', 'th', '/blog/พีพี-หรือ-อ่าวพังงา', null, 0],
 ].map(([q, l, url, pos, ch]) => ({ q, l, url, pos, ch }));
@@ -201,7 +201,7 @@ function seoKw() {
 function seoAddKw() {
   const P = seoPages().filter(p => !p.draft);
   openModal(`<div class="p-5 grid gap-3"><p class="font-medium">เพิ่มคีย์เวิร์ดที่ต้องการติดตาม</p>
-    <label><span class="lbl">คีย์เวิร์ด</span><input id="kwQ" class="inp" placeholder="เช่น เช่าเรือยอชต์ภูเก็ต ราคา"/></label>
+    <label><span class="lbl">คีย์เวิร์ด</span><input id="kwQ" class="inp" placeholder="เช่น เช่าเรือยอร์ชภูเก็ต ราคา"/></label>
     <div class="grid grid-cols-2 gap-3"><label><span class="lbl">ภาษา</span><select id="kwL" class="inp"><option value="th">ไทย</option><option value="en">English</option></select></label>
     <label><span class="lbl">หน้าเป้าหมาย</span><select id="kwU" class="inp">${P.map(p => `<option value="${esc(p.url.th)}">${esc(p.name)}</option>`).join('')}</select></label></div>
     <div class="flex justify-end gap-2 mt-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" onclick="if($('#kwQ').value.trim()){const l=$('#kwL').value;KW.unshift({q:$('#kwQ').value.trim(),l,url:(l==='en'?'/en':'')+$('#kwU').value,pos:null,ch:0});closeModal();vSeo();toast('เพิ่มคีย์เวิร์ดแล้ว · อันดับจะอัปเดตพรุ่งนี้')}">เพิ่ม</button></div></div>`);

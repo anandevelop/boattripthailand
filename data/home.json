@@ -16,7 +16,7 @@
   "promo": {
     "tag": { "th": "OVERNIGHT CHARTER", "en": "OVERNIGHT CHARTER" },
     "title": { "th": "นอนกลางทะเล ตื่นมากับพระอาทิตย์ขึ้นที่อันดามัน", "en": "Sleep on the sea, wake up to an Andaman sunrise" },
-    "sub": { "th": "แพ็กเกจ 2 วัน 1 คืน บนเรือยอชต์ VTECH 68 ฟุต รวมอาหารทุกมื้อ ค่าอุทยาน และรถรับส่ง", "en": "2 days 1 night aboard the VTECH 68 ft yacht — all meals, park fees and transfers included." },
+    "sub": { "th": "แพ็กเกจ 2 วัน 1 คืน บนเรือยอร์ช VTECH 68 ฟุต รวมอาหารทุกมื้อ ค่าอุทยาน และรถรับส่ง", "en": "2 days 1 night aboard the VTECH 68 ft yacht — all meals, park fees and transfers included." },
     "cta": { "th": "ดูแพ็กเกจ", "en": "View package" },
     "boat": "vtech-68-ft",
     "price": 375000,
@@ -26,18 +26,18 @@
   "faq": [
     [
       { "th": "Yacht charter ภูเก็ตราคาเท่าไหร่?", "en": "How much does a yacht charter in Phuket cost?" },
-      { "th": "ราคาขึ้นกับขนาดเรือ เส้นทาง และฤดูกาล ในโบรชัวร์ของเรา เรือคาตามารันเริ่มต้น {from:sail} สปีดโบ๊ทเริ่ม {from:speed} และเรือยอชต์ส่วนตัวเริ่ม {from:yacht} ต่อทริป (ทั้งลำ) ราคารวมกัปตัน ลูกเรือ ประกันภัย และ VAT 7%", "en": "Prices depend on boat size, route and season. In our brochure, sailing catamarans start at {from:sail}, speedboats at {from:speed} and private motor yachts at {from:yacht} per charter (whole boat), including captain, crew, insurance and 7% VAT." }
+      { "th": "ราคาขึ้นกับขนาดเรือ เส้นทาง และฤดูกาล ในโบรชัวร์ของเรา เรือคาตามารันเริ่มต้น {from:sail} สปีดโบ๊ทเริ่ม {from:speed} และเรือยอร์ชส่วนตัวเริ่ม {from:yacht} ต่อทริป (ทั้งลำ) ราคารวมกัปตัน ลูกเรือ ประกันภัย และ VAT 7%", "en": "Prices depend on boat size, route and season. In our brochure, sailing catamarans start at {from:sail}, speedboats at {from:speed} and private motor yachts at {from:yacht} per charter (whole boat), including captain, crew, insurance and 7% VAT." }
     ],
     [
       { "th": "ราคา yacht charter รวมอะไรบ้าง?", "en": "What is included in a yacht charter?" },
       { "th": "โดยทั่วไปรวมกัปตันและลูกเรือ น้ำมันเชื้อเพลิง อุปกรณ์ดำน้ำตื้น แพดเดิลบอร์ด น้ำดื่ม ผลไม้ ผ้าเย็น ประกันภัย และ VAT 7% ส่วนค่าอุทยานแห่งชาติ ค่าขึ้นเกาะ และรถรับส่ง ขึ้นอยู่กับแต่ละลำ — ดูรายละเอียดได้ในหน้าเรือแต่ละลำ", "en": "Most charters include captain and crew, fuel, snorkelling gear, paddle boards, drinking water, fruit, towels, insurance and 7% VAT. National-park fees, island landing fees and transfers vary by boat — each boat page lists exactly what is and isn’t included." }
     ],
     [
-      { "th": "ช่วงไหนเหมาะกับการเช่าเรือยอชต์ในภูเก็ตที่สุด?", "en": "When is the best time for a yacht charter in Phuket?" },
+      { "th": "ช่วงไหนเหมาะกับการเช่าเรือยอร์ชในภูเก็ตที่สุด?", "en": "When is the best time for a yacht charter in Phuket?" },
       { "th": "High Season (พ.ย.–เม.ย.) ทะเลอันดามันสงบและฟ้าใส เหมาะที่สุดสำหรับไปพีพีและเกาะราชา ช่วง Low Season (พ.ค.–ต.ค.) ราคาดีกว่าและยังออกเรือได้เกือบทุกวัน โดยเลือกเส้นทางที่กำบังลม เช่น อ่าวพังงา", "en": "High season (November–April) brings calm, clear Andaman seas — ideal for Phi Phi and Racha. Low season (May–October) offers better rates and most days are still sailable on sheltered routes such as Phang Nga Bay." }
     ],
     [
-      { "th": "เช่าเรือยอชต์ได้กี่คน?", "en": "How many guests can join a yacht charter?" },
+      { "th": "เช่าเรือยอร์ชได้กี่คน?", "en": "How many guests can join a yacht charter?" },
       { "th": "ตั้งแต่ 2 คนบนเรือส่วนตัวขนาดเล็ก ไปจนถึง {maxpax} คนบนเรือคาตามารันขนาดใหญ่ ใช้ Smart Match หรือตัวกรองจำนวนคนในหน้าเรือทั้งหมดเพื่อหาลำที่พอดีกับกลุ่มของคุณ", "en": "From 2 guests on a small private boat up to {maxpax} on our largest catamaran. Use Smart Match or the guest filter on the fleet page to find the right size." }
     ],
     [
@@ -50,8 +50,8 @@
     ]
   ],
   "seo": {
-    "title": { "th": "Yacht Charter ภูเก็ต – เช่าเรือยอชต์ {boats} ลำ | Boat Trip Thailand", "en": "Yacht Charter Phuket – {boats} Private Boats | Boat Trip Thailand" },
-    "desc": { "th": "Yacht Charter ภูเก็ต เช่าเรือยอชต์ส่วนตัว คาตามารัน สปีดโบ๊ท {boats} ลำ ไปพีพี อ่าวพังงา เกาะราชา เริ่ม {from} รวมกัปตัน ลูกเรือ และประกันภัย จองตรงกับทีมงาน", "en": "Yacht charter in Phuket with {boats} private yachts, catamarans and speedboats. Phi Phi, Phang Nga Bay and Racha from {from} incl. crew & insurance. Book direct." },
+    "title": { "th": "Yacht Charter ภูเก็ต – เช่าเรือยอร์ช {boats} ลำ | Boat Trip Thailand", "en": "Yacht Charter Phuket – {boats} Private Boats | Boat Trip Thailand" },
+    "desc": { "th": "Yacht Charter ภูเก็ต เช่าเรือยอร์ชส่วนตัว คาตามารัน สปีดโบ๊ท {boats} ลำ ไปพีพี อ่าวพังงา เกาะราชา เริ่ม {from} รวมกัปตัน ลูกเรือ และประกันภัย จองตรงกับทีมงาน", "en": "Yacht charter in Phuket with {boats} private yachts, catamarans and speedboats. Phi Phi, Phang Nga Bay and Racha from {from} incl. crew & insurance. Book direct." },
     "kw": { "th": "yacht charter ภูเก็ต", "en": "yacht charter phuket" }
   }
 }

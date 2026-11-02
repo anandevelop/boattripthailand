@@ -480,7 +480,7 @@
     "en": "Monkey Island – Meet playful wild monkeys and snap fun photos."
    },
    {
-    "th": "อ่าวปอ แกรนด์ มารีน่า – แวะชมมารีน่าเรือยอชต์วิวสวย",
+    "th": "อ่าวปอ แกรนด์ มารีน่า – แวะชมมารีน่าเรือยอร์ชวิวสวย",
     "en": "Ao Por Grand Marina – A quick stop at a marina with yachts and a stunning view."
    },
    {
@@ -2712,18 +2712,18 @@
   "cat": "tourth",
   "pic": "hype",
   "op": "Hype Yacht",
-  "th": "Hype Yacht ทริปเรือยอชต์หรู",
+  "th": "Hype Yacht ทริปเรือยอร์ชหรู",
   "en": "Hype Yacht Experience",
   "loc": "Phuket",
   "price": 8500,
   "dur": "Full day",
   "durTh": "ทั้งวัน",
   "tag": {
-   "th": "เรือยอชต์ใหม่ · อาหารกูร์เมต์ · แชมเปญ ค็อกเทล · DJ",
+   "th": "เรือยอร์ชใหม่ · อาหารกูร์เมต์ · แชมเปญ ค็อกเทล · DJ",
    "en": "Brand-new luxury yacht · Gourmet lunch · Champagne · DJ booth"
   },
   "desc": {
-   "th": "ทริปเรือจากภูเก็ตบนเรือยอชต์หรูลำใหม่ สลับเส้นทางตามฤดูกาล: หมู่เกาะพีพี 15 พ.ย.–16 เม.ย. และเกาะห้อง กระบี่ / อ่าวพังงา 17 เม.ย.–14 พ.ย.\nบริการอบอุ่นจากลูกเรือ อาหารกลางวันกูร์เมต์ แชมเปญ สปิริต และค็อกเทล เรือมีระบบเสียงและบูธ DJ ราคาเดียวทุกวัยเพราะจำกัดจำนวนคน อัปเกรดห้อง VIP Cabin +4,000 หรือ Master Suite +5,000 บาท",
+   "th": "ทริปเรือจากภูเก็ตบนเรือยอร์ชหรูลำใหม่ สลับเส้นทางตามฤดูกาล: หมู่เกาะพีพี 15 พ.ย.–16 เม.ย. และเกาะห้อง กระบี่ / อ่าวพังงา 17 เม.ย.–14 พ.ย.\nบริการอบอุ่นจากลูกเรือ อาหารกลางวันกูร์เมต์ แชมเปญ สปิริต และค็อกเทล เรือมีระบบเสียงและบูธ DJ ราคาเดียวทุกวัยเพราะจำกัดจำนวนคน อัปเกรดห้อง VIP Cabin +4,000 หรือ Master Suite +5,000 บาท",
    "en": "A boat tour from Phuket on a brand-new luxury yacht, with destinations by season: Phi Phi Islands 15 Nov–16 Apr and Koh Hong – Krabi / Phang Nga Bay 17 Apr–14 Nov.\nWarm service, gourmet lunch, champagne, spirits and cocktails, a great sound system and DJ booth. One price for all ages due to limited capacity. Upgrade to a VIP Cabin (+4,000) or Master Suite (+5,000 THB)."
   },
   "facts": [
