@@ -444,8 +444,9 @@ const TR_FAQ = () => [
 function renderTours() {
   const v = $('#view-tours'); if (!v) return;
   const cat = (VH.hash.match(/[?&]cat=(\w+)/) || [])[1], cats = trCats(), on = c => (c || '') === (CATS[cat] ? cat : '');
-  const item = (c, label, n) => `<a href="${c ? `#/tours?cat=${c}` : '#/tours'}" class="tr-cat${on(c) ? ' on' : ''}"${on(c) ? ' aria-current="page"' : ''}><span>${label}</span><small>${n}</small></a>`;
-  const nav = item('', L('ทั้งหมด', 'All'), ACTS.length) + cats.map(c => item(c, trCatName(c), ACTS.filter(a => a.cat === c).length)).join('');
+  // same tab bar as the home page (.cbar / .cbar-item): icon + name, dividers, arrows when it overflows
+  const item = (c, icon, label) => `<a href="${c ? `#/tours?cat=${c}` : '#/tours'}" role="tab" aria-selected="${on(c)}" class="cbar-item${on(c) ? ' is-on' : ''}"${on(c) ? ' aria-current="page"' : ''}><i data-lucide="${icon}" class="w-[18px] h-[18px]" stroke-width="1.5"></i><span>${label}</span></a>`;
+  const nav = item('', 'layout-grid', L('ทั้งหมด', 'All')) + cats.map(c => item(c, CATS[c].icon, trCatName(c))).join('');
   const ph = c => /phuket|ภูเก็ต/i.test(trCatName(c)), h1 = CATS[cat] ? (ph(cat) ? trCatName(cat) : L(`${trCatName(cat)} ภูเก็ต`, `${trCatName(cat)} in Phuket`)) : L('ทัวร์ & กิจกรรมในภูเก็ต', 'Phuket tours & activities');
   TR_Q = '';
   v.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-10 pb-14 lg:pb-20 tr">
@@ -455,10 +456,12 @@ function renderTours() {
         <p class="tr-lead">${L('โชว์ ทัวร์เกาะ กิจกรรมทางน้ำ สปา และที่พัก จองพร้อมเช่าเรือได้ในคำขอเดียว', 'Shows, island tours, water activities, spas and stays — book them with your boat in one request.')}</p></div>
       <label class="tr-search"><i data-lucide="search" class="w-4 h-4"></i><input type="search" placeholder="${L('ค้นหาทัวร์ เช่น FantaSea', 'Search, e.g. FantaSea')}" aria-label="${L('ค้นหาทัวร์', 'Search tours')}" oninput="trSearch(this.value)"/></label>
     </div>
-    <div class="tr-body">
-      <aside class="tr-side" aria-label="${L('หมวดหมู่', 'Categories')}"><p class="tr-k">${L('หมวดหมู่', 'Categories')}</p><nav class="tr-cats">${nav}</nav></aside>
-      <div class="tr-main" id="trList">${trListHTML()}</div>
+    <div class="cbar tr-bar relative mt-6 bg-white rounded-[20px] px-2 py-2.5 flex items-center">
+      <button type="button" onclick="trScroll(-1)" id="trPrev" class="cbar-arr shrink-0" aria-label="Previous"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+      <nav id="trTabs" class="flex-1 min-w-0 flex items-center overflow-x-auto no-scrollbar scroll-smooth" role="tablist" aria-label="${L('หมวดหมู่', 'Categories')}">${nav}</nav>
+      <button type="button" onclick="trScroll(1)" id="trNext" class="cbar-arr shrink-0" aria-label="Next"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
     </div>
+    <div class="tr-main" id="trList">${trListHTML()}</div>
     ${CATS[cat] ? trPackHTML() : ''}
     <section class="tr-faq"><h2 class="font-display">${L('คำถามที่พบบ่อย', 'FAQ')}</h2>
       <div>${TR_FAQ().map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${q}<i data-lucide="plus" class="w-4 h-4 text-maroon shrink-0"></i></summary><p>${a}</p></details>`).join('')}</div></section>
@@ -475,7 +478,10 @@ function renderTours() {
     { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: t('home'), item: SITE_ORIGIN + hashToPath('#/') }, { '@type': 'ListItem', position: 2, name: L('ทัวร์ & กิจกรรม', 'Tours & activities'), item: SITE_ORIGIN + hashToPath('#/tours') }, ...(CATS[cat] ? [{ '@type': 'ListItem', position: 3, name: trCatName(cat), item: url }] : [])] },
   ] });
   icons();
+  const tb = $('#trTabs'); if (tb && typeof requestAnimationFrame === 'function') { tb.onscroll = trNavState; requestAnimationFrame(() => { const a = tb.querySelector('.is-on'); if (a && a.offsetLeft > tb.clientWidth * .6) tb.scrollLeft = a.offsetLeft - 60; trNavState(); }); }
 }
+function trScroll(d) { const r = $('#trTabs'); r && r.scrollBy({ left: d * r.clientWidth * .7, behavior: 'smooth' }); }
+function trNavState() { const r = $('#trTabs'); if (!r) return; $('#trPrev').classList.toggle('is-off', r.scrollLeft < 8); $('#trNext').classList.toggle('is-off', r.scrollLeft + r.clientWidth >= r.scrollWidth - 8); }
 
 /* =========================================================
    FLEET HELPERS (data from BTT brochure → window.FLEET)

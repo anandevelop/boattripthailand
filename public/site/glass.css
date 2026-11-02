@@ -1044,3 +1044,6 @@ html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !im
 .tr h1, .tr h2 { text-transform: none !important; }
 .tr-more-m { display: none; }
 @media (max-width: 1023px) { .tr-grid.tr-3 > :nth-child(3) { display: none; } .tr-more-m { display: inline-flex; } }
+.tr .tr-bar { box-shadow: 0 0 0 1px rgb(35 20 22 / .06), 0 14px 36px -24px rgba(58,0,7,.3); }
+.tr .tr-main { margin-top: 28px; }
+@media (max-width: 767px) { .tr .tr-bar { margin-left: -4px; margin-right: -4px; padding: 6px; } .tr .tr-bar .cbar-arr { display: none; } .tr .tr-bar .cbar-item { padding: 0 16px; font-size: 13.5px; height: 40px; } }
