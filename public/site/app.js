@@ -854,7 +854,7 @@ function bpHeadHTML(b) {
   return `<header class="bp-head">
       <div class="min-w-0"><h1 class="font-display">${name}</h1></div>
       <div class="bp-hacts">
-        <button type="button" class="bp-pill" onclick="shareBoat('${b.slug}')"><i data-lucide="share-2"></i><span>${L('แชร์', 'Share')}</span></button>
+        <span class="bp-share"><button type="button" class="bp-pill" id="bpShareBtn" aria-haspopup="true" aria-expanded="false" aria-controls="bpSharePop" onclick="shareBoat('${b.slug}')"><i data-lucide="share-2"></i><span>${L('แชร์', 'Share')}</span></button>${shareBoxHTML(b)}</span>
         <button type="button" class="bp-pill" data-fav="${b.slug}" onclick="toggleFav('${b.slug}')" aria-pressed="${FAV.includes(b.slug)}" aria-label="${L('บันทึก', 'Save')} ${name}"><i data-lucide="heart"></i><span>${L('บันทึก', 'Save')}</span></button>
       </div>
     </header>`;
@@ -882,10 +882,38 @@ function bpAnswerHTML(b, progs) {
   // หัวข้อมีชื่อเรือ (SEO/AEO: บอก Google และ AI ว่าย่อหน้านี้ตอบเรื่องเรือลำไหน) · section ใช้ h2 เป็นชื่อ ไม่ต้องมี aria-label ซ้ำ
   return `<p class="bp-lead">${L(th + prTh + incTh, en)}</p>`;
 }
+/* share panel on the boat page: LINE · Facebook · WhatsApp · Telegram · X · copy link */
+const SHARE_ICO = {
+  line: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.5 3 2 6.6 2 11c0 3.9 3.5 7.2 8.3 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.5 1.1-.5 5.9-3.5 8-5.9C21.4 14.3 22 12.7 22 11c0-4.4-4.5-8-10-8z"/><path fill="#fff" d="M6.4 13.4h2c.2 0 .3-.1.3-.3v-.5c0-.2-.1-.3-.3-.3H7.3V8.9c0-.2-.1-.3-.3-.3h-.5c-.2 0-.3.1-.3.3v4.2c0 .2.1.3.2.3zm3.2 0h.5c.2 0 .3-.1.3-.3V8.9c0-.2-.1-.3-.3-.3h-.5c-.2 0-.3.1-.3.3v4.2c0 .2.1.3.3.3zm1.8 0h.5c.2 0 .3-.1.3-.3v-2.5l1.9 2.6.1.1h.6c.2 0 .3-.1.3-.3V8.9c0-.2-.1-.3-.3-.3h-.5c-.2 0-.3.1-.3.3v2.5l-1.9-2.6-.1-.1h-.6c-.2 0-.3.1-.3.3v4.2c0 .2.1.3.3.3zm4.3 0h2c.2 0 .3-.1.3-.3v-.5c0-.2-.1-.3-.3-.3h-1.2v-.7h1.2c.2 0 .3-.1.3-.3v-.5c0-.2-.1-.3-.3-.3h-1.2v-.7h1.2c.2 0 .3-.1.3-.3v-.5c0-.2-.1-.3-.3-.3h-2c-.2 0-.3.1-.3.3v4.2c0 .2.1.3.3.3z"/></svg>',
+  fb: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.5 21v-7.5H16l.4-3h-2.9V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21h3z"/></svg>',
+  wa: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5A9.5 9.5 0 0 0 3.8 16.8L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5zm0 17.3c-1.5 0-2.9-.4-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A7.8 7.8 0 1 1 12 19.8zm4.3-5.8c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1l-.7.9c-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.3-.5-.5-.9-1-1.2-1.6-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.7-1.7c-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.6.6-.9 1.3-.9 2.1.1.9.4 1.8 1 2.6 1.1 1.6 2.5 2.9 4.2 3.6 1.3.5 2 .5 2.6.4.7-.1 1.4-.6 1.6-1.2.2-.5.2-1 .1-1.1l-.5-.2z"/></svg>',
+  tg: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.7 4.3 2.9 11.2c-1.2.5-1.2 1.2-.2 1.5l4.6 1.4 1.8 5.4c.2.6.4.8.8.8.3 0 .5-.2.8-.4l2.2-2.1 4.6 3.4c.8.5 1.4.2 1.6-.8l3-14.1c.3-1.2-.5-1.8-1.4-1.4zM9.6 14.5l8.2-7.4c.4-.3-.1-.5-.6-.2l-10.1 6.4"/></svg>',
+  x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.6 3h3.1l-6.8 7.7L22 21h-6.3l-4.9-6.4L5.2 21H2.1l7.3-8.3L1.7 3h6.4l4.4 5.9L17.6 3zm-1.1 16.2h1.7L7.3 4.7H5.5l11 14.5z"/></svg>',
+};
+function shareBoxHTML(b) {
+  const btn = (k, cls, label) => `<button type="button" class="bp-sh ${cls}" onclick="shareTo('${k}','${b.slug}')" aria-label="${label}">${SHARE_ICO[k]}</button>`;
+  return `<div class="bp-sharepop" id="bpSharePop" role="dialog" aria-label="${L('แชร์เรือลำนี้', 'Share this boat')}" hidden>
+    <span class="bp-sh-t">${L('แชร์', 'Share')}</span>
+    ${btn('line', 'is-line', 'LINE')}${btn('fb', 'is-fb', 'Facebook')}${btn('wa', 'is-wa', 'WhatsApp')}${btn('tg', 'is-tg', 'Telegram')}${btn('x', 'is-x', 'X')}
+    <button type="button" class="bp-sh-copy" onclick="shareTo('copy','${b.slug}')">${L('คัดลอกลิงก์', 'Copy')}</button>
+  </div>`;
+}
 function shareBoat(slug) {
-  const url = SITE_ORIGIN + hashToPath('#/boat/' + slug);
-  if (navigator.share) navigator.share({ title: niceTitle(bySlug(slug).title), url }).catch(() => {});
-  else { navigator.clipboard?.writeText(url); toast(L('คัดลอกลิงก์แล้ว', 'Link copied')); }
+  const pop = $('#bpSharePop'), btn = $('#bpShareBtn'); if (!pop) return;
+  const open = pop.hidden;
+  pop.hidden = !open; btn?.setAttribute('aria-expanded', String(open));
+  if (open) setTimeout(() => {
+    const off = e => { if (e.type === 'keydown' ? e.key === 'Escape' : !e.target.closest('.bp-share')) { pop.hidden = true; btn?.setAttribute('aria-expanded', 'false'); document.removeEventListener('click', off); document.removeEventListener('keydown', off); } };
+    document.addEventListener('click', off); document.addEventListener('keydown', off);
+  }, 0);
+}
+function shareTo(k, slug) {
+  const url = SITE_ORIGIN + hashToPath('#/boat/' + slug), u = encodeURIComponent(url), b = bySlug(slug);
+  const text = encodeURIComponent(L(`เช่าเรือ ${niceTitle(b.title)} ภูเก็ต`, `${niceTitle(b.title)} private charter in Phuket`));
+  const to = { line: `https://social-plugins.line.me/lineit/share?url=${u}`, fb: `https://www.facebook.com/sharer/sharer.php?u=${u}`, wa: `https://wa.me/?text=${text}%20${u}`,
+    tg: `https://t.me/share/url?url=${u}&text=${text}`, x: `https://twitter.com/intent/tweet?url=${u}&text=${text}` }[k];
+  if (to) { window.open(to, '_blank', 'noopener,noreferrer,width=640,height=640'); return; }
+  (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast(L('คัดลอกลิงก์แล้ว', 'Link copied')), () => toast(url));
 }
 /* section nav on the boat page: sticky, arrows when it overflows, active link follows the scroll */
 function secState() { const n = $('#secnav'), w = $('#secwrap'); if (!n || !w) return; w.classList.toggle('can-l', n.scrollLeft > 4); w.classList.toggle('can-r', n.scrollLeft + n.clientWidth < n.scrollWidth - 4); }
