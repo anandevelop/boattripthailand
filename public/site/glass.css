@@ -922,8 +922,8 @@ html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !im
   .bp-ans h2 { font-size:19px; }
   .bp-ans p { font-size:14.5px; line-height:1.8; }
 }
-.bp-lead { margin:14px 0 18px; font-size:15.5px; line-height:1.85; color:#3d3133; }
-@media (max-width:767px) { .bp-lead { font-size:14.5px; line-height:1.8; margin:12px 0 14px; } }
+.bp-lead { margin:12px 0 16px; font-size:14px; line-height:1.75; color:#3d3133; }
+@media (max-width:767px) { .bp-lead { font-size:13.5px; line-height:1.7; margin:10px 0 14px; } }
 /* หน้าเรือ: แกลเลอรีแบบ mockup — รูปใหญ่ซ้าย + 2×2 ขวา สูงเท่ากัน มุมโค้งเฉพาะขอบนอก ไม่มีเงา */
 @media (min-width:721px) {
   .bento.bento-v2 { grid-template-columns:2fr 1fr 1fr; grid-template-rows:repeat(2, clamp(160px, 16vw, 222px)); gap:10px; border-radius:24px; overflow:hidden; }
