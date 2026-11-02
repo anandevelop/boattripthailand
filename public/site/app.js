@@ -690,7 +690,8 @@ function bpAnswerHTML(b, progs) {
   const incTh = inc.length || crew ? ` รวม${crew ? `กัปตัน ลูกเรือ ${crew} คน` : ''}${inc.length ? `${crew ? ', ' : ''}${inc.filter(x => !(crew && /กัปตัน|captain/i.test(x))).join(', ')}` : ''}` : '';
   const prEn = [hf && `half day${hf.h ? ` (${hf.h} hrs)` : ''} from ${baht(hf.n)}`, fl && `full day${fl.h ? ` (${fl.h} hrs)` : ''} from ${baht(fl.n)}`].filter(Boolean);
   const en = `${name} is a ${b.ft ? b.ft + ' ft ' : ''}${typeLabel(b.type).toLowerCase()}${b.pax ? ` for up to ${b.pax} guests${rule ? ` (${rule.from - 1} included in the price)` : ''}` : ''}${cabN ? ` with ${cabN} cabin${cabN > 1 ? 's' : ''}${ens ? ', all ensuite' : ''}` : ''}${mar ? `, departing from ${mar}` : ''}. ${prEn.length ? `Whole-boat price: ${prEn.join(' and ')}${sz ? ` (${sz})` : ''}.` : b.from_ ? `Whole-boat price from ${baht(b.from_)}.` : ''}${crew || inc.length ? ` Includes ${[crew ? `captain and ${crew} crew` : '', ...inc.filter(x => !(crew && /กัปตัน|captain/i.test(x)))].filter(Boolean).join(', ')}.` : ''}`;
-  return `<section class="bp-ans" aria-label="${L('สรุปสั้น', 'In short')}"><h2>${L('สรุปสั้น', 'In short')}</h2><p>${L(th + prTh + incTh, en)}</p></section>`;
+  // หัวข้อมีชื่อเรือ (SEO/AEO: บอก Google และ AI ว่าย่อหน้านี้ตอบเรื่องเรือลำไหน) · section ใช้ h2 เป็นชื่อ ไม่ต้องมี aria-label ซ้ำ
+  return `<section class="bp-ans"><h2>${L(`ข้อมูลสำคัญของ ${name}`, `${name} at a glance`)}</h2><p>${L(th + prTh + incTh, en)}</p></section>`;
 }
 function shareBoat(slug) {
   const url = SITE_ORIGIN + hashToPath('#/boat/' + slug);
