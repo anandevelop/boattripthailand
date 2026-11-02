@@ -643,28 +643,54 @@ function bentoHTML(b) {
   const g = gallery(b.slug), n = g.length, name = niceTitle(b.title);
   const tile = (i, cls, extra = '') => g[i] ? `<button type="button" class="bt ${cls} img-fallback group" onclick="openLightbox('${b.slug}',${i})" aria-label="${t('viewPhotos')} ${i + 1}">
       <img src="${rs(g[i])}" alt="${name} — photo ${i + 1}" loading="lazy" class="gal-img"/>${extra}</button>` : '';
-  const all = `<span class="bt-all"><i data-lucide="layout-grid"></i>${L('ดูรูปทั้งหมด', 'All photos')} ${n}</span>`;
-  const sub = [typeLabel(b.type), b.pax ? `${b.pax} ${t('guests')}` : ''].filter(Boolean).join(' · ');
-  return `<div class="bento bento-n${Math.min(n, 5)}">
+  const all = `<span class="bt-all"><i data-lucide="layout-grid"></i>${L(`ดูรูปทั้งหมด ${n} รูป`, `All ${n} photos`)}</span>`;
+  return `<div class="bento bento-v2 bento-n${Math.min(n, 5)}">
     <div class="bt bt-main img-fallback">
       <button type="button" class="absolute inset-0 w-full h-full group" onclick="openLightbox('${b.slug}',0)" aria-label="${t('viewPhotos')}"><img src="${rs(g[0] || '', 1600)}" srcset="${g[0] ? `${rs(g[0])} 768w, ${rs(g[0], 1280)} 1280w, ${rs(g[0], 1600)} 1600w` : ''}" sizes="(min-width:1024px) 60vw, 100vw" alt="${name}" fetchpriority="high" class="gal-img"/></button>
       ${b.hot ? `<span class="bt-chip"><i data-lucide="star"></i>${L('ยอดนิยม', 'Popular')}</span>` : ''}
-      <div class="bt-acts">
-        <button type="button" class="bt-round bt-cmp" data-cmp="${b.slug}" onclick="toggleCompare('${b.slug}');CMP.includes('${b.slug}')&&toast(CMP.length>1?'${L('พร้อมเทียบแล้ว · กดปุ่มเปรียบเทียบด้านล่าง', 'Ready · tap Compare below')}':'${L('เพิ่มในรายการเทียบแล้ว · เปิดเรือลำอื่นแล้วกดเทียบอีกลำ', 'Added · open another boat and tap compare')}')" aria-pressed="${CMP.includes(b.slug)}" aria-label="${L('เปรียบเทียบกับลำอื่น', 'Compare with other boats')}" title="${L('เปรียบเทียบ', 'Compare')}"><i data-lucide="git-compare"></i></button>
-        <button type="button" class="bt-round" onclick="shareBoat('${b.slug}')" aria-label="${L('แชร์', 'Share')}"><i data-lucide="share-2"></i></button>
-        <button type="button" class="bt-round" data-fav="${b.slug}" onclick="toggleFav('${b.slug}')" aria-pressed="${FAV.includes(b.slug)}" aria-label="${L('บันทึก', 'Save')} ${name}"><i data-lucide="heart"></i></button>
-      </div>
-      <div class="bt-cover">
-        <div class="min-w-0"><h1>${name}</h1><p>${sub}<span class="bt-hide-m">${b.marinaP ? ' · ' + b.marinaP : ''}</span></p></div>
-        ${b.from_ ? `<div class="bt-price"><small>${t('price.from', 'เริ่มต้น')} / ${L('ทริป', 'trip')}</small><b class="tabular-nums">${baht(b.from_)}</b></div>` : ''}
-      </div>
     </div>
-    ${tile(1, 'bt-1')}${tile(2, 'bt-2')}${tile(3, 'bt-3')}${tile(4, 'bt-4', n > 5 ? all : '')}
+    ${tile(1, 'bt-1')}${tile(2, 'bt-2')}${tile(3, 'bt-3', n === 4 ? all : '')}${tile(4, 'bt-4', n > 4 ? all : '')}
   </div>
   ${n > 1 ? `<button type="button" class="bt-mall" onclick="openLightbox('${b.slug}',0)">
     <span class="bt-stack">${g.slice(1, 3).map(s => `<img src="${rs(s, 160)}" alt="" loading="lazy"/>`).join('')}</span>
     <span class="min-w-0"><b>${L('ดูรูปทั้งหมด', 'View all')} ${n} ${L('รูป', 'photos')}</b><span>${L('แตะเพื่อดูภาพเต็มจอ', 'Tap to view full screen')}</span></span>
     <i data-lucide="chevron-right"></i></button>` : ''}`;
+}
+function bpHeadHTML(b) {
+  const name = niceTitle(b.title), g = (...k) => infoGet(b, ...k), num = x => (String(x || '').match(/\d+/) || [])[0];
+  const bn = g('Boat Name'), cab = num(g('Cabin', 'Cabins', 'Bedroom'));
+  const nice = x => String(x).toLowerCase().replace(/(^|\s)\S/g, m => m.toUpperCase());
+  const sub = [typeLabel(b.type), bn && bn.toLowerCase() !== name.toLowerCase() ? L(`ชื่อเรือ ${nice(bn)}`, `named ${nice(bn)}`) : '', b.pax ? L(`สูงสุด ${b.pax} คน`, `up to ${b.pax} guests`) : '', cab ? L(`${cab} ห้องนอน`, `${cab} cabin${cab > 1 ? 's' : ''}`) : '', b.marinaP ? L(`ออกจาก ${b.marinaP}`, `from ${b.marinaP}`) : ''].filter(Boolean).join(' · ');
+  return `<header class="bp-head">
+      <div class="min-w-0"><h1 class="font-display">${L(`เช่า${typeLabel(b.type)} ${name} ภูเก็ต`, `${name} ${typeLabel(b.type).toLowerCase()} charter Phuket`)}</h1><p>${sub}</p></div>
+      <div class="bp-hacts">
+        <button type="button" class="bp-pill" onclick="shareBoat('${b.slug}')"><i data-lucide="share-2"></i><span>${L('แชร์', 'Share')}</span></button>
+        <button type="button" class="bp-pill" data-fav="${b.slug}" onclick="toggleFav('${b.slug}')" aria-pressed="${FAV.includes(b.slug)}" aria-label="${L('บันทึก', 'Save')} ${name}"><i data-lucide="heart"></i><span>${L('บันทึก', 'Save')}</span></button>
+        <button type="button" class="bp-pill bt-cmp" data-cmp="${b.slug}" onclick="toggleCompare('${b.slug}');CMP.includes('${b.slug}')&&toast(CMP.length>1?'${L('พร้อมเทียบแล้ว · กดปุ่มเปรียบเทียบด้านล่าง', 'Ready · tap Compare below')}':'${L('เพิ่มในรายการเทียบแล้ว · เปิดเรือลำอื่นแล้วกดเทียบอีกลำ', 'Added · open another boat and tap compare')}')" aria-pressed="${CMP.includes(b.slug)}" aria-label="${L('เปรียบเทียบกับลำอื่น', 'Compare with other boats')}" title="${L('เปรียบเทียบ', 'Compare')}"><i data-lucide="git-compare"></i><span>${L('เปรียบเทียบ', 'Compare')}</span></button>
+      </div>
+    </header>`;
+}
+/* AEO: first paragraph answers "what is this boat, how many people, where from, how much, what's included" from the boat record */
+function bpAnswerHTML(b, progs) {
+  const name = niceTitle(b.title), g = (...k) => infoGet(b, ...k), num = x => (String(x || '').match(/\d+/) || [])[0];
+  const cab = g('Cabin', 'Cabins', 'Bedroom'), cabN = num(cab), crew = num(g('Crew', 'Crews')), rule = extraRule(b) || extraRule({ notes: String(b.i18n?.notes?.en || '').split('\n') });
+  const mar = b.marinaP && !/^\s*phuket\s*$/i.test(b.marinaP) ? b.marinaP : '';
+  const low = kind => { let m = null; progs.filter(p => p.kind === kind).forEach(p => { const x = bpPrice(b, p); if (x && x.n && (!m || x.n < m.n)) m = { n: x.n, h: p.hrs }; }); return m; };
+  const hf = low('half'), fl = low('full'), sz = DSZ && DSZ.key && !['all', 'special'].includes(DSZ.key) && SKEY[DSZ.key] ? SKEY[DSZ.key][LANG === 'en' ? 'en' : 'th'] : '';
+  const ens = /ensuite|en-suite/i.test(cab || '');
+  const inc = b.includes.slice(0, 6).map(moneyText).filter(x => !/full use/i.test(x));
+  const th = [
+    `${name} เป็น${typeLabel(b.type)}${b.ft ? ` ${b.ft} ฟุต` : ''}`,
+    b.pax ? `รับได้สูงสุด ${b.pax} คน${rule ? ` (ราคารวม ${rule.from - 1} คน)` : ''}` : '',
+    cabN ? `มี ${cabN} ห้องนอน${ens ? 'พร้อมห้องน้ำในตัว' : ''}` : '',
+    mar ? `ออกจาก ${mar}` : '',
+  ].filter(Boolean).join(' ');
+  const pr = [hf && `ครึ่งวัน${hf.h ? ` ${hf.h} ชม.` : ''} เริ่ม ${baht(hf.n)}`, fl && `เต็มวัน${fl.h ? ` ${fl.h} ชม.` : ''} เริ่ม ${baht(fl.n)}`].filter(Boolean);
+  const prTh = pr.length ? ` ราคาเช่าทั้งลำ ${pr.join(' และ')}${sz ? ` (${sz})` : ''}` : (b.from_ ? ` ราคาเช่าทั้งลำเริ่ม ${baht(b.from_)}` : '');
+  const incTh = inc.length || crew ? ` รวม${crew ? `กัปตัน ลูกเรือ ${crew} คน` : ''}${inc.length ? `${crew ? ', ' : ''}${inc.filter(x => !(crew && /กัปตัน|captain/i.test(x))).join(', ')}` : ''}` : '';
+  const prEn = [hf && `half day${hf.h ? ` (${hf.h} hrs)` : ''} from ${baht(hf.n)}`, fl && `full day${fl.h ? ` (${fl.h} hrs)` : ''} from ${baht(fl.n)}`].filter(Boolean);
+  const en = `${name} is a ${b.ft ? b.ft + ' ft ' : ''}${typeLabel(b.type).toLowerCase()}${b.pax ? ` for up to ${b.pax} guests${rule ? ` (${rule.from - 1} included in the price)` : ''}` : ''}${cabN ? ` with ${cabN} cabin${cabN > 1 ? 's' : ''}${ens ? ', all ensuite' : ''}` : ''}${mar ? `, departing from ${mar}` : ''}. ${prEn.length ? `Whole-boat price: ${prEn.join(' and ')}${sz ? ` (${sz})` : ''}.` : b.from_ ? `Whole-boat price from ${baht(b.from_)}.` : ''}${crew || inc.length ? ` Includes ${[crew ? `captain and ${crew} crew` : '', ...inc.filter(x => !(crew && /กัปตัน|captain/i.test(x)))].filter(Boolean).join(', ')}.` : ''}`;
+  return `<section class="bp-ans" aria-label="${L('สรุปสั้น', 'In short')}"><h2>${L('สรุปสั้น', 'In short')}</h2><p>${L(th + prTh + incTh, en)}</p></section>`;
 }
 function shareBoat(slug) {
   const url = SITE_ORIGIN + hashToPath('#/boat/' + slug);
@@ -790,10 +816,12 @@ function renderDetail(slug) {
   v.innerHTML = `<div class="bp">
   <div class="bp-ambient" aria-hidden="true">${g[0] ? `<img src="${rs(g[0], 320)}" alt="" decoding="async"/>` : ''}</div>
   <div class="bp-wrap">
-    <nav aria-label="Breadcrumb" class="bp-crumb"><a href="#/">${t('home')}</a><i data-lucide="chevron-right"></i><a href="#/fleet">${t('fleet')}</a><i data-lucide="chevron-right"></i><span aria-current="page">${name}</span></nav>
+    <nav aria-label="Breadcrumb" class="bp-crumb"><a href="#/">${t('home')}</a><i data-lucide="chevron-right"></i><a href="#/fleet">${t('fleet')}</a><i data-lucide="chevron-right"></i><a href="#/fleet?type=${b.type}">${typeLabel(b.type)}</a><i data-lucide="chevron-right"></i><span aria-current="page">${name}</span></nav>
+    ${bpHeadHTML(b)}
     ${bentoHTML(b)}
     <div class="bp-grid">
       <div class="min-w-0">
+        ${bpAnswerHTML(b, progs)}
         <div class="secwrap" id="secwrap">
           <div class="sec-fade l"><button type="button" onclick="secScroll(-1)" aria-label="${L('เลื่อนซ้าย', 'Scroll left')}"><i data-lucide="chevron-left"></i></button></div>
           <div class="sec-fade r"><button type="button" onclick="secScroll(1)" aria-label="${L('เลื่อนขวา', 'Scroll right')}"><i data-lucide="chevron-right"></i></button></div>
