@@ -1047,3 +1047,17 @@ html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !im
 .tr .tr-bar { box-shadow: 0 0 0 1px rgb(35 20 22 / .06), 0 14px 36px -24px rgba(58,0,7,.3); }
 .tr .tr-main { margin-top: 28px; }
 @media (max-width: 767px) { .tr .tr-bar { margin-left: -4px; margin-right: -4px; padding: 6px; } .tr .tr-bar .cbar-arr { display: none; } .tr .tr-bar .cbar-item { padding: 0 16px; font-size: 13.5px; height: 40px; } }
+/* หน้าเรือ: รูปหลักปัดดูได้ทุกรูปบนมือถือ (คอมแสดงรูปแรก) */
+.bt-swipe { position: absolute; inset: 0; display: flex; overflow: hidden; }
+.bt-sl { position: relative; flex: 0 0 100%; height: 100%; padding: 0; display: block; }
+.bt-sl .gal-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bt-sl-x { display: none; }
+.bt-count { display: none; }
+@media (max-width: 720px) {
+  .bt-swipe { overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .bt-swipe::-webkit-scrollbar { display: none; }
+  .bt-sl { scroll-snap-align: start; scroll-snap-stop: always; }
+  .bt-sl-x { display: block; }
+  .bt-count { display: inline-flex; position: absolute; right: 12px; bottom: 12px; z-index: 3; height: 28px; padding: 0 11px; align-items: center; gap: 2px; border-radius: 99px; background: rgb(20 10 12 / .55); color: #fff; font-size: 12.5px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); pointer-events: none; }
+  .bt-count b { font-weight: 500; }
+}

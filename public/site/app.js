@@ -902,7 +902,11 @@ function bentoHTML(b) {
   const all = `<span class="bt-all"><i data-lucide="layout-grid"></i>${L(`ดูรูปทั้งหมด ${n} รูป`, `All ${n} photos`)}</span>`;
   return `<div class="bento bento-v2 bento-n${Math.min(n, 5)}">
     <div class="bt bt-main img-fallback">
-      <button type="button" class="absolute inset-0 w-full h-full group" onclick="openLightbox('${b.slug}',0)" aria-label="${t('viewPhotos')}"><img src="${rs(g[0] || '', 1600)}" srcset="${g[0] ? `${rs(g[0])} 768w, ${rs(g[0], 1280)} 1280w, ${rs(g[0], 1600)} 1600w` : ''}" sizes="(min-width:1024px) 60vw, 100vw" alt="${name}" fetchpriority="high" class="gal-img"/></button>
+      <div class="bt-swipe" id="btSwipe">
+        <button type="button" class="bt-sl group" onclick="openLightbox('${b.slug}',0)" aria-label="${t('viewPhotos')}"><img src="${rs(g[0] || '', 1600)}" srcset="${g[0] ? `${rs(g[0])} 768w, ${rs(g[0], 1280)} 1280w, ${rs(g[0], 1600)} 1600w` : ''}" sizes="(min-width:1024px) 60vw, 100vw" alt="${name}" fetchpriority="high" class="gal-img"/></button>
+        ${g.slice(1).map((src, i) => `<button type="button" class="bt-sl bt-sl-x" onclick="openLightbox('${b.slug}',${i + 1})" aria-label="${t('viewPhotos')} ${i + 2}"><img src="${rs(src)}" alt="${name} — photo ${i + 2}" loading="lazy" decoding="async" class="gal-img"/></button>`).join('')}
+      </div>
+      ${n > 1 ? `<span class="bt-count" aria-hidden="true"><b id="btIdx">1</b> / ${n}</span>` : ''}
       ${b.hot ? `<span class="bt-chip"><i data-lucide="star"></i>${L('ยอดนิยม', 'Popular')}</span>` : ''}
     </div>
     ${tile(1, 'bt-1')}${tile(2, 'bt-2')}${tile(3, 'bt-3', n === 4 ? all : '')}${tile(4, 'bt-4', n > 4 ? all : '')}
@@ -1017,6 +1021,11 @@ function secState() { const n = $('#secnav'), w = $('#secwrap'); if (!n || !w) r
 function secScroll(d) { const n = $('#secnav'); n?.scrollBy({ left: d * Math.max(140, n.clientWidth * .6), behavior: 'smooth' }); }
 function secGo(id) { const el = document.getElementById(id); if (el) scrollTo({ top: el.getBoundingClientRect().top + scrollY - 140, behavior: 'smooth' }); }
 let secIO;
+/* phones: swipe the main photo through every photo of the boat; the counter follows */
+function btSwipeBind() {
+  const r = $('#btSwipe'), c = $('#btIdx'); if (!r || !c || typeof requestAnimationFrame !== 'function') return;
+  let q = 0; r.addEventListener('scroll', () => { if (q) return; q = requestAnimationFrame(() => { q = 0; c.textContent = Math.round(r.scrollLeft / Math.max(1, r.clientWidth)) + 1; }); }, { passive: true });
+}
 function bindSecnav() {
   const n = $('#secnav'); if (!n) return;
   n.addEventListener('scroll', secState, { passive: true }); setTimeout(secState, 50);
@@ -1218,7 +1227,7 @@ function renderDetail(slug) {
   if ($('#dProg')) $('#dProg').onchange = e => { detailProgram = +e.target.value; drawProgPrices(b); };
   $('#dDate').onchange = () => { DSZ.pick = null; drawProgPrices(b); };
   drawProgPrices(b, true);
-  bindSecnav();
+  bindSecnav(); btSwipeBind();
   icons();
 }
 function bpGuests(d) { const b = bySlug(currentSlug); bpGuestsN = Math.min(b.pax || 99, Math.max(1, bpGuestsN + d)); $('#dPax').value = bpGuestsN; drawProgPrices(b); }
