@@ -932,3 +932,15 @@ html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !im
   .bento.bento-v2 .bt { border-radius:0 !important; box-shadow:none; }
 }
 .bento-v2 .bt-chip { display:none; }
+/* หน้าเรือ: การ์ดข้อมูล 4 ใบ แบบมินิมอล (ตัวเล็กลง บรรทัดรองไม่เกิน 2 บรรทัด) */
+.bp-facts .bp-fact { padding: 12px 14px; }
+.bp-facts .bp-fact svg { width: 16px; height: 16px; }
+.bp-facts .bp-fact b { font-size: 15px; font-weight: 500; margin-top: 6px; }
+.bp-facts .bp-fact span { font-size: 11.5px; line-height: 1.45; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+@media (max-width: 767px) {
+  .bp-facts { gap: 8px; }
+  .bp-facts .bp-fact { padding: 10px 12px; }
+  .bp-facts .bp-fact svg { width: 15px; height: 15px; }
+  .bp-facts .bp-fact b { font-size: 14px; margin-top: 5px; }
+  .bp-facts .bp-fact span { font-size: 11px; }
+}

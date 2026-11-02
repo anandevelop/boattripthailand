@@ -956,7 +956,7 @@ function bpFacts(b) {
   const night = num(g('Over Night', 'Overnight', 'Overnight Capacity'));
   if (b.pax) out.push(['users', `${b.pax} ${L('คน', 'guests')}`, night ? L(`รอบกลางวัน (ค้างคืน ${night} คน)`, `Day trips (overnight ${night})`) : L('รอบกลางวัน', 'Day trips')]);
   const cab = g('Cabin', 'Cabins', 'Bedroom');
-  if (cab) { const n = num(cab); out.push(['bed-double', n ? `${n} ${L('ห้องนอน', n > 1 ? 'cabins' : 'cabin')}` : cab, n ? infoValTH('Cabin', cab.replace(/^\s*\d+\s*(cabins?|bedrooms?|rooms?)?\s*/i, '')).replace(/^ห้อง มี/, 'มี') || L('ห้องนอน', 'Cabins') : L('ห้องนอน', 'Cabins')]); }
+  if (cab) { const n = num(cab); out.push(['bed-double', n ? `${n} ${L('ห้องนอน', n > 1 ? 'cabins' : 'cabin')}` : cab, n ? infoValTH('Cabin', cab.replace(/^\s*\d+\s*(cabins?|bedrooms?|rooms?)?\s*/i, '')).replace(/^ห้อง มี/, 'มี').replace(/\s*\([^)]*(มาสเตอร์|VIP|เตียง|master|twin|bunk)[^)]*\)/gi, '').replace(/^\((.*)\)$/, '$1').trim() || L('ห้องนอน', 'Cabins') || L('ห้องนอน', 'Cabins') : L('ห้องนอน', 'Cabins')]); }
   const crew = g('Crew', 'Crews');
   if (crew) out.push(['life-buoy', num(crew) ? L(`ลูกเรือ ${num(crew)} คน`, `${num(crew)} crew`) : crew, L('กัปตันและลูกเรือดูแลตลอดทริป', 'Captain and crew on board')]);
   const yr = g('Year', 'Year Built', 'First Launch'), rf = g('Year Refit', 'Last Refit', 'Refit', 'Refitted');
