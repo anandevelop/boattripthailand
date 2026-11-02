@@ -441,7 +441,6 @@ function boatCard(b, i=0) {
         </a>
         ${b.hot?`<span class="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-white/90 backdrop-blur text-ink text-[11px] px-2.5 py-1 rounded-full shadow-sm"><i data-lucide="star" class="w-3 h-3 text-maroon fill-maroon"></i>${t('hot')}</span>`:''}
         <div class="absolute top-3 right-3 flex gap-2">
-          <button data-cmp="${b.slug}" onclick="toggleCompare('${b.slug}')" aria-pressed="${CMP.includes(b.slug)}" aria-label="${L('เปรียบเทียบ','Compare')} ${b.title}" title="${L('เปรียบเทียบ','Compare')}" class="bcard-ico"><i data-lucide="git-compare" class="w-4 h-4"></i></button>
           <button data-fav="${b.slug}" onclick="toggleFav('${b.slug}')" aria-pressed="${FAV.includes(b.slug)}" aria-label="${L('บันทึก','Save')} ${b.title}" title="${L('บันทึก','Save')}" class="bcard-ico"><i data-lucide="heart" class="w-4 h-4 ${FAV.includes(b.slug)?'fill-maroon':''}"></i></button>
         </div>
       </div>
@@ -651,6 +650,7 @@ function bentoHTML(b) {
       <button type="button" class="absolute inset-0 w-full h-full group" onclick="openLightbox('${b.slug}',0)" aria-label="${t('viewPhotos')}"><img src="${rs(g[0] || '', 1600)}" srcset="${g[0] ? `${rs(g[0])} 768w, ${rs(g[0], 1280)} 1280w, ${rs(g[0], 1600)} 1600w` : ''}" sizes="(min-width:1024px) 60vw, 100vw" alt="${name}" fetchpriority="high" class="gal-img"/></button>
       ${b.hot ? `<span class="bt-chip"><i data-lucide="star"></i>${L('ยอดนิยม', 'Popular')}</span>` : ''}
       <div class="bt-acts">
+        <button type="button" class="bt-round bt-cmp" data-cmp="${b.slug}" onclick="toggleCompare('${b.slug}');CMP.includes('${b.slug}')&&toast(CMP.length>1?'${L('พร้อมเทียบแล้ว · กดปุ่มเปรียบเทียบด้านล่าง', 'Ready · tap Compare below')}':'${L('เพิ่มในรายการเทียบแล้ว · เปิดเรือลำอื่นแล้วกดเทียบอีกลำ', 'Added · open another boat and tap compare')}')" aria-pressed="${CMP.includes(b.slug)}" aria-label="${L('เปรียบเทียบกับลำอื่น', 'Compare with other boats')}" title="${L('เปรียบเทียบ', 'Compare')}"><i data-lucide="git-compare"></i></button>
         <button type="button" class="bt-round" onclick="shareBoat('${b.slug}')" aria-label="${L('แชร์', 'Share')}"><i data-lucide="share-2"></i></button>
         <button type="button" class="bt-round" data-fav="${b.slug}" onclick="toggleFav('${b.slug}')" aria-pressed="${FAV.includes(b.slug)}" aria-label="${L('บันทึก', 'Save')} ${name}"><i data-lucide="heart"></i></button>
       </div>

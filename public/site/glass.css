@@ -743,6 +743,7 @@ details.fq { border-radius: 22px !important; } .fq { background: rgb(255 255 255
   #view-home > #typeBand, #view-home > #routes, #view-home > #promo, #view-home > #categories, #view-home > #activities,
   #view-home > #seoGuide, #view-home > #homeBlog, #view-home > #faq, #view-home > #booking, footer { content-visibility:auto; contain-intrinsic-size:auto 900px; }
   #fxGrid > .fx-card:nth-child(n+7) { content-visibility:auto; contain-intrinsic-size:auto 520px; }
+  @media (max-width:639px) { #fxGrid:not([data-cols="1"]) > .fx-card:nth-child(n+7) { contain-intrinsic-size:auto 300px; } }
 }
 
 /* ---------- phone menu (mockup F): full-screen brand red under the white navbar ---------- */

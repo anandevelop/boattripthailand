@@ -805,3 +805,46 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
 /* booking form: privacy notice + marketing consent */
 .bf-note a { color: #70000e; text-decoration: underline; text-underline-offset: 2px; }
 .bf-check small { color: #8a7d7f; font-size: .92em; }
+
+/* ---------- phone: 2 per row (mockup A) · #fxGrid[data-cols="1"] = the old one-per-row card, a bit shorter ---------- */
+.fx-nm2 { display: none; }
+.fx-cols { display: none; }
+@media (max-width: 639px) {
+  .fx-cols { display: inline-flex; flex: none; padding: 3px; border-radius: 99px; background: var(--g-bg); box-shadow: var(--g-shadow), var(--g-spec); }
+  .fx-cols button { width: 34px; height: 34px; border-radius: 99px; display: grid; place-items: center; color: #9a8e8f; }
+  .fx-cols button[aria-pressed="true"] { background: var(--fx-ink); color: #fff; }
+  .fx-cols svg { width: 16px; height: 16px; }
+  .fx-bar .r .fx-sort { flex: 1; min-width: 0; } .fx-bar .r .fx-sort select { width: 100%; }
+  #fxGrid[data-cols="1"] > .fx-card:not(.fx-pick) .fx-ph { aspect-ratio: 16 / 10; }
+  #fxGrid:not([data-cols="1"]) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 10px; }
+  #fxGrid:not([data-cols="1"]) > :is(.fx-empty, .fx-big, .fx-saved) { grid-column: 1 / -1; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) { background: transparent; box-shadow: none !important; border-radius: 0; overflow: visible; transform: none !important; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-ph { aspect-ratio: 4 / 5; border-radius: 18px; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-ph::after { background: linear-gradient(180deg, rgb(0 0 0 / .16), transparent 30%); }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) :is(.fx-nm, .fx-drive, .fx-fit, .fx-tags, .fx-view, .xtra, .fx-price .lbl, .fx-price .amt > span) { display: none !important; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) :is(.fx-tl, .fx-tr) { top: 8px; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-tl { left: 8px; } #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-tr { right: 8px; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-badge { height: 24px; padding: 0 8px; font-size: 11px; background: rgb(255 255 255 / .92); color: var(--fx-ink); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-badge.value { color: #fff; background: #2f6b45; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-badge svg { width: 12px; height: 12px; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-fav { width: 32px; height: 32px; background: rgb(255 255 255 / .92); color: var(--fx-ink); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-body { padding: 9px 2px 0; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-nm2 { display: block; color: var(--fx-ink); margin-bottom: 2px; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-nm2 small { display: block; font-size: 11px; color: var(--fx-muted); letter-spacing: .02em; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-nm2 b { display: block; font-size: 15px; font-weight: 500; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-specs { font-size: 12px; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-specs :is(.m, i:last-of-type) { display: none; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-specs i { margin: 0 5px; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-price { margin-top: 4px !important; padding: 0; border: 0; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-price .amt { font-size: 15px !important; font-weight: 500; margin: 0; }
+  #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-price .amt::before { content: attr(data-from) ' '; font-size: 11.5px; font-weight: 400; color: var(--fx-muted); }
+}
+.fx-saved { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border-radius: 20px; background: var(--fx-m50); }
+.fx-saved b { display: block; font-weight: 500; font-size: 15px; } .fx-saved span { display: block; font-size: 12.5px; color: var(--fx-muted); margin-top: 2px; }
+.fx-saved button { flex: none; height: 42px; padding: 0 16px; border-radius: 99px; background: var(--fx-m); color: #fff; font-size: 13.5px; display: inline-flex; align-items: center; gap: 7px; }
+.fx-saved button svg { width: 15px; height: 15px; }
+@media (max-width: 480px) { .fx-saved { flex-direction: column; align-items: stretch; } .fx-saved button { justify-content: center; } }
+/* boat page: compare lives here now (not on every card) */
+.bt-round.bt-cmp[aria-pressed="true"] { background: #fff; color: #70000e; }
+.bt-round.bt-cmp[aria-pressed="true"] svg { fill: none; stroke: #70000e; }
+@media (max-width: 1040px) { html:has(#view-boat:not(.hidden) .bp-mbar) #cmpTray.fx-tray { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 84px); } }   /* above the boat page's price bar */

@@ -172,7 +172,8 @@ function fxBuild(v) {
       <div class="r"><span class="tnum" id="fxCount"></span>
         <label class="fx-sort"><span class="sr-only">${L('เรียงลำดับ', 'Sort')}</span><select id="fxSort">
           <option value="smart">${L('เรียงแบบฉลาด ✦', 'Smart order ✦')}</option><option value="pp">${L('ราคาต่อคน ต่ำ → สูง', 'Price per guest, low → high')}</option>
-          <option value="low">${L('ราคาต่อลำ ต่ำ → สูง', 'Price per boat, low → high')}</option><option value="high">${L('ราคาต่อลำ สูง → ต่ำ', 'Price per boat, high → low')}</option><option value="size">${L('เรือใหญ่ก่อน', 'Largest first')}</option><option value="near" id="fxSortNear">${L('ใกล้ที่พักก่อน', 'Closest to my stay')}</option></select>${FXI('chevron-down')}</label></div>
+          <option value="low">${L('ราคาต่อลำ ต่ำ → สูง', 'Price per boat, low → high')}</option><option value="high">${L('ราคาต่อลำ สูง → ต่ำ', 'Price per boat, high → low')}</option><option value="size">${L('เรือใหญ่ก่อน', 'Largest first')}</option><option value="near" id="fxSortNear">${L('ใกล้ที่พักก่อน', 'Closest to my stay')}</option></select>${FXI('chevron-down')}</label>
+        <span class="fx-cols" role="group" aria-label="${L('มุมมอง', 'View')}"><button type="button" data-cols="1" onclick="fxCols(1)" aria-label="${L('แถวละ 1 ลำ', 'One per row')}">${FXI('rows-2')}</button><button type="button" data-cols="2" onclick="fxCols(2)" aria-label="${L('แถวละ 2 ลำ', 'Two per row')}">${FXI('layout-grid')}</button></span></div>
     </div>
     <div class="fx-ins" id="fxIns" hidden><span class="fx-spark">${FXI('sparkles')}</span><span id="fxInsT"></span><button class="fx-share" onclick="fxShare()">${FXI('link')}<span>${L('แชร์ผลค้นหา', 'Share this search')}</span></button><button class="fx-clr" onclick="fxReset()">${L('ล้าง', 'Clear')}</button></div>
     <div class="fx-grid" id="fxGrid"></div>
@@ -200,8 +201,9 @@ function fxDraw() {
   const order = pick ? [pick, ...list.filter(b => b !== pick)] : list, n = big ? 0 : list.length;
   $('#fxGrid').innerHTML = big
     ? `<div class="fx-big"><div><b>${L(`กลุ่ม ${FX.pax} คน · ใหญ่กว่าเรือลำเดียว`, `${FX.pax} guests · more than one boat`)}</b><p>${L(`เรือที่ใหญ่ที่สุดของเรารับได้ ${fxMaxPax()} คน · ทีมจัดหลายลำให้ออกเดินทางพร้อมกันได้`, `Our largest boat takes ${fxMaxPax()} guests · we can arrange several boats sailing together.`)}</p></div><button class="fx-book" onclick="fxBook('')">${L('ส่งคำขอจัดหลายลำ', 'Request several boats')}</button></div>`
-    : list.length ? order.map((b, i) => fxCard(b, b === pick ? 'pick' : b === value ? 'value' : '', i, list)).join('')
+    : list.length ? (FX.fav ? fxSavedAsk(list) : '') + order.map((b, i) => fxCard(b, b === pick ? 'pick' : b === value ? 'value' : '', i, list)).join('')
     : `<div class="fx-empty">${FXI('ship')}<b>${FX.fav ? L('ยังไม่มีเรือในรายการโปรด', 'No saved boats yet') : L('ยังไม่มีเรือที่ตรงทุกข้อ', 'No boat matches everything yet')}</b><p>${L('ลองเพิ่มงบ หรือลดจำนวนจุดหมาย · ทีมเราหาเรือนอกรายการให้ได้', 'Try a higher budget or fewer stops · our team can also find boats not listed here.')}</p><div><button class="fx-reset" onclick="fxReset()">${L('ล้างตัวกรอง', 'Clear filters')}</button><button class="fx-book" onclick="fxBook('')">${L('ให้ทีมหาเรือให้', 'Ask our team')}</button></div></div>`;
+  fxApplyCols(n);
   $('#fxCount').textContent = L(`พบ ${n} ลำ`, `${n} boats`);
   $('#fxGoT').textContent = L(`ดู ${n} ลำ`, `See ${n} boats`); $('#fxSGo').textContent = L(`ดู ${n} ลำ`, `See ${n} boats`);
   const H = $('#fxH1'); if (H) H.innerHTML = `${FX.fav ? L('เรือที่บันทึกไว้', 'Saved boats') : t('fleet')}<sup class="tnum">${FX.fav ? FAV.length : FLEET.length}</sup>`;
@@ -242,9 +244,10 @@ function fxCard(b, mode, i, list) {
   return `<article class="fx-card ${pick ? 'fx-pick' : ''}">
     <div class="fx-ph"><a class="fx-ph-link img-fallback" href="#/boat/${b.slug}" aria-label="${L('ดูรายละเอียด', 'View')} ${name}"><img loading="${i < 3 && (VH.hash || '').startsWith('#/fleet') ? 'eager' : 'lazy'}" decoding="async" width="796" height="597" src="${bimg(b.slug, 'hero')}" alt="${name} – ${typeLabel(b.type)} ${L('เช่าเหมาลำ ภูเก็ต', 'private charter, Phuket')}"><span class="fx-more fx-gd">${L('ดูรายละเอียด', 'Details')} ${FXI('arrow-right')}</span></a>
       <div class="fx-tl">${badge}</div>
-      <div class="fx-tr"><button class="fx-cmp fx-gd" data-cmp="${b.slug}" aria-pressed="${CMP.includes(b.slug)}" onclick="toggleCompare('${b.slug}')"><span class="n">${FXI('plus')}${L('เทียบ', 'Compare')}</span><span class="y">${FXI('check')}${L('เทียบแล้ว', 'Comparing')}</span></button><button class="fx-fav fx-gd" data-fav="${b.slug}" aria-pressed="${FAV.includes(b.slug)}" onclick="toggleFav('${b.slug}')" aria-label="${L('บันทึก', 'Save')} ${name}">${FXI('heart')}</button></div>
+      <div class="fx-tr"><button class="fx-fav fx-gd" data-fav="${b.slug}" aria-pressed="${FAV.includes(b.slug)}" onclick="toggleFav('${b.slug}')" aria-label="${L('บันทึก', 'Save')} ${name}">${FXI('heart')}</button></div>
       <a class="fx-nm" href="#/boat/${b.slug}"><small>${typeLabel(b.type)}</small><b>${name}</b></a></div>
     <div class="fx-body">
+      <a class="fx-nm2" href="#/boat/${b.slug}"><small>${typeLabel(b.type)}</small><b>${name}</b></a>
       ${pick ? `<p class="fx-eye">${FXI('sparkles')}${L(`ตรงกับที่คุณเลือก · จาก ${list.length} ลำ`, `Matches your search · from ${list.length} boats`)}</p>
       <div class="fx-why"><div><span>${FXI('star')}</span><div><b>${L('เรือแนะนำของเรา', 'One of our recommended boats')}</b> · ${L('ตรงกับวัน จำนวนคน และเส้นทางที่เลือก', 'fits your date, group and route')}</div></div>
         <div><span>${FXI('users')}</span><div><b>${FX.pax} ${t('guests')} ${fill < 75 ? L('นั่งสบาย', 'with room to spare') : L('พอดีลำ', 'a snug fit')}</b> · ${L('จุได้', 'takes')} ${b.pax} ${t('guests')}</div></div>
@@ -254,7 +257,7 @@ function fxCard(b, mode, i, list) {
       ${FX.paxSet && !pick ? `<div class="fx-fit"><div class="t"><span>${L('กลุ่มคุณ', 'Your group')} <b>${FX.pax}</b> / ${b.pax} ${t('guests')}</span><span>${fill < 35 ? L('กว้างขวางมาก', 'very spacious') : fill < 75 ? L('นั่งสบาย', 'comfortable') : L('เต็มพอดี', 'snug')}</span></div><div class="fx-meter"><i style="width:${fill}%"></i></div></div>` : ''}
       ${pick && alts.length ? `<p class="fx-alt-h">${L('ทางเลือกใกล้เคียง', 'Similar options')}</p><div class="fx-alts">${alts.map(x => `<a class="fx-alt" href="#/boat/${x.slug}"><img src="${bimg(x.slug, 'hero')}" alt="" loading="lazy"><div><b>${fxEsc(niceTitle(x.title))}</b><small>${x.pax} ${t('guests')} · ${baht(fxPrice(x).total)}</small></div></a>`).join('')}</div>` : ''}
       ${!pick && tags.length ? `<div class="fx-tags">${tags.map(d => `<span class="fx-tag ${FX.dest.has(d) ? 'hit' : ''}">${fxDL(d)}</span>`).join('')}</div>` : ''}
-      <div class="fx-price"><div class="min-w-0"><span class="lbl">${lbl}</span><span class="amt tnum">${pr.total ? baht(pr.total) : '—'} <span>${t('perTrip')}</span></span>${pr.extraPax ? `<span class="xtra">${L(`รวมค่าคนเกิน ${pr.extraPax} คนแล้ว`, `incl. ${pr.extraPax} extra guest${pr.extraPax > 1 ? 's' : ''}`)}</span>` : ''}</div>
+      <div class="fx-price"><div class="min-w-0"><span class="lbl">${lbl}</span><span class="amt tnum" data-from="${FX.date ? '' : L('เริ่ม', 'from')}">${pr.total ? baht(pr.total) : '—'} <span>${t('perTrip')}</span></span>${pr.extraPax ? `<span class="xtra">${L(`รวมค่าคนเกิน ${pr.extraPax} คนแล้ว`, `incl. ${pr.extraPax} extra guest${pr.extraPax > 1 ? 's' : ''}`)}</span>` : ''}</div>
         <a class="fx-view" href="#/boat/${b.slug}" aria-label="${L('ดูรายละเอียด', 'View')} ${name}">${FXI('arrow-up-right')}</a></div>
     </div></article>`;
 }
@@ -1334,3 +1337,29 @@ updateCompareUI();
 { const _rd = renderDest; renderDest = function (slug) { _rd(slug); try { $$('#view-dest .grid.lg\\:grid-cols-4').forEach(g => { if (g.querySelector('.fx-card')) g.className = 'fx-grid mt-6'; }); fxPark(); } catch (e) { } }; }
 if ((VH.hash || '').startsWith('#/dest/')) { try { renderDest(decodeURIComponent(VH.hash.slice(7))); fxFixImgs(); } catch (e) { } }
 if ((VH.hash || '').startsWith('#/fleet')) { renderFleetPage(); if (typeof afterRoute === 'function') afterRoute(); }
+
+/* ---------- phone: 2 boats per row (default) or 1 · the choice is remembered; 1–2 results always show one per row ----------
+   CSS does the 2-column look (fleet.css "phone: 2 per row"), so the server-rendered page already has it. */
+function fxColsPref() { try { return localStorage.getItem('btt_fx_cols') === '1' ? 1 : 2; } catch (e) { return 2; } }
+function fxApplyCols(n) {
+  const g = document.getElementById('fxGrid'); if (!g) return;
+  const c = n != null && n <= 2 ? 1 : fxColsPref();
+  g.dataset.cols = String(c);
+  document.querySelectorAll('.fx-cols button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.cols === c)));
+}
+function fxCols(c) {
+  try { localStorage.setItem('btt_fx_cols', String(c)); } catch (e) { }
+  fxApplyCols(document.querySelectorAll('#fxGrid > .fx-card').length);
+  try { track && track('FleetView', { content_name: c === 1 ? 'one-per-row' : 'two-per-row' }); } catch (e) { }
+}
+/* saved boats (#/fleet?fav): one button sends the whole list to the team in a booking request */
+function fxSavedAsk(list) {
+  return `<div class="fx-saved"><div><b>${L(`บันทึกไว้ ${list.length} ลำ`, `${list.length} saved boat${list.length > 1 ? 's' : ''}`)}</b><span>${L('ส่งรายการนี้ให้ทีมเราช่วยเลือกลำที่เหมาะ และเช็กว่าว่างวันไหน', 'Send this list and our team will help you pick and check dates')}</span></div>
+    <button type="button" onclick="fxAskSaved()">${FXI('send')}${L('ส่งให้ทีมช่วยเลือก', 'Ask our team')}</button></div>`;
+}
+function fxAskSaved() {
+  const bs = FAV.map(bySlug).filter(Boolean); if (!bs.length) return;
+  openBooking(bs.length === 1 ? 'boat:' + bs[0].slug : '');
+  const note = typeof modalForm !== 'undefined' && modalForm && modalForm.note;
+  if (note) note.value = L('เรือที่บันทึกไว้: ', 'Saved boats: ') + bs.map(b => niceTitle(b.title)).join(', ') + L(' · ช่วยแนะนำลำที่เหมาะกับกลุ่มเราหน่อย', ' · please help us choose');
+}
