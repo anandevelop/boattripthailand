@@ -960,3 +960,8 @@ html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !im
   .bp-kv dd { font-size: 13.5px; }
   .bp-inc li { font-size: 12px; }
 }
+/* หน้าเรือ (มือถือ): แกลเลอรีมุมเหลี่ยมด้านใน โค้งเฉพาะขอบนอก ไม่มีขอบขาว/เงา — แบบเดียวกับคอม */
+@media (max-width:720px) {
+  .bento.bento-v2 { gap:4px; border-radius:20px; overflow:hidden; }
+  .bento.bento-v2 .bt, .bento.bento-v2 .bt-1, .bento.bento-v2 .bt-2, .bento.bento-v2 .bt-3, .bento.bento-v2 .bt-4 { border-radius:0 !important; box-shadow:none; }
+}
