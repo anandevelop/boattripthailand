@@ -207,6 +207,12 @@
 <!-- ============ SMART MATCH TEASER ============ -->
 <section id="smartTeaser" hidden></section>
 
+<!-- ============ สรุปสั้น + ราคาตามประเภทเรือ (AEO) ============ -->
+<section id="homeAnswer" aria-label="Summary"></section>
+
+<!-- ============ BY BOAT TYPE ============ -->
+<section id="typeBand" class="relative overflow-hidden on-dark" aria-labelledby="typeBandTitle"></section>
+
 <!-- ============ FEATURED BOATS ============ -->
 <section id="boats" class="bg-white pt-20 lg:pt-24 pb-14 lg:pb-20 relative scroll-mt-16">
   <div class="max-w-7xl mx-auto px-4 sm:px-6">
@@ -235,50 +241,14 @@
   </div>
 </section>
 
-<!-- ============ BY BOAT TYPE ============ -->
-<section id="typeBand" class="relative overflow-hidden on-dark" aria-labelledby="typeBandTitle"></section>
 
-<!-- ============ ROUTES MARQUEE ============ -->
-<section id="routes" class="py-12 lg:py-t7 scroll-mt-16" aria-roledescription="carousel">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6">
-    <div class="flex items-end justify-between gap-4 mb-6">
-      <div>
-        <p class="text-[11px] uppercase tracking-[.28em] text-muted" data-i18n="routes.kicker">Island Hopping</p>
-        <h2 class="font-display text-2xl sm:text-3xl text-ink mt-3" data-i18n="routes.title">เส้นทางยอดฮิตจากภูเก็ต</h2>
-      </div>
-      <div class="hidden sm:flex gap-2 shrink-0">
-        <button onclick="routeScroll(-1)" id="rtPrev" class="rt-nav" aria-label="Previous"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>
-        <button onclick="routeScroll(1)" id="rtNext" class="rt-nav" aria-label="Next"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
-      </div>
-    </div>
-    <div class="relative">
-      <div id="routeTrack" class="rt-track flex gap-5 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth"></div>
-      <button onclick="routeScroll(1)" class="rt-float hidden sm:grid" aria-label="Next"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-    </div>
-  </div>
-</section>
 
-<!-- ============ PROMO BANNER ============ -->
-<section id="promo" class="max-w-7xl mx-auto px-4 sm:px-6 pb-14 lg:pb-20">
-  <div class="relative overflow-hidden bg-maroon text-white on-dark">
-    <div class="grid md:grid-cols-2 items-stretch">
-    <div class="p-6 sm:p-12 flex flex-col justify-center">
-      <div>
-        <span class="inline-block bg-sun text-ink text-xs font-medium px-3 py-2 rounded-full" data-i18n="promo.tag">OVERNIGHT CHARTER</span>
-        <h2 class="font-display font-medium text-2xl sm:text-3xl mt-4 leading-tight" data-i18n="promo.title">นอนกลางทะเล ตื่นมากับพระอาทิตย์ขึ้นที่อันดามัน</h2>
-        <p class="text-white/90 mt-3 max-w-lg" data-i18n="promo.sub">แพ็กเกจ 2 วัน 1 คืน บนเรือยอชต์ VTECH 68 ฟุต รวมอาหารทุกมื้อ ค่าอุทยาน และรถรับส่ง</p>
-        <div class="mt-6 flex flex-wrap gap-3 items-center">
-          <button onclick="location.hash='#/boat/vtech-68-ft'" class="bg-white text-ink font-medium px-6 py-3 rounded-full hover:bg-sun hover:text-ink transition" data-i18n="promo.cta">ดูแพ็กเกจ</button>
-          <span class="text-sm text-white/90"><span data-i18n="price.from">เริ่มต้น</span> <b class="text-sun text-lg" id="promoPrice">฿375,000</b></span>
-        </div>
-      </div>
-    </div>
-    <div class="img-fallback min-h-[220px]"><img data-bimg="vtech-68-ft:hero" alt="VTECH 68 ft" class="w-full h-full object-cover" /></div>
-    </div>
-  </div>
-</section>
 
 <section id="recentWrap" class="hidden bg-sand"></section>
+
+<!-- ============ ปลายทาง + 3 ขั้นตอนการจอง ============ -->
+<section id="homeDests" aria-label="Destinations"></section>
+<section id="homeHow" aria-label="How to book"></section>
 
 <!-- ============ CATEGORIES ============ -->
 <section id="categories" class="max-w-7xl mx-auto px-4 sm:px-6 pt-14 lg:pt-20 scroll-mt-24">
@@ -306,7 +276,6 @@
   </div>
 </section>
 
-<section id="seoGuide" aria-labelledby="seoGuideTitle" class="border-t border-sand-200"></section>
 
 <!-- ============ FAQ ============ -->
 <section id="homeBlog" aria-label="Blog"></section>

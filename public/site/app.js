@@ -995,6 +995,7 @@ function routeInfo(r) {
   return { list, n: list.length, from: Math.min(...list.filter(b=>b.from_).map(b=>b.from_)) };
 }
 function renderRoutes() {
+  if (!$('#routeTrack')) return;   // หน้าแรกแบบใหม่ใช้ #homeDests แทน
   const used = new Set();
   const card = r => { const info = routeInfo(r); const pick = info.list.find(b => !used.has(b.slug) && bimg(b.slug,'hero')) || FLEET.find(b=>!used.has(b.slug)); used.add(pick.slug);
     return `<a href="${destSlugOf(r[0]) ? '#/dest/' + destSlugOf(r[0]) : '#boats'}" onclick="${destSlugOf(r[0]) ? '' : `quickDest('${r[0]}')`}" class="rt-card snap-start shrink-0 group relative block aspect-[4/5] rounded-[18px] overflow-hidden img-fallback">
@@ -1307,7 +1308,58 @@ function tbBar() {
 }
 { const _tb = renderTypeBand; renderTypeBand = function () { _tb(); if (typeof requestAnimationFrame === 'function' && navigator.userAgent !== 'BTT-SSR') requestAnimationFrame(tbBar); }; }
 
-const HOME_PARTS = () => [renderHeroText, renderHero, renderTypeBand, renderStats, renderSmartTeaser, renderGroups, renderCats, renderActs, renderBoatFilters, renderBoats, renderRoutes, renderRecent, renderSeoGuide, renderHomeBlog, renderFaq, renderTeam, renderTeamLive];
+/* =========================================================
+   HOME (mockup หน้าบ้านใหม่): สรุปสั้น/ราคา · ปลายทาง · 3 ขั้นตอนการจอง — สไตล์ .hx-* ใน glass.css
+   ทุกตัวเลขคำนวณจาก FLEET / DEST_PAGES
+   ========================================================= */
+function renderHomeAnswer() {
+  const el = $('#homeAnswer'); if (!el) return;
+  const rows = TYPES.map(ty => { const bs = FLEET.filter(b => b.type === ty), fr = bs.filter(b => b.from_).map(b => b.from_); return { ty, n: bs.length, from: fr.length ? Math.min(...fr) : 0, top: fr.length ? Math.max(...fr) : 0 }; })
+    .filter(r => r.n).sort((a, b) => (a.from || 9e9) - (b.from || 9e9));
+  const lo = rows.find(r => r.from), hi = rows.reduce((m, r) => (r.top > (m ? m.top : 0) ? r : m), null);
+  const ships = FLEET.length;
+  el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 pt-10 lg:pt-14 pb-10 lg:pb-14"><div class="hx-ans">
+    <div class="hx-ans-t">
+      <p class="hx-eye">${L('สรุปสั้น', 'In short')}</p>
+      <h2 class="font-display hx-h2">${L('เช่าเรือส่วนตัวในภูเก็ต ราคาเท่าไหร่ ต้องรู้อะไรบ้าง', 'Private boat charter in Phuket: prices and what to know')}</h2>
+      <p class="hx-p">${lo ? L(`เช่าเรือส่วนตัวกับ Boat Trip Thailand เริ่มต้น ${baht(lo.from)} ต่อลำ (${typeLabel(lo.ty)})`, `Private charters with Boat Trip Thailand start at ${baht(lo.from)} per boat (${typeLabel(lo.ty)})`) : ''}${hi ? L(` ไปจนถึงเรือยอชต์ลำใหญ่ที่เริ่มราว ${baht(hi.top)}`, `, up to large yachts from around ${baht(hi.top)}`) : ''}${L(' ราคาเป็นต่อลำ ไม่ใช่ต่อคน รวมกัปตันและลูกเรือ ขึ้นกับเรือ ระยะเวลา และฤดูกาล ทะเลสงบที่สุดช่วงพฤศจิกายน–เมษายน', ' — prices are per boat, not per person, with captain and crew, and depend on the boat, duration and season. Seas are calmest November–April.')}</p>
+      <p class="hx-p">${L(`มีเรือให้เลือก ${ships} ลำ ไปเกาะพีพี อ่าวพังงา เกาะราชา และเกาะไข่ ส่งคำขอฟรี ไม่ต้องจ่ายบนเว็บ ทีมงานเช็กเรือว่างและยืนยันราคาให้`, `${ships} boats to Phi Phi, Phang Nga Bay, Racha and the Khai islands. Requests are free with no payment online — our team checks availability and confirms the price.`)}</p>
+      <div class="hx-links"><a href="#/fleet">${L(`ดูเรือทั้งหมด ${ships} ลำ`, `All ${ships} boats`)}<i data-lucide="arrow-right" class="w-4 h-4"></i></a><a href="#/destinations">${L('ดูปลายทาง', 'Destinations')}<i data-lucide="arrow-right" class="w-4 h-4"></i></a></div>
+    </div>
+    <div class="hx-tw"><table class="hx-t">
+      <caption>${L('ราคาเริ่มต้นตามประเภทเรือ (ต่อลำ)', 'Starting price by boat type (per boat)')}</caption>
+      <thead><tr><th scope="col">${L('ประเภท', 'Type')}</th><th scope="col">${L('จำนวน', 'Boats')}</th><th scope="col">${L('เริ่มต้น', 'From')}</th></tr></thead>
+      <tbody>${rows.map(r => `<tr><th scope="row"><a href="#/fleet?type=${r.ty}">${typeLabel(r.ty)}</a></th><td>${r.n} ${L('ลำ', 'boats')}</td><td>${r.from ? baht(r.from) : '—'}</td></tr>`).join('')}</tbody>
+    </table></div>
+  </div></div>`;
+}
+function renderHomeDests() {
+  const el = $('#homeDests'); if (!el || !DPAGES.length) return;
+  const sub = { 'phi-phi': L('อ่าวมาหยา น้ำทะเลใส', 'Maya Bay, clear water'), 'phang-nga-bay': L('เขาหินปูน พายแคนูลอดถ้ำ', 'Limestone karsts, sea caves'), 'racha-island': L('น้ำใส ดำน้ำตื้น', 'Clear water, snorkelling'), 'khai-island': L('ใกล้ที่สุด เหมาะครึ่งวัน', 'Closest, ideal half day') };
+  el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 lg:py-20">
+    <div class="tm-head"><div><p class="tm-eyebrow"><i data-lucide="map-pin"></i>${L('ปลายทางยอดนิยม', 'Top destinations')}</p><h2 class="tm-title font-display">${L('เช่าเรือไปเกาะไหนดี', 'Where to go by private boat')}</h2></div>
+      <a href="#/destinations" class="hx-more">${L('ดูปลายทางทั้งหมด', 'All destinations')}<i data-lucide="arrow-right" class="w-4 h-4"></i></a></div>
+    <div class="hx-dg">${DPAGES.map((d, i) => { const n = destBoats(d.slug).length; return `<a href="#/dest/${d.slug}" class="hx-dc${i === 0 ? ' hx-dc1' : ''} img-fallback">
+      <img src="${rs(d.hero, i === 0 ? 1280 : 768)}" alt="${L('เช่าเรือไป', 'Private boat to ')}${dl(d.name)}" loading="lazy"/><span class="hx-sh"></span>
+      <span class="hx-dt"><b class="font-display">${dl(d.name)}</b><span>${[sub[d.slug], n ? L(`เรือที่ไป ${n} ลำ`, `${n} boats`) : ''].filter(Boolean).join(' · ')}</span></span></a>`; }).join('')}</div>
+  </div>`;
+}
+function renderHomeHow() {
+  const el = $('#homeHow'); if (!el) return;
+  const S = [
+    ['send', L('ส่งคำขอฟรี', 'Send a free request'), L('เลือกวัน จำนวนคน และเรือที่สนใจ หรือให้ทีมช่วยเลือกเรือให้', 'Pick a date, group size and boat — or let us choose for you')],
+    ['calendar-check', L('ทีมยืนยันเรือและราคา', 'We confirm boat & price'), L('เช็กว่าเรือว่าง แจ้งราคาสุทธิ สิ่งที่รวม และเวลานัด ภายใน 30 นาที (09:00–21:00)', 'We check availability and send the final price, inclusions and pickup time within 30 minutes (09:00–21:00)')],
+    ['ship', L('ชำระและออกทริป', 'Pay and set sail'), L('ชำระตามเงื่อนไขที่ทีมงานแจ้ง แล้วไปขึ้นเรือที่ท่าตามนัด', 'Pay as agreed with our team, then meet the boat at the marina')],
+  ];
+  el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 pb-14 lg:pb-20"><div class="hx-how">
+    <div class="hx-how-h"><p class="tm-eyebrow"><i data-lucide="list"></i>${L('จองยังไง', 'How to book')}</p><h2 class="tm-title font-display">${L('3 ขั้นตอน ไม่ต้องจ่ายบนเว็บ', '3 steps, no payment online')}</h2>
+      <p class="tm-sub">${L('เลือกเรือหรือบอกความต้องการ ทีมงานติดต่อกลับทาง LINE, WhatsApp หรือโทร พร้อมราคาที่ยืนยันแล้ว', 'Choose a boat or tell us what you need — we reply on LINE, WhatsApp or phone with a confirmed price.')}</p>
+      <button type="button" onclick="openBooking()" class="hx-btn">${L('ส่งคำขอฟรี', 'Send a free request')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+    <ol class="hx-steps">${S.map(([ic, a, b], i) => `<li><span class="hx-n">${i + 1}</span><span><b>${a}</b><span>${b}</span></span><i data-lucide="${ic}" class="hx-ic"></i></li>`).join('')}</ol>
+  </div></div>`;
+}
+
+const HOME_PARTS = () => [renderHeroText, renderHero, renderHomeAnswer, renderTypeBand, renderStats, renderSmartTeaser, renderGroups, renderCats, renderActs, renderBoatFilters, renderBoats, renderRoutes, renderRecent, renderHomeDests, renderHomeHow, renderSeoGuide, renderHomeBlog, renderFaq, renderTeam, renderTeamLive];
 function renderAll() { HOME_PARTS().forEach(f => f()); renderNavText(); updateCompareUI(); route(true); }
 /* first load on another page (a boat, the fleet, an article…): draw that page first, then the hidden home sections
    a few at a time in later tasks, so the phone is not frozen while it builds a page nobody is looking at yet */
