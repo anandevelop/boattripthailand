@@ -1120,3 +1120,9 @@ html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !im
 @keyframes hwWave { to { transform: translateX(-50%); } }
 @media (max-width: 1023px) { .hw-ph { transform: scale(.82); transform-origin: top center; top: 16px; } .hw-cf { transform: scale(.88); transform-origin: top center; top: 22px; } }
 @media (prefers-reduced-motion: reduce) { .hw * { animation: none !important; } .hw-fld b { width: 100%; } .hw-chk path { stroke-dashoffset: 0; } .hw-plane { display: none; } .hw-boat { left: 30%; } }
+/* Modals on phones: the sheet sits at the bottom with margin-top:auto instead of align-items:flex-end.
+   With flex-end a form taller than the screen overflowed upwards and its top (name, close button) could not be
+   scrolled to — the booking form looked frozen on iPhone. */
+#bookingModal > .relative, #smartModal > .relative { align-items: flex-start !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+#bookingModal .modal-enter, #smartModal .modal-enter { margin-top: auto; flex: none; }
+@media (min-width: 640px) { #bookingModal .modal-enter, #smartModal .modal-enter { margin-bottom: auto; } }
