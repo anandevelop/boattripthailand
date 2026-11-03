@@ -45,7 +45,7 @@ const CUSTOMERS = BOOT.customers;
 const BOOKINGS = BOOT.leads;
 const custOf = id => CUSTOMERS.find(c => c.id === id);
 const teamOf = id => TEAM.find(t => t.id === id);
-const pill = s => `<span class="pill ${STATUS[s][1]}">${STATUS[s][0]}</span>`;
+const pill = s => { const t = STATUS[s] || [s || '—', 'st-new']; return `<span class="pill ${t[1]}">${t[0]}</span>`; };
 const thumb = (slug, cls = 'w-12 h-9') => THUMBS[slug] ? `<img src="${THUMBS[slug]}" alt="" class="${cls} rounded-lg object-cover bg-sand shrink-0"/>` : `<span class="${cls} rounded-lg bg-sand shrink-0 grid place-items-center ring-1 ring-inset ring-[#e9b9bd]" title="ยังไม่มีรูป"><i data-lucide="image-off" class="w-4 h-4 text-[#c47a82]"></i></span>`;
 
 /* ---------- Shell helpers ---------- */
@@ -71,7 +71,7 @@ function vDashboard() {
   const months = Array.from({ length: 6 }, (_, i) => new Date(TODAY.getFullYear(), TODAY.getMonth() - 3 + i, 1));
   const mrev = months.map(m => live.filter(b => { const d = new Date(b.date + 'T00:00:00'); return d.getMonth() === m.getMonth() && d.getFullYear() === m.getFullYear(); }).reduce((s, b) => s + b.total, 0));
   const max = Math.max(...mrev, 1);
-  const byType = Object.keys(TYPE_TH).map(t => [t, live.filter(b => bySlug(b.boat).type === t).length]);
+  const byType = Object.keys(TYPE_TH).map(t => [t, live.filter(b => bySlug(b.boat)?.type === t).length]);
   const topBoats = Object.entries(live.reduce((o, b) => (o[b.boat] = (o[b.boat] || 0) + b.total, o), {})).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const totT = byType.reduce((s, x) => s + x[1], 0) || 1;
   $('#view').innerHTML = `
@@ -100,13 +100,13 @@ function vDashboard() {
       <div class="card xl:col-span-2 overflow-hidden">
         <div class="px-5 pt-5 pb-3 flex items-center justify-between"><p class="font-medium">ทริปที่กำลังจะออก (7 วัน)</p><button class="btn btn-g" onclick="go('bookings')">ดูทั้งหมด <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button></div>
         <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>วันที่</th><th>เรือ</th><th>ลูกค้า</th><th>คน</th><th>สถานะ</th><th class="text-right">ยอด</th></tr></thead><tbody>
-          ${upcoming.slice(0, 8).map(b => `<tr class="click" onclick="bookingDetail('${b.id}')"><td class="whitespace-nowrap">${fmtD(b.date)}</td><td><div class="flex items-center gap-2.5">${thumb(b.boat, 'w-10 h-7')}<span class="truncate max-w-[160px]">${bySlug(b.boat).name}</span></div></td><td class="truncate max-w-[140px]">${esc(custOf(b.cust).name)}</td><td class="tnum">${b.guests}</td><td>${pill(b.status)}</td><td class="text-right tnum">${baht(b.total)}</td></tr>`).join('') || `<tr><td colspan="6" class="text-center text-muted py-8">ไม่มีทริปใน 7 วันนี้</td></tr>`}
+          ${upcoming.slice(0, 8).map(b => `<tr class="click" onclick="bookingDetail('${b.id}')"><td class="whitespace-nowrap">${fmtD(b.date)}</td><td><div class="flex items-center gap-2.5">${thumb(b.boat, 'w-10 h-7')}<span class="truncate max-w-[160px]">${boatName(b.boat)}</span></div></td><td class="truncate max-w-[140px]">${esc(custOf(b.cust).name)}</td><td class="tnum">${b.guests}</td><td>${pill(b.status)}</td><td class="text-right tnum">${baht(b.total)}</td></tr>`).join('') || `<tr><td colspan="6" class="text-center text-muted py-8">ไม่มีทริปใน 7 วันนี้</td></tr>`}
         </tbody></table></div>
       </div>
       <div class="card p-5">
         <p class="font-medium">ต้องจัดการ</p>
         <ul class="mt-3 divide-y divide-line">
-          ${newOnes.slice(0, 4).map(b => `<li class="py-3 flex items-start gap-3 cursor-pointer" onclick="bookingDetail('${b.id}')"><span class="w-8 h-8 rounded-full bg-[#eef2ff] text-[#3b4bb5] grid place-items-center shrink-0"><i data-lucide="message-square" class="w-4 h-4"></i></span><div class="min-w-0 flex-1"><p class="truncate">${esc(custOf(b.cust).name)} · ${bySlug(b.boat).name}</p><p class="text-[11px] text-muted">${STATUS[b.status][0]} · ${b.channel} · ${fmtD(b.date)}</p></div></li>`).join('')}
+          ${newOnes.slice(0, 4).map(b => `<li class="py-3 flex items-start gap-3 cursor-pointer" onclick="bookingDetail('${b.id}')"><span class="w-8 h-8 rounded-full bg-[#eef2ff] text-[#3b4bb5] grid place-items-center shrink-0"><i data-lucide="message-square" class="w-4 h-4"></i></span><div class="min-w-0 flex-1"><p class="truncate">${esc(custOf(b.cust).name)} · ${boatName(b.boat)}</p><p class="text-[11px] text-muted">${(STATUS[b.status] || STATUS.new)[0]} · ${b.channel} · ${fmtD(b.date)}</p></div></li>`).join('')}
           ${pendingDep.slice(0, 3).map(b => `<li class="py-3 flex items-start gap-3 cursor-pointer" onclick="bookingDetail('${b.id}')"><span class="w-8 h-8 rounded-full bg-[#fff1e8] text-[#b4501a] grid place-items-center shrink-0"><i data-lucide="banknote" class="w-4 h-4"></i></span><div class="min-w-0 flex-1"><p class="truncate">รอมัดจำ ${baht(b.total / 2)}</p><p class="text-[11px] text-muted">${esc(custOf(b.cust).name)} · ${b.id}</p></div></li>`).join('')}
         </ul>
       </div>
@@ -121,7 +121,7 @@ function vBookings() {
   const tabs = [['all', 'ทั้งหมด'], ...Object.entries(STATUS).map(([k, v]) => [k, v[0]])];
   const q = BK.q.toLowerCase();
   let list = BOOKINGS.filter(b => (BK.tab === 'all' || b.status === BK.tab) && (!BK.sales || b.sales === BK.sales) &&
-    (!q || (b.id + ' ' + custOf(b.cust).name + ' ' + bySlug(b.boat).name + ' ' + b.prog).toLowerCase().includes(q)));
+    (!q || (b.id + ' ' + custOf(b.cust).name + ' ' + boatName(b.boat) + ' ' + b.prog).toLowerCase().includes(q)));
   list = [...list].sort((a, b) => BK.sort === 'date' ? a.date.localeCompare(b.date) : b.created.localeCompare(a.created));
   $('#view').innerHTML = `
     ${head('การจอง', `${BOOKINGS.length} รายการ · ${BOOKINGS.filter(b => b.status === 'new').length} รายการใหม่`, `<button class="btn btn-o" onclick="exportCsv()"><i data-lucide="download" class="w-3.5 h-3.5"></i>Export CSV</button><button class="btn btn-p" onclick="newBooking()"><i data-lucide="plus" class="w-3.5 h-3.5"></i>สร้างการจอง</button>`)}
@@ -138,7 +138,7 @@ function vBookings() {
         ${list.map(b => { const c = custOf(b.cust), s = teamOf(b.sales); return `<tr class="click" onclick="bookingDetail('${b.id}')">
           <td class="whitespace-nowrap"><p class="tnum">${b.id}</p><p class="text-[11px] text-muted">สร้าง ${fmtD(b.created)}</p></td>
           <td><p class="truncate max-w-[150px]">${esc(c.name)}</p><p class="text-[11px] text-muted">${c.country}</p></td>
-          <td><div class="flex items-center gap-2.5">${thumb(b.boat, 'w-10 h-7')}<div class="min-w-0"><p class="truncate max-w-[180px]">${bySlug(b.boat).name}</p><p class="text-[11px] text-muted truncate max-w-[180px]">${esc(b.prog)}</p></div></div></td>
+          <td><div class="flex items-center gap-2.5">${thumb(b.boat, 'w-10 h-7')}<div class="min-w-0"><p class="truncate max-w-[180px]">${boatName(b.boat)}</p><p class="text-[11px] text-muted truncate max-w-[180px]">${esc(b.prog)}</p></div></div></td>
           <td class="whitespace-nowrap">${fmtD(b.date)}</td><td class="tnum">${b.guests}</td><td class="text-muted">${b.channel}</td>
           <td><div class="flex items-center gap-1.5"><img src="${teamImg(s.id)}" class="w-6 h-6 rounded-full object-cover"/>${s.name}</div></td>
           <td>${pill(b.status)}</td>
@@ -184,7 +184,7 @@ function bookingDetail(id) {
 function setStatus(id, s) { const b = BOOKINGS.find(x => x.id === id); b.status = s; if (s === 'confirmed' && !b.paid) b.paid = b.total / 2; toast(`เปลี่ยนสถานะเป็น "${STATUS[s][0]}" แล้ว`); rerender(); }
 function recordPay(id) { const b = BOOKINGS.find(x => x.id === id); b.paid = b.paid ? b.total : b.total / 2; if (b.status === 'deposit' || b.status === 'quote' || b.status === 'new') b.status = 'confirmed'; toast('บันทึกรับเงินแล้ว'); bookingDetail(id); rerender(); }
 function exportCsv() {
-  const rows = [['id', 'customer', 'boat', 'program', 'date', 'guests', 'total', 'paid', 'status', 'sales', 'channel'], ...BOOKINGS.map(b => [b.id, custOf(b.cust).name, bySlug(b.boat).name, b.prog, b.date, b.guests, b.total, b.paid, b.status, b.sales, b.channel])];
+  const rows = [['id', 'customer', 'boat', 'program', 'date', 'guests', 'total', 'paid', 'status', 'sales', 'channel'], ...BOOKINGS.map(b => [b.id, custOf(b.cust).name, boatName(b.boat), b.prog, b.date, b.guests, b.total, b.paid, b.status, b.sales, b.channel])];
   const csv = rows.map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(',')).join('\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'btt-bookings.csv'; a.click(); toast('ดาวน์โหลด CSV แล้ว');
 }
@@ -224,7 +224,7 @@ function vCalendar() {
   for (let i = 0; i < lead; i++) cells.push('<div class="cal-day bg-sand/40"></div>');
   for (let d = 1; d <= days; d++) {
     const ds = iso(new Date(CAL.y, CAL.m, d)), items = list.filter(b => b.date === ds), isT = ds === iso(TODAY);
-    cells.push(`<div class="cal-day ${isT ? 'bg-maroon-50/60' : ''}"><p class="text-[11px] ${isT ? 'text-maroon font-medium' : 'text-muted'}">${d}</p>${items.slice(0, 3).map(b => `<button class="cal-chip ${STATUS[b.status][1]}" onclick="bookingDetail('${b.id}')">${bySlug(b.boat).name}</button>`).join('')}${items.length > 3 ? `<p class="text-[10px] text-muted mt-1">+${items.length - 3} รายการ</p>` : ''}</div>`);
+    cells.push(`<div class="cal-day ${isT ? 'bg-maroon-50/60' : ''}"><p class="text-[11px] ${isT ? 'text-maroon font-medium' : 'text-muted'}">${d}</p>${items.slice(0, 3).map(b => `<button class="cal-chip ${(STATUS[b.status] || STATUS.new)[1]}" onclick="bookingDetail('${b.id}')">${boatName(b.boat)}</button>`).join('')}${items.length > 3 ? `<p class="text-[10px] text-muted mt-1">+${items.length - 3} รายการ</p>` : ''}</div>`);
   }
   const busy = FLEET.filter(b => list.some(x => x.boat === b.slug)).map(b => [b, list.filter(x => x.boat === b.slug && x.date.startsWith(`${CAL.y}-${String(CAL.m + 1).padStart(2, '0')}`)).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 8);
   $('#view').innerHTML = `
@@ -382,7 +382,7 @@ function vCustomers() {
 function custDetail(id) { const c = custOf(id), bs = BOOKINGS.filter(b => b.cust === id);
   openDrawer(`<div class="h-16 px-5 flex items-center justify-between border-b border-line"><p class="font-medium">${esc(c.name)}</p><button class="btn btn-g !px-2" onclick="closeDrawer()"><i data-lucide="x" class="w-5 h-5"></i></button></div>
     <div class="flex-1 overflow-y-auto p-5 space-y-5"><dl class="grid grid-cols-2 gap-3"><div><dt class="lbl">ประเทศ</dt><dd>${c.country}</dd></div><div><dt class="lbl">ช่องทาง</dt><dd>${c.channel}</dd></div><div><dt class="lbl">โทร</dt><dd class="tnum">${c.phone}</dd></div><div><dt class="lbl">อีเมล</dt><dd class="break-all">${c.email}</dd></div></dl>
-    <div><p class="lbl">ประวัติการจอง (${bs.length})</p><ul class="space-y-2">${bs.map(b => `<li class="flex items-center gap-3 p-2 rounded-xl ring-1 ring-line cursor-pointer" onclick="bookingDetail('${b.id}')">${thumb(b.boat, 'w-12 h-9')}<div class="flex-1 min-w-0"><p class="truncate">${bySlug(b.boat).name}</p><p class="text-[11px] text-muted">${fmtD(b.date)} · ${b.guests} คน</p></div>${pill(b.status)}</li>`).join('') || '<li class="text-muted">ยังไม่มีการจอง</li>'}</ul></div>
+    <div><p class="lbl">ประวัติการจอง (${bs.length})</p><ul class="space-y-2">${bs.map(b => `<li class="flex items-center gap-3 p-2 rounded-xl ring-1 ring-line cursor-pointer" onclick="bookingDetail('${b.id}')">${thumb(b.boat, 'w-12 h-9')}<div class="flex-1 min-w-0"><p class="truncate">${boatName(b.boat)}</p><p class="text-[11px] text-muted">${fmtD(b.date)} · ${b.guests} คน</p></div>${pill(b.status)}</li>`).join('') || '<li class="text-muted">ยังไม่มีการจอง</li>'}</ul></div>
     <label class="block"><span class="lbl">บันทึกเกี่ยวกับลูกค้า</span><textarea class="inp" rows="3" placeholder="เช่น ชอบเรือใบ แพ้กุ้ง…"></textarea></label></div>`); }
 
 /* ---------- Team ---------- */
@@ -2910,7 +2910,7 @@ saveNew = function () {
   closeModal(); toast('บันทึกลีด ' + id + ' แล้ว'); BK.tab = 'open'; go('bookings'); if (CUR === 'bookings') vBookings();
 };
 const leadCsvRows = L => [['lead_id', 'created', 'customer', 'phone', 'email', 'country', 'language', 'marketing_consent', 'boat', 'program', 'trip_date', 'guests', 'source', 'campaign', 'landing_page', 'contact_via', 'score', 'status', 'lost_reason', 'sales', 'first_reply_min', 'next_follow_up'],
-  ...L.map(l => { const c = custOf(l.cust); return [l.id, l.createdAt, c.name, c.phone, c.email, c.country, l.lang, c.consent ? 'yes' : 'no', boatName(l.boat), l.prog, l.date, l.guests, SRC[l.src]?.[0], l.campaign, l.landing, l.contact, leadScore(l).s, STATUS[l.status][0], l.lost, teamOf(l.sales)?.name, l.reply ?? '', l.next]; })];
+  ...L.map(l => { const c = custOf(l.cust); return [l.id, l.createdAt, c.name, c.phone, c.email, c.country, l.lang, c.consent ? 'yes' : 'no', boatName(l.boat), l.prog, l.date, l.guests, SRC[l.src]?.[0], l.campaign, l.landing, l.contact, leadScore(l).s, (STATUS[l.status] || STATUS.new)[0], l.lost, teamOf(l.sales)?.name, l.reply ?? '', l.next]; })];
 exportCsv = function () { const rows = leadCsvRows(BOOKINGS); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + rows.map(r => r.map(x => `"${String(x ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv' })); a.download = 'btt-leads.csv'; a.click(); toast('ดาวน์โหลด CSV แล้ว'); };
 
 /* ---------- dashboard ---------- */
@@ -2951,7 +2951,7 @@ vDashboard = function () {
         <p class="font-medium">ต้องทำตอนนี้</p>
         <ul class="mt-2 divide-y divide-line">
           ${waiting.slice(0, 4).map(l => `<li class="py-2.5 flex items-center gap-3 cursor-pointer" onclick="bookingDetail('${l.id}')"><span class="w-8 h-8 rounded-full ${leadAgeMin(l) > 30 ? 'bg-[#fdecea] text-[#b42318]' : 'bg-[#eef2ff] text-[#3b4bb5]'} grid place-items-center shrink-0"><i data-lucide="message-square" class="w-4 h-4"></i></span><div class="min-w-0 flex-1"><p class="truncate">${esc(custOf(l.cust).name)}</p><p class="text-[11px] text-muted truncate">ลีดใหม่ · ${boatName(l.boat)} · รอ ${ago(leadAgeMin(l))}</p></div>${scorePill(l)}</li>`).join('')}
-          ${due.slice(0, 4).map(l => `<li class="py-2.5 flex items-center gap-3 cursor-pointer" onclick="bookingDetail('${l.id}')"><span class="w-8 h-8 rounded-full bg-maroon-50 text-maroon grid place-items-center shrink-0"><i data-lucide="bell-ring" class="w-4 h-4"></i></span><div class="min-w-0 flex-1"><p class="truncate">${esc(custOf(l.cust).name)}</p><p class="text-[11px] ${l.next < iso(now) ? 'text-[#b42318]' : 'text-muted'} truncate">ติดตาม${l.next < iso(now) ? 'เลยกำหนด ' + fmtD(l.next) : 'วันนี้'} · ${STATUS[l.status][0]}</p></div></li>`).join('')}
+          ${due.slice(0, 4).map(l => `<li class="py-2.5 flex items-center gap-3 cursor-pointer" onclick="bookingDetail('${l.id}')"><span class="w-8 h-8 rounded-full bg-maroon-50 text-maroon grid place-items-center shrink-0"><i data-lucide="bell-ring" class="w-4 h-4"></i></span><div class="min-w-0 flex-1"><p class="truncate">${esc(custOf(l.cust).name)}</p><p class="text-[11px] ${l.next < iso(now) ? 'text-[#b42318]' : 'text-muted'} truncate">ติดตาม${l.next < iso(now) ? 'เลยกำหนด ' + fmtD(l.next) : 'วันนี้'} · ${(STATUS[l.status] || STATUS.new)[0]}</p></div></li>`).join('')}
           ${!waiting.length && !due.length ? '<li class="py-6 text-center text-muted">ไม่มีงานค้าง</li>' : ''}
         </ul>
         <button class="btn btn-o w-full mt-3" onclick="BK.tab='open';BK.sort='next';go('bookings')">ดูลีดที่กำลังดำเนินการ</button>
@@ -3113,7 +3113,7 @@ function auBSend(i, via) {
 }
 function auList(k) { const s = SEGS.find(x => x.k === k), r = segLeads(s.f);
   openDrawer(`<div class="h-16 px-5 flex items-center justify-between border-b border-line shrink-0"><div><p class="text-[11px] text-muted">กลุ่มเป้าหมาย</p><p class="font-medium">${s.n}</p></div><button class="btn btn-g !px-2" onclick="closeDrawer()"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-    <div class="flex-1 overflow-y-auto p-3"><ul class="divide-y divide-line">${r.L.map(l => { const c = custOf(l.cust); return `<li class="p-2.5 flex items-center gap-3 cursor-pointer hover:bg-sand rounded-xl" onclick="bookingDetail('${l.id}')"><div class="min-w-0 flex-1"><p class="truncate">${esc(c.name)} ${c.consent ? '' : '<span class="text-[10.5px] text-muted">· ไม่ยินยอม</span>'}</p><p class="text-[11px] text-muted truncate">${boatName(l.boat)} · ${fmtD(l.date)} · ${STATUS[l.status][0]}${l.lost ? ' · ' + l.lost : ''}</p></div>${scorePill(l)}</li>`; }).join('') || '<li class="p-6 text-center text-muted">ไม่มี</li>'}</ul></div>`); }
+    <div class="flex-1 overflow-y-auto p-3"><ul class="divide-y divide-line">${r.L.map(l => { const c = custOf(l.cust); return `<li class="p-2.5 flex items-center gap-3 cursor-pointer hover:bg-sand rounded-xl" onclick="bookingDetail('${l.id}')"><div class="min-w-0 flex-1"><p class="truncate">${esc(c.name)} ${c.consent ? '' : '<span class="text-[10.5px] text-muted">· ไม่ยินยอม</span>'}</p><p class="text-[11px] text-muted truncate">${boatName(l.boat)} · ${fmtD(l.date)} · ${(STATUS[l.status] || STATUS.new)[0]}${l.lost ? ' · ' + l.lost : ''}</p></div>${scorePill(l)}</li>`; }).join('') || '<li class="p-6 text-center text-muted">ไม่มี</li>'}</ul></div>`); }
 function auCsv() { const L = BOOKINGS.filter(segByKey('custom')).filter(l => custOf(l.cust)?.consent); const rows = leadCsvRows(L); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + rows.map(r => r.map(x => `"${String(x ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv' })); a.download = 'btt-segment.csv'; a.click(); if (typeof audit === 'function') audit('export', 'customer', 'segment', `Export กลุ่มที่สร้างเอง ${L.length} ลีด (เฉพาะคนที่ยินยอม)`); toast(`ดาวน์โหลด ${L.length} รายการ (เฉพาะคนที่ยินยอม)`); }
 
 /* ---------- nav ---------- */
@@ -3334,7 +3334,7 @@ function bkChange(id, act, f, from, to, o = {}) { const b = BOOKINGS.find(x => x
 function bkAssign(id, v) { if (!can('bookings_all')) return toast('ไม่มีสิทธิ์'); const b = BOOKINGS.find(x => x.id === id), from = teamOf(b.sales)?.name; b.sales = v; bkChange(id, 'assign', 'เซลล์ผู้ดูแล', from, teamOf(v)?.name); toast('มอบหมายเซลล์แล้ว'); }
 function bkNote(id, v) { const b = BOOKINGS.find(x => x.id === id), from = b.note || ''; b.note = v; bkChange(id, 'update', 'บันทึกภายใน', from || '—', v || '—'); toast('บันทึกแล้ว'); }
 const _setStatus18 = setStatus;
-setStatus = function (id, s) { const b = BOOKINGS.find(x => x.id === id); if (!b || isRO() || (!can('bookings_all') && !ownB(b))) return toast('ไม่มีสิทธิ์แก้ลีดนี้'); const from = b.status; _setStatus18(id, s); if (from !== b.status) bkChange(id, 'status', 'สถานะ', STATUS[from][0], STATUS[b.status][0]); };
+setStatus = function (id, s) { const b = BOOKINGS.find(x => x.id === id); if (!b || isRO() || (!can('bookings_all') && !ownB(b))) return toast('ไม่มีสิทธิ์แก้ลีดนี้'); const from = b.status; _setStatus18(id, s); if (from !== b.status) bkChange(id, 'status', 'สถานะ', STATUS[from][0], (STATUS[b.status] || STATUS.new)[0]); };
 const _newBooking18 = newBooking;
 newBooking = function (slug) { if (isRO()) return toast('โหมดดูอย่างเดียว'); _newBooking18(slug); if (!can('bookings_all')) { const s = $('#nbS'); if (s) { s.value = ME.id; s.disabled = true; } } };
 const _saveNew18 = saveNew;
@@ -4302,7 +4302,8 @@ const addBoatTabs = k => { const h = $('#view > div'); if (h && !$('#view > .tab
 { const _b = vBoats; vBoats = function () { _b(); addBoatTabs('boats'); }; PAGES.find(p => p[0] === 'boats')[3] = vBoats; }
 { const _s = vSeasons; vSeasons = function () { _s(); addBoatTabs('seasons'); }; PAGES.find(p => p[0] === 'seasons')[3] = vSeasons; }
 { const _r = route; route = function () {
-  _r();
+  // a page that fails to draw (e.g. one odd record) must not leave the menu without icons or the merged items visible
+  try { _r(); } catch (e) { console.error('[route]', e); icons(); toastErr('แสดงหน้านี้ไม่ครบ · ลองรีเฟรช หรือแจ้งทีมพัฒนา'); }
   for (const [k, parent] of Object.entries(NAV_MERGED)) { $$(`#nav a[href="#/${k}"]`).forEach(a => a.remove()); if (CUR === k) $(`#nav a[href="#/${parent}"]`)?.classList.add('on'); }
   if (CUR === 'seasons') $('#pageTitle').textContent = 'เรือ & ราคา';
 }; }
