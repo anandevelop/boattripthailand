@@ -6560,16 +6560,21 @@ function seoSpeed() {
     + (full ? `<p class="mt-2 text-[12px] text-[#a3222c]">ครบเพดานของระบบวันนี้แล้ว · กดตรวจได้อีกหลังเที่ยงคืน (เพดานนี้ตั้งไว้กันโควตาหมด ไม่เกี่ยวกับค่าใช้จ่าย)</p>` : '');
 }
 
-/* SEO tabs: + PageSpeed */
-vSeo = function () {
-  const tabs = [['overview', 'ภาพรวม', 'gauge'], ['speed', 'PageSpeed', 'zap'], ['pages', 'Meta ทุกหน้า', 'file-text'], ['keywords', 'คีย์เวิร์ด', 'tag'], ['redirects', 'Redirect & 404', 'shuffle'], ['schema', 'Schema', 'code'], ['sitemap', 'Sitemap & Robots', 'network'], ['settings', 'ตั้งค่า SEO', 'settings-2']];
-  const P = auditAll();
-  if (SEOV.tab !== 'speed') clearTimeout(PS.poll);
-  $('#view').innerHTML = `${head('SEO', 'ตรวจและจัดการ SEO ทุกหน้า ทั้งภาษาไทยและอังกฤษ · ปัญหาคำนวณจากข้อมูลจริงในระบบ · ตัวเลขจาก Google ดึงจาก Search Console', SEOV.tab === 'speed' ? '' : `<button class="btn btn-o" onclick="toast('ตรวจทั้งเว็บใหม่แล้ว · ${P.length} หน้า');vSeo()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>ตรวจใหม่</button>`)}
-    <div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${SEOV.tab === k ? 'on' : ''}" onclick="SEOV.tab='${k}';vSeo()"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div><div class="card">
-    <div id="seoBody" class="p-4 sm:p-5 fade">${({ overview: seoOverview, speed: seoSpeed, pages: seoPagesTab, keywords: seoKw, redirects: seoRedir, schema: seoSchema, sitemap: seoSitemap, settings: seoSettings })[SEOV.tab](P)}</div></div>`;
+/* SEO tabs: + PageSpeed (wraps the existing chain like the other tabs, so ลิงก์ภายใน / ตรวจสุขภาพ / AI Search stay) */
+{ const _vp = vSeo; vSeo = function () {
+  const on = SEOV.tab === 'speed'; if (on) SEOV.tab = 'schema';
+  try { _vp(); } finally { if (on) SEOV.tab = 'speed'; }
+  if (!on) clearTimeout(PS.poll);
+  const bar = $('#view .tabbar'); if (!bar) return;
+  if (on) bar.querySelector('.tab.on')?.classList.remove('on');
+  const ov = [...bar.querySelectorAll('.tab')].find(t => (t.getAttribute('onclick') || '').includes("'overview'"));
+  (ov || bar.firstElementChild).insertAdjacentHTML(ov ? 'afterend' : 'beforebegin', `<button class="tab ${on ? 'on' : ''}" onclick="SEOV.tab='speed';vSeo()">PageSpeed</button>`);
+  if (on) {
+    const b = $('#seoBody'); if (b) b.innerHTML = seoSpeed();
+    $$('#view > div:first-child button').forEach(x => { if (/ตรวจใหม่/.test(x.textContent)) x.remove(); });
+  }
   icons();
-};
+}; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
 /* overview card → link to the full tab */
 { const _pc = psiCard; psiCard = function () { return _pc().replace(/<\/div>$/, `<button class="text-[11.5px] text-maroon mt-2" onclick="SEOV.tab='speed';vSeo()">ดู PageSpeed ทุกหน้า →</button></div>`); }; }
 
