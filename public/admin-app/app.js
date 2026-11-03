@@ -43,7 +43,8 @@ const LAST = ['Müller', 'Smith', 'Rossi', 'Johansson', 'Kim', 'Ivanova', 'Tanak
 const COUNTRY = ['🇩🇪 DE', '🇬🇧 UK', '🇮🇹 IT', '🇸🇪 SE', '🇰🇷 KR', '🇷🇺 RU', '🇯🇵 JP', '🇨🇳 CN', '🇫🇷 FR', '🇦🇺 AU', '🇹🇭 TH', '🇹🇭 TH', '🇹🇭 TH'];
 const CUSTOMERS = BOOT.customers;
 const BOOKINGS = BOOT.leads;
-const custOf = id => CUSTOMERS.find(c => c.id === id);
+// a lead can point at a customer row that is gone: show a placeholder instead of breaking the page
+const custOf = id => CUSTOMERS.find(c => c.id === id) || (id ? { id, name: 'ไม่พบข้อมูลลูกค้า', country: '', phone: '—', email: '', wa: '', channel: '', tags: [], consent: false, lang: 'th', countryRaw: '', notes: '', missing: true } : undefined);
 const teamOf = id => TEAM.find(t => t.id === id);
 const pill = s => { const t = STATUS[s] || [s || '—', 'st-new']; return `<span class="pill ${t[1]}">${t[0]}</span>`; };
 const thumb = (slug, cls = 'w-12 h-9') => THUMBS[slug] ? `<img src="${THUMBS[slug]}" alt="" class="${cls} rounded-lg object-cover bg-sand shrink-0"/>` : `<span class="${cls} rounded-lg bg-sand shrink-0 grid place-items-center ring-1 ring-inset ring-[#e9b9bd]" title="ยังไม่มีรูป"><i data-lucide="image-off" class="w-4 h-4 text-[#c47a82]"></i></span>`;
@@ -484,7 +485,7 @@ FLEET.forEach(b => {
   if (saved) { Object.assign(b.i18n, saved); return; }
   if (['leopard-90-ft', 'splo-74-ft', 'vtech-68-ft'].includes(b.slug)) { b.i18n.subtitle.th = b.subtitle; b.i18n.notes.th = 'ราคาพื้นฐานรองรับตามจำนวนคนที่ระบุ มีค่าใช้จ่ายเพิ่มสำหรับผู้โดยสารเกิน'; }
 });
-function boatI18nFields(b) { const i = b.i18n; return [i.name, i.subtitle, i.desc, ...i.programs.flat(), ...i.includes, ...i.complimentary, ...i.not_included, ...i.slots, i.notes, i.seoTitle, i.seoDesc]; }
+function boatI18nFields(b) { const i = b.i18n || {}, A = x => Array.isArray(x) ? x : []; return [i.name, i.subtitle, i.desc, ...A(i.programs).flat(), ...A(i.includes), ...A(i.complimentary), ...A(i.not_included), ...A(i.slots), i.notes, i.seoTitle, i.seoDesc]; }
 function langPct(fields, k) { const f = fields.filter(Boolean); return Math.round(f.filter(o => String(o[k] || '').trim()).length / Math.max(1, f.length) * 100); }
 const langBadge = (fields) => LANGS.map(([k, c]) => { const p = langPct(fields, k); return `<span class="lang-b ${p === 100 ? 'ok' : p >= 60 ? 'mid' : 'low'}" title="${c} ${p}%">${c} ${p}%</span>`; }).join('');
 
