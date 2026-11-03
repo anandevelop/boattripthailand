@@ -14,7 +14,7 @@ import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
 import { analyticsData } from '@/lib/analytics';
 import { GoogleError, googleData, googleStatus, loadGoogleCfg, saveGoogleCfg, testGoogle } from '@/lib/google';
-import { pageSpeed, psiPath, PsiKeyError, psiRun, psiRunAll, psiState, savePsiCfg, savePsiKey } from '@/lib/pagespeed';
+import { pageSpeed, PsiBusyError, psiCooldown, psiPath, PsiKeyError, psiUsage, psiRun, psiRunAll, psiState, savePsiCfg, savePsiKey } from '@/lib/pagespeed';
 import { BookingConflict, customerEdit, customerErase, customerMerge, dealOp, dealsFor, wonGuard } from '@/lib/lead-guard';
 import { aiSave, aiStore, cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
 import { sitemapStats, submitSitemap } from '@/lib/sitemap-tools';
@@ -512,10 +512,13 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       if (method === 'GET') return json(await psiState());
       if (method === 'POST' && c0 === 'run') {
         const p = psiPath(str(body.url, 500)); if (!p) throw new HttpError(400, 'ใส่ลิงก์หน้าในเว็บนี้เท่านั้น');
-        try { return json({ result: await psiRun(p, body.strategy === 'desktop' ? 'desktop' : 'mobile', me.name) }); }
+        const st = body.strategy === 'desktop' ? 'desktop' : 'mobile';
+        try { psiCooldown(p, st); } catch (e) { throw new HttpError(429, e instanceof PsiBusyError ? e.message : 'ลองใหม่อีกครั้ง'); }
+        try { return json({ result: await psiRun(p, st, me.name), usage: await psiUsage() }); }
         catch (e) { throw new HttpError(502, e instanceof Error ? e.message : String(e)); }
       }
       if (method === 'POST' && c0 === 'all') {
+        { const u = await psiUsage(); if (u.n >= u.limit) throw new HttpError(429, `ครบเพดานของระบบวันนี้แล้ว (${u.limit} ครั้ง) · ตรวจได้อีกหลังเที่ยงคืน`); }
         const paths = Array.isArray(body.paths) ? body.paths.map(x => psiPath(typeof x === 'string' ? x : '')).filter((x): x is string => !!x).slice(0, 20) : undefined;
         return json({ started: psiRunAll(me.name, paths), state: await psiState() });
       }

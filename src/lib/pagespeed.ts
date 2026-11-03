@@ -115,13 +115,45 @@ async function build() {
 const plain = (s: string) => String(s || '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/`/g, '').split(/(?<=[.。])\s/)[0].slice(0, 220);
 
 /** one Lighthouse run (all 4 categories, Thai texts) */
+/* ---------- usage guard: our own daily cap (well under Google's free 25,000/day) + 1-minute cooldown per page ---------- */
+export const PSI_DAILY_LIMIT = Math.max(20, Number(process.env.PSI_DAILY_LIMIT) || 500);
+const USAGE_KEY = 'system.psi.usage';
+const bkkDay = (d = new Date()) => new Date(d.getTime() + 7 * 3600_000).toISOString().slice(0, 10);
+type Usage = { day: string; n: number };
+let usageLock: Promise<unknown> = Promise.resolve();
+export async function psiUsage(): Promise<Usage & { limit: number }> {
+  const u = await getSet<Usage | null>(USAGE_KEY, null);
+  return { day: bkkDay(), n: u?.day === bkkDay() ? u.n : 0, limit: PSI_DAILY_LIMIT };
+}
+/** counts one call, or refuses when today's cap is reached (serialised so parallel runs cannot overshoot) */
+function takeUsage() {
+  const job = usageLock.then(async () => {
+    const u = await psiUsage();
+    if (u.n >= u.limit) throw new Error(`ครบเพดานของระบบวันนี้แล้ว (${u.limit} ครั้ง) · ตรวจได้อีกหลังเที่ยงคืน`);
+    await putSet(USAGE_KEY, { day: u.day, n: u.n + 1 });
+  });
+  usageLock = job.catch(() => {});
+  return job;
+}
+const lastRun = new Map<string, number>();
+export class PsiBusyError extends Error {}
+/** manual "ตรวจตอนนี้": the same page + device at most once a minute */
+export function psiCooldown(p: string, strategy: Strategy) {
+  const k = `${strategy}|${p}`, left = 60 - Math.floor((Date.now() - (lastRun.get(k) ?? 0)) / 1000);
+  if (left > 0) throw new PsiBusyError(`เพิ่งตรวจหน้านี้ไป · ตรวจซ้ำได้อีกใน ${left} วินาที`);
+}
+
 export async function psiRun(p: string, strategy: Strategy, by?: string): Promise<PsiResult> {
   const url = psiBase() + p;
   const q = new URLSearchParams({ url, strategy, locale: 'th' });
   for (const c of ['performance', 'accessibility', 'best-practices', 'seo']) q.append('category', c);
   const key = await apiKey();
+  if (!key) throw new Error('ยังไม่ได้ใส่ API key · ใส่ได้ที่หน้า SEO → PageSpeed');
+  await takeUsage();
+  lastRun.set(`${strategy}|${p}`, Date.now());
   if (key) q.set('key', key);
-  const r = await fetch('https://www.googleapis.com/pagespeedonline/v5/runPagespeed?' + q, { signal: AbortSignal.timeout(120_000), cache: 'no-store' });
+  const r = await fetch('https://www.googleapis.com/pagespeedonline/v5/runPagespeed?' + q, { signal: AbortSignal.timeout(120_000), cache: 'no-store' })
+    .catch(e => { throw new Error(e?.name === 'TimeoutError' ? 'Google ใช้เวลาตรวจนานเกิน 2 นาที · ลองใหม่อีกครั้ง' : 'ติดต่อ Google ไม่ได้ · ลองใหม่อีกครั้ง'); });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) {
     const m: string = j?.error?.message || `PageSpeed ${r.status}`;
@@ -214,7 +246,7 @@ export function psiRunAll(by: string, paths?: string[]) {
         B.now.push(k);
         try { await psiRun(t[0], t[1], by); } catch (e) { B.errors.push(`${k}: ${e instanceof Error ? e.message : e}`); }
         B.now = B.now.filter(x => x !== k); B.done++;
-        if (B.errors.length && /คีย์|โควตา/.test(B.errors.at(-1)!)) todo.length = 0; // no key / quota → stop early
+        if (B.errors.length && /คีย์|โควตา|เพดาน/.test(B.errors.at(-1)!)) todo.length = 0; // no key / quota → stop early
       }
     };
     await Promise.all([worker(), worker()]);
@@ -247,7 +279,7 @@ export async function psiDaily() {
 export async function psiState() {
   const [last, hist, cfg, pages] = await Promise.all([getSet<Record<string, PsiResult>>(LAST_KEY, {}), getSet<PsiHist[]>(HIST_KEY, []), psiCfg(), psiPages()]);
   const cut = Date.now() - 31 * 86400_000;
-  return { base: psiBase(), pages, last, hist: hist.filter(h => new Date(h.at).getTime() > cut), cfg, batch: psiBatch(), key: !!(await apiKey()), keyInfo: await keyInfo(), line: lineEnabled() };
+  return { base: psiBase(), pages, last, hist: hist.filter(h => new Date(h.at).getTime() > cut), cfg, batch: psiBatch(), key: !!(await apiKey()), keyInfo: await keyInfo(), usage: await psiUsage(), line: lineEnabled() };
 }
 
 /* ---------- SEO → ภาพรวม card (home page, cached 24 h) · kept for the existing card ---------- */

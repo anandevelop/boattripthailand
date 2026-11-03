@@ -6448,11 +6448,12 @@ function psUrl(el) {
 }
 function psRunOne() {
   if (PS.run) return; PS.run = true; vSeo();
-  api('POST', 'analytics/psi/run', { url: PS.page, strategy: PS.s }).then(({ result: r }) => {
+  api('POST', 'analytics/psi/run', { url: PS.page, strategy: PS.s }).then(({ result: r, usage }) => {
+    if (usage) PS.d.usage = usage;
     PS.d.last[`${r.strategy}|${r.path}`] = r;
     PS.d.hist.push({ p: r.path, s: r.strategy, at: r.at, ...r.scores, lcp: r.lab.lcp.v, cls: r.lab.cls.v, b: r.build });
     toast(`ตรวจแล้ว · ${psName(r.path)} · ${r.strategy === 'mobile' ? 'มือถือ' : 'คอม'} ${r.scores.perf}/100`);
-  }).catch(fail).finally(() => { PS.run = false; if (psOn()) vSeo(); });
+  }).catch(e => { fail(e); api('GET', 'analytics/psi').then(d => { PS.d = d; if (psOn()) vSeo(); }).catch(() => { }); }).finally(() => { PS.run = false; if (psOn()) vSeo(); });
 }
 function psRunAll() {
   api('POST', 'analytics/psi/all', {}).then(r => { PS.d = r.state; toast(r.started ? 'เริ่มตรวจทุกหน้าแล้ว · ใช้เวลาประมาณ 3–5 นาที' : 'กำลังตรวจอยู่แล้ว'); if (psOn()) vSeo(); psPoll(); }).catch(fail);
@@ -6552,7 +6553,10 @@ function seoSpeed() {
         <label class="flex items-center gap-2 text-[12.5px]"><label class="tgl"><input type="checkbox" ${C.alerts ? 'checked' : ''} onchange="psCfgSave('alerts', this.checked)"/><span></span></label>${C.alerts ? 'เปิดอยู่' : 'ปิดอยู่'}</label>
         <label class="flex items-center gap-2 text-[12.5px]"><label class="tgl"><input type="checkbox" ${C.daily ? 'checked' : ''} onchange="psCfgSave('daily', this.checked)"/><span></span></label>ตรวจอัตโนมัติ 06:00</label>
       </div></div></div>`;
-  return top + keyMsg + chips + body + table + alerts + keyRow + `<p class="text-[11px] text-muted mt-4">ใช้ Google PageSpeed Insights API แบบฟรี (ไม่ต้องผูกบัตร ไม่มีค่าใช้จ่าย · ฟรี 25,000 ครั้ง/วัน) · ตรวจทั้งหมด 1 รอบใช้ประมาณ ${D.pages.length * 2} ครั้ง</p>`;
+  const U = D.usage || { n: 0, limit: 500 }, full = U.n >= U.limit;
+  return top + keyMsg + chips + body + table + alerts + keyRow + `<div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-2 justify-between text-[11px] text-muted"><span>ใช้ Google PageSpeed Insights API แบบฟรี (ไม่ต้องผูกบัตร ไม่มีค่าใช้จ่าย · Google ให้ฟรี 25,000 ครั้ง/วัน) · ตรวจทั้งหมด 1 รอบใช้ประมาณ ${D.pages.length * 2} ครั้ง · หน้าเดียวกันตรวจซ้ำได้ทุก 1 นาที</span>
+    <span class="inline-flex items-center gap-2 whitespace-nowrap"><span>วันนี้ใช้ไป <b class="font-medium tnum ${full ? 'text-[#a3222c]' : 'text-ink'}">${nf(U.n)} / ${nf(U.limit)}</b> ครั้ง</span><span style="display:inline-block;width:80px;height:6px;border-radius:9px;background:#f1eaea;overflow:hidden"><span class="block h-full rounded-full" style="width:${Math.min(100, U.n / U.limit * 100)}%;background:${full ? '#a3222c' : U.n / U.limit > .8 ? '#b4501a' : '#1e7a46'}"></span></span></span></div>`
+    + (full ? `<p class="mt-2 text-[12px] text-[#a3222c]">ครบเพดานของระบบวันนี้แล้ว · กดตรวจได้อีกหลังเที่ยงคืน (เพดานนี้ตั้งไว้กันโควตาหมด ไม่เกี่ยวกับค่าใช้จ่าย)</p>` : '');
 }
 
 /* SEO tabs: + PageSpeed */
