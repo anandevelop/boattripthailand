@@ -6411,6 +6411,150 @@ function lvBody() {
 }; PAGES.find(p => p[0] === 'analytics')[3] = vAnalytics; }
 
 /* ---------- start: the server already checked the session ---------- */
+/* =====================================================================
+   SEO → PageSpeed Insights (ทุกหน้า · มือถือ/คอม · 4 หมวด · กราฟ 30 วัน · ควรแก้อะไรก่อน · แจ้งเตือน LINE)
+   เซิร์ฟเวอร์: src/lib/pagespeed.ts · /api/admin/analytics/psi · ตรวจอัตโนมัติทุกวัน 06:00 (src/lib/system.ts)
+   ===================================================================== */
+const PS = { d: null, loading: false, err: '', page: '/', s: 'mobile', run: false, poll: 0 };
+const psOn = () => CUR === 'seo' && SEOV.tab === 'speed';
+function psLoad() {
+  if (PS.loading) return; PS.loading = true;
+  api('GET', 'analytics/psi').then(d => { PS.d = d; PS.err = ''; }).catch(e => { PS.err = e.message; })
+    .finally(() => { PS.loading = false; if (psOn()) vSeo(); psPoll(); });
+}
+function psPoll() {
+  clearTimeout(PS.poll);
+  if (PS.d && PS.d.batch.busy) PS.poll = setTimeout(() => { if (psOn()) psLoad(); }, 5000);
+}
+const psCls = v => v >= 90 ? 'ok' : v >= 50 ? 'mid' : 'low';
+const psCol = v => v >= 90 ? '#1e7a46' : v >= 50 ? '#b4501a' : '#a3222c';
+const psMs = v => v >= 1000 ? (v / 1000).toFixed(1) + ' วิ' : Math.round(v) + ' ms';
+const psTime = iso => { const d = new Date(iso), t = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); return d.toDateString() === new Date().toDateString() ? t : d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) + ' ' + t; };
+function psGauge(v, size = 92) {
+  const r = size / 2 - 7, c = 2 * Math.PI * r, col = psCol(v);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="shrink-0"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="${col}14" stroke="#f1eaea" stroke-width="7"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c * v / 100} ${c}" transform="rotate(-90 ${size / 2} ${size / 2})"/><text x="50%" y="50%" text-anchor="middle" dy=".35em" font-size="${size / 3.6}" fill="${col}" font-family="Jost">${v}</text></svg>`;
+}
+const psName = p => (PS.d?.pages.find(x => x.path === p)?.name) || decodeURIComponent(p);
+function psAllPages() {
+  const D = PS.d, fixed = D.pages.map(p => p.path);
+  const extra = [...new Set(Object.values(D.last).map(r => r.path))].filter(p => !fixed.includes(p));
+  return [...D.pages, ...extra.map(p => ({ path: p, name: decodeURIComponent(p), extra: true }))];
+}
+function psPick(p) { PS.page = p; vSeo(); }
+function psUrl(el) {
+  const v = el.value.trim(); if (!v) return;
+  let p = v; try { const u = new URL(v, PS.d.base + '/'); p = (u.pathname.replace(/\/+$/, '') || '/') + u.search; } catch (e) { }
+  PS.page = p; el.value = ''; psRunOne();
+}
+function psRunOne() {
+  if (PS.run) return; PS.run = true; vSeo();
+  api('POST', 'analytics/psi/run', { url: PS.page, strategy: PS.s }).then(({ result: r }) => {
+    PS.d.last[`${r.strategy}|${r.path}`] = r;
+    PS.d.hist.push({ p: r.path, s: r.strategy, at: r.at, ...r.scores, lcp: r.lab.lcp.v, cls: r.lab.cls.v, b: r.build });
+    toast(`ตรวจแล้ว · ${psName(r.path)} · ${r.strategy === 'mobile' ? 'มือถือ' : 'คอม'} ${r.scores.perf}/100`);
+  }).catch(fail).finally(() => { PS.run = false; if (psOn()) vSeo(); });
+}
+function psRunAll() {
+  api('POST', 'analytics/psi/all', {}).then(r => { PS.d = r.state; toast(r.started ? 'เริ่มตรวจทุกหน้าแล้ว · ใช้เวลาประมาณ 3–5 นาที' : 'กำลังตรวจอยู่แล้ว'); if (psOn()) vSeo(); psPoll(); }).catch(fail);
+}
+function psCfgSave(k, v) {
+  const b = { [k]: v };
+  api('PUT', 'analytics/psi/settings', b).then(r => { PS.d.cfg = r.cfg; toast('บันทึกแล้ว'); if (psOn()) vSeo(); }).catch(fail);
+}
+
+/* 30-day trend: one point per day (the last run of that day) · mobile vs desktop · dashed line where a new build went live */
+function psTrend(p) {
+  const H = PS.d.hist.filter(h => h.p === p).sort((a, b) => a.at.localeCompare(b.at));
+  const day = iso => new Date(new Date(iso).getTime() + 7 * 3600e3).toISOString().slice(0, 10);
+  const days = [...Array(30)].map((_, i) => day(new Date(Date.now() - (29 - i) * 864e5).toISOString()));
+  const ser = s => { const m = {}; H.filter(h => h.s === s).forEach(h => { m[day(h.at)] = h.perf; }); return days.map(d => m[d] ?? null); };
+  const mob = ser('mobile'), desk = ser('desktop');
+  if (!H.length) return '<p class="text-[12px] text-muted py-10 text-center">ยังไม่มีประวัติของหน้านี้ · กราฟจะขึ้นหลังตรวจครบ 2 วันขึ้นไป</p>';
+  const W = 640, Hh = 260, L = 30, R = 8, T = 10, B = 22, x = i => L + i * (W - L - R) / 29, y = v => T + (100 - v) / 100 * (Hh - T - B);
+  const line = (a, col) => { let d = '', pen = false; a.forEach((v, i) => { if (v == null) { pen = false; return; } d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`; pen = true; });
+    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${a.map((v, i) => v == null ? '' : `<circle cx="${x(i)}" cy="${y(v)}" r="2.6" fill="${col}"><title>${days[i]} · ${v}</title></circle>`).join('')}`; };
+  const deps = []; let prev = null;
+  PS.d.hist.slice().sort((a, b) => a.at.localeCompare(b.at)).forEach(h => { if (h.b && prev && h.b !== prev) { const i = days.indexOf(day(h.at)); if (i >= 0 && !deps.includes(i)) deps.push(i); } if (h.b) prev = h.b; });
+  const grid = [0, 50, 90, 100].map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${v === 90 ? '#cfe6d8' : '#f1eaea'}" ${v === 90 ? 'stroke-dasharray="4 4"' : ''}/><text x="${L - 6}" y="${y(v)}" dy=".35em" text-anchor="end" font-size="10" fill="#8a7a7c">${v}</text>`).join('');
+  const lbl = [0, 7, 14, 21, 29].map(i => `<text x="${x(i)}" y="${Hh - 6}" text-anchor="middle" font-size="10" fill="#8a7a7c">${new Date(days[i]).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</text>`).join('');
+  const dep = deps.map(i => `<line x1="${x(i)}" x2="${x(i)}" y1="${T}" y2="${Hh - B}" stroke="#70000e" stroke-opacity=".35" stroke-dasharray="3 3"/><text x="${x(i) + 3}" y="${T + 8}" font-size="10" fill="#70000e">deploy</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${Hh}" class="w-full h-auto" role="img" aria-label="คะแนนความเร็ว 30 วัน">${grid}${dep}${line(desk, '#9b8d8f')}${line(mob, '#70000e')}${lbl}</svg>`;
+}
+
+function seoSpeed() {
+  if (!PS.d && !PS.loading && !PS.err) psLoad();
+  if (!PS.d) return PS.err ? `<p class="text-[13px] text-[#a3222c] py-6">โหลดไม่สำเร็จ: ${esc(PS.err)} <button class="text-maroon ml-2" onclick="PS.err='';psLoad()">ลองใหม่</button></p>` : '<p class="text-[13px] text-muted py-10 text-center">กำลังโหลด PageSpeed…</p>';
+  const D = PS.d, S = PS.s, r = D.last[`${S}|${PS.page}`], B = D.batch, pages = psAllPages();
+  const lastAt = Object.values(D.last).map(x => x.at).sort().at(-1);
+  const seg = `<div class="inline-flex rounded-full bg-sand p-1">${[['mobile', 'มือถือ', 'smartphone'], ['desktop', 'คอม', 'monitor']].map(([k, l, ic]) => `<button class="h-8 px-3.5 rounded-full text-[12.5px] inline-flex items-center gap-1.5 ${S === k ? 'bg-white shadow-sm text-ink' : 'text-muted'}" onclick="PS.s='${k}';vSeo()"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>`;
+  const top = `<div class="flex flex-col lg:flex-row lg:items-end gap-3 justify-between">
+      <div><p class="text-[11px] tracking-[.14em] uppercase text-maroon">SEO · ความเร็วเว็บ</p><p class="text-[19px] font-medium mt-0.5">PageSpeed Insights</p>
+        <p class="text-[12px] text-muted mt-1">คะแนนจาก Google ทั้งผู้ใช้จริง (Chrome 28 วัน) และการทดสอบ Lighthouse · ${D.cfg.daily ? 'ตรวจอัตโนมัติทุกวัน 06:00' : 'ปิดการตรวจอัตโนมัติ'}${lastAt ? ' · ล่าสุด ' + psTime(lastAt) : ''}</p></div>
+      <div class="flex items-center gap-2">${seg}<button class="btn btn-p" ${PS.run ? 'disabled' : ''} onclick="psRunOne()"><i data-lucide="${PS.run ? 'loader-2' : 'play'}" class="w-3.5 h-3.5 ${PS.run ? 'animate-spin' : ''}"></i>${PS.run ? 'กำลังตรวจ… ~30 วิ' : 'ตรวจตอนนี้'}</button></div></div>`;
+  const keyMsg = D.key ? '' : `<div class="mt-4 rounded-xl bg-[#fff6e5] text-[#7a4a00] text-[12.5px] p-3.5 flex gap-2.5"><i data-lucide="key-round" class="w-4 h-4 shrink-0 mt-0.5"></i><span>ยังไม่ได้ใส่ <b class="font-medium">PAGESPEED_API_KEY</b> · ตอนนี้ Google ไม่ให้ตรวจโดยไม่มีคีย์ · สร้างคีย์ฟรีที่ Google Cloud → APIs &amp; Services → เปิด “PageSpeed Insights API” → Credentials → API key (ไม่ต้องผูกบัตร ไม่มีค่าใช้จ่าย) แล้ววางใน .env ของเซิร์ฟเวอร์ · การตรวจอัตโนมัติ 06:00 จะเริ่มทำงานเมื่อมีคีย์</span></div>`;
+  const chips = `<div class="mt-4 flex flex-wrap items-center gap-2"><span class="text-[12px] text-muted mr-1">หน้าที่ตรวจ</span>${pages.map(p => `<button class="h-8 px-3 rounded-full text-[12.5px] ${PS.page === p.path ? '' : 'bg-white ring-1 ring-line hover:ring-maroon/40'}" ${PS.page === p.path ? 'style="background:#70000e;color:#fff"' : ''} onclick="psPick('${esc(p.path).replace(/'/g, '&#39;')}')" title="${esc(decodeURIComponent(p.path))}">${esc(p.name)}</button>`).join('')}
+      <input class="inp text-[12.5px]" style="width:240px;height:32px;border-radius:999px" placeholder="วางลิงก์หน้าอื่นของเว็บ…" onkeydown="if(event.key==='Enter')psUrl(this)"/></div>`;
+
+  let body;
+  if (!r) body = `<div class="mt-5 rounded-2xl ring-1 ring-line p-10 text-center"><i data-lucide="gauge" class="w-8 h-8 text-muted mx-auto"></i><p class="font-medium mt-3">ยังไม่เคยตรวจ ${esc(psName(PS.page))} · ${S === 'mobile' ? 'มือถือ' : 'คอม'}</p><p class="text-[12px] text-muted mt-1">${esc(D.base + decodeURIComponent(PS.page))}</p><button class="btn btn-p mt-4" ${PS.run || !D.key ? 'disabled' : ''} onclick="psRunOne()">ตรวจตอนนี้</button></div>`;
+  else {
+    const wk = D.hist.filter(h => h.p === r.path && h.s === S && new Date(h.at) < new Date(new Date(r.at).getTime() - 6 * 864e5)).at(-1);
+    const dlt = wk ? r.scores.perf - wk.perf : null;
+    const cats = [['perf', 'Performance', 'ความเร็ว'], ['a11y', 'Accessibility', 'ใช้งานง่ายทุกคน'], ['bp', 'Best Practices', 'มาตรฐานเว็บ'], ['seo', 'SEO', 'พร้อมให้ Google อ่าน']];
+    const gauges = `<div class="rounded-2xl ring-1 ring-line p-5"><div class="flex items-center justify-between gap-2"><p class="font-medium">คะแนน Lighthouse · ${esc(psName(r.path))} · ${S === 'mobile' ? 'มือถือ' : 'คอม'}</p>${dlt != null && dlt !== 0 ? `<span class="lang-b ${dlt > 0 ? 'ok' : 'low'}">${dlt > 0 ? '+' : ''}${dlt} จากสัปดาห์ก่อน</span>` : ''}</div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">${cats.map(([k, en, th]) => `<div class="flex flex-col items-center text-center">${psGauge(r.scores[k])}<p class="text-[13px] font-medium mt-2">${en}</p><p class="text-[11.5px] text-muted">${th}</p></div>`).join('')}</div>
+      <div class="flex justify-center gap-4 mt-4 text-[11px] text-muted">${[['#1e7a46', '90–100 ดี'], ['#b4501a', '50–89 ควรปรับ'], ['#a3222c', '0–49 แย่']].map(([c, l]) => `<span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:${c}"></span>${l}</span>`).join('')}</div>
+      <p class="text-[11px] text-muted mt-3 text-center">ตรวจ ${psTime(r.at)}${r.by ? ' · โดย ' + esc(r.by) : ''} · ${esc(r.url.replace(/^https?:\/\//, ''))}</p></div>`;
+    const F = r.field, bar = (m, good, poor, fmt, max) => `<div class="h-1.5 rounded-full bg-[#f1eaea] mt-1.5 relative overflow-hidden"><div class="absolute inset-y-0 left-0 rounded-full" style="width:${Math.min(100, m.v / max * 100)}%;background:${{ ok: '#1e7a46', mid: '#b4501a', low: '#a3222c' }[m.cat]}"></div></div>`;
+    const cwvRows = F ? [['LCP · รูปหลักโหลดเสร็จ', F.lcp, psMs, 6000], ['INP · กดแล้วตอบสนอง', F.inp, psMs, 800], ['CLS · หน้าไม่กระตุก', F.cls, v => v.toFixed(2), 0.4]].filter(x => x[1]) : [];
+    const cwv = `<div class="rounded-2xl ring-1 ring-line p-5"><div class="flex items-center justify-between gap-2"><p class="font-medium">Core Web Vitals · ผู้ใช้จริง 28 วัน</p>${F ? `<span class="lang-b ${F.pass ? 'ok' : 'low'}">${F.pass ? 'ผ่าน' : 'ไม่ผ่าน'}</span>` : ''}</div>
+      <p class="text-[11.5px] text-muted mt-1">${F ? `Google ใช้ค่านี้จัดอันดับ · วัดจากคนที่เปิดเว็บด้วย Chrome จริง${F.scope === 'origin' ? ' · หน้านี้คนเข้ายังไม่พอ จึงแสดงค่าของทั้งเว็บ' : ''}` : 'Google ยังมีข้อมูลผู้ใช้จริงไม่พอ (ต้องมีคนเข้าด้วย Chrome มากพอ) · ดูผลทดสอบด้านล่างแทน'}</p>
+      ${cwvRows.map(([l, m, fm, mx]) => `<div class="mt-3"><div class="flex justify-between text-[12.5px]"><span>${l}</span><span class="lang-b ${m.cat}">${fm(m.v)}</span></div>${bar(m, 0, 0, fm, mx)}</div>`).join('')}
+      <p class="font-medium text-[13px] mt-5">ผลทดสอบ Lighthouse (ห้องแล็บ)</p>
+      <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-2">${[['FCP', r.lab.fcp, psMs], ['LCP', r.lab.lcp, psMs], ['TBT', r.lab.tbt, psMs], ['CLS', r.lab.cls, v => v.toFixed(2)], ['Speed Index', r.lab.si, psMs]].map(([k, m, fm]) => `<div class="rounded-xl bg-sand p-2.5"><p class="text-[10.5px] text-muted">${k}</p><p class="text-[15px] font-medium tnum" style="color:${{ ok: '#1e7a46', mid: '#b4501a', low: '#a3222c' }[m.cat]}">${fm(m.v)}</p></div>`).join('')}</div></div>`;
+    const opps = `<div class="rounded-2xl ring-1 ring-line p-5"><p class="font-medium">ควรแก้อะไรก่อน</p><p class="text-[11.5px] text-muted">เรียงตามเวลาที่ประหยัดได้ · คำอธิบายจาก Google เป็นภาษาไทย</p>
+      <div class="mt-3 divide-y divide-line">${r.opps.length ? r.opps.map(o => `<div class="py-3 flex gap-3 items-start"><span class="w-2 h-2 rounded-full mt-1.5 shrink-0" style="background:${o.ms >= 500 ? '#a3222c' : '#b4501a'}"></span><div class="min-w-0 flex-1"><p class="text-[13px] font-medium">${esc(o.title)}</p><p class="text-[11.5px] text-muted mt-0.5">${esc([o.display, o.items ? o.items + ' รายการ' : '', o.desc].filter(Boolean).join(' · '))}</p></div><span class="text-[12.5px] tnum whitespace-nowrap ${o.ms ? 'text-[#1e7a46]' : 'text-muted'}">${o.ms ? '−' + psMs(o.ms) : 'ควรปรับ'}</span></div>`).join('') : '<p class="py-4 text-[12.5px] text-muted">ไม่มีรายการที่ต้องแก้ 🎉</p>'}</div>
+      <div class="mt-2 rounded-xl bg-[#eaf6ef] text-[#1e7a46] p-3 text-[12px] flex gap-2 items-center"><i data-lucide="check-circle-2" class="w-4 h-4"></i>ผ่านแล้ว ${r.passed} ข้อ (ทั้ง 4 หมวด)</div></div>`;
+    const trend = `<div class="rounded-2xl ring-1 ring-line p-5"><div class="flex flex-wrap gap-2 items-center justify-between"><p class="font-medium">คะแนนความเร็ว 30 วัน · ${esc(psName(r.path))}</p><div class="flex gap-3 text-[11px] text-muted"><span class="inline-flex items-center gap-1.5"><span style="width:12px;height:2px;background:#70000e"></span>มือถือ</span><span class="inline-flex items-center gap-1.5"><span style="width:12px;height:2px;background:#9b8d8f"></span>คอม</span><span class="inline-flex items-center gap-1.5"><span style="width:12px;border-top:1.5px dashed rgba(112,0,14,.5)"></span>deploy</span></div></div><div class="mt-3">${psTrend(r.path)}</div></div>`;
+    body = `<div class="mt-5 grid lg:grid-cols-2 gap-4">${gauges}${cwv}</div><div class="mt-4 grid lg:grid-cols-2 gap-4">${trend}${opps}</div>`;
+  }
+
+  const cell = (p, s) => { const x = D.last[`${s}|${p}`]; return x ? `<span class="lang-b ${psCls(x.scores.perf)} tnum">${x.scores.perf}</span>` : '<span class="text-muted">—</span>'; };
+  const busy = p => B.busy && B.now.some(k => k.endsWith(' ' + p));
+  const table = `<div class="rounded-2xl ring-1 ring-line mt-4 overflow-hidden"><div class="p-5 pb-3 flex items-center justify-between gap-3"><div><p class="font-medium">ทุกหน้าสำคัญ</p>${B.busy ? `<p class="text-[11.5px] text-muted">กำลังตรวจ ${B.done}/${B.total}…</p>` : B.errors.length ? `<p class="text-[11.5px] text-[#a3222c]">รอบล่าสุดมีปัญหา ${B.errors.length} รายการ · ${esc(B.errors[0])}</p>` : ''}</div>
+      <button class="btn btn-o" ${B.busy || !D.key ? 'disabled' : ''} onclick="psRunAll()"><i data-lucide="${B.busy ? 'loader-2' : 'refresh-cw'}" class="w-3.5 h-3.5 ${B.busy ? 'animate-spin' : ''}"></i>${B.busy ? `กำลังตรวจ ${B.done}/${B.total}` : `ตรวจทั้งหมด (${D.pages.length} หน้า)`}</button></div>
+      <div class="overflow-x-auto"><table class="tbl min-w-[640px]"><thead><tr><th>หน้า</th><th class="text-center">มือถือ</th><th class="text-center">คอม</th><th class="text-right">LCP</th><th class="text-right">CLS</th><th class="text-right">ตรวจล่าสุด</th></tr></thead><tbody>
+      ${pages.map(p => { const m = D.last[`mobile|${p.path}`], dk = D.last[`desktop|${p.path}`], at = [m?.at, dk?.at].filter(Boolean).sort().at(-1);
+        return `<tr class="click ${PS.page === p.path ? 'bg-sand/60' : ''}" onclick="psPick('${esc(p.path).replace(/'/g, '&#39;')}')"><td><p>${esc(p.name)}</p><p class="text-[11px] text-muted truncate max-w-[300px]">${esc(decodeURIComponent(p.path))}</p></td><td class="text-center">${cell(p.path, 'mobile')}</td><td class="text-center">${cell(p.path, 'desktop')}</td>
+        <td class="text-right tnum">${m ? `<span class="lang-b ${m.lab.lcp.cat}">${psMs(m.lab.lcp.v)}</span>` : '—'}</td><td class="text-right tnum">${m ? m.lab.cls.v.toFixed(2) : '—'}</td><td class="text-right text-muted text-[12px] whitespace-nowrap">${busy(p.path) ? '<span class="text-maroon">กำลังตรวจ…</span>' : at ? psTime(at) : 'ยังไม่ตรวจ'}</td></tr>`; }).join('')}
+      </tbody></table></div><p class="px-5 py-3 text-[11px] text-muted border-t border-line">LCP และ CLS ในตารางเป็นผลทดสอบบนมือถือ · กดแถวเพื่อดูรายละเอียดหน้านั้น</p></div>`;
+
+  const C = D.cfg;
+  const alerts = `<div class="rounded-2xl ring-1 ring-line p-5 mt-4"><div class="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+      <div><p class="font-medium">แจ้งเตือนเมื่อเว็บช้าลง</p><p class="text-[12px] text-muted mt-0.5">ส่งข้อความหาทีมเมื่อคะแนนมือถือของหน้าสำคัญต่ำกว่าเกณฑ์ หรือ Core Web Vitals ไม่ผ่าน (หลังการตรวจทุกหน้า)</p></div>
+      <div class="flex flex-wrap items-center gap-3">
+        <label class="flex items-center gap-2 text-[12.5px] whitespace-nowrap">คะแนนต่ำกว่า<input type="number" min="10" max="100" value="${C.threshold}" class="inp text-center tnum" style="width:72px;height:32px" onchange="psCfgSave('threshold', +this.value)"/></label>
+        <span class="lang-b ${D.line ? 'ok' : 'low'}">LINE ทีมงาน ${D.line ? '✓' : '· ยังไม่ได้เชื่อม'}</span>
+        <span class="lang-b" title="ระบบยังไม่มีบริการส่งอีเมล">อีเมล · ยังไม่มีระบบส่ง</span>
+        <label class="flex items-center gap-2 text-[12.5px]"><label class="tgl"><input type="checkbox" ${C.alerts ? 'checked' : ''} onchange="psCfgSave('alerts', this.checked)"/><span></span></label>${C.alerts ? 'เปิดอยู่' : 'ปิดอยู่'}</label>
+        <label class="flex items-center gap-2 text-[12.5px]"><label class="tgl"><input type="checkbox" ${C.daily ? 'checked' : ''} onchange="psCfgSave('daily', this.checked)"/><span></span></label>ตรวจอัตโนมัติ 06:00</label>
+      </div></div></div>`;
+  return top + keyMsg + chips + body + table + alerts + `<p class="text-[11px] text-muted mt-4">ใช้ Google PageSpeed Insights API แบบฟรี (ไม่ต้องผูกบัตร ไม่มีค่าใช้จ่าย · ฟรี 25,000 ครั้ง/วัน) · ตรวจทั้งหมด 1 รอบใช้ประมาณ ${D.pages.length * 2} ครั้ง</p>`;
+}
+
+/* SEO tabs: + PageSpeed */
+vSeo = function () {
+  const tabs = [['overview', 'ภาพรวม', 'gauge'], ['speed', 'PageSpeed', 'zap'], ['pages', 'Meta ทุกหน้า', 'file-text'], ['keywords', 'คีย์เวิร์ด', 'tag'], ['redirects', 'Redirect & 404', 'shuffle'], ['schema', 'Schema', 'code'], ['sitemap', 'Sitemap & Robots', 'network'], ['settings', 'ตั้งค่า SEO', 'settings-2']];
+  const P = auditAll();
+  if (SEOV.tab !== 'speed') clearTimeout(PS.poll);
+  $('#view').innerHTML = `${head('SEO', 'ตรวจและจัดการ SEO ทุกหน้า ทั้งภาษาไทยและอังกฤษ · ปัญหาคำนวณจากข้อมูลจริงในระบบ · ตัวเลขจาก Google ดึงจาก Search Console', SEOV.tab === 'speed' ? '' : `<button class="btn btn-o" onclick="toast('ตรวจทั้งเว็บใหม่แล้ว · ${P.length} หน้า');vSeo()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>ตรวจใหม่</button>`)}
+    <div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${tabs.map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${SEOV.tab === k ? 'on' : ''}" onclick="SEOV.tab='${k}';vSeo()"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div><div class="card">
+    <div id="seoBody" class="p-4 sm:p-5 fade">${({ overview: seoOverview, speed: seoSpeed, pages: seoPagesTab, keywords: seoKw, redirects: seoRedir, schema: seoSchema, sitemap: seoSitemap, settings: seoSettings })[SEOV.tab](P)}</div></div>`;
+  icons();
+};
+/* overview card → link to the full tab */
+{ const _pc = psiCard; psiCard = function () { return _pc().replace(/<\/div>$/, `<button class="text-[11.5px] text-maroon mt-2" onclick="SEOV.tab='speed';vSeo()">ดู PageSpeed ทุกหน้า →</button></div>`); }; }
+
 (function start() {
   const me = Object.assign({}, TEAM.find(t => t.id === BOOT.me.id) || BOOT.me, { perms: BOOT.me.perms });
   finishLogin(me, '', { t: Date.now() });

@@ -14,7 +14,7 @@ import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
 import { analyticsData } from '@/lib/analytics';
 import { GoogleError, googleData, googleStatus, loadGoogleCfg, saveGoogleCfg, testGoogle } from '@/lib/google';
-import { pageSpeed } from '@/lib/pagespeed';
+import { pageSpeed, psiPath, psiRun, psiRunAll, psiState, savePsiCfg } from '@/lib/pagespeed';
 import { BookingConflict, customerEdit, customerErase, customerMerge, dealOp, dealsFor, wonGuard } from '@/lib/lead-guard';
 import { aiSave, aiStore, cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
 import { sitemapStats, submitSitemap } from '@/lib/sitemap-tools';
@@ -504,6 +504,26 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
           if (e instanceof QuotaError) throw new HttpError(429, e.message);
           throw new HttpError(502, 'แปลไม่สำเร็จ: ' + (e instanceof Error ? e.message : String(e)));
         }
+      }
+    }
+    if (a === 'analytics' && b0 === 'psi') {
+      // SEO → PageSpeed: state · run one page · run all key pages (background) · alert settings
+      await need(me, 'seo');
+      if (method === 'GET') return json(await psiState());
+      if (method === 'POST' && c0 === 'run') {
+        const p = psiPath(str(body.url, 500)); if (!p) throw new HttpError(400, 'ใส่ลิงก์หน้าในเว็บนี้เท่านั้น');
+        try { return json({ result: await psiRun(p, body.strategy === 'desktop' ? 'desktop' : 'mobile', me.name) }); }
+        catch (e) { throw new HttpError(502, e instanceof Error ? e.message : String(e)); }
+      }
+      if (method === 'POST' && c0 === 'all') {
+        const paths = Array.isArray(body.paths) ? body.paths.map(x => psiPath(typeof x === 'string' ? x : '')).filter((x): x is string => !!x).slice(0, 20) : undefined;
+        return json({ started: psiRunAll(me.name, paths), state: await psiState() });
+      }
+      if (method === 'PUT' && c0 === 'settings') {
+        const r = await savePsiCfg(body, me.name);
+        const changes = ([['threshold', 'เกณฑ์คะแนน'], ['alerts', 'แจ้งเตือน LINE'], ['daily', 'ตรวจอัตโนมัติ 06:00']] as const).filter(([k]) => r.before[k] !== r.after[k]).map(([k, f]) => ({ f, from: String(r.before[k]), to: String(r.after[k]) }));
+        if (changes.length) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'pagespeed', label: 'ตั้งค่าแจ้งเตือน PageSpeed', changes });
+        return json({ cfg: r.after });
       }
     }
     if (a === 'analytics' && b0 === 'pagespeed' && method === 'GET') { await need(me, 'seo'); const q = new URL(req.url).searchParams; return json(await pageSpeed(q.get('strategy') === 'desktop' ? 'desktop' : 'mobile', q.get('refresh') === '1')); }

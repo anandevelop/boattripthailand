@@ -9,6 +9,7 @@ import { purgeExpiredSessions } from './auth-jobs';
 import { checkSla } from './leads';
 import { lineEnabled, pushLine, text } from './line';
 import { maintenance } from './maintenance';
+import { psiDaily } from './pagespeed';
 import { UPLOAD_DIR } from './media';
 import { listTrash } from './post-trash';
 import { publishDue } from './post-schedule';
@@ -258,6 +259,7 @@ export const JOBS: Job[] = [
   { id: 'sessions', name: 'ล้างเซสชันที่หมดอายุ', every: 'ทุกชั่วโมง', due: every(3600_000), run: async () => { await purgeExpiredSessions(); return 'เรียบร้อย'; } },
   { id: 'publish', name: 'เผยแพร่บทความที่ตั้งเวลาไว้', every: 'ทุก 1 นาที', due: every(60_000), run: publishDue, quiet: true },
   { id: 'sla', name: 'เตือนลีดที่ยังไม่ตอบ (SLA)', every: 'ทุก 1 นาที', due: every(60_000), run: async () => { await checkSla(); return 'เรียบร้อย'; }, quiet: true },
+  { id: 'psi', name: 'ตรวจ PageSpeed หน้าสำคัญ', every: 'ทุกวัน 06:00', due: daily(6), run: psiDaily },
   { id: 'web', name: 'วัดเว็บ (ออนไลน์ + เวลาโหลด)', every: 'ทุก 1 นาที', due: every(60_000), run: webCheck, quiet: true },
 ];
 
