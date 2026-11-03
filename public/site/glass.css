@@ -1061,3 +1061,62 @@ html:has(#mobileMenu:not(.hidden)) :is(#cookieBar, #floatCta) { display:none !im
   .bt-count { display: inline-flex; position: absolute; right: 12px; bottom: 12px; z-index: 3; height: 28px; padding: 0 11px; align-items: center; gap: 2px; border-radius: 99px; background: rgb(20 10 12 / .55); color: #fff; font-size: 12.5px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); pointer-events: none; }
   .bt-count b { font-weight: 500; }
 }
+
+/* ===== หน้าแรก: 3 ขั้นตอนการจอง แบบการ์ดภาพประกอบเคลื่อนไหว (mockup แบบ A) · .hw-* ===== */
+.hw { border-radius: 28px; background: #f8f4f3; padding: 24px; }
+@media (min-width: 1024px) { .hw { padding: 40px 44px; } }
+.hw-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px 24px; }
+.hw-head .tm-sub { max-width: 620px; }
+.hw-steps { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 14px; }
+@media (min-width: 768px) { .hw-steps { grid-template-columns: repeat(3, 1fr); gap: 18px; } }
+.hw-card { background: #fff; border-radius: 22px; box-shadow: 0 0 0 1px rgba(35,20,22,.06); overflow: hidden; }
+.hw-ill { position: relative; height: 170px; background: linear-gradient(180deg, #f9f1f2, #f3ebe8); overflow: hidden; }
+@media (min-width: 1024px) { .hw-ill { height: 200px; } }
+.hw-body { padding: 16px 18px 20px; }
+@media (min-width: 1024px) { .hw-body { padding: 20px 22px 24px; } }
+.hw-t { margin: 0; display: flex; align-items: center; gap: 12px; font-size: 16.5px; font-weight: 500; color: #231416; }
+.hw-t .hx-n { width: 30px; height: 30px; font-size: 14px; }
+.hw-d { margin: 8px 0 0; font-size: 14px; line-height: 1.65; color: #6b5e60; }
+.hw-cta-m { display: none; }
+@media (max-width: 767px) { .hw-cta { display: none; } .hw-cta-m { display: inline-flex; margin-top: 16px; width: 100%; justify-content: center; } }
+/* 1 · phone form + send */
+.hw-ph { position: absolute; left: 50%; top: 22px; width: 132px; height: 200px; margin-left: -66px; border-radius: 22px; background: #fff; box-shadow: 0 18px 36px -18px rgba(58,0,7,.45), 0 0 0 1px rgba(35,20,22,.06); padding: 30px 10px 0; }
+.hw-ph::before { content: ''; position: absolute; top: 10px; left: 50%; width: 34px; height: 5px; margin-left: -17px; border-radius: 9px; background: #ece5e1; }
+.hw-fld { display: block; height: 16px; border-radius: 6px; background: #f3ecea; margin-bottom: 7px; position: relative; overflow: hidden; }
+.hw-fld b { position: absolute; inset: 0; width: 0; background: #e9d9da; animation: hwFill 4s infinite; }
+.hw-fld:nth-child(2) b { animation-delay: .5s; } .hw-fld:nth-child(3) b { animation-delay: 1s; }
+@keyframes hwFill { 0%, 10% { width: 0; } 35%, 100% { width: 100%; } }
+.hw-send { display: grid; place-items: center; height: 22px; margin-top: 10px; border-radius: 99px; background: #70000e; color: #fff; font-size: 10px; animation: hwPress 4s infinite; }
+@keyframes hwPress { 0%, 45% { transform: scale(1); } 50% { transform: scale(.92); } 55%, 100% { transform: scale(1); } }
+.hw-plane { position: absolute; left: 58%; top: 112px; color: #70000e; opacity: 0; animation: hwFly 4s infinite; }
+.hw-plane svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes hwFly { 0%, 50% { opacity: 0; transform: translate(0, 0); } 55% { opacity: 1; } 85% { opacity: 1; transform: translate(90px, -80px) rotate(-12deg); } 100% { opacity: 0; transform: translate(110px, -95px); } }
+/* 2 · confirmation card */
+.hw-cf { position: absolute; left: 50%; top: 30px; width: 210px; margin-left: -105px; border-radius: 18px; background: #fff; box-shadow: 0 18px 36px -18px rgba(58,0,7,.45), 0 0 0 1px rgba(35,20,22,.06); padding: 12px 14px; }
+.hw-cf p { margin: 0; display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f0eae7; font-size: 11px; color: #6b5e60; }
+.hw-cf p:nth-of-type(3) { border-bottom: 0; }
+.hw-cf p b { color: #231416; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hw-ok { margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: #2f6b45; }
+.hw-chk { width: 26px; height: 26px; border-radius: 50%; background: #e7f2ea; display: grid; place-items: center; }
+.hw-chk svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.hw-chk path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: hwDraw 3.5s infinite; }
+@keyframes hwDraw { 0%, 30% { stroke-dashoffset: 24; } 55%, 100% { stroke-dashoffset: 0; } }
+.hw-bub { position: absolute; right: 16px; top: 12px; height: 26px; padding: 0 10px; border-radius: 13px 13px 13px 4px; background: #06c755; color: #fff; font-size: 11px; display: flex; align-items: center; transform-origin: left bottom; animation: hwPop 3.5s infinite; }
+@keyframes hwPop { 0%, 8% { transform: scale(0); opacity: 0; } 18%, 85% { transform: scale(1); opacity: 1; } 100% { opacity: 0; } }
+.hw-clock { position: absolute; left: 16px; bottom: 14px; height: 26px; padding: 0 10px; border-radius: 99px; background: #fff; box-shadow: 0 0 0 1px rgba(35,20,22,.06); font-size: 11px; color: #70000e; display: flex; align-items: center; gap: 5px; }
+.hw-clock svg { width: 13px; height: 13px; }
+/* 3 · boat at sea */
+.hw-sea { position: absolute; inset: 0; background: linear-gradient(180deg, #fbeee8 0%, #f6dfd6 55%, #8fc3cf 56%, #5aa3b5 100%); }
+.hw-sun { position: absolute; left: 58%; top: 26px; width: 54px; height: 54px; border-radius: 50%; background: #f2b27a; opacity: .85; animation: hwSun 6s ease-in-out infinite; }
+@keyframes hwSun { 50% { transform: translateY(6px); } }
+.hw-boat { position: absolute; left: -35%; top: 64px; animation: hwSail 7s linear infinite; }
+@media (min-width: 1024px) { .hw-boat { top: 78px; } }
+.hw-boat svg { display: block; width: 130px; height: auto; animation: hwBob 1.6s ease-in-out infinite; }
+@keyframes hwSail { 0% { left: -35%; } 100% { left: 105%; } }
+@keyframes hwBob { 50% { transform: translateY(4px) rotate(-1.5deg); } }
+.hw-wave { position: absolute; left: 0; width: 200%; height: 40px; background-repeat: repeat-x; background-image: radial-gradient(circle at 20px -6px, transparent 22px, #fff 23px, transparent 24px); animation: hwWave 5s linear infinite; }
+.hw-wave.w1 { bottom: 24px; opacity: .55; background-size: 40px 40px; }
+.hw-wave.w2 { bottom: 6px; opacity: .4; background-size: 56px 40px; animation-duration: 7s; }
+@keyframes hwWave { to { transform: translateX(-50%); } }
+@media (max-width: 1023px) { .hw-ph { transform: scale(.82); transform-origin: top center; top: 16px; } .hw-cf { transform: scale(.88); transform-origin: top center; top: 22px; } }
+@media (prefers-reduced-motion: reduce) { .hw * { animation: none !important; } .hw-fld b { width: 100%; } .hw-chk path { stroke-dashoffset: 0; } .hw-plane { display: none; } .hw-boat { left: 30%; } }

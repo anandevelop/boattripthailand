@@ -1698,16 +1698,28 @@ function renderHomeDests() {
 }
 function renderHomeHow() {
   const el = $('#homeHow'); if (!el) return;
-  const S = [
-    ['send', L('ส่งคำขอฟรี', 'Send a free request'), L('เลือกวัน จำนวนคน และเรือที่สนใจ หรือให้ทีมช่วยเลือกเรือให้', 'Pick a date, group size and boat — or let us choose for you')],
-    ['calendar-check', L('ทีมยืนยันเรือและราคา', 'We confirm boat & price'), L('เช็กว่าเรือว่าง แจ้งราคาสุทธิ สิ่งที่รวม และเวลานัด ภายใน 30 นาที (09:00–21:00)', 'We check availability and send the final price, inclusions and pickup time within 30 minutes (09:00–21:00)')],
-    ['ship', L('ชำระและออกทริป', 'Pay and set sail'), L('ชำระตามเงื่อนไขที่ทีมงานแจ้ง แล้วไปขึ้นเรือที่ท่าตามนัด', 'Pay as agreed with our team, then meet the boat at the marina')],
+  // example on the confirmation card: a real boat from the fleet, its current from-price, a date two weeks ahead
+  const ex = FLEET.find(b => b.slug === 'leopard-90-ft' && b.from_) || FLEET.find(b => b.from_) || FLEET[0];
+  const d = new Date(Date.now() + 14 * 864e5), dISO = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const send = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>';
+  const ill = [
+    `<div class="hw-ph"><i class="hw-fld"><b></b></i><i class="hw-fld"><b></b></i><i class="hw-fld"><b></b></i><span class="hw-send">${L('ส่งคำขอ', 'Send')}</span></div><span class="hw-plane">${send}</span>`,
+    `<div class="hw-cf"><p><span>${L('เรือ', 'Boat')}</span><b>${esc(niceTitle(ex ? ex.title : ''))}</b></p><p><span>${L('วันที่', 'Date')}</span><b>${fmtMD(dISO.slice(5), LANG === 'en' ? 'en' : 'th')}</b></p><p><span>${L('ราคาสุทธิ', 'Final price')}</span><b>${ex && ex.from_ ? baht(ex.from_) : '—'}</b></p>
+      <div class="hw-ok"><span class="hw-chk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>${L('เรือว่าง · ยืนยันแล้ว', 'Available · confirmed')}</div></div>
+      <span class="hw-bub">${L('LINE · ทีมงานตอบแล้ว', 'LINE · our team replied')}</span><span class="hw-clock"><i data-lucide="clock-3"></i>${L('ภายใน 30 นาที', 'Within 30 min')}</span>`,
+    `<span class="hw-sea"></span><span class="hw-sun"></span><span class="hw-boat"><svg viewBox="0 0 130 70" aria-hidden="true"><path d="M8 46h110l-14 16H24z" fill="#fff" stroke="#231416" stroke-width="2" stroke-linejoin="round"/><path d="M34 46V24h46l14 22" fill="#fff" stroke="#231416" stroke-width="2" stroke-linejoin="round"/><path d="M44 30h10v8H44zM60 30h10v8H60z" fill="#5aa3b5"/><path d="M62 24V10h14" fill="none" stroke="#231416" stroke-width="2" stroke-linecap="round"/><path d="M76 10l8 4-8 4z" fill="#70000e"/></svg></span><span class="hw-wave w1"></span><span class="hw-wave w2"></span>`,
   ];
-  el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 pb-14 lg:pb-20"><div class="hx-how">
-    <div class="hx-how-h"><p class="tm-eyebrow"><i data-lucide="list"></i>${L('จองยังไง', 'How to book')}</p><h2 class="tm-title font-display">${L('3 ขั้นตอน ไม่ต้องจ่ายบนเว็บ', '3 steps, no payment online')}</h2>
-      <p class="tm-sub">${L('เลือกเรือหรือบอกความต้องการ ทีมงานติดต่อกลับทาง LINE, WhatsApp หรือโทร พร้อมราคาที่ยืนยันแล้ว', 'Choose a boat or tell us what you need — we reply on LINE, WhatsApp or phone with a confirmed price.')}</p>
-      <button type="button" onclick="openBooking()" class="hx-btn">${L('ส่งคำขอฟรี', 'Send a free request')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
-    <ol class="hx-steps">${S.map(([ic, a, b], i) => `<li><span class="hx-n">${i + 1}</span><span><b>${a}</b><span>${b}</span></span><i data-lucide="${ic}" class="hx-ic"></i></li>`).join('')}</ol>
+  const S = [
+    [L('ส่งคำขอฟรี', 'Send a free request'), L('เลือกวัน จำนวนคน และเรือที่สนใจ หรือให้ทีมช่วยเลือกเรือให้', 'Pick a date, group size and boat — or let us choose for you')],
+    [L('ทีมยืนยันเรือและราคา', 'We confirm boat & price'), L('เช็กว่าเรือว่าง แจ้งราคาสุทธิ สิ่งที่รวม และเวลานัด ภายใน 30 นาที (09:00–21:00)', 'We check availability and send the final price, inclusions and pickup time within 30 minutes (09:00–21:00)')],
+    [L('ชำระและออกทริป', 'Pay and set sail'), L('ชำระตามเงื่อนไขที่ทีมงานแจ้ง แล้วไปขึ้นเรือที่ท่าตามนัด', 'Pay as agreed with our team, then meet the boat at the marina')],
+  ];
+  el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 pb-14 lg:pb-20"><div class="hw">
+    <div class="hw-head"><div><p class="tm-eyebrow"><i data-lucide="list"></i>${L('จองยังไง', 'How to book')}</p><h2 class="tm-title font-display">${L('3 ขั้นตอน ไม่ต้องจ่ายบนเว็บ', '3 steps, no payment online')}</h2>
+      <p class="tm-sub">${L('เลือกเรือหรือบอกความต้องการ ทีมงานติดต่อกลับทาง LINE, WhatsApp หรือโทร พร้อมราคาที่ยืนยันแล้ว', 'Choose a boat or tell us what you need — we reply on LINE, WhatsApp or phone with a confirmed price.')}</p></div>
+      <button type="button" onclick="openBooking()" class="hx-btn hw-cta">${L('ส่งคำขอฟรี', 'Send a free request')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+    <ol class="hw-steps">${S.map(([t1, t2], i) => `<li class="hw-card"><div class="hw-ill hw-ill${i + 1}" aria-hidden="true">${ill[i]}</div><div class="hw-body"><p class="hw-t"><span class="hx-n">${i + 1}</span>${t1}</p><p class="hw-d">${t2}</p></div></li>`).join('')}</ol>
+    <button type="button" onclick="openBooking()" class="hx-btn hw-cta-m">${L('ส่งคำขอฟรี', 'Send a free request')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button>
   </div></div>`;
 }
 
