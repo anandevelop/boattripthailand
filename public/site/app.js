@@ -342,7 +342,7 @@ function openAct(pic, k = 0) {
         ${a.facts ? `<ul class="mt-5 grid sm:grid-cols-3 gap-2">${a.facts.map(f => `<li class="flex gap-2 items-start rounded-xl bg-sand px-3 py-2.5 text-[13px]"><i data-lucide="check" class="w-4 h-4 text-maroon shrink-0 mt-px"></i>${f[lang]}</li>`).join('')}</ul>` : ''}
         ${a.rates ? rateHTML(a) : ''}
         ${a.itin ? `<div class="mt-6"><p class="text-[11px] uppercase tracking-[.16em] text-muted">${L('เส้นทาง', 'Itinerary')}</p><ol class="mt-3 space-y-2.5">${a.itin.map((x, n) => { const [h, ...r] = x[lang].split(' – '); return `<li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-maroon-50 text-maroon text-xs grid place-items-center tabular-nums">${n + 1}</span><span class="text-[14px] leading-relaxed"><b class="font-medium text-ink">${h}</b>${r.length ? ` <span class="text-muted">– ${r.join(' – ')}</span>` : ''}</span></li>`; }).join('')}</ol></div>` : ''}
-        ${(() => { if (!a.kw && !a.marina) return ''; const bs = FLEET.filter(b => a.marina ? (b.marina || '').toLowerCase().includes(a.marina) : b.tables.some(t => t.rows.some(r => a.kw.some(k => (r[0] || '').toLowerCase().includes(k))))).sort((x, y) => (x.from_ || 9e9) - (y.from_ || 9e9)); if (!bs.length) return '';
+        ${(() => { if (!a.kw && !a.marina) return ''; let bs = FLEET.filter(b => a.marina ? (b.marina || '').toLowerCase().includes(a.marina) : b.tables.some(t => t.rows.some(r => a.kw.some(k => (r[0] || '').toLowerCase().includes(k))))).sort((x, y) => (x.from_ || 9e9) - (y.from_ || 9e9)); bs = popFirst(bs); if (!bs.length) return '';
           return `<div class="mt-7 rounded-[18px] bg-sand p-4"><div class="flex items-center justify-between gap-3"><p class="font-medium text-ink text-[15px]">${a.marina ? L('เรือที่ออกจากท่า Boat Lagoon ที่ตั้งของโรงแรม', 'Boats departing from Boat Lagoon marina') : L(`เช่าเรือส่วนตัวไป${a.th}`, `Private boats to ${a.en}`)}</p><span class="text-xs text-muted whitespace-nowrap">${bs.length} ${L('ลำ', 'boats')}</span></div>
             <div class="mt-3 grid sm:grid-cols-3 gap-2">${bs.slice(0, 3).map(b => `<a href="#/boat/${b.slug}" onclick="closeAct()" class="flex sm:block items-center gap-3 bg-white rounded-[14px] p-2 hover:ring-1 hover:ring-maroon/30"><img src="${bimg(b.slug, 'a')}" alt="" class="w-20 sm:w-full aspect-[4/3] object-cover rounded-[10px]"/><span class="block sm:mt-2 min-w-0"><span class="block text-[13px] font-medium truncate">${niceTitle(b.title)}</span><span class="block text-[12px] text-muted">${t('price.from','เริ่มต้น')} ${baht(b.from_)}</span></span></a>`).join('')}</div>
             ${bs.length > 3 ? `<a href="#/fleet" onclick="closeAct()" class="inline-flex items-center gap-1 mt-3 text-[13px] text-maroon">${L('ดูเรือทั้งหมดที่ไปเส้นทางนี้', 'See all boats for this route')} <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>` : ''}</div>`; })()}
@@ -491,6 +491,8 @@ const TYPE_COLOR = { yacht:'bg-maroon text-white', sail:'bg-lagoon text-white', 
 const DESTS = ['Phi Phi','Racha','Phang Nga','Khai','Coral','Maiton','Naka','Hong','Krabi','Promthep','Yao'];
 const DEST_MAP = { 'Phi Phi':'Phi Phi','Racha Yai':'Racha','Phang Nga Bay':'Phang','Khai Island':'Khai','Coral Island':'Coral','Maiton':'Maiton','Naka Noi':'Naka','Hong Krabi':'Hong' };
 const FEATURED = ['leopard-90-ft','splo-74-ft','vtech-68-ft','the-origin-90-ft','cognac-75-ft','siam-princess-70-ft','lobster-78-ft','leopard-40-ft','coco-40-ft','dean-44-ft','r5-47-ft','nanea-40-ft'];
+/* popular boats first wherever boats are listed (order of FEATURED), the rest keep the order they came in */
+const popFirst = list => list.map((b, i) => [b, i]).sort((x, y) => (x[0].popRank ?? 999) - (y[0].popRank ?? 999) || x[1] - y[1]).map(x => x[0]);
 const prettyMarina = s => (s||'').toLowerCase().replace(/(^|[\s(\/-])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase()).replace(/\bRpm\b/,'RPM').replace(/Puhket/,'Phuket').replace('One°15','ONE°15');
 const infoGet = (b, ...keys) => { for (const k of keys) { const r = b.info.find(x => x[0].toLowerCase()===k.toLowerCase()); if (r && r[1] && r[1] !== 'N/A') return r[1]; } return null; };
 /* photos at the size they are shown: /r/<w>/… is resized on the server (cards don't need the 1920 px originals). w = 0 → original */
@@ -506,6 +508,7 @@ FLEET.forEach((b, i) => {
   b.overnight = b.trips.includes('overnight') || !!infoGet(b,'Over Night','Overnight','Overnight Capacity');
   b.dest = DESTS.filter(d => blob.includes(d.toLowerCase()));
   b.hot = FEATURED.indexOf(b.slug) > -1 && FEATURED.indexOf(b.slug) < 6;
+  b.popRank = FEATURED.indexOf(b.slug) < 0 ? 999 : FEATURED.indexOf(b.slug);
   b.marinaP = prettyMarina(b.marina);
   b.tags = [infoGet(b,'Cabin','Cabins','Bedroom') && `${infoGet(b,'Cabin','Cabins','Bedroom').split(' ')[0]} Cabin`, infoGet(b,'Cruising Speed','Cruising','Cruise Speed','Speed Cruise','Speed Cruising'), infoGet(b,'Year Refit','Last Refit','Refit','Year','Year Built') && 'Year ' + infoGet(b,'Year Refit','Last Refit','Refit','Year','Year Built')].filter(Boolean).slice(0,3);
 });
@@ -749,9 +752,9 @@ function renderBoats() {
   } else {
     const featured = FEATURED.map(bySlug).filter(Boolean);
     list = filterList(featured, boatFilter);
-    if (list.length < 3) list = filterList(FLEET, boatFilter).slice(0, 9);
+    if (list.length < 3) list = popFirst(filterList(FLEET, boatFilter)).slice(0, 9);
   }
-  if (boatSort !== 'pop') list = sortList(list, boatSort);
+  if (boatSort !== 'pop') list = sortList(list, boatSort); else list = popFirst(list);
   $('#boatEmpty').classList.toggle('hidden', list.length>0);
   $('#boatGrid').innerHTML = list.slice(0, search ? 60 : 12).map(boatCard).join('');
   icons();
@@ -1130,7 +1133,7 @@ function renderDetail(slug) {
   detailProgram = 0; { const v0 = seasonView(b, todayISO()); DSZ = { ...v0, pick: null }; if (!v0.key && boatKeys(b).length) { const nx = nextSeason(v0.cal, todayISO()); if (nx) DSZ.key = DSZ.base = nx.key; } }
   bpGuestsN = Math.max(1, Math.min(guests || 2, b.pax || 99));
   const name = niceTitle(b.title), g = gallery(b.slug), progs = bpProgs(b), facts = bpFacts(b), rule = extraRule(b);
-  const similar = FLEET.filter(x => x.type === b.type && x.slug !== b.slug).sort((x, y) => Math.abs((x.from_ || 0) - (b.from_ || 0)) - Math.abs((y.from_ || 0) - (b.from_ || 0))).slice(0, 3);
+  const similar = popFirst(FLEET.filter(x => x.type === b.type && x.slug !== b.slug).sort((x, y) => Math.abs((x.from_ || 0) - (b.from_ || 0)) - Math.abs((y.from_ || 0) - (b.from_ || 0)))).slice(0, 3);
   const refit = infoGet(b, 'Year Refit', 'Last Refit', 'Refit', 'Refitted');
   const yes = [...b.includes.map(x => [moneyText(x)]), ...b.complimentary.map(x => [x, L('ฟรี', 'free')])], no = b.not_included.map(moneyText);
   const secs = [['overview', L('ภาพรวม', 'Overview')], progs.length && ['programs', L('โปรแกรม & ราคา', 'Programs & rates')], b.time_slots.length && ['slotsSec', t('timeSlots')], (yes.length || no.length) && ['inclSec', L('รวม / ไม่รวม', 'Included')],
@@ -3258,7 +3261,7 @@ function renderDest(slug) {
   ${bs.length ? `<section class="max-w-7xl mx-auto px-4 sm:px-6 pb-14 lg:pb-20">
     <p class="text-lagoon-600 font-medium text-sm tracking-wider uppercase">Our Fleet</p>
     <h2 class="font-display font-medium text-2xl sm:text-3xl text-ink mt-2">${L(`เรือที่มีโปรแกรมไป${d.name.th}`, `Boats with ${d.name.en} programs`)}</h2>
-    <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">${bs.slice(0, 12).map((b, i) => boatCard(b, i)).join('')}</div>
+    <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">${popFirst(bs).slice(0, 12).map((b, i) => boatCard(b, i)).join('')}</div>
   </section>` : ''}`;
   buildForm($('#destForm'));
   document.title = d.seoTitle[k]; setMeta('description', d.seoDesc[k]);

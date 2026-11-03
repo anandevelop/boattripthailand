@@ -101,7 +101,7 @@ function fxScore(b) {
 const fxNear = b => { const d = fxDrive(b); return d ? d.hi : 999; };
 function fxList() {
   const rank = b => b.fxRank >= 0 ? b.fxRank : 99;
-  const by = { smart: fxActive() ? (a, b) => fxScore(b) - fxScore(a) : (a, b) => rank(a) - rank(b) || (b.ft || 0) - (a.ft || 0),
+  const by = { smart: fxActive() ? (a, b) => (a.fxRank >= 0 ? 0 : 1) - (b.fxRank >= 0 ? 0 : 1) || fxScore(b) - fxScore(a) : (a, b) => rank(a) - rank(b) || (b.ft || 0) - (a.ft || 0),
     pp: (a, b) => fxPer(a) - fxPer(b), low: (a, b) => fxPrice(a).total - fxPrice(b).total, high: (a, b) => fxPrice(b).total - fxPrice(a).total, size: (a, b) => (b.ft || 0) - (a.ft || 0), near: (a, b) => fxNear(a) - fxNear(b) || fxPrice(a).total - fxPrice(b).total }[FX.sort] || (() => 0);
   return FLEET.filter(b => fxPass(b)).sort(by);
 }
