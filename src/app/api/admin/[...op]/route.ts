@@ -14,7 +14,7 @@ import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
 import { analyticsData } from '@/lib/analytics';
 import { GoogleError, googleData, googleStatus, loadGoogleCfg, saveGoogleCfg, testGoogle } from '@/lib/google';
-import { pageSpeed, psiPath, psiRun, psiRunAll, psiState, savePsiCfg } from '@/lib/pagespeed';
+import { pageSpeed, psiPath, PsiKeyError, psiRun, psiRunAll, psiState, savePsiCfg, savePsiKey } from '@/lib/pagespeed';
 import { BookingConflict, customerEdit, customerErase, customerMerge, dealOp, dealsFor, wonGuard } from '@/lib/lead-guard';
 import { aiSave, aiStore, cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
 import { sitemapStats, submitSitemap } from '@/lib/sitemap-tools';
@@ -518,6 +518,15 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       if (method === 'POST' && c0 === 'all') {
         const paths = Array.isArray(body.paths) ? body.paths.map(x => psiPath(typeof x === 'string' ? x : '')).filter((x): x is string => !!x).slice(0, 20) : undefined;
         return json({ started: psiRunAll(me.name, paths), state: await psiState() });
+      }
+      if (method === 'PUT' && c0 === 'key') {
+        // API key pasted in /admin (encrypted at rest · .env still wins) · same permission as the Google API connection
+        await need(me, 'settings');
+        let r; try { r = await savePsiKey(body.key === null ? null : body.key, me.name); }
+        catch (e) { throw new HttpError(400, e instanceof PsiKeyError ? e.message : 'บันทึกไม่สำเร็จ'); }
+        const show = (x: typeof r.before) => x ? `····${x.last4}` : null;
+        await audit(actor(me), { action: 'update', entity: 'settings', ref: 'pagespeed-key', label: body.key === null ? 'ลบ PageSpeed API key' : 'ใส่ PageSpeed API key', changes: [{ f: 'API key', from: show(r.before), to: show(r.after) }] });
+        return json({ state: await psiState() });
       }
       if (method === 'PUT' && c0 === 'settings') {
         const r = await savePsiCfg(body, me.name);

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { boats as boatsT, posts as postsT, settings } from '@/db/schema';
+import { openSecret, sealSecret } from './google';
 import { SITE } from './i18n';
 import { lineEnabled, pushLine, text } from './line';
 
@@ -12,7 +13,8 @@ import { lineEnabled, pushLine, text } from './line';
  * - Field data = real Chrome users (CrUX, 28 days) when Google has enough traffic; lab data = Lighthouse.
  * - Results and a 90-day history live in the settings table (system.psi.* · not part of backups/restores).
  * - A daily run at 06:00 Bangkok checks the key pages and sends a LINE alert when the mobile score drops.
- * Google now allows (almost) no calls without a key: set PAGESPEED_API_KEY (free, Google Cloud → APIs → PageSpeed Insights API).
+ * Google allows no calls without a key: an API key (free, Google Cloud → Credentials) pasted in /admin (stored encrypted),
+ * or PAGESPEED_API_KEY in .env (wins when both are set).
  */
 type Cat = 'ok' | 'mid' | 'low';
 type Metric = { v: number; cat: Cat };
@@ -30,7 +32,7 @@ export type PsiResult = {
 export type PsiHist = { p: string; s: Strategy; at: string; perf: number; a11y: number; bp: number; seo: number; lcp: number; cls: number; b: string | null };
 export type PsiCfg = { threshold: number; alerts: boolean; daily: boolean; at?: string; by?: string };
 
-const LAST_KEY = 'system.psi.last', HIST_KEY = 'system.psi.hist', CFG_KEY = 'system.psi.cfg';
+const LAST_KEY = 'system.psi.last', HIST_KEY = 'system.psi.hist', CFG_KEY = 'system.psi.cfg', KEY_KEY = 'system.psi.key';
 const DEF_CFG: PsiCfg = { threshold: 80, alerts: true, daily: true };
 
 async function getSet<T>(key: string, def: T): Promise<T> {
@@ -41,6 +43,35 @@ const putSet = (key: string, value: unknown) => db.insert(settings).values({ key
 
 /** PageSpeed cannot reach localhost, so a dev setup measures the live domain */
 export const psiBase = () => (/localhost|127\.0\.0\.1/.test(SITE) ? 'https://new.boattripthailand.com' : SITE);
+
+/* ---------- API key: .env wins · otherwise the one pasted in /admin (AES-GCM sealed in settings) ---------- */
+type KeyRow = { sealed: string; last4: string; at: string; by: string };
+let keyMemo: { at: number; v: string | null } | null = null;
+async function apiKey(): Promise<string | null> {
+  if (process.env.PAGESPEED_API_KEY) return process.env.PAGESPEED_API_KEY;
+  if (keyMemo && Date.now() - keyMemo.at < 60_000) return keyMemo.v;
+  const row = await getSet<KeyRow | null>(KEY_KEY, null);
+  let v: string | null = null;
+  try { v = row?.sealed ? openSecret(row.sealed) : null; } catch { v = null; }
+  keyMemo = { at: Date.now(), v };
+  return v;
+}
+async function keyInfo() {
+  if (process.env.PAGESPEED_API_KEY) return { src: 'env' as const, last4: process.env.PAGESPEED_API_KEY.slice(-4), at: null, by: null };
+  const row = await getSet<KeyRow | null>(KEY_KEY, null);
+  return row?.sealed ? { src: 'admin' as const, last4: row.last4, at: row.at, by: row.by } : null;
+}
+export class PsiKeyError extends Error {}
+/** save (or remove with null) the key pasted in /admin; the value is never sent back to the browser */
+export async function savePsiKey(raw: unknown, by: string) {
+  const before = await keyInfo();
+  if (raw === null) { await db.delete(settings).where(eq(settings.key, KEY_KEY)); keyMemo = null; return { before, after: await keyInfo() }; }
+  const k = String(raw ?? '').trim();
+  if (!/^AIza[0-9A-Za-z_-]{30,45}$/.test(k)) throw new PsiKeyError('รูปแบบคีย์ไม่ถูกต้อง · API key ของ Google ขึ้นต้นด้วย AIza');
+  await putSet(KEY_KEY, { sealed: sealSecret(k), last4: k.slice(-4), at: new Date().toISOString(), by } satisfies KeyRow);
+  keyMemo = null;
+  return { before, after: await keyInfo() };
+}
 
 /** a path or a full URL of this site → its path; anything else is refused */
 export function psiPath(input: string): string | null {
@@ -88,12 +119,15 @@ export async function psiRun(p: string, strategy: Strategy, by?: string): Promis
   const url = psiBase() + p;
   const q = new URLSearchParams({ url, strategy, locale: 'th' });
   for (const c of ['performance', 'accessibility', 'best-practices', 'seo']) q.append('category', c);
-  if (process.env.PAGESPEED_API_KEY) q.set('key', process.env.PAGESPEED_API_KEY);
+  const key = await apiKey();
+  if (key) q.set('key', key);
   const r = await fetch('https://www.googleapis.com/pagespeedonline/v5/runPagespeed?' + q, { signal: AbortSignal.timeout(120_000), cache: 'no-store' });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) {
     const m: string = j?.error?.message || `PageSpeed ${r.status}`;
-    if (r.status === 429 || /quota/i.test(m)) throw new Error(process.env.PAGESPEED_API_KEY ? 'โควตา PageSpeed วันนี้หมดแล้ว · ลองใหม่พรุ่งนี้' : 'Google ไม่ให้ตรวจโดยไม่มีคีย์ · ใส่ PAGESPEED_API_KEY (ฟรี) ใน .env');
+    if (r.status === 429 || /quota/i.test(m)) throw new Error(key ? 'โควตา PageSpeed วันนี้หมดแล้ว · ลองใหม่พรุ่งนี้' : 'Google ไม่ให้ตรวจโดยไม่มีคีย์ · ใส่ API key (ฟรี) ในหน้า SEO → PageSpeed');
+    if (/API key not valid|API_KEY_INVALID/i.test(m)) throw new Error('API key ไม่ถูกต้อง · ตรวจคีย์อีกครั้ง');
+    if (/blocked|not been used|disabled|PERMISSION_DENIED/i.test(m) || r.status === 403) throw new Error('คีย์นี้ใช้กับ PageSpeed ไม่ได้ · เปิด PageSpeed Insights API และอนุญาต API นี้ในการจำกัดคีย์ (' + m.slice(0, 120) + ')');
     throw new Error(m);
   }
   const L = j.lighthouseResult ?? {}, A: Record<string, any> = L.audits ?? {}, C: Record<string, any> = L.categories ?? {};
@@ -205,7 +239,7 @@ async function psiAlert(pages: string[]) {
 /** daily job (system.ts): starts the background run and returns at once */
 export async function psiDaily() {
   if (!(await psiCfg()).daily) return 'ปิดการตรวจอัตโนมัติอยู่';
-  if (!process.env.PAGESPEED_API_KEY) return 'ข้าม · ยังไม่ได้ใส่ PAGESPEED_API_KEY';
+  if (!(await apiKey())) return 'ข้าม · ยังไม่ได้ใส่ API key'; 
   return psiRunAll('ระบบ') ? 'เริ่มตรวจหน้าสำคัญทั้งหมด (มือถือ + คอม)' : 'กำลังตรวจอยู่แล้ว';
 }
 
@@ -213,7 +247,7 @@ export async function psiDaily() {
 export async function psiState() {
   const [last, hist, cfg, pages] = await Promise.all([getSet<Record<string, PsiResult>>(LAST_KEY, {}), getSet<PsiHist[]>(HIST_KEY, []), psiCfg(), psiPages()]);
   const cut = Date.now() - 31 * 86400_000;
-  return { base: psiBase(), pages, last, hist: hist.filter(h => new Date(h.at).getTime() > cut), cfg, batch: psiBatch(), key: !!process.env.PAGESPEED_API_KEY, line: lineEnabled() };
+  return { base: psiBase(), pages, last, hist: hist.filter(h => new Date(h.at).getTime() > cut), cfg, batch: psiBatch(), key: !!(await apiKey()), keyInfo: await keyInfo(), line: lineEnabled() };
 }
 
 /* ---------- SEO → ภาพรวม card (home page, cached 24 h) · kept for the existing card ---------- */

@@ -22,7 +22,7 @@ export type GoogleCfg = { ga4Id: string; propertyId: string; gscSite: string; sa
 let CFG: GoogleCfg = { ga4Id: '', propertyId: '', gscSite: '', sa: null }, cfgAt = 0;
 const secretKey = () => createHash('sha256').update('btt-google|' + (process.env.SETTINGS_KEY || process.env.POSTGRES_PASSWORD || process.env.DATABASE_URL || 'btt')).digest();
 export function sealSecret(plain: string) { const iv = randomBytes(12), c = createCipheriv('aes-256-gcm', secretKey(), iv), enc = Buffer.concat([c.update(plain, 'utf8'), c.final()]); return [iv, c.getAuthTag(), enc].map(b => b.toString('base64')).join('.'); }
-function openSecret(sealed: string) { const [iv, tag, enc] = sealed.split('.').map(x => Buffer.from(x, 'base64')); const d = createDecipheriv('aes-256-gcm', secretKey(), iv); d.setAuthTag(tag); return Buffer.concat([d.update(enc), d.final()]).toString('utf8'); }
+export function openSecret(sealed: string) { const [iv, tag, enc] = sealed.split('.').map(x => Buffer.from(x, 'base64')); const d = createDecipheriv('aes-256-gcm', secretKey(), iv); d.setAuthTag(tag); return Buffer.concat([d.update(enc), d.final()]).toString('utf8'); }
 /** saved settings (cached 60 s); call before reading prop() / site() / serviceAccount() */
 export async function loadGoogleCfg(force = false) {
   if (!force && Date.now() - cfgAt < 60_000) return CFG;

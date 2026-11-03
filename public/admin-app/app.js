@@ -6457,6 +6457,15 @@ function psRunOne() {
 function psRunAll() {
   api('POST', 'analytics/psi/all', {}).then(r => { PS.d = r.state; toast(r.started ? 'เริ่มตรวจทุกหน้าแล้ว · ใช้เวลาประมาณ 3–5 นาที' : 'กำลังตรวจอยู่แล้ว'); if (psOn()) vSeo(); psPoll(); }).catch(fail);
 }
+function psKeySave() {
+  const el = $('#psKey'), k = (el?.value || '').trim();
+  if (!/^AIza[0-9A-Za-z_-]{30,45}$/.test(k)) { toastErr('API key ของ Google ต้องขึ้นต้นด้วย AIza · ตรวจว่าคัดลอกมาครบ'); el?.focus(); return; }
+  api('PUT', 'analytics/psi/key', { key: k }).then(r => { PS.d = r.state; PS.keyEdit = false; toast('บันทึก API key แล้ว · กด “ตรวจตอนนี้” เพื่อทดสอบ'); if (psOn()) vSeo(); }).catch(fail);
+}
+function psKeyDel() {
+  if (!confirm('ลบ API key? การตรวจ PageSpeed และการตรวจอัตโนมัติจะหยุดจนกว่าจะใส่คีย์ใหม่')) return;
+  api('PUT', 'analytics/psi/key', { key: null }).then(r => { PS.d = r.state; toast('ลบ API key แล้ว'); if (psOn()) vSeo(); }).catch(fail);
+}
 function psCfgSave(k, v) {
   const b = { [k]: v };
   api('PUT', 'analytics/psi/settings', b).then(r => { PS.d.cfg = r.cfg; toast('บันทึกแล้ว'); if (psOn()) vSeo(); }).catch(fail);
@@ -6491,7 +6500,11 @@ function seoSpeed() {
       <div><p class="text-[11px] tracking-[.14em] uppercase text-maroon">SEO · ความเร็วเว็บ</p><p class="text-[19px] font-medium mt-0.5">PageSpeed Insights</p>
         <p class="text-[12px] text-muted mt-1">คะแนนจาก Google ทั้งผู้ใช้จริง (Chrome 28 วัน) และการทดสอบ Lighthouse · ${D.cfg.daily ? 'ตรวจอัตโนมัติทุกวัน 06:00' : 'ปิดการตรวจอัตโนมัติ'}${lastAt ? ' · ล่าสุด ' + psTime(lastAt) : ''}</p></div>
       <div class="flex items-center gap-2">${seg}<button class="btn btn-p" ${PS.run ? 'disabled' : ''} onclick="psRunOne()"><i data-lucide="${PS.run ? 'loader-2' : 'play'}" class="w-3.5 h-3.5 ${PS.run ? 'animate-spin' : ''}"></i>${PS.run ? 'กำลังตรวจ… ~30 วิ' : 'ตรวจตอนนี้'}</button></div></div>`;
-  const keyMsg = D.key ? '' : `<div class="mt-4 rounded-xl bg-[#fff6e5] text-[#7a4a00] text-[12.5px] p-3.5 flex gap-2.5"><i data-lucide="key-round" class="w-4 h-4 shrink-0 mt-0.5"></i><span>ยังไม่ได้ใส่ <b class="font-medium">PAGESPEED_API_KEY</b> · ตอนนี้ Google ไม่ให้ตรวจโดยไม่มีคีย์ · สร้างคีย์ฟรีที่ Google Cloud → APIs &amp; Services → เปิด “PageSpeed Insights API” → Credentials → API key (ไม่ต้องผูกบัตร ไม่มีค่าใช้จ่าย) แล้ววางใน .env ของเซิร์ฟเวอร์ · การตรวจอัตโนมัติ 06:00 จะเริ่มทำงานเมื่อมีคีย์</span></div>`;
+  const KI = D.keyInfo, keyForm = `<div class="flex flex-wrap items-center gap-2 mt-3"><input id="psKey" type="password" autocomplete="off" spellcheck="false" class="inp font-mono text-[12.5px]" style="width:340px;max-width:100%" placeholder="วาง API key ที่ขึ้นต้นด้วย AIza…" onkeydown="if(event.key==='Enter')psKeySave()"/><button class="btn btn-p" onclick="psKeySave()"><i data-lucide="save" class="w-3.5 h-3.5"></i>บันทึกคีย์</button>${KI ? '<button class="btn btn-g" onclick="PS.keyEdit=false;vSeo()">ยกเลิก</button>' : ''}</div>`;
+  const keyMsg = !KI ? `<div class="mt-4 rounded-xl bg-[#fff6e5] text-[#7a4a00] text-[12.5px] p-4"><div class="flex gap-2.5"><i data-lucide="key-round" class="w-4 h-4 shrink-0 mt-0.5"></i><div class="min-w-0"><p class="font-medium text-[13px]">ใส่ API key ของ Google เพื่อเริ่มตรวจ</p><p class="mt-1">Google ไม่ให้ตรวจโดยไม่มีคีย์ · สร้างฟรีที่ <a class="underline" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud → Credentials</a> → <b class="font-medium">+ Create credentials → API key</b> → จำกัดคีย์ให้ใช้ได้เฉพาะ PageSpeed Insights API · ไม่ต้องผูกบัตร ไม่มีค่าใช้จ่าย</p>${keyForm}<p class="text-[11px] mt-2 opacity-80">คีย์ถูกเข้ารหัสก่อนเก็บ และจะไม่แสดงเต็มอีก · ต้องมีสิทธิ์ “ตั้งค่า” จึงบันทึกได้</p></div></div></div>`
+    : PS.keyEdit ? `<div class="mt-4 rounded-xl bg-sand text-[12.5px] p-4"><p class="font-medium text-[13px]">เปลี่ยน API key</p>${keyForm}</div>` : '';
+  const keyRow = !KI ? '' : `<div class="rounded-2xl ring-1 ring-line p-5 mt-4 flex flex-col md:flex-row md:items-center gap-3 justify-between"><div class="flex items-center gap-3"><span class="w-9 h-9 rounded-xl bg-[#eaf6ef] text-[#1e7a46] grid place-items-center shrink-0"><i data-lucide="key-round" class="w-4 h-4"></i></span><div><p class="font-medium">Google API key</p><p class="text-[12px] text-muted">ใส่แล้ว <span class="font-mono">····${esc(KI.last4)}</span> · ${KI.src === 'env' ? 'ตั้งไว้ใน .env ของเซิร์ฟเวอร์ (แก้ได้ที่เซิร์ฟเวอร์)' : `โดย ${esc(KI.by || '')} · ${psTime(KI.at)} · เก็บแบบเข้ารหัส`}</p></div></div>
+      ${KI.src === 'admin' ? `<div class="flex gap-2"><button class="btn btn-o" onclick="PS.keyEdit=true;vSeo();setTimeout(()=>$('#psKey')?.focus(),50)"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>เปลี่ยนคีย์</button><button class="btn btn-g" onclick="psKeyDel()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบคีย์</button></div>` : ''}</div>`;
   const chips = `<div class="mt-4 flex flex-wrap items-center gap-2"><span class="text-[12px] text-muted mr-1">หน้าที่ตรวจ</span>${pages.map(p => `<button class="h-8 px-3 rounded-full text-[12.5px] ${PS.page === p.path ? '' : 'bg-white ring-1 ring-line hover:ring-maroon/40'}" ${PS.page === p.path ? 'style="background:#70000e;color:#fff"' : ''} onclick="psPick('${esc(p.path).replace(/'/g, '&#39;')}')" title="${esc(decodeURIComponent(p.path))}">${esc(p.name)}</button>`).join('')}
       <input class="inp text-[12.5px]" style="width:240px;height:32px;border-radius:999px" placeholder="วางลิงก์หน้าอื่นของเว็บ…" onkeydown="if(event.key==='Enter')psUrl(this)"/></div>`;
 
@@ -6539,7 +6552,7 @@ function seoSpeed() {
         <label class="flex items-center gap-2 text-[12.5px]"><label class="tgl"><input type="checkbox" ${C.alerts ? 'checked' : ''} onchange="psCfgSave('alerts', this.checked)"/><span></span></label>${C.alerts ? 'เปิดอยู่' : 'ปิดอยู่'}</label>
         <label class="flex items-center gap-2 text-[12.5px]"><label class="tgl"><input type="checkbox" ${C.daily ? 'checked' : ''} onchange="psCfgSave('daily', this.checked)"/><span></span></label>ตรวจอัตโนมัติ 06:00</label>
       </div></div></div>`;
-  return top + keyMsg + chips + body + table + alerts + `<p class="text-[11px] text-muted mt-4">ใช้ Google PageSpeed Insights API แบบฟรี (ไม่ต้องผูกบัตร ไม่มีค่าใช้จ่าย · ฟรี 25,000 ครั้ง/วัน) · ตรวจทั้งหมด 1 รอบใช้ประมาณ ${D.pages.length * 2} ครั้ง</p>`;
+  return top + keyMsg + chips + body + table + alerts + keyRow + `<p class="text-[11px] text-muted mt-4">ใช้ Google PageSpeed Insights API แบบฟรี (ไม่ต้องผูกบัตร ไม่มีค่าใช้จ่าย · ฟรี 25,000 ครั้ง/วัน) · ตรวจทั้งหมด 1 รอบใช้ประมาณ ${D.pages.length * 2} ครั้ง</p>`;
 }
 
 /* SEO tabs: + PageSpeed */
