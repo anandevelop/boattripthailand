@@ -150,3 +150,11 @@
   .ed-faq-add { margin-top:6px; height:32px; padding:0 12px; border-radius:99px; font-size:12.5px; color:#70000e; display:inline-flex; align-items:center; gap:6px; box-shadow:inset 0 0 0 1px #e9d4d6; } .ed-faq-add:hover { background:#f9f1f2; }
   .b-faq { margin:18px 0; } .b-faq details { border-bottom:1px solid #ece4e3; padding:12px 0; } .b-faq summary { cursor:pointer; font-weight:500; list-style:none; display:flex; justify-content:space-between; gap:12px; } .b-faq summary::after { content:'+'; color:#70000e; } .b-faq details[open] summary::after { content:'–'; } .b-faq details > div { margin-top:6px; color:#4d4244; }
   .art-body .tbl-wrap { overflow-x:auto; margin:14px 0; } .art-body table { width:100%; border-collapse:collapse; font-size:13.5px; } .art-body td, .art-body th { border:1px solid #ece4e3; padding:7px 10px; text-align:left; vertical-align:top; } .art-body thead td, .art-body thead th { background:#f8f4f3; font-weight:500; }
+
+/* lead drawer → ราคาที่ตกลง & การชำระเงิน: nothing wider than the drawer (inputs never force a sideways scroll) */
+#drawer .overflow-y-auto { overflow-x: hidden; }
+#dealBox, #dealBox > *, #dealBox label, #dealBox .inp { min-width: 0; }
+#dealBox .inp { width: 100%; }
+.dl-pay { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dl-pay-h, .dl-pay-b { grid-column: 1 / -1; }
+.dl-pay-b { justify-content: center; height: 40px; }
