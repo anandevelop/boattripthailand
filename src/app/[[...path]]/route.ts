@@ -3,6 +3,7 @@ import { measurementId } from '@/lib/google';
 import { can } from '@/lib/perms';
 import { renderPostPreview, renderSite, routeExists } from '@/lib/site-render';
 import { pub } from '@/lib/env';
+import { noindexSite, reqHost } from '@/lib/indexing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,10 +17,12 @@ export async function GET(req: Request) {
   if (pid && url.pathname.replace(/^\/en(?=\/)/, '').startsWith('/blog/')) return preview(url, Number(pid));
   const ok = await routeExists(url.pathname);
   const target = ok ? url : new URL((url.pathname.startsWith('/en') ? '/en' : '') + '/404', url);
-  const html = await renderSite(target, await cfg());
+  let html = await renderSite(target, await cfg());
+  const noindex = noindexSite(reqHost(req.headers));
+  if (noindex) html = html.replace(/<meta name="robots" content="[^"]*"\s*\/?>/, '<meta name="robots" content="noindex, nofollow" />');
   return new Response(html, {
     status: ok ? 200 : 404,
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': ok ? 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' : 'no-store' },
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': ok ? 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' : 'no-store', ...(noindex ? { 'X-Robots-Tag': 'noindex, nofollow' } : {}) },
   });
 }
 

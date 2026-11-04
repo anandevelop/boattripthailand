@@ -1,6 +1,7 @@
 import { statSync } from 'node:fs';
 import { join } from 'node:path';
 import { NextResponse, type NextRequest } from 'next/server';
+import { noindexSite, reqHost } from '@/lib/indexing';
 
 /**
  * 1. 301 redirects from the old WordPress URLs (table `redirects`, cached 5 min)
@@ -8,6 +9,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  * 3. โหมดปิดปรับปรุง: visitors get a 503 page with the contact channels; signed-in staff see the site
  * 4. /boats and /img: the same URL, a lighter file — AVIF (or WebP for PNG/JPG) when the browser accepts it.
  *    The twins sit next to each image (x.webp.avif, x.png.webp), made by `node scripts/optimize-images.mjs`; an empty twin = no gain.
+ * 5. noindex mode (lib/indexing: dev domain new.*): X-Robots-Tag noindex on every page and image
  */
 export const config = { runtime: 'nodejs', matcher: ['/boats/:path*', '/img/:path*', '/((?!_next/|api/|admin|boats/|brand/|img/|r/|site/|site-data.js|uploads/|feeds/|icon|favicon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|js|css|map)$).*)'] };
 
@@ -37,6 +39,12 @@ function lighterImage(req: NextRequest, path: string) {
 }
 
 export async function middleware(req: NextRequest) {
+  const res = await route(req);
+  if (noindexSite(reqHost(req.headers))) res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return res;
+}
+
+async function route(req: NextRequest): Promise<NextResponse> {
   const url = req.nextUrl;
   let path: string;
   try { path = decodeURIComponent(url.pathname); } catch { path = url.pathname; }

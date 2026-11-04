@@ -6,6 +6,7 @@ import { settings } from '@/db/schema';
 import sitemap from '@/app/sitemap';
 import { gscSubmitSitemap } from './google';
 import { SITE } from './i18n';
+import { NOINDEX_MSG, noindexSite } from './indexing';
 
 /**
  * /admin → ศูนย์ SEO → Sitemap & Index: what /sitemap.xml lists right now, and sending it to search engines —
@@ -35,6 +36,7 @@ async function log(to: 'google' | 'bing', s: Sent) { const L = (await getSetting
 
 export async function submitSitemap(to: 'google' | 'bing'): Promise<{ ok: boolean; msg: string; log: SubmitLog }> {
   const at = new Date().toISOString();
+  if (noindexSite()) return { ok: false, msg: NOINDEX_MSG, log: (await getSetting<SubmitLog>(SUBMIT_KEY)) ?? {} };
   try {
     if (to === 'google') {
       await gscSubmitSitemap(SITE + '/sitemap.xml');
