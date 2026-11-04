@@ -1235,3 +1235,7 @@ html.nav-up .bp-book { top: 72px; }
 /* the section bar sits under the photos (and the phone "view all photos" button): keep a gap */
 .bp .secwrap { margin-top: 20px; }
 @media (max-width: 720px) { .bp .secwrap { margin-top: 10px; } }
+/* boat page on phones / tablets: the cookie notice sits above the booking bar instead of under it */
+@media (max-width: 1040px) {
+  body:has(#view-boat:not(.hidden)) #cookieBar { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 84px); z-index: 51; }
+}
