@@ -848,3 +848,62 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
 .bt-round.bt-cmp[aria-pressed="true"] { background: #fff; color: #70000e; }
 .bt-round.bt-cmp[aria-pressed="true"] svg { fill: none; stroke: #70000e; }
 @media (max-width: 1040px) { html:has(#view-boat:not(.hidden) .bp-mbar) #cmpTray.fx-tray { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 84px); } }   /* above the boat page's price bar */
+
+/* ---------- SEO / AEO pass (heading, answer line, filter chips, guide under the grid) ---------- */
+#fxH1 sup small { font-size: .78em; color: var(--fx-muted); }
+.fx-ans b { font-weight: 500; color: var(--fx-ink, #231416); }
+.fx-tab.z { opacity: .42; }
+/* the filters in use as chips (was a full-width insight bar) */
+.fx-ins { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0; margin: -4px 0 16px; gap: 8px; flex-wrap: wrap; }
+.fx-ins .fx-spark { display: none; }
+#fxInsT { display: flex; flex-wrap: wrap; gap: 6px; }
+.fx-ac { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px 0 13px; border-radius: 99px; font-size: 13px; color: var(--fx-m); background: rgb(112 0 14 / .08); box-shadow: inset 0 0 0 1px rgb(112 0 14 / .12); cursor: pointer; }
+.fx-ac svg { width: 14px; height: 14px; }
+.fx-ac:hover { background: rgb(112 0 14 / .14); }
+.fx-ins .fx-share { height: 32px; }
+.fx-ins .fx-clr { text-decoration: underline; text-underline-offset: 3px; }
+.fx-pp { display: inline-block; margin-top: 4px; font-size: 12px; padding: 2px 8px; border-radius: 99px; background: rgb(35 20 22 / .06); color: #3d3133; }
+.fx-pp.best { background: #eaf6ef; color: #1e7a46; }
+/* guide under the grid */
+.fx-seo { margin-top: 56px; padding: 32px 36px 28px; border-radius: 28px; background: rgb(255 255 255 / .82); box-shadow: 0 0 0 1px rgb(35 20 22 / .05); }
+.fx-seo h2 { margin: 30px 0 12px; font-weight: 400; font-size: 23px; line-height: 1.35; }
+.fx-seo h2:first-child { margin-top: 0; }
+.fx-tw { overflow-x: auto; }
+.fx-seo table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.fx-seo th { text-align: left; font-weight: 500; font-size: 12.5px; color: var(--fx-muted); padding: 8px 10px; border-bottom: 1px solid rgb(35 20 22 / .08); white-space: nowrap; }
+.fx-seo td { padding: 11px 10px; border-bottom: 1px solid rgb(35 20 22 / .06); }
+.fx-seo td b { font-weight: 500; }
+.fx-seo td button { color: var(--fx-m); text-decoration: underline; text-underline-offset: 3px; font: inherit; background: none; padding: 0; cursor: pointer; text-align: left; }
+.fx-seo .fx-for { color: #3d3133; }
+.fx-pickl { margin: 0; padding-left: 20px; line-height: 1.8; color: #3d3133; font-size: 14.5px; }
+.fx-pickl b { font-weight: 500; color: inherit; }
+.fx-seo2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; }
+.fx-piers { list-style: none; margin: 0; padding: 0; font-size: 14.5px; }
+.fx-piers li { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid rgb(35 20 22 / .06); }
+.fx-piers small { color: var(--fx-muted); font-size: 13px; }
+.fx-dl { display: grid; gap: 8px; }
+.fx-dl a { display: flex; justify-content: space-between; align-items: center; height: 50px; padding: 0 16px; border-radius: 16px; background: rgb(35 20 22 / .04); font-size: 15px; }
+.fx-dl a:hover { background: rgb(112 0 14 / .07); color: var(--fx-m); }
+.fx-dl svg { width: 16px; height: 16px; color: var(--fx-m); }
+.fx-faq details { border-bottom: 1px solid rgb(35 20 22 / .07); padding: 14px 0; }
+.fx-faq summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 16px; font-size: 15.5px; font-weight: 500; }
+.fx-faq summary::-webkit-details-marker { display: none; }
+.fx-faq summary::after { content: '+'; color: var(--fx-m); font-size: 20px; line-height: 1; font-weight: 400; }
+.fx-faq details[open] summary::after { content: '–'; }
+.fx-faq p { margin: 8px 0 0; line-height: 1.75; color: #3d3133; font-size: 14.5px; max-width: 80ch; }
+.fx-by { display: flex; gap: 8px; align-items: flex-start; margin: 22px 0 0; font-size: 13px; color: var(--fx-muted); line-height: 1.6; }
+.fx-by svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: #b8892b; }
+@media (max-width: 760px) {
+  .fx-seo { margin: 36px -4px 0; padding: 22px 18px 20px; border-radius: 24px; }
+  .fx-seo h2 { font-size: 20px; margin-top: 26px; }
+  .fx-seo table { font-size: 13.5px; }
+  .fx-seo .fx-for { display: none; }
+  .fx-seo2 { grid-template-columns: 1fr; }
+  .fx-ins .fx-clr { display: inline; }
+}
+/* quick-book button on the fleet page: a small pill at the right, so it no longer covers the boat cards */
+@media (max-width: 639px) {
+  body:has(#view-fleet:not(.hidden)) #floatCta { left: auto; right: 16px; padding-left: 20px; padding-right: 20px; }
+  #view-fleet .fx-grid { padding-bottom: 8px; }
+}
+.fx-seo td.tnum { white-space: nowrap; }

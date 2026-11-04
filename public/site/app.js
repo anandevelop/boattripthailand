@@ -3082,7 +3082,7 @@ function applySeo(view, boat) {
       potentialAction:{ '@type':'SearchAction', target:SITE+'/yacht-charter?q={search_term_string}', 'query-input':'required name=search_term_string' } },
     // FAQ structured data must match the FAQ shown on that page: the home FAQ on home only, each boat's own FAQ on its page
     ...(view === 'home' ? [{ '@type':'FAQPage', '@id':SITE+'/#faq', mainEntity: FAQ.map(f => ({ '@type':'Question', name:f.q[k==='en'?1:0], acceptedAnswer:{ '@type':'Answer', text:f.a[k==='en'?1:0]() } })) }] : []),
-    ...(view === 'home' || view === 'fleet' ? [{ '@type':'ItemList', '@id':SITE+'/#featured', name:L('เรือแนะนำสำหรับ yacht charter','Featured yacht charters'), itemListElement: FEATURED.map(bySlug).filter(Boolean).map((b,i) => ({ '@type':'ListItem', position:i+1, url:SITE+'/yacht-charter/'+b.slug,
+    ...(view === 'home' ? [{ '@type':'ItemList', '@id':SITE+'/#featured', name:L('เรือแนะนำสำหรับ yacht charter','Featured yacht charters'), itemListElement: FEATURED.map(bySlug).filter(Boolean).map((b,i) => ({ '@type':'ListItem', position:i+1, url:SITE+'/yacht-charter/'+b.slug,
       item:{ '@type':'Product', name:niceTitle(b.title)+' – '+typeLabel(b.type)+' charter', image:SITE+'/boats/'+b.slug+'-hero.webp', brand:{ '@id':SITE+'/#org' },
         offers:{ '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:b.from_, offerCount:b.tables.reduce((n,t)=>n+t.rows.length,0), availability:'https://schema.org/InStock' } } })) }] : []),
   ]};
@@ -3094,6 +3094,13 @@ function applySeo(view, boat) {
     ld['@graph'].push({ '@type':'Product', '@id':SITE+path+'#boat', name:niceTitle(boat.title)+' – '+typeLabel(boat.type)+' charter', description:desc, ...(imgs.length ? { image:imgs } : {}), brand:{ '@id':SITE+'/#org' }, category:typeLabel(boat.type),
       offers:{ '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:boat.from_ || (prices.length ? Math.min(...prices) : undefined), ...(prices.length ? { highPrice:Math.max(...prices) } : {}), offerCount:Math.max(1, prices.length), availability:'https://schema.org/InStock', url:SITE+path } });
     try { const qa = bpFaq(boat); if (qa.length) ld['@graph'].push({ '@type':'FAQPage', '@id':SITE+path+'#faq', mainEntity: qa.map(([q, a]) => ({ '@type':'Question', name:plain(q), acceptedAnswer:{ '@type':'Answer', text:plain(a) } })) }); } catch (e) { }
+  }
+  if (view === 'fleet') {
+    const url = SITE + (k === 'en' ? '/en' : '') + '/yacht-charter', plain = h => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    ld['@graph'].push({ '@type':'CollectionPage', '@id':url+'#page', url, name:typeof fxTitle === 'function' ? fxTitle() : title, description:desc, inLanguage:k, isPartOf:{ '@id':SITE+'/#website' }, publisher:{ '@id':SITE+'/#org' }, mainEntity:{ '@id':url+'#boats' } },
+      { '@type':'ItemList', '@id':url+'#boats', numberOfItems:FLEET.length, itemListElement:FLEET.map((b, i) => ({ '@type':'ListItem', position:i+1, name:niceTitle(b.title), url:SITE+(k === 'en' ? '/en' : '')+'/yacht-charter/'+b.slug })) },
+      { '@type':'BreadcrumbList', itemListElement:[{ '@type':'ListItem', position:1, name:t('home'), item:SITE+(k === 'en' ? '/en' : '/') },{ '@type':'ListItem', position:2, name:t('fleet'), item:url }] });
+    try { if (typeof fxFaq === 'function') ld['@graph'].push({ '@type':'FAQPage', '@id':url+'#faq', mainEntity:fxFaq().map(([q, a]) => ({ '@type':'Question', name:plain(q), acceptedAnswer:{ '@type':'Answer', text:plain(a) } })) }); } catch (e) { }
   }
   if (view === 'boat' && boat) ld['@graph'].push({ '@type':'BreadcrumbList', itemListElement:[{ '@type':'ListItem', position:1, name:t('home'), item:SITE+'/' },{ '@type':'ListItem', position:2, name:t('fleet'), item:SITE+'/yacht-charter' },{ '@type':'ListItem', position:3, name:niceTitle(boat.title), item:SITE+path }] });
   document.getElementById('ldjson').textContent = JSON.stringify(ld);

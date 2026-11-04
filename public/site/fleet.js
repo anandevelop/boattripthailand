@@ -127,6 +127,59 @@ function fxWrite() {
   if (!FX_SSR) try { history.replaceState(history.state, '', hashToPath(VHASH)); seoAlternates(); } catch (e) { }
 }
 
+/* ---------- page heading, answer line and the guide under the grid (SEO / AEO) ---------- */
+const fxTitle = () => L('เช่าเรือส่วนตัวภูเก็ต', 'Private Boat Charter Phuket');
+const fxPier = b => typeof MARINA_CANON === 'function' ? MARINA_CANON(b.marina) : b.marinaP;
+const fxDestShort = d => String((d.name || {})[LANG === 'en' ? 'en' : 'th'] || d.slug).split(' & ')[0];
+function fxFacts() {
+  const pr = FLEET.map(b => b.from_).filter(Boolean), piers = {};
+  FLEET.forEach(b => { const k = fxPier(b); piers[k] = (piers[k] || 0) + 1; });
+  const types = TYPES.filter(k => FLEET.some(b => b.type === k)).map(k => {
+    const bs = FLEET.filter(b => b.type === k), p = bs.map(b => b.from_).filter(Boolean), x = bs.map(b => b.pax).filter(Boolean);
+    return { k, n: bs.length, lo: p.length ? Math.min(...p) : 0, hi: p.length ? Math.max(...p) : 0, pmin: x.length ? Math.min(...x) : 0, pmax: x.length ? Math.max(...x) : 0 };
+  }).sort((a, b) => (a.lo || 1e9) - (b.lo || 1e9));
+  return { n: FLEET.length, lo: Math.min(...pr), hi: Math.max(...pr), piers: Object.entries(piers).sort((a, b) => b[1] - a[1]), types, dests: (typeof DPAGES !== 'undefined' ? DPAGES : []) };
+}
+const FX_FOR = { sail: ['ครอบครัว · คนที่กลัวเมาเรือ · ดำน้ำตื้น', 'families · anyone prone to seasickness · snorkelling'], speed: ['ไปไกลหลายเกาะในวันเดียว เช่น พีพี ราชา', 'far islands in one day, e.g. Phi Phi, Racha'],
+  longtail: ['งบประหยัด · เกาะใกล้ · บรรยากาศท้องถิ่น', 'smaller budgets · nearby islands · local feel'], power: ['กลุ่มใหญ่ · นิ่งแบบคาตามารันแต่เร็วกว่า', 'big groups · catamaran stability with more speed'],
+  yacht: ['ปาร์ตี้ · โอกาสพิเศษ · ค้างคืนบนเรือ', 'parties · special occasions · overnight trips'] };
+function fxAnswer() {
+  const f = fxFacts(), d = f.dests.map(fxDestShort);
+  return L(`${f.types.map(x => typeLabel(x.k)).join(' ')} รวม <b>${f.n} ลำ</b> ออกจาก ${f.piers.length} ท่าเรือในภูเก็ต · ราคาเหมาลำ <b>${baht(f.lo)}–${baht(f.hi)}</b> ต่อทริป${d.length ? ' · ไป' + d.join(' ') : ''}`,
+    `<b>${f.n} private boats</b> — ${f.types.map(x => typeLabel(x.k).toLowerCase()).join(', ')} — from ${f.piers.length} Phuket piers · whole-boat prices <b>${baht(f.lo)}–${baht(f.hi)}</b> per trip${d.length ? ' · to ' + d.join(', ') : ''}`);
+}
+function fxFaq() {
+  const f = fxFacts(), cheap = f.types[0], fast = f.types.find(x => x.k === 'speed'), top = f.piers.slice(0, 4).map(([p, n]) => `${p} (${n})`).join(', ');
+  return [
+    [L('เช่าเรือส่วนตัวภูเก็ตราคาเท่าไหร่?', 'How much is a private boat charter in Phuket?'),
+     L(`ราคาเหมาลำเริ่ม ${baht(f.lo)} ถึง ${baht(f.hi)} ต่อทริป ประเภทที่เริ่มถูกที่สุดคือ${typeLabel(cheap.k)} (เริ่ม ${baht(cheap.lo)}) ราคาขึ้นกับขนาดเรือ ระยะเวลา จำนวนคน และฤดูกาล`,
+       `Whole-boat prices run from ${baht(f.lo)} to ${baht(f.hi)} per trip. The lowest starting price is a ${typeLabel(cheap.k).toLowerCase()} (from ${baht(cheap.lo)}). Price depends on boat size, duration, group size and season.`)],
+    [L('ราคาเป็นต่อคนหรือต่อลำ?', 'Is the price per person or per boat?'),
+     L('ราคาเป็นแบบเหมาลำ ทั้งกลุ่มใช้เรือลำเดียว บางลำคิดเพิ่มเมื่อจำนวนคนเกินที่กำหนด ระบบรวมค่าคนเกินให้ในราคาที่แสดงเมื่อเลือกจำนวนคน', 'Prices are for the whole boat, private to your group. Some boats add a charge above a set number of guests; once you pick your group size, the price shown includes it.')],
+    [L('เรือแบบไหนเมาเรือน้อยที่สุด?', 'Which boat is best if I get seasick?'),
+     L('เรือใบคาตามารันและพาวเวอร์คาตามารัน เพราะมีสองลำตัว โคลงน้อยกว่าเรือลำตัวเดียว', 'Sailing and power catamarans: two hulls roll far less than a single hull.')],
+    ...(fast ? [[L('ไปเกาะพีพีควรเช่าเรือแบบไหน?', 'Which boat should I take to Phi Phi?'),
+     L(`สปีดโบ๊ทหรือพาวเวอร์คาตามารัน เพราะเกาะพีพีอยู่ไกลจากภูเก็ต เรือเร็วทำให้มีเวลาเที่ยวมากขึ้น สปีดโบ๊ทของเรามี ${fast.n} ลำ เริ่ม ${baht(fast.lo)}`, `A speedboat or power catamaran — Phi Phi is a long way from Phuket, so a faster boat leaves more time on the islands. We have ${fast.n} speedboats from ${baht(fast.lo)}.`)]] : []),
+    [L('ออกเรือจากท่าไหน?', 'Which pier do the boats leave from?'),
+     L(`เรือของเราออกจาก ${f.piers.length} ท่าเรือ ท่าที่มีเรือมากที่สุดคือ ${top} · หน้าเรือแต่ละลำบอกท่าเรือและเวลาขับรถจากที่พัก`, `Our boats leave from ${f.piers.length} piers; the busiest are ${top}. Each boat page shows its pier and the drive from your hotel.`)],
+  ];
+}
+function fxSeoBlock() {
+  const f = fxFacts(), now = new Date(), mon = now.toLocaleDateString(LANG === 'en' ? 'en-GB' : 'th-TH', { month: 'short', year: 'numeric' });
+  const rows = f.types.map(x => `<tr><td><button type="button" onclick="fxType('${x.k}');fxToResults()">${typeLabel(x.k)}</button></td><td class="tnum">${x.n}</td><td class="tnum">${x.pmin === x.pmax ? x.pmax : `${x.pmin}–${x.pmax}`}</td><td class="tnum"><b>${baht(x.lo)}</b></td><td class="fx-for">${fxL(FX_FOR[x.k] || ['', ''])}</td></tr>`).join('');
+  return `<section class="fx-seo" aria-labelledby="fxSeoH">
+    <h2 id="fxSeoH">${L(`ราคาเช่าเรือภูเก็ตแต่ละประเภท (${mon})`, `Phuket boat charter prices by type (${mon})`)}</h2>
+    <div class="fx-tw"><table><thead><tr><th>${L('ประเภทเรือ', 'Boat type')}</th><th>${L('จำนวนลำ', 'Boats')}</th><th>${L('จุ (คน)', 'Guests')}</th><th>${L('เริ่มต้น / ลำ', 'From / boat')}</th><th class="fx-for">${L('เหมาะกับ', 'Best for')}</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <h2>${L('เลือกเรือแบบไหนดี', 'Which boat should you choose?')}</h2>
+    <ul class="fx-pickl">${f.types.map(x => `<li><b>${typeLabel(x.k)}</b> — ${fxL(FX_FOR[x.k] || ['', ''])}</li>`).join('')}</ul>
+    <div class="fx-seo2"><div><h2>${L('ออกเรือจากท่าไหน', 'Where the boats leave from')}</h2><ul class="fx-piers">${f.piers.map(([p, n]) => `<li>${fxEsc(p)}<small>${n} ${L('ลำ', 'boats')}</small></li>`).join('')}</ul></div>
+      ${f.dests.length ? `<div><h2>${L('เช่าเรือไปเกาะยอดนิยม', 'Private boats to popular islands')}</h2><div class="fx-dl">${f.dests.map(d => `<a href="#/dest/${d.slug}">${fxEsc(fxDestShort(d))}${FXI('arrow-right')}</a>`).join('')}</div></div>` : ''}</div>
+    <h2>${L('คำถามที่พบบ่อย', 'Frequently asked questions')}</h2>
+    <div class="fx-faq">${fxFaq().map(([q, a], i) => `<details${i ? '' : ' open'}><summary>${q}</summary><p>${a}</p></details>`).join('')}</div>
+    <p class="fx-by">${FXI('badge-check')}${L(`ข้อมูลและราคาโดยทีม Boat Trip Thailand · ใบอนุญาตนำเที่ยว ททท. ${fxEsc(SET.tat || '34/03754')} · อัปเดต ${mon}`, `Boats and prices by the Boat Trip Thailand team · TAT licence ${fxEsc(SET.tat || '34/03754')} · updated ${mon}`)}</p>
+  </section>`;
+}
+
 /* ---------- page ---------- */
 const FXI = n => `<i data-lucide="${n}"></i>`;
 renderFleetPage = function () {
@@ -142,8 +195,8 @@ function fxBuild(v) {
   <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-10 pb-16">
     <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-1.5"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span class="text-ink" aria-current="page">${t('fleet')}</span></nav>
     <div class="fx-head">
-      <div><h1 id="fxH1">${t('fleet')}<sup class="tnum">${FLEET.length}</sup></h1>
-        <p class="fx-sub">${L('เรือยอร์ช คาตามารัน สปีดโบ๊ท และเรือหางยาวหรูแบบเหมาลำทั่วภูเก็ต · เลือกวันที่ จำนวนคน และที่อยากไป ระบบจะแสดงราคาจริงของวันนั้นให้', 'Private yachts, catamarans, speedboats and luxury long-tails across Phuket. Pick a date, your group size and where you want to go — we show the real price for that day.')}</p></div>
+      <div><h1 id="fxH1">${fxTitle()}<sup class="tnum">${FLEET.length}</sup></h1>
+        <p class="fx-sub fx-ans">${fxAnswer()}</p></div>
       <div class="fx-stats"><div><b class="tnum">${new Set(FLEET.map(b => typeof MARINA_CANON === 'function' ? MARINA_CANON(b.marina) : b.marinaP)).size}</b>${L('ท่าเรือ', 'piers & marinas')}</div><div><b class="tnum">${fxMaxPax()}</b>${L('คนต่อลำสูงสุด', 'guests on our largest boat')}</div><div><b>TAT</b>${fxEsc(SET.tat || '34/03754')}</div></div>
     </div>
 
@@ -177,6 +230,7 @@ function fxBuild(v) {
     </div>
     <div class="fx-ins" id="fxIns" hidden><span class="fx-spark">${FXI('sparkles')}</span><span id="fxInsT"></span><button class="fx-share" onclick="fxShare()">${FXI('link')}<span>${L('แชร์ผลค้นหา', 'Share this search')}</span></button><button class="fx-clr" onclick="fxReset()">${L('ล้าง', 'Clear')}</button></div>
     <div class="fx-grid" id="fxGrid"></div>
+    ${fxSeoBlock()}
   </section>
   <div class="fx-veil" id="fxVeil" onclick="if(event.target===this)fxSheet(false)"><div class="fx-sheet">
     <div class="fx-srow" style="margin-bottom:14px"><h3>${L('หาเรือที่ใช่', 'Find your boat')}</h3><button class="fx-x" onclick="fxSheet(false)" aria-label="${L('ปิด', 'Close')}">${FXI('x')}</button></div>
@@ -206,15 +260,18 @@ function fxDraw() {
   fxApplyCols(n);
   $('#fxCount').textContent = L(`พบ ${n} ลำ`, `${n} boats`);
   $('#fxGoT').textContent = L(`ดู ${n} ลำ`, `See ${n} boats`); $('#fxSGo').textContent = L(`ดู ${n} ลำ`, `See ${n} boats`);
-  const H = $('#fxH1'); if (H) H.innerHTML = `${FX.fav ? L('เรือที่บันทึกไว้', 'Saved boats') : t('fleet')}<sup class="tnum">${FX.fav ? FAV.length : FLEET.length}</sup>`;
+  const H = $('#fxH1'); if (H) H.innerHTML = `${FX.fav ? L('เรือที่บันทึกไว้', 'Saved boats') : fxTitle()}<sup class="tnum">${FX.fav ? FAV.length : act && !big && n < FLEET.length ? `${n}<small>/${FLEET.length}</small>` : FLEET.length}</sup>`;
   // tabs with live counts + the sliding glass pill
-  $('#fxTabs').innerHTML = '<span class="fx-ind" id="fxInd"></span>' + FX_TYPES.map(k => `<button class="fx-tab ${FX.type === k ? 'on' : ''}" onclick="fxType('${k}')">${k === 'all' ? t('all') : typeLabel(k)}<i class="tnum">${FLEET.filter(b => (k === 'all' || b.type === k) && fxPass(b, true)).length}</i></button>`).join('');
+  $('#fxTabs').innerHTML = '<span class="fx-ind" id="fxInd"></span>' + FX_TYPES.map(k => [k, FLEET.filter(b => (k === 'all' || b.type === k) && fxPass(b, true)).length]).sort((a, b) => (a[0] !== 'all' && !a[1]) - (b[0] !== 'all' && !b[1])).map(([k, c]) => `<button class="fx-tab ${FX.type === k ? 'on' : ''} ${k !== 'all' && !c && FX.type !== k ? 'z' : ''}" onclick="fxType('${k}')">${k === 'all' ? t('all') : typeLabel(k)}<i class="tnum">${c}</i></button>`).join('');
   fxMoveInd();
   // insight line
   const ins = $('#fxIns');
-  if (act && list.length && !big) {
+  if (act) {
     ins.hidden = false;
-    $('#fxInsT').innerHTML = `${FX.date ? fxDate(FX.date) + ' · ' : ''}${FX.pax} ${t('guests')}${FX.dest.size ? ' · ' + [...FX.dest].map(fxDL).join(' + ') : ''}${FX.stay ? ' · ' + L('พัก', 'staying in ') + fxStayL(FX.stay) : ''}${FX.dur ? ' · ' + fxL(FX_DUR[FX.dur]) : ''} — <b>${L(`${list.length} ลำ`, `${list.length} boats`)}</b>${value ? L(` · คุ้มสุดคือ <b>${fxEsc(niceTitle(value.title))}</b> ≈ ${baht(fxPer(value))}/คน`, ` · best value <b>${fxEsc(niceTitle(value.title))}</b> ≈ ${baht(fxPer(value))}/guest`) : ''}`;
+    const chip = (txt, fn) => `<button type="button" class="fx-ac" onclick="${fn}" aria-label="${L('เอาออก', 'Remove')} ${txt}">${txt}${FXI('x')}</button>`;
+    $('#fxInsT').innerHTML = [FX.date && chip(fxDate(FX.date), "FX.date='';fxDraw()"), FX.paxSet && chip(`${FX.pax} ${t('guests')}`, 'FX.paxSet=false;FX.pax=2;fxDraw()'),
+      ...[...FX.dest].map(d => chip(fxDL(d), `fxToggleDest('${d}')`)), FX.stay && chip(L('พัก', 'Staying in ') + fxStayL(FX.stay), "fxSetStay('')"),
+      FX.dur && chip(fxL(FX_DUR[FX.dur]), "fxSetDur('')"), FX.bud < FX_MAX && chip(L('ไม่เกิน ', 'Up to ') + baht(FX.bud), 'FX.bud=FX_MAX;fxDraw()')].filter(Boolean).join('');
   } else ins.hidden = true;
   // finder labels
   const dl = [...FX.dest].map(fxDL), se = FX.date ? seasonOf(FX.date) : '';
@@ -257,7 +314,7 @@ function fxCard(b, mode, i, list) {
       ${FX.paxSet && !pick ? `<div class="fx-fit"><div class="t"><span>${L('กลุ่มคุณ', 'Your group')} <b>${FX.pax}</b> / ${b.pax} ${t('guests')}</span><span>${fill < 35 ? L('กว้างขวางมาก', 'very spacious') : fill < 75 ? L('นั่งสบาย', 'comfortable') : L('เต็มพอดี', 'snug')}</span></div><div class="fx-meter"><i style="width:${fill}%"></i></div></div>` : ''}
       ${pick && alts.length ? `<p class="fx-alt-h">${L('ทางเลือกใกล้เคียง', 'Similar options')}</p><div class="fx-alts">${alts.map(x => `<a class="fx-alt" href="#/boat/${x.slug}"><img src="${bimg(x.slug, 'hero')}" alt="" loading="lazy"><div><b>${fxEsc(niceTitle(x.title))}</b><small>${x.pax} ${t('guests')} · ${baht(fxPrice(x).total)}</small></div></a>`).join('')}</div>` : ''}
       ${!pick && tags.length ? `<div class="fx-tags">${tags.map(d => `<span class="fx-tag ${FX.dest.has(d) ? 'hit' : ''}">${fxDL(d)}</span>`).join('')}</div>` : ''}
-      <div class="fx-price"><div class="min-w-0"><span class="lbl">${lbl}</span><span class="amt tnum" data-from="${FX.date ? '' : L('เริ่ม', 'from')}">${pr.total ? baht(pr.total) : '—'} <span>${t('perTrip')}</span></span>${pr.extraPax ? `<span class="xtra">${L(`รวมค่าคนเกิน ${pr.extraPax} คนแล้ว`, `incl. ${pr.extraPax} extra guest${pr.extraPax > 1 ? 's' : ''}`)}</span>` : ''}</div>
+      <div class="fx-price"><div class="min-w-0"><span class="lbl">${lbl}</span><span class="amt tnum" data-from="${FX.date ? '' : L('เริ่ม', 'from')}">${pr.total ? baht(pr.total) : '—'} <span>${t('perTrip')}</span></span>${pr.extraPax ? `<span class="xtra">${L(`รวมค่าคนเกิน ${pr.extraPax} คนแล้ว`, `incl. ${pr.extraPax} extra guest${pr.extraPax > 1 ? 's' : ''}`)}</span>` : ''}${FX.paxSet && pr.total ? `<span class="fx-pp ${mode === 'value' ? 'best' : ''}">≈ ${baht(fxPer(b))}/${L('คน', 'guest')}</span>` : ''}</div>
         <a class="fx-view" href="#/boat/${b.slug}" aria-label="${L('ดูรายละเอียด', 'View')} ${name}">${FXI('arrow-up-right')}</a></div>
     </div></article>`;
 }
