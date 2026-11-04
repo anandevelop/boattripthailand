@@ -1173,3 +1173,16 @@ html.nav-up .bp-book { top: 72px; }
   html.nav-up .secwrap { top: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { #navbar, .secwrap, .bp-book { transition: none; } }
+
+/* ===== ฟอร์มจองที่เปิดจากหน้าเรือ: สรุปสิ่งที่เลือกแล้วด้านบน ไม่ถามซ้ำ (เรือ โปรแกรม วันที่ รอบ จำนวนคน) ===== */
+.bf .bf-hide { display: none !important; }
+.bf-sum { display: flex; align-items: center; gap: 14px; padding: 10px 12px 10px 10px; border-radius: 20px; background: rgb(255 255 255 / .7); box-shadow: inset 0 0 0 1px rgb(35 20 22 / .08); }
+.bf-sum img { width: 84px; height: 64px; border-radius: 14px; object-fit: cover; flex: none; }
+.bf-sum-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bf-sum-t b { font-weight: 500; font-size: 16px; }
+.bf-sum-t > span { font-size: 13px; color: #6b5e60; line-height: 1.45; }
+.bf-sum-p { margin-top: 2px; color: #231416 !important; }
+.bf-sum-p b { font-size: 15px; color: #70000e; }
+.bf-sum-e { flex: none; height: 36px; padding: 0 14px; border-radius: 99px; background: #fff; color: #70000e; font-size: 13px; box-shadow: inset 0 0 0 1px rgb(112 0 14 / .2); }
+.bf-sum-e:hover { background: #f9f1f2; }
+@media (max-width: 480px) { .bf-sum { flex-wrap: wrap; } .bf-sum img { width: 64px; height: 52px; } .bf-sum-e { margin-left: auto; } }

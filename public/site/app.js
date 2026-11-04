@@ -1342,18 +1342,31 @@ function pickProgram(i) {
   if (innerWidth > 1040) $('#bookingCard')?.animate([{ transform: 'scale(.985)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out' });
 }
 function bookFromDetail(slug) {
-  const b = bySlug(slug), p = allPrograms(b)[detailProgram], slot = $('#dSlot')?.value;
+  const b = bySlug(slug), p = allPrograms(b)[detailProgram], slot = $('#dSlot')?.value || '';
+  const date = $('#dDate')?.value || '', pax = +($('#dPax')?.value || 2);
+  // what the guest already chose on the boat page — read before the card moves or redraws
+  const prog = $('#bpPtitle')?.textContent.trim() || (p ? p.label : ''), total = $('#bpMbarP')?.textContent.trim() || '';
   bpSheet(false);
   openBooking('boat:' + slug, p ? p.label : '');
-  if ($('#dDate').value) modalForm.date.value = $('#dDate').value;
-  modalForm.adults.value = $('#dPax').value || 2;
-  if (slot) {
-    // select the matching time chip; a time the chips don't have goes in the note and no chip is sent
-    const chips = $$('.slot', modalForm), hit = chips.find(s => s.dataset.slot === slot);
-    chips.forEach(s => s.classList.toggle('chip-active', s === hit));
-    if (!hit && modalForm.note && !modalForm.note.value) modalForm.note.value = L('รอบเวลา: ', 'Time slot: ') + slot;
-  }
+  const f = modalForm; if (!f) return;
+  if (date) { dpSet(f.date, date, true); dpSync(f.date); }
+  f.adults.value = pax; f.kids.value = 0;
+  // the chosen time goes with the request as its own chip (no more "รอบเวลา: …" in the note)
+  const grp = $('.slot-group', f);
+  if (slot && grp) { $$('.slot', grp).forEach(x => x.classList.remove('chip-active')); grp.insertAdjacentHTML('beforeend', `<button type="button" class="slot chip-active" data-slot="${slot}">${slot}</button>`); }
+  // already chosen → show it once as a summary instead of asking again; the date stays open if none was picked
+  const hide = el => el && el.closest('.bf-fld')?.classList.add('bf-hide');
+  [f.item, f.program, f.adults, grp].forEach(hide); if (date) hide(f.date);
+  const img = gallery(slug)[0];
+  f.insertAdjacentHTML('afterbegin', `<div class="bf-sum bf-wide">
+    ${img ? `<img src="${rs(img, 320)}" alt="" />` : ''}
+    <div class="bf-sum-t"><b>${niceTitle(b.title)}</b><span>${[prog, date ? dpText(date) : '', slot, `${pax} ${L('คน', pax > 1 ? 'guests' : 'guest')}`].filter(Boolean).join(' · ')}</span>
+      ${total ? `<span class="bf-sum-p">${L('รวมประมาณ', 'Estimated')} <b>${total}</b></span>` : ''}</div>
+    <button type="button" class="bf-sum-e" onclick="bfEditTrip()">${L('แก้ไข', 'Edit')}</button></div>`);
+  setTimeout(() => f.name.focus(), 60);
 }
+/* back to the booking card on the boat page (phones: the booking sheet) */
+function bfEditTrip() { closeModals(); if (innerWidth <= 1040) bpSheet(true); else $('#bookingCard')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
 function accordion(title, body, icon) {
   return `<div class="bg-white rounded-lg ring-1 ring-sand-200 overflow-hidden">
     <button class="acc-btn w-full flex items-center justify-between gap-3 px-4 py-4 text-left font-medium"><span class="flex items-center gap-3"><i data-lucide="${icon}" class="w-5 h-5 text-lagoon-600"></i>${title}</span><i data-lucide="chevron-down" class="acc-chev w-5 h-5 transition"></i></button>
