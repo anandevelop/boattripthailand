@@ -188,7 +188,16 @@ function run(a: NonNullable<typeof assets>, url: URL, data: SiteData, page: Reco
   for (let round = 0; round < 5 && timers.length; round++) { const batch = timers.splice(0).sort((x, y) => x.ms - y.ms); for (const t of batch) { try { t.fn(); } catch (e) { console.error('[ssr timer]', e); } } }
   vm.runInContext('typeof afterRoute === "function" && afterRoute(); typeof icons === "function" && icons(); typeof fxSsrDone === "function" && fxSsrDone();', ctx);
   document.documentElement.setAttribute('lang', lang);
+  // pages other than the home page: the hidden home view (hero H1, home sections, their JSON-LD) is not sent as page
+  // content — one H1 per page, no copy of the home text on every URL. The browser puts it back from this string
+  // (app.js, first lines) because the app still uses the home view's elements on every page.
+  let homeJs = '';
+  const vh = document.getElementById('view-home');
+  if (vh && vh.classList.contains('hidden') && vh.innerHTML.trim()) {
+    homeJs = `window.__HOME_HTML__=${JSON.stringify(vh.innerHTML).replace(/</g, '\\u003c')};`;
+    vh.innerHTML = ''; vh.setAttribute('data-deferred', '1');
+  }
   const dataTag = document.getElementById('btt-data');
-  if (dataTag) dataTag.textContent = dataJs;
+  if (dataTag) dataTag.textContent = dataJs + homeJs;
   return '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 }

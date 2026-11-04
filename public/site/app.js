@@ -7,6 +7,16 @@
    /cookie-preferences ⇄ #/cookies        /design-system ⇄ #/design
    The rest of the app still speaks "#/…" internally (VH.hash).
    ========================================================= */
+/* server-rendered pages other than home ship the home view as a string (see site-render.ts): put it back before anything
+   uses it, without its H1 (only the page's own H1 counts) and without its structured data (it belongs to the home page) */
+{ const vh = document.getElementById('view-home');
+  if (vh && vh.dataset.deferred && typeof window.__HOME_HTML__ === 'string') {
+    vh.innerHTML = window.__HOME_HTML__.replace(/<h1 id="heroTitle"/, '<div id="heroTitle" role="heading" aria-level="1"').replace(/<\/h1>/, '</div>');
+    vh.querySelectorAll('script[type="application/ld+json"]').forEach(s => s.remove());
+    delete vh.dataset.deferred; window.__HOME_HTML__ = '';
+  } }
+/* the home hero heading becomes a real H1 again when the home view is shown */
+function heroH1() { const t = document.getElementById('heroTitle'); if (!t || t.tagName === 'H1') return; const h = document.createElement('h1'); h.id = 'heroTitle'; h.className = t.className; h.innerHTML = t.innerHTML; t.replaceWith(h); }
 /* server-rendered pages: drop "already built/bound" markers so this browser binds its own handlers */
 document.querySelectorAll('[data-built],[data-swipe]').forEach(el => { el.removeAttribute('data-built'); el.removeAttribute('data-swipe'); });
 window.__LANG__ = /^\/en(\/|$)/.test(location.pathname) ? 'en' : 'th';
@@ -1878,7 +1888,7 @@ function renderHomeAnswer() {
         <td class="hx-tp"><small>${L('เริ่ม', 'from')}</small><b>${r.from ? baht(r.from) : '—'}</b></td>
         <td class="hx-tg" aria-hidden="true"><i data-lucide="chevron-right"></i></td></tr>`; }).join('')}</tbody>
     </table></div>
-  </div></div><script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`;
+  </div></div>${/^\/(en\/?)?$/.test(location.pathname) ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>` : ''}`;   // the price list's structured data only on the home page itself
 }
 function renderHomeDests() {
   const el = $('#homeDests'); if (!el || !DPAGES.length) return;
@@ -3049,7 +3059,13 @@ function applySeo(view, boat) {
   if (view === 'terms') { title = L('ข้อกำหนดและเงื่อนไข | Boat Trip Thailand','Terms & Conditions | Boat Trip Thailand'); desc = L('เงื่อนไขการจองเรือ การชำระเงิน การยกเลิก กฎบนเรือ และความรับผิดของ Boat Trip Thailand','Booking, payment, cancellation, on-board rules and liability terms for Boat Trip Thailand charters.'); path = '/terms-and-conditions'; }
   if (view === 'cookies') { title = L('การตั้งค่าคุกกี้ | Boat Trip Thailand','Cookie Preferences | Boat Trip Thailand'); desc = L('เลือกประเภทคุกกี้ที่อนุญาตบนเว็บไซต์ Boat Trip Thailand','Choose which cookies you allow on the Boat Trip Thailand website.'); path = '/cookie-preferences'; }
   if (view === 'about') { title = L('เกี่ยวกับเรา – Boat Trip Thailand | Yacht Charter ภูเก็ต','About Us – Boat Trip Thailand | Yacht Charter Phuket'); desc = L(`รู้จัก Boat Trip Thailand ผู้ให้บริการ yacht charter ภูเก็ต เรือส่วนตัว ${FLEET.length} ลำ ใบอนุญาต ททท. ${SET.tat} ราคาโปร่งใส ทีมงานตอบไวทุกวัน`,`Meet Boat Trip Thailand, a TAT-licensed (${SET.tat}) yacht charter company in Phuket with ${FLEET.length} private boats, transparent pricing and a fast, friendly team.`); path = '/about-us'; }
-  if (view === 'fleet') { title = L('เรือทั้งหมด – Yacht Charter ภูเก็ต | BTT','All Boats – Yacht Charter Phuket | BTT'); path = '/yacht-charter'; }
+  if (view === 'fleet') {
+    // its own search terms (price / comparison / rental) so it doesn't compete with the home page for "yacht charter phuket"
+    const n = FLEET.length, lo = Math.min(...FLEET.map(b => b.from_).filter(Boolean)), types = TYPES.filter(t => FLEET.some(b => b.type === t)).map(typeLabel);
+    title = L(`เช่าเรือภูเก็ต ${n} ลำ ราคาเริ่ม ${baht(lo)} – เปรียบเทียบยอร์ช คาตามารัน สปีดโบ๊ท | BTT`, `Phuket Boat Rental – ${n} Private Boats from ${baht(lo)}, Compare Prices | BTT`);
+    desc = L(`เปรียบเทียบราคาเช่าเรือส่วนตัวในภูเก็ต ${n} ลำ ทั้ง${types.join(' ')} ดูจำนวนคน ท่าเรือ และโปรแกรมเกาะของแต่ละลำ ราคาเหมาลำเริ่ม ${baht(lo)} รวมกัปตันและลูกเรือ`,
+      `Compare ${n} private boats for rent in Phuket — ${types.map(x => x.toLowerCase()).join(', ')}. Guests, pier and island programs for each boat, whole-boat prices from ${baht(lo)} with captain and crew.`);
+    path = '/yacht-charter'; }
   document.title = title;
   setMeta('description', desc);
   setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property'); setMeta('og:url', SITE + path, 'property');
@@ -3165,6 +3181,7 @@ function showView(name) {
   { const m = { fleet:'#navFleet', boat:'#navFleet', about:'#navLinks a[href="#/about"]', blog:'#navGuide', dest:'#navDest', tours:'#navTours' }[name]; m && $(m)?.classList.add('is-active'); }
   setTimeout(renderTeam, 0);
   ['home','fleet','boat','about','legal','design','blog','dest','tours','nf'].forEach(n => $('#view-'+n)?.classList.toggle('hidden', n !== name));
+  if (name === 'home') heroH1();
   $('#floatCta').classList.toggle('!hidden', name === 'boat' || name === 'home');
 }
 /* =========================================================
