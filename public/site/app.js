@@ -1024,6 +1024,29 @@ function shareTo(k, slug) {
 /* section nav on the boat page: sticky, arrows when it overflows, active link follows the scroll */
 function secState() { const n = $('#secnav'), w = $('#secwrap'); if (!n || !w) return; w.classList.toggle('can-l', n.scrollLeft > 4); w.classList.toggle('can-r', n.scrollLeft + n.clientWidth < n.scrollWidth - 4); }
 function secScroll(d) { const n = $('#secnav'); n?.scrollBy({ left: d * Math.max(140, n.clientWidth * .6), behavior: 'smooth' }); }
+/* boat page: one bar at the top. Past the photos, scrolling down slides the site menu away and the section bar
+   (with price + book) takes the top; scrolling up a little brings the menu back */
+function secBook() {
+  if (innerWidth > 1040) { const c = $('#bookingCard'); if (!c) return; c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); $('#dDate')?.focus({ preventScroll: true }); }
+  else bpSheet(true);
+}
+let navLastY = 0, navUpBy = 0;
+function navHideTick() {
+  const root = document.documentElement, w = $('#secwrap'), bt = $('#view-boat .bento');
+  const y = scrollY, dy = y - navLastY; navLastY = y;
+  if (!w || !bt || !w.offsetParent || !$('#mobileMenu')?.classList.contains('hidden') && $('#mobileMenu')) { root.classList.remove('nav-up'); w?.classList.remove('stuck'); return; }
+  const past = bt.getBoundingClientRect().bottom < 40;
+  if (!past) { root.classList.remove('nav-up'); navUpBy = 0; }
+  else if (dy > 4) { root.classList.add('nav-up'); navUpBy = 0; }
+  else if (dy < -4) { navUpBy -= dy; if (navUpBy > 60) root.classList.remove('nav-up'); }
+  const top = parseFloat(getComputedStyle(w).top) || 0;
+  w.classList.toggle('stuck', past && w.getBoundingClientRect().top <= top + 2);
+}
+if (typeof requestAnimationFrame === 'function') {
+  let navQ = 0;
+  addEventListener('scroll', () => { if (!navQ) navQ = requestAnimationFrame(() => { navQ = 0; navHideTick(); }); }, { passive: true });
+  addEventListener('hashchange', () => setTimeout(navHideTick, 60));
+}
 function secGo(id) { const el = document.getElementById(id); if (el) scrollTo({ top: el.getBoundingClientRect().top + scrollY - 140, behavior: 'smooth' }); }
 let secIO;
 /* phones: swipe the main photo through every photo of the boat; the counter follows */
@@ -1156,13 +1179,16 @@ function renderDetail(slug) {
     <nav aria-label="Breadcrumb" class="bp-crumb"><a href="#/">${t('home')}</a><i data-lucide="chevron-right"></i><a href="#/fleet">${t('fleet')}</a><i data-lucide="chevron-right"></i><a href="#/fleet?type=${b.type}">${typeLabel(b.type)}</a><i data-lucide="chevron-right"></i><span aria-current="page">${name}</span></nav>
     ${bpHeadHTML(b)}
     ${bentoHTML(b)}
-    <div class="bp-grid">
-      <div class="min-w-0">
-        <div class="secwrap" id="secwrap">
+    <div class="secwrap" id="secwrap">
+      <div class="sec-scroll">
           <div class="sec-fade l"><button type="button" onclick="secScroll(-1)" aria-label="${L('เลื่อนซ้าย', 'Scroll left')}"><i data-lucide="chevron-left"></i></button></div>
           <div class="sec-fade r"><button type="button" onclick="secScroll(1)" aria-label="${L('เลื่อนขวา', 'Scroll right')}"><i data-lucide="chevron-right"></i></button></div>
           <nav class="secnav" id="secnav" aria-label="${L('ส่วนของหน้า', 'Page sections')}">${secs.map(([id, l], i) => `<a href="#${id}" class="${i ? '' : 'on'}" onclick="event.preventDefault();secGo('${id}')">${l}</a>`).join('')}</nav>
-        </div>
+      </div>
+      <div class="sec-buy" aria-hidden="true"><span><small id="secBuyL"></small><b class="tabular-nums" id="secBuyP"></b></span><button type="button" tabindex="-1" onclick="secBook()">${L('จองเรือ', 'Book')}</button></div>
+    </div>
+    <div class="bp-grid">
+      <div class="min-w-0">
 
         ${panel('overview', L(`ข้อมูลสำคัญของ ${name}`, `${name} at a glance`), '',
           `${bpAnswerHTML(b, progs)}
@@ -1299,6 +1325,7 @@ function drawProgPrices(b, keepPick) {
     : `<div><span>${L('ราคาวันที่นี้', 'Rate for this date')}</span><span>${L('ทีมขายแจ้งราคาให้', 'Our team will quote')}</span></div>`;
   $('#bpMbarL').textContent = p ? `${p.name} · ${keys.length ? bpSzShort(DSZ.key) : L('ทั้งปี', 'All year')}` : name0(b);
   $('#bpMbarP').textContent = total != null ? baht(total) : L('สอบถามราคา', 'On request');
+  if ($('#secBuyP')) { $('#secBuyL').textContent = $('#bpMbarL').textContent; $('#secBuyP').textContent = $('#bpMbarP').textContent; }
   icons();
 }
 const name0 = b => niceTitle(b.title);
