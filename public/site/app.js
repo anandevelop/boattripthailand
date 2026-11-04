@@ -1239,7 +1239,7 @@ function renderDetail(slug) {
 
         ${similar.length ? `<section class="bp-simwrap" aria-label="${t('similar')}">
           <div class="bp-simhead"><div><h2>${L('เรือขนาดใกล้เคียง', 'Similar boats')}</h2><p class="bp-sub m-0">${L(`เผื่อวันที่ต้องการ ${name} ไม่ว่าง`, `In case ${name} is booked on your date`)}</p></div><a href="#/fleet">${t('viewAll')} →</a></div>
-          <div class="bp-sims">${similar.map(s => `<a href="#/boat/${s.slug}" class="bp-sim"><div class="ph img-fallback"><img src="${rs(gallery(s.slug)[0]) || bimg(s.slug, 'a')}" alt="${niceTitle(s.title)}" loading="lazy"/></div><div class="bd"><b>${niceTitle(s.title)}</b><span>${[typeLabel(s.type), s.pax ? `${s.pax} ${t('guests')}` : '', s.marinaP].filter(Boolean).join(' · ')}</span>${s.from_ ? `<div class="pr">${t('price.from', 'เริ่มต้น')} <strong class="tabular-nums">${baht(s.from_)}</strong></div>` : ''}</div></a>`).join('')}</div>
+          <div class="bp-sims" id="bpSims">${similar.map(s => `<a href="#/boat/${s.slug}" class="bp-sim"><div class="ph img-fallback"><img src="${rs(gallery(s.slug)[0]) || bimg(s.slug, 'a')}" alt="${niceTitle(s.title)}" loading="lazy"/></div><div class="bd"><b>${niceTitle(s.title)}</b><span>${[typeLabel(s.type), s.pax ? `${s.pax} ${t('guests')}` : '', s.marinaP].filter(Boolean).join(' · ')}</span>${s.from_ ? `<div class="pr">${t('price.from', 'เริ่มต้น')} <strong class="tabular-nums">${baht(s.from_)}</strong></div>` : ''}</div></a>`).join('')}</div><div class="bp-simbar" aria-hidden="true"><i id="bpSimThumb"></i></div>
         </section>` : ''}
       </div>
 
@@ -1279,7 +1279,7 @@ function renderDetail(slug) {
   if ($('#dProg')) $('#dProg').onchange = e => { detailProgram = +e.target.value; drawProgPrices(b); };
   $('#dDate').onchange = () => { DSZ.pick = null; drawProgPrices(b); };
   drawProgPrices(b, true);
-  bindSecnav(); btSwipeBind();
+  bindSecnav(); btSwipeBind(); if (typeof requestAnimationFrame === 'function' && navigator.userAgent !== 'BTT-SSR') requestAnimationFrame(simBar);
   icons();
 }
 function bpGuests(d) { const b = bySlug(currentSlug); bpGuestsN = Math.min(b.pax || 99, Math.max(1, bpGuestsN + d)); $('#dPax').value = bpGuestsN; drawProgPrices(b); }
@@ -1824,6 +1824,13 @@ function tbBar() {
   const max = r.scrollWidth - r.clientWidth, w = max > 0 ? Math.max(18, r.clientWidth / r.scrollWidth * 100) : 100;
   t.style.width = w + '%'; t.style.transform = `translateX(${max > 0 ? r.scrollLeft / max * (100 - w) / w * 100 : 0}%)`;
   if (!r.dataset.bar) { r.dataset.bar = 1; r.addEventListener('scroll', () => requestAnimationFrame(tbBar), { passive: true }); addEventListener('resize', tbBar); }
+}
+/* boat page → similar boats on phones: a sideways row like the boat-type row, with the same small position bar */
+function simBar() {
+  const r = document.getElementById('bpSims'), t = document.getElementById('bpSimThumb'); if (!r || !t) return;
+  const max = r.scrollWidth - r.clientWidth, w = max > 0 ? Math.max(18, r.clientWidth / r.scrollWidth * 100) : 100;
+  t.style.width = w + '%'; t.style.transform = `translateX(${max > 0 ? r.scrollLeft / max * (100 - w) / w * 100 : 0}%)`;
+  if (!r.dataset.bar) { r.dataset.bar = 1; r.addEventListener('scroll', () => requestAnimationFrame(simBar), { passive: true }); addEventListener('resize', simBar); }
 }
 { const _tb = renderTypeBand; renderTypeBand = function () { _tb(); if (typeof requestAnimationFrame === 'function' && navigator.userAgent !== 'BTT-SSR') requestAnimationFrame(tbBar); }; }
 

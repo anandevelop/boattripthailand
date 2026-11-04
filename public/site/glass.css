@@ -1239,3 +1239,13 @@ html.nav-up .bp-book { top: 72px; }
 @media (max-width: 1040px) {
   body:has(#view-boat:not(.hidden)) #cookieBar { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 84px); z-index: 51; }
 }
+/* boat page → "เรือขนาดใกล้เคียง" on phones: swipe sideways (like the boat-type row) + small position bar */
+.bp-simbar { display: none; }
+@media (max-width: 720px) {
+  .bp-sims { display: flex !important; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 0 -16px; padding: 2px 16px 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .bp-sims::-webkit-scrollbar { display: none; }
+  .bp-sims > .bp-sim { flex: 0 0 78%; scroll-snap-align: start; scroll-margin-left: 16px; }
+  .bp-sims > .bp-sim:hover { transform: none; }
+  .bp-simbar { display: block; width: 44px; height: 4px; border-radius: 9px; background: rgb(35 20 22 / .12); margin: 12px auto 0; overflow: hidden; }
+  .bp-simbar i { display: block; height: 100%; width: 40%; border-radius: inherit; background: #70000e; transition: transform .1s linear; }
+}
