@@ -514,6 +514,7 @@ const RT_ISL = {
   rachayai: ['Racha Yai', 'เกาะราชาใหญ่', 'อ่าวปะตก · น้ำใสมาก', 'Patok Bay · very clear water', [7.6045, 98.3667], 's'],
   rachanoi: ['Racha Noi', 'เกาะราชาน้อย', 'จุดดำน้ำ · ไกลจากฝั่ง', 'Dive spot · far offshore', [7.4985, 98.3185], 's'],
   promthep: ['Promthep Cape', 'แหลมพรหมเทพ', 'ชมพระอาทิตย์ตกจากทะเล', 'Sunset from the sea', [7.7505, 98.3045], 's'],
+  yanui: ['Ya Nui', 'หาดยะนุ้ย', 'ดำน้ำตื้นหน้าหาด · เกาะแก้วใหญ่', 'Snorkelling off the beach · Koh Kaew Yai', [7.7655, 98.3035], 's'],
   panak: ['Panak', 'เกาะปันหยัก', 'ถ้ำทะลุ · ป่าโกงกาง', 'Sea caves · mangroves', [8.1785, 98.4932]],
   hongpn: ['Hong (Phang Nga)', 'เกาะห้อง พังงา', 'ลากูนในถ้ำ · พายคายัค', 'Hidden lagoon · kayaking', [8.2302, 98.5032]],
   jb: ['James Bond Island', 'เขาตะปู', 'เขาหินปูนกลางทะเล', 'Limestone tower in the sea', [8.2747, 98.5013]],
@@ -541,12 +542,14 @@ function rtStops(raw) {
   if (/khai nok/.test(s)) add('khainok'); if (/khai nui/.test(s)) add('khainui'); if (/\bkhai\b(?!\s*n[oa-z])/.test(s)) add('khainok');
   if (/naka/.test(s)) add('nakanoi'); if (/rang/.test(s)) add('rangyai');
   if (/racha noi/.test(s)) add('rachanoi'); if (/racha(?!\s*noi)/.test(s)) add('rachayai');
-  if (/coral/.test(s)) add('coral'); if (/maiton/.test(s)) add('maiton'); if (/promthep|phromthep|sunset/.test(s)) add('promthep');
+  if (/coral/.test(s)) add('coral'); if (/maiton/.test(s)) add('maiton'); if (/ya ?nui/.test(s)) add('yanui'); if (/promthep|phromthep/.test(s)) add('promthep');
   if (/phang ?nga|james|\bjb\b|panak/.test(s)) { add('panak'); add('hongpn'); add('jb'); }
   if (/hong krabi|krabi hong/.test(s) || (/\bhong\b/.test(s) && !/phang ?nga|jb/.test(s))) add('hongkr');
   if (/yao ?noi/.test(s)) add('yaonoi'); if (/yao ?yai/.test(s)) add('yaoyai');
   if (/phi ?phi|maya/.test(s)) add('phiphi'); if (/bamboo/.test(s)) add('bamboo');
   if (/4 island|four island|krabi(?!\s*hong)/.test(s) && !/hong krabi/.test(s)) { add('poda'); add('chicken'); }
+  // a sunset trip with no island named: the usual sunset spot off Promthep Cape
+  if (!out.length && /sunset/.test(s)) add('promthep');
   return out;
 }
 const rtZone = ll => ll.z || 'e';

@@ -1118,6 +1118,14 @@ function bpSlots(b, p) {
   const all = b.time_slots.map(([k, v], si) => ({ k: slotName(b, si, k), raw: k, v }));
   let fit = p ? all.filter(s => p.hrs && bpHrs(s.raw) === p.hrs) : [];
   if (!fit.length && p && p.kind) fit = all.filter(s => bpKind(s.raw) === p.kind);
+  // several slots of the same length (Half Day Mor 4 hrs. / Half Day Aft 4 hrs.): keep the one the program is named after
+  if (fit.length > 1 && p && p.raw) {
+    const nm = x => String(x || '').toLowerCase().replace(/\s+/g, ' ').trim(), pr = nm(p.raw);
+    const same = fit.filter(s => nm(s.raw) && pr.startsWith(nm(s.raw)));
+    const part = x => /\b(aft|afternoon|pm|sunset|evening)\b/.test(x) ? 'pm' : /\b(mor|morning|am)\b/.test(x) ? 'am' : '';
+    const half = part(pr) ? fit.filter(s => part(nm(s.raw)) === part(pr)) : [];
+    if (same.length) fit = same.sort((x, y) => nm(y.raw).length - nm(x.raw).length).slice(0, 1); else if (half.length) fit = half;
+  }
   return (fit.length ? fit : all).flatMap(s => String(s.v).split('/').map(x => bpTime(x.trim())).filter(Boolean));
 }
 function bpFacts(b) {
