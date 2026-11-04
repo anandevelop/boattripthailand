@@ -907,9 +907,11 @@ function bentoHTML(b) {
     <div class="bt bt-main img-fallback">
       <div class="bt-swipe" id="btSwipe">
         <button type="button" class="bt-sl group" onclick="openLightbox('${b.slug}',0)" aria-label="${t('viewPhotos')}"><img src="${rs(g[0] || '', 1600)}" srcset="${g[0] ? `${rs(g[0])} 768w, ${rs(g[0], 1280)} 1280w, ${rs(g[0], 1600)} 1600w` : ''}" sizes="(min-width:1024px) 60vw, 100vw" alt="${name}" fetchpriority="high" class="gal-img"/></button>
-        ${g.slice(1).map((src, i) => `<button type="button" class="bt-sl bt-sl-x" onclick="openLightbox('${b.slug}',${i + 1})" aria-label="${t('viewPhotos')} ${i + 2}"><img src="${rs(src)}" alt="${name} — photo ${i + 2}" loading="lazy" decoding="async" class="gal-img"/></button>`).join('')}
+        ${g.slice(1).map((src, i) => `<button type="button" class="bt-sl bt-sl-x" onclick="openLightbox('${b.slug}',${i + 1})" aria-label="${t('viewPhotos')} ${i + 2}"><img src="${rs(src)}" srcset="${rs(src)} 768w, ${rs(src, 1280)} 1280w" sizes="(min-width:1024px) 60vw, 100vw" alt="${name} — photo ${i + 2}" loading="lazy" decoding="async" class="gal-img"/></button>`).join('')}
       </div>
-      ${n > 1 ? `<span class="bt-count" aria-hidden="true"><b id="btIdx">1</b> / ${n}</span>` : ''}
+      ${n > 1 ? `<span class="bt-count" aria-hidden="true"><b id="btIdx">1</b> / ${n}</span>
+      <button type="button" class="bt-nav bt-prev" onclick="btGo(-1)" aria-label="${L('รูปก่อนหน้า', 'Previous photo')}"><i data-lucide="chevron-left"></i></button>
+      <button type="button" class="bt-nav bt-next" onclick="btGo(1)" aria-label="${L('รูปถัดไป', 'Next photo')}"><i data-lucide="chevron-right"></i></button>` : ''}
       ${b.hot ? `<span class="bt-chip"><i data-lucide="star"></i>${L('ยอดนิยม', 'Popular')}</span>` : ''}
     </div>
     ${tile(1, 'bt-1')}${tile(2, 'bt-2')}${tile(3, 'bt-3', n === 4 ? all : '')}${tile(4, 'bt-4', n > 4 ? all : '')}
@@ -1025,8 +1027,16 @@ function secScroll(d) { const n = $('#secnav'); n?.scrollBy({ left: d * Math.max
 function secGo(id) { const el = document.getElementById(id); if (el) scrollTo({ top: el.getBoundingClientRect().top + scrollY - 140, behavior: 'smooth' }); }
 let secIO;
 /* phones: swipe the main photo through every photo of the boat; the counter follows */
+/* main photo: arrows (computer) step through every photo, wrapping at both ends; phones swipe */
+function btGo(d) {
+  const r = $('#btSwipe'); if (!r) return;
+  const w = r.clientWidth, n = r.children.length, i = Math.round(r.scrollLeft / Math.max(1, w)), j = (i + d + n) % n;
+  r.scrollTo({ left: j * w, behavior: Math.abs(j - i) > 1 ? 'auto' : 'smooth' });
+}
 function btSwipeBind() {
   const r = $('#btSwipe'), c = $('#btIdx'); if (!r || !c || typeof requestAnimationFrame !== 'function') return;
+  // keyboard: ← → when the photo (or one of its buttons) has focus
+  r.closest('.bt-main')?.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); btGo(e.key === 'ArrowLeft' ? -1 : 1); } });
   let q = 0; r.addEventListener('scroll', () => { if (q) return; q = requestAnimationFrame(() => { q = 0; c.textContent = Math.round(r.scrollLeft / Math.max(1, r.clientWidth)) + 1; }); }, { passive: true });
 }
 function bindSecnav() {
