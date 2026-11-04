@@ -1672,21 +1672,34 @@ function renderHomeAnswer() {
     .filter(r => r.n).sort((a, b) => (a.from || 9e9) - (b.from || 9e9));
   const lo = rows.find(r => r.from), hi = rows.reduce((m, r) => (r.top > (m ? m.top : 0) ? r : m), null);
   const ships = FLEET.length;
-  el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 pt-10 lg:pt-14 pb-10 lg:pb-14"><div class="hx-ans">
+  // one photo per type: the most popular boat of that type that has a photo
+  const pic = ty => { const b = popFirst(FLEET.filter(x => x.type === ty)).find(x => bimg(x.slug, 'hero') || bimg(x.slug, 'a')); return b ? (bimg(b.slug, 'hero', 320) || bimg(b.slug, 'a', 320)) : ''; };
+  const USE = { sail: L('นิ่ง กว้าง เหมาะครอบครัว', 'Stable and roomy, great for families'), speed: L('เร็ว ไปได้หลายเกาะ', 'Fast, more islands in a day'), longtail: L('สไตล์ไทย ถ่ายรูปสวย', 'Thai style, great photos'), power: L('เร็วและนิ่ง', 'Fast and stable'), yacht: L('หรูหรา จัดงานบนเรือได้', 'Luxury, parties on board') };
+  const now = new Date(), upd = LANG === 'en' ? now.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : `${['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][now.getMonth()]} ${now.getFullYear() + 543}`;
+  const facts = [['tag', L('ราคาต่อลำ ไม่ใช่ต่อคน', 'Per boat, not per person')], ['users', L('รวมกัปตัน + ลูกเรือ', 'Captain + crew included')], ['clock', L('ยืนยันใน 30 นาที', 'Confirmed in 30 min')]];
+  // structured data: the same price list as an ItemList of offers (read by Google / AI answers)
+  const ld = { '@context': 'https://schema.org', '@type': 'ItemList', name: L('ราคาเช่าเรือส่วนตัวภูเก็ต ตามประเภทเรือ', 'Private boat charter prices in Phuket by boat type'), itemListElement: rows.filter(r => r.from).map((r, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'Service', name: L('เช่า', 'Private ') + typeLabel(r.ty) + L(' ส่วนตัว ภูเก็ต', ' charter, Phuket'), url: SITE_ORIGIN + hashToPath('#/fleet') + '?type=' + r.ty, areaServed: 'Phuket', offers: { '@type': 'AggregateOffer', priceCurrency: 'THB', lowPrice: r.from, ...(r.top ? { highPrice: r.top } : {}), offerCount: r.n } } })) };
+  el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 pt-10 lg:pt-16 pb-10 lg:pb-16"><div class="hx-ans">
     <div class="hx-ans-t">
+      <p class="tm-eyebrow"><i data-lucide="tag"></i>${L('ราคาเช่าเรือ', 'Charter prices')} · ${L('อัปเดต', 'updated')} ${upd}</p>
       <h2 class="font-display hx-h2">${L('เช่าเรือส่วนตัวภูเก็ต ราคาเท่าไหร่?', 'How much does a private boat charter in Phuket cost?')}</h2>
       <p class="hx-p">${lo ? L(`<strong>ค่าเช่าเรือส่วนตัวในภูเก็ตเริ่มต้น ${baht(lo.from)} ต่อลำ</strong> (${typeLabel(lo.ty)})${hi ? ` ไปจนถึงประมาณ ${baht(hi.top)} สำหรับ${typeLabel(hi.ty)}ลำใหญ่` : ''} ราคาคิดเหมาทั้งลำ ไม่ใช่ต่อคน รวมกัปตันและลูกเรือ ส่วนราคาจริงขึ้นกับขนาดเรือ ระยะเวลา (ครึ่งวันหรือเต็มวัน) และฤดูกาล`,
         `<strong>A private boat charter in Phuket starts at ${baht(lo.from)} per boat</strong> (${typeLabel(lo.ty)})${hi ? ` and goes up to about ${baht(hi.top)} for a large ${typeLabel(hi.ty).toLowerCase()}` : ''}. Prices are for the whole boat, not per person, with captain and crew; the final price depends on the boat size, duration (half or full day) and season.`) : ''}</p>
-      <p class="hx-p">${L(`Boat Trip Thailand มีเรือส่วนตัว ${ships} ลำ ทั้ง${rows.map(r => typeLabel(r.ty)).join(' ')} ออกจากท่าเรือรอบภูเก็ตไปเกาะพีพี อ่าวพังงา เกาะราชา และเกาะไข่ ทะเลสงบที่สุดช่วงพฤศจิกายน–เมษายน ส่งคำขอจองฟรี ไม่ต้องจ่ายบนเว็บ ทีมงานยืนยันเรือว่างและราคาภายใน 30 นาที (09:00–21:00)${SET.tat ? ` · ใบอนุญาตนำเที่ยว ททท. ${SET.tat}` : ''}`,
+      <ul class="hx-facts">${facts.map(([ic, tx]) => `<li><i data-lucide="${ic}"></i>${tx}</li>`).join('')}</ul>
+      <p class="hx-p hx-p2">${L(`Boat Trip Thailand มีเรือส่วนตัว ${ships} ลำ ทั้ง${rows.map(r => typeLabel(r.ty)).join(' ')} ออกจากท่าเรือรอบภูเก็ตไปเกาะพีพี อ่าวพังงา เกาะราชา และเกาะไข่ ทะเลสงบที่สุดช่วงพฤศจิกายน–เมษายน ส่งคำขอจองฟรี ไม่ต้องจ่ายบนเว็บ ทีมงานยืนยันเรือว่างและราคาภายใน 30 นาที (09:00–21:00)${SET.tat ? ` · ใบอนุญาตนำเที่ยว ททท. ${SET.tat}` : ''}`,
         `Boat Trip Thailand offers ${ships} private boats — ${rows.map(r => typeLabel(r.ty).toLowerCase()).join(', ')} — from marinas around Phuket to Phi Phi, Phang Nga Bay, Racha and the Khai islands. Seas are calmest November–April. Requests are free with no payment online; our team confirms availability and price within 30 minutes (09:00–21:00)${SET.tat ? ` · TAT licence ${SET.tat}` : ''}.`)}</p>
       <div class="hx-links"><a href="#/fleet">${L(`ดูเรือทั้งหมด ${ships} ลำ`, `All ${ships} boats`)}<i data-lucide="arrow-right" class="w-4 h-4"></i></a><a href="#/destinations">${L('ดูปลายทาง', 'Destinations')}<i data-lucide="arrow-right" class="w-4 h-4"></i></a></div>
     </div>
     <div class="hx-tw"><table class="hx-t">
-      <caption>${L('ราคาเริ่มต้นตามประเภทเรือ (ต่อลำ)', 'Starting price by boat type (per boat)')}</caption>
-      <thead><tr><th scope="col">${L('ประเภท', 'Type')}</th><th scope="col">${L('จำนวน', 'Boats')}</th><th scope="col">${L('เริ่มต้น', 'From')}</th></tr></thead>
-      <tbody>${rows.map(r => `<tr><th scope="row"><a href="#/fleet?type=${r.ty}">${typeLabel(r.ty)}</a></th><td>${r.n} ${L('ลำ', 'boats')}</td><td>${r.from ? baht(r.from) : '—'}</td></tr>`).join('')}</tbody>
+      <caption><span>${L('ราคาเริ่มต้นตามประเภทเรือ', 'Starting price by boat type')}</span><span>${L('ต่อลำ', 'per boat')}</span></caption>
+      <thead class="sr-only"><tr><th scope="col">${L('ประเภท', 'Type')}</th><th scope="col">${L('จำนวน', 'Boats')}</th><th scope="col">${L('เริ่มต้น', 'From')}</th></tr></thead>
+      <tbody>${rows.map(r => { const im = pic(r.ty); return `<tr>
+        <th scope="row"><a href="#/fleet?type=${r.ty}" class="hx-tl">${im ? `<img src="${im}" alt="${typeLabel(r.ty)} ${L('เช่าเรือส่วนตัวภูเก็ต', 'private charter Phuket')}" loading="lazy" width="76" height="56"/>` : '<span class="hx-ti"></span>'}<span><b>${typeLabel(r.ty)}</b><small>${USE[r.ty] || ''}</small></span></a></th>
+        <td class="hx-tn">${r.n} ${L('ลำ', 'boats')}</td>
+        <td class="hx-tp"><small>${L('เริ่ม', 'from')}</small><b>${r.from ? baht(r.from) : '—'}</b></td>
+        <td class="hx-tg" aria-hidden="true"><i data-lucide="chevron-right"></i></td></tr>`; }).join('')}</tbody>
     </table></div>
-  </div></div>`;
+  </div></div><script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`;
 }
 function renderHomeDests() {
   const el = $('#homeDests'); if (!el || !DPAGES.length) return;
