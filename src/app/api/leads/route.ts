@@ -9,7 +9,8 @@ export const runtime = 'nodejs';
 const str = (max: number) => z.string().trim().max(max).optional().nullable();
 const Body = z.object({
   name: z.string().trim().min(1).max(120),
-  phone: z.string().trim().min(6).max(40).regex(/^[+\d\s().\-@a-zA-Z_]+$/),
+  // a phone number, a LINE ID, or (when the guest chose to be contacted by email) the email address
+  phone: z.string().trim().min(3).max(160).regex(/^[+\d\s().\-@a-zA-Z_]+$/),
   email: z.string().trim().email().max(160).optional().or(z.literal('')).nullable(),
   whatsapp: z.string().trim().max(30).regex(/^\+?[\d\s().-]*$/).refine(v => !v || v.replace(/\D/g, '').length >= 7).optional().nullable(),
   item: str(160), program: str(200),

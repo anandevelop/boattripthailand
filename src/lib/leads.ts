@@ -15,6 +15,9 @@ export * from './lead-meta';
 
 export const appUrl = () => (process.env.APP_URL || 'http://localhost:3009').replace(/\/$/, '');
 export const normPhone = (p: string) => { let d = p.replace(/\D/g, ''); if (d.startsWith('0') && d.length === 10) d = '66' + d.slice(1); return d; };
+/** the key a web customer is merged on: the phone digits, or for a LINE ID / email (few or no digits) the ID itself.
+ *  Before this, every LINE-ID-only customer got the same empty key and was merged into one customer. */
+export const contactKey = (p: string) => { const d = normPhone(p); return d.length >= 6 ? d : 'id:' + p.trim().toLowerCase().replace(/\s+/g, ''); };
 const ymd = (d = new Date()) => d.toISOString().slice(2, 10).replace(/-/g, '');
 
 export type LeadInput = {
@@ -40,7 +43,7 @@ async function nextAssignee(lang: string, tx: typeof db) {
 
 /** Create (or merge) a lead from the website / chat / manual entry, assign it and notify sales. */
 export async function createLead(input: LeadInput, actor?: User) {
-  const phoneNorm = normPhone(input.phone);
+  const phoneNorm = contactKey(input.phone);
   const c = input.ctx ?? {};
   const boatSlug = input.item?.startsWith('boat:') ? input.item.slice(5) : null;
   const lang = input.lang === 'en' ? 'en' : 'th';
