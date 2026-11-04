@@ -3080,11 +3080,21 @@ function applySeo(view, boat) {
       contactPoint: TEAM.map(m => ({ '@type':'ContactPoint', name:m.name, contactType:'sales', telephone:m.tel })) },
     { '@type':'WebSite', '@id':SITE+'/#website', url:SITE+'/', name:'Boat Trip Thailand', inLanguage:['th','en'], publisher:{ '@id':SITE+'/#org' },
       potentialAction:{ '@type':'SearchAction', target:SITE+'/yacht-charter?q={search_term_string}', 'query-input':'required name=search_term_string' } },
-    { '@type':'FAQPage', '@id':SITE+'/#faq', mainEntity: FAQ.map(f => ({ '@type':'Question', name:f.q[k==='en'?1:0], acceptedAnswer:{ '@type':'Answer', text:f.a[k==='en'?1:0]() } })) },
-    { '@type':'ItemList', '@id':SITE+'/#featured', name:L('เรือแนะนำสำหรับ yacht charter','Featured yacht charters'), itemListElement: FEATURED.map(bySlug).filter(Boolean).map((b,i) => ({ '@type':'ListItem', position:i+1, url:SITE+'/yacht-charter/'+b.slug,
+    // FAQ structured data must match the FAQ shown on that page: the home FAQ on home only, each boat's own FAQ on its page
+    ...(view === 'home' ? [{ '@type':'FAQPage', '@id':SITE+'/#faq', mainEntity: FAQ.map(f => ({ '@type':'Question', name:f.q[k==='en'?1:0], acceptedAnswer:{ '@type':'Answer', text:f.a[k==='en'?1:0]() } })) }] : []),
+    ...(view === 'home' || view === 'fleet' ? [{ '@type':'ItemList', '@id':SITE+'/#featured', name:L('เรือแนะนำสำหรับ yacht charter','Featured yacht charters'), itemListElement: FEATURED.map(bySlug).filter(Boolean).map((b,i) => ({ '@type':'ListItem', position:i+1, url:SITE+'/yacht-charter/'+b.slug,
       item:{ '@type':'Product', name:niceTitle(b.title)+' – '+typeLabel(b.type)+' charter', image:SITE+'/boats/'+b.slug+'-hero.webp', brand:{ '@id':SITE+'/#org' },
-        offers:{ '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:b.from_, offerCount:b.tables.reduce((n,t)=>n+t.rows.length,0), availability:'https://schema.org/InStock' } } })) },
+        offers:{ '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:b.from_, offerCount:b.tables.reduce((n,t)=>n+t.rows.length,0), availability:'https://schema.org/InStock' } } })) }] : []),
   ]};
+  if (view === 'boat' && boat) {
+    // the boat itself: Product with its price range, and the FAQ that is on the page
+    const plain = h => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const prices = boat.tables.flatMap(tb => tb.rows.flatMap(r => r.slice(1).map(v => +String(v).replace(/[^\d]/g, '')).filter(v => v >= 1000)));
+    const imgs = (typeof gallery === 'function' ? gallery(boat.slug) : []).slice(0, 6).map(u => /^https?:/.test(u) ? u : SITE + u);
+    ld['@graph'].push({ '@type':'Product', '@id':SITE+path+'#boat', name:niceTitle(boat.title)+' – '+typeLabel(boat.type)+' charter', description:desc, ...(imgs.length ? { image:imgs } : {}), brand:{ '@id':SITE+'/#org' }, category:typeLabel(boat.type),
+      offers:{ '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:boat.from_ || (prices.length ? Math.min(...prices) : undefined), ...(prices.length ? { highPrice:Math.max(...prices) } : {}), offerCount:Math.max(1, prices.length), availability:'https://schema.org/InStock', url:SITE+path } });
+    try { const qa = bpFaq(boat); if (qa.length) ld['@graph'].push({ '@type':'FAQPage', '@id':SITE+path+'#faq', mainEntity: qa.map(([q, a]) => ({ '@type':'Question', name:plain(q), acceptedAnswer:{ '@type':'Answer', text:plain(a) } })) }); } catch (e) { }
+  }
   if (view === 'boat' && boat) ld['@graph'].push({ '@type':'BreadcrumbList', itemListElement:[{ '@type':'ListItem', position:1, name:t('home'), item:SITE+'/' },{ '@type':'ListItem', position:2, name:t('fleet'), item:SITE+'/yacht-charter' },{ '@type':'ListItem', position:3, name:niceTitle(boat.title), item:SITE+path }] });
   document.getElementById('ldjson').textContent = JSON.stringify(ld);
   seoFinal(view === 'boat' && boat ? 'b-' + boat.slug : 's-' + view);
@@ -3328,7 +3338,12 @@ function seoPost(p) {
   $('#ldjson').textContent = JSON.stringify(ld);
   seoFinal('a-' + p.id);
 }
-function seoBlog() { const k = plang(), title = L('บทความ คู่มือเช่าเรือยอร์ชภูเก็ต & เส้นทางเกาะ | Boat Trip Thailand', 'Phuket Yacht Charter Guides & Island Routes | Boat Trip Thailand'); document.title = title; setMeta('description', L('รวมบทความเช่าเรือยอร์ชภูเก็ต ราคา เส้นทางเกาะ ช่วงเวลาที่ดีที่สุด และไอเดียจัดทริปบนเรือ', 'Phuket yacht charter guides: prices, island routes, best time to go and ideas for your day at sea.')); setMeta('og:title', title, 'property'); $('#canonical').href = SITE + (k === 'en' ? '/en' : '') + '/blog'; setMeta('robots', BL.q ? 'noindex, follow' : 'index, follow'); }
+function seoBlog() { const k = plang(), title = L('บทความ คู่มือเช่าเรือยอร์ชภูเก็ต & เส้นทางเกาะ | Boat Trip Thailand', 'Phuket Yacht Charter Guides & Island Routes | Boat Trip Thailand'); document.title = title; setMeta('description', L('รวมบทความเช่าเรือยอร์ชภูเก็ต ราคา เส้นทางเกาะ ช่วงเวลาที่ดีที่สุด และไอเดียจัดทริปบนเรือ', 'Phuket yacht charter guides: prices, island routes, best time to go and ideas for your day at sea.')); setMeta('og:title', title, 'property'); $('#canonical').href = SITE + (k === 'en' ? '/en' : '') + '/blog'; setMeta('robots', BL.q ? 'noindex, follow' : 'index, follow');
+  const url = SITE + (k === 'en' ? '/en' : '') + '/blog', list = POSTS.filter(p => p.slug && (p.slug[k] || p.slug.th)).slice(0, 30);
+  $('#ldjson').textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
+    { '@type': 'CollectionPage', '@id': url + '#page', url, name: title, inLanguage: k, isPartOf: { '@type': 'WebSite', name: 'Boat Trip Thailand', url: SITE + '/' },
+      mainEntity: { '@type': 'ItemList', itemListElement: list.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: SITE + (k === 'en' ? '/en' : '') + '/blog/' + (p.slug[k] || p.slug.th), name: pT(p, 'title') })) } },
+    { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: t('home'), item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: L('บทความ', 'Blog'), item: url }] }] }); }
 { const _sb = seoBlog; seoBlog = function () { _sb(); if (!BL.q) seoFinal('s-blog'); }; }   // search results stay noindex
 /* home: latest articles strip */
 function renderHomeBlog() {

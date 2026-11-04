@@ -1267,6 +1267,16 @@ function renderContact() {
   const desc = L(`ติดต่อ Boat Trip Thailand ทางโทรศัพท์ ${phone} LINE ${lineId} WhatsApp หรืออีเมล ทุกวัน 09:00–21:00 น. ขอใบเสนอราคาเช่าเรือยอร์ช คาตามารัน สปีดโบ๊ท ภูเก็ต ตอบภายใน 30 นาที`, `Contact Boat Trip Thailand by phone ${phone}, LINE ${lineId}, WhatsApp or email, daily 09:00–21:00. Request a quote for yacht, catamaran and speedboat charters in Phuket — reply within 30 minutes.`);
   setMeta('description', desc); setMeta('og:title', document.title, 'property'); setMeta('og:description', desc, 'property'); setMeta('og:url', SITE + '/contact', 'property');
   const c = document.getElementById('canonical'); if (c) c.href = SITE + (LANG === 'en' ? '/en' : '') + '/contact';
+  // the app routes before this file loads, so /contact first went through "page not found": undo its noindex and its H1
+  setMeta('robots', 'index, follow, max-image-preview:large');
+  { const nf = document.getElementById('view-nf'); if (nf) nf.innerHTML = ''; }
+  { const ld = document.getElementById('ldjson'), u = SITE + (LANG === 'en' ? '/en' : '') + '/contact';
+    if (ld) ld.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
+      { '@type': 'ContactPage', '@id': u + '#page', url: u, name: document.title, about: { '@id': SITE + '/#org' } },
+      { '@type': 'TravelAgency', '@id': SITE + '/#org', name: 'Boat Trip Thailand', url: SITE + '/', telephone: phone, email: mail,
+        address: { '@type': 'PostalAddress', streetAddress: '79/29 Moo 4, Koh Kaew', addressLocality: 'Muang Phuket', addressRegion: 'Phuket', postalCode: '83000', addressCountry: 'TH' },
+        openingHoursSpecification: { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], opens: '09:00', closes: '21:00' } },
+      { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: t('home'), item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: L('ติดต่อเรา', 'Contact'), item: u }] }] }); }
   icons();
 }
 { const _sv2 = showView; showView = function (name) { _sv2(name); const v = document.getElementById('view-contact'); if (v) v.classList.toggle('hidden', name !== 'contact'); if (name === 'contact') $('#floatCta')?.classList.add('!hidden'); }; }
