@@ -515,6 +515,18 @@ const RT_ISL = {
   rachanoi: ['Racha Noi', 'เกาะราชาน้อย', 'จุดดำน้ำ · ไกลจากฝั่ง', 'Dive spot · far offshore', [7.4985, 98.3185], 's'],
   promthep: ['Promthep Cape', 'แหลมพรหมเทพ', 'ชมพระอาทิตย์ตกจากทะเล', 'Sunset from the sea', [7.7505, 98.3045], 's'],
   yanui: ['Ya Nui', 'หาดยะนุ้ย', 'ดำน้ำตื้นหน้าหาด · เกาะแก้วใหญ่', 'Snorkelling off the beach · Koh Kaew Yai', [7.7655, 98.3035], 's'],
+  lon: ['Koh Lon', 'เกาะโหลน', 'หาดเงียบ · น้ำตื้นใส', 'Quiet beach · clear shallow water', [7.7905, 98.3745], 's'],
+  similan: ['Similan Islands', 'หมู่เกาะสิมิลัน', 'หินแกรนิต · น้ำใสระดับโลก', 'Granite boulders · world-class water', [8.6545, 97.6435], 'w'],
+  kohhaa: ['Koh Haa', 'เกาะห้า', 'จุดดำน้ำ · ลากูนน้ำใส', 'Dive site · clear lagoon', [7.4335, 99.0285]],
+  kohrok: ['Koh Rok', 'เกาะรอก', 'หาดขาว · ดำน้ำดูปะการัง', 'White beach · coral snorkelling', [7.2135, 99.0705]],
+  lanta: ['Koh Lanta', 'เกาะลันตา', 'หาดยาว · เมืองเก่าลันตา', 'Long beaches · Lanta Old Town', [7.6435, 99.0405]],
+  patong: ['Patong', 'หาดป่าตอง', 'อ่าวใหญ่ · วิวเมือง', 'Big bay · town views', [7.8945, 98.2845], 'w'],
+  freedom: ['Freedom Beach', 'หาดฟรีด้อม', 'หาดลับ · เข้าได้ทางเรือ', 'Hidden beach · boat access', [7.8745, 98.2735], 'w'],
+  kamala: ['Kamala', 'หาดกมลา', 'หาดสงบ · หน้าผาหิน', 'Calm beach · rock cliffs', [7.9535, 98.2765], 'w'],
+  laemsing: ['Laem Sing', 'แหลมสิงห์', 'อ่าวเล็กน้ำใส', 'Small clear-water cove', [7.9665, 98.2745], 'w'],
+  surin: ['Surin Beach', 'หาดสุรินทร์', 'หาดขาว · น้ำใส', 'White sand · clear water', [7.9765, 98.2755], 'w'],
+  kohwaew: ['Koh Waew', 'เกาะแวว', 'เกาะเล็กนอกหาดลายัน', 'Islet off Layan', [8.0305, 98.2645], 'w'],
+  bananalayan: ['Banana Beach (Layan)', 'หาดบานาน่า ลายัน', 'หาดลับระหว่างลายันกับไนทอน', 'Hidden beach near Layan', [8.0045, 98.2725], 'w'],
   panak: ['Panak', 'เกาะปันหยัก', 'ถ้ำทะลุ · ป่าโกงกาง', 'Sea caves · mangroves', [8.1785, 98.4932]],
   hongpn: ['Hong (Phang Nga)', 'เกาะห้อง พังงา', 'ลากูนในถ้ำ · พายคายัค', 'Hidden lagoon · kayaking', [8.2302, 98.5032]],
   jb: ['James Bond Island', 'เขาตะปู', 'เขาหินปูนกลางทะเล', 'Limestone tower in the sea', [8.2747, 98.5013]],
@@ -541,12 +553,16 @@ function rtStops(raw) {
   const s = String(raw || '').toLowerCase(), out = [], add = k => { if (!out.includes(k)) out.push(k); };
   if (/khai nok/.test(s)) add('khainok'); if (/khai nui/.test(s)) add('khainui'); if (/\bkhai\b(?!\s*n[oa-z])/.test(s)) add('khainok');
   if (/naka/.test(s)) add('nakanoi'); if (/rang/.test(s)) add('rangyai');
-  if (/racha noi/.test(s)) add('rachanoi'); if (/racha(?!\s*noi)/.test(s)) add('rachayai');
+  if (/r?ar?cha ?noi/.test(s)) add('rachanoi'); if (/r?ar?cha(?!\s*noi)/.test(s) && !/^\W*r?ar?cha ?noi\W*$/.test(s)) add('rachayai');
   if (/coral/.test(s)) add('coral'); if (/maiton/.test(s)) add('maiton'); if (/ya ?nui/.test(s)) add('yanui'); if (/promthep|phromthep/.test(s)) add('promthep');
+  if (/\b(koh )?lon\b/.test(s)) add('lon'); if (/banana/.test(s)) add(/layan/.test(s) ? 'bananalayan' : 'coral');
+  if (/similan/.test(s)) add('similan'); if (/koh ?haa?\b/.test(s)) add('kohhaa'); if (/koh ?rok/.test(s)) add('kohrok'); if (/lanta/.test(s)) add('lanta');
+  if (/patong/.test(s)) add('patong'); if (/freedom/.test(s)) add('freedom'); if (/kamala/.test(s)) add('kamala'); if (/laem ?sing/.test(s)) add('laemsing');
+  if (/surin/.test(s)) add('surin'); if (/koh ?wa?ew|koh ?waeo/.test(s)) add('kohwaew');
   if (/phang ?nga|james|\bjb\b|panak/.test(s)) { add('panak'); add('hongpn'); add('jb'); }
   if (/hong krabi|krabi hong/.test(s) || (/\bhong\b/.test(s) && !/phang ?nga|jb/.test(s))) add('hongkr');
   if (/yao ?noi/.test(s)) add('yaonoi'); if (/yao ?yai/.test(s)) add('yaoyai');
-  if (/phi ?phi|maya/.test(s)) add('phiphi'); if (/bamboo/.test(s)) add('bamboo');
+  if (/phi ?phi|maya|\bpp\b/.test(s)) add('phiphi'); if (/bamboo/.test(s)) add('bamboo');
   if (/4 island|four island|krabi(?!\s*hong)/.test(s) && !/hong krabi/.test(s)) { add('poda'); add('chicken'); }
   // a sunset trip with no island named: the usual sunset spot off Promthep Cape
   if (!out.length && /sunset/.test(s)) add('promthep');
