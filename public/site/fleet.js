@@ -577,7 +577,12 @@ function rtLeg(a, za, b, zb) {   // straight over water, or round the island thr
 }
 function rtRoute(b, p) {
   const pier = pierOf(b), cfg = pier && RT_PIER[pier.c]; if (!cfg) return null;
-  const st0 = rtStops(p.raw + ' ' + (p.tb.caption || '')); if (!st0.length) return null;
+  let st0 = rtStops(p.raw + ' ' + (p.tb.caption || ''));
+  // overnight trips that name no island: the islands of the boat's day programs
+  if (!st0.length && /night|\bdays?\b|ค้างคืน|วัน\s*\d*\s*คืน/i.test(p.raw + ' ' + (p.tb.caption || ''))) {
+    try { st0 = [...new Set(bpProgs(b).flatMap(q => q.i === p.i ? [] : rtStops(q.raw + ' ' + (q.tb.caption || ''))))]; } catch (e) { st0 = []; }
+  }
+  if (!st0.length) return null;
   // the likely loop: nearest island first, then the nearest from there (the captain decides on the day)
   const left = [...st0], st = []; let at = cfg.out[cfg.out.length - 1];
   while (left.length) { left.sort((x, y) => fxKm(at, RT_ISL[x][4]) - fxKm(at, RT_ISL[y][4])); st.push(left.shift()); at = RT_ISL[st[st.length - 1]][4]; }
