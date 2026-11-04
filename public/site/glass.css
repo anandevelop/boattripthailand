@@ -1232,3 +1232,6 @@ html.nav-up .bp-book { top: 72px; }
 .bk-tl strong { font-weight: 500; }
 .bk-again { margin-top: 10px; font-size: 13px; color: #70000e; }
 .bk-again:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* the section bar sits under the photos (and the phone "view all photos" button): keep a gap */
+.bp .secwrap { margin-top: 20px; }
+@media (max-width: 720px) { .bp .secwrap { margin-top: 10px; } }
