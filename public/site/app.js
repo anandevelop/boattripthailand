@@ -3160,37 +3160,35 @@ function teamIsOnline() { const ict = new Date(Date.now() + (new Date().getTimez
 function copyTel(tel, name) { const done = () => toast(L(`คัดลอกเบอร์ ${name} แล้ว`, `${name}'s number copied`)); try { navigator.clipboard.writeText(tel).then(done, done); } catch (e) { done(); } }
 function renderTeam() {
   const el = $('#team'); if (!el) return;
-  const k = LANG === 'en' ? 1 : 0, on = teamIsOnline();
-  const faces = TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="" loading="lazy" decoding="async" class="tm-face"/>`).join('');
-  // styles: .tm-* in glass.css (liquid glass, same tone as the boat page)
+  const k = LANG === 'en' ? 1 : 0, on = teamIsOnline(), b = currentView === 'boat' && bySlug(currentSlug);
+  const msg = b ? L(`สวัสดีครับ/ค่ะ สนใจเช่าเรือ ${niceTitle(b.title)}`, `Hi, I'm interested in chartering ${niceTitle(b.title)}.`) : L('สวัสดีครับ/ค่ะ สนใจเช่าเรือส่วนตัว', "Hi, I'd like to plan a private boat charter.");
+  const faces = TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="" loading="lazy" decoding="async"/>`).join('');
+  const ch = (cls, href, ic, t, s, ext = '') => `<a href="${href}" class="th-ch ${cls}"${ext}><span class="th-ci"><i data-lucide="${ic}"></i></span><span class="th-ct"><b>${t}</b><small>${s}</small></span><i data-lucide="arrow-right" class="th-go"></i></a>`;
+  // contact hub: big channel buttons (WhatsApp first, in its own green) + talk to a named person · styles .th-* in glass.css
   el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 lg:py-20">
-    <div class="tm-head reveal">
+    <div class="th-head reveal">
       <div class="max-w-xl">
-        <p class="tm-eyebrow"><i data-lucide="life-buoy"></i>${L('ทีมของเรา','Our crew')}</p>
-        <h2 id="teamTitle" class="tm-title">${L('คุยกับผู้เชี่ยวชาญ Yacht Charter','Talk to a yacht charter specialist')}</h2>
-        <p class="tm-sub">${L('บอกวันที่และจำนวนคน ทีมงานจะช่วยเลือกเรือและเส้นทางที่ลงตัวที่สุด พร้อมราคาจริง ทางโทรศัพท์หรือ WhatsApp','Tell us your date and group size — we will match the right boat and route with real prices, by phone or WhatsApp.')}</p>
+        <p class="tm-eyebrow"><i data-lucide="life-buoy"></i>${L('ทีมของเรา', 'Our crew')}</p>
+        <h2 id="teamTitle" class="th-title">${L('ติดต่อทางไหนก็ได้ ทีมเดียวกันตอบ', 'Any channel, the same team replies')}</h2>
+        <p class="th-sub">${L('เลือกช่องทางที่สะดวก บอกวันที่และจำนวนคน ทีมขายตัวจริงช่วยเลือกเรือและบอกราคาจริงให้ ทุกวัน 09:00–21:00 น.', 'Pick the channel you like and tell us your date and group size — a real person matches the boat and sends real prices, daily 09:00–21:00.')}</p>
       </div>
-      <div class="tm-live${on ? ' on' : ''}">
-        <span class="tm-faces">${faces}</span>
-        <span><b><i class="tm-dot" aria-hidden="true"></i>${on ? L('ออนไลน์ตอนนี้','Online now') : L('ออฟไลน์','Offline')}</b><small>${on ? L('ตอบเฉลี่ยภายใน 30 นาที','Replies within ~30 min') : L('กลับมา 09:00 น. · ฝากข้อความได้','Back at 09:00 · leave a message')}</small></span>
-      </div>
+      <div class="th-live${on ? ' on' : ''}"><span class="th-faces">${faces}</span><span><b><i class="th-dot" aria-hidden="true"></i>${on ? L('ออนไลน์ตอนนี้', 'Online now') : L('ออฟไลน์', 'Offline')}</b><small>${on ? L('ตอบเฉลี่ยภายใน 30 นาที', 'Replies within ~30 min') : L('กลับมา 09:00 น. · ฝากข้อความได้', 'Back at 09:00 · leave a message')}</small></span></div>
     </div>
-    <ul class="tm-grid">
-      ${TEAM.map((m, i) => `<li class="tm-card${on ? ' on' : ''} reveal" style="transition-delay:${i * 80}ms" itemscope itemtype="https://schema.org/Person">
-        <div class="tm-who">
-          <span class="tm-av"><img src="${TEAM_IMG[m.id]}" alt="${m.name} – ${m.role[1]}, Boat Trip Thailand" width="56" height="56" loading="lazy" itemprop="image"/><i class="tm-dot" aria-hidden="true"></i></span>
-          <span class="min-w-0"><b class="tm-name" itemprop="name">${m.name}</b><small class="tm-role"><span itemprop="jobTitle">${m.role[k]}</span> · ไทย / English</small></span>
-        </div>
-        <a href="tel:${m.tel}" itemprop="telephone" class="tm-tel tabular-nums">${m.telFmt}</a>
-        <div class="tm-acts">
-          <a href="${waLink(m)}" target="_blank" rel="noopener" class="tm-wa" aria-label="WhatsApp ${m.name}"><i data-lucide="message-circle"></i>WhatsApp</a>
-          <a href="tel:${m.tel}" class="tm-ic" aria-label="${L('โทรหา','Call')} ${m.name}"><i data-lucide="phone"></i></a>
-          <button type="button" onclick="copyTel('${m.tel}','${m.name}')" class="tm-ic" aria-label="${L('คัดลอกเบอร์','Copy number')} ${m.name}"><i data-lucide="copy"></i></button>
-        </div>
-      </li>`).join('')}
-    </ul>
-    <p class="tm-hours"><i data-lucide="clock-3"></i>${L('ทุกวัน 09:00–21:00 น. (เวลาไทย)','Daily 09:00–21:00 (ICT)')}</p>
-  </div>`; icons();
+    <div class="th-grid">
+      <div class="th-chs reveal">
+        ${ch('wa', `${WA_URL}?text=${encodeURIComponent(msg)}`, 'message-circle', 'WhatsApp', L('ตอบเร็วที่สุด · แนะนำ', 'Fastest reply · recommended'), ' target="_blank" rel="noopener"')}
+        ${ch('ln', SET.lineUrl, 'message-square', 'LINE', SET.line, ' target="_blank" rel="noopener"')}
+        ${ch('tel', TEL, 'phone', L('โทรเลย', 'Call us'), SET.phone)}
+        <button type="button" onclick="openBooking()" class="th-ch fm"><span class="th-ci"><i data-lucide="file-text"></i></span><span class="th-ct"><b>${L('ฟอร์มขอราคา', 'Request a quote')}</b><small>${L('ไม่ต้องสมัคร · ตอบใน 30 นาที', 'No sign-up · reply within 30 min')}</small></span><i data-lucide="arrow-right" class="th-go"></i></button>
+      </div>
+      <div class="th-ppl reveal"><p class="th-k">${L('หรือคุยตรงกับคนที่ชอบ', 'Or talk to someone directly')}</p>
+        <ul>${TEAM.map((m, i) => `<li style="--k:${i}" itemscope itemtype="https://schema.org/Person">
+          <span class="th-av"><img src="${TEAM_IMG[m.id]}" alt="${m.name} – ${m.role[1]}, Boat Trip Thailand" width="54" height="54" loading="lazy" itemprop="image"/>${on ? '<i aria-hidden="true"></i>' : ''}</span>
+          <span class="th-nm"><b itemprop="name">${m.name}</b><small><span itemprop="jobTitle">${m.role[k]}</span> · ${L('ไทย / English', 'Thai / English')}</small><a href="tel:${m.tel}" itemprop="telephone" class="tabular-nums">${m.telFmt}</a></span>
+          <span class="th-acts"><a href="${waLink(m)}" target="_blank" rel="noopener" class="wa" aria-label="WhatsApp ${m.name}"><i data-lucide="message-circle"></i></a><a href="tel:${m.tel}" aria-label="${L('โทรหา', 'Call')} ${m.name}"><i data-lucide="phone"></i></a><button type="button" onclick="copyTel('${m.tel}','${m.name}')" aria-label="${L('คัดลอกเบอร์', 'Copy number')} ${m.name}"><i data-lucide="copy"></i></button></span>
+        </li>`).join('')}</ul></div>
+    </div>
+  </div>`; icons(); if (typeof observeReveal === 'function') observeReveal();
 }
 
 /* ---------- Navbar: sliding ink, live team status ---------- */
