@@ -1475,3 +1475,4 @@ html.nav-up .bp-book { top: 72px; }
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
 @media (max-width:1328px){.ab-trust{margin-left:24px;margin-right:24px}}
 @media (max-width:640px){.ab-trust{margin-left:12px;margin-right:12px}}
+.ab-story p b{font-weight:500;color:var(--ab-ink)}.ab-story p+p{margin-top:12px}
