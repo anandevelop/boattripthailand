@@ -20,7 +20,7 @@ export const DESTINATIONS: Destination[] = [
   {
     slug: 'phi-phi',
     match: /phi\s?phi|maya|pileh|bamboo/i,
-    hero: '/boats/the-origin-90-ft-hero.webp',
+    hero: '/img/dest/phi-phi-island.webp',
     name: { th: 'เกาะพีพี', en: 'Phi Phi Islands' },
     seoTitle: { th: 'เช่าเรือไปเกาะพีพี เรือส่วนตัวจากภูเก็ต | Boat Trip Thailand', en: 'Phi Phi Private Boat Charter from Phuket | Boat Trip Thailand' },
     seoDesc: { th: 'เช่าเรือยอร์ช คาตามารัน หรือสปีดโบ๊ทส่วนตัวไปเกาะพีพีจากภูเก็ต แวะอ่าวปิเละ อ่าวมาหยา เกาะไผ่ ออกเรือเวลาที่คุณเลือก ดูเรือและราคาตามฤดูกาล', en: 'Charter a private yacht, catamaran or speedboat from Phuket to Phi Phi. Pileh Lagoon, Maya Bay, Bamboo Island on your own schedule. See boats and seasonal prices.' },
@@ -33,7 +33,7 @@ export const DESTINATIONS: Destination[] = [
   {
     slug: 'phang-nga-bay',
     match: /phang\s?nga|james\s?bond|hong|panyee|panyi/i,
-    hero: '/boats/siam-princess-70-ft-hero.webp',
+    hero: '/img/dest/phang-nga-bay.webp',
     name: { th: 'อ่าวพังงา & เกาะเจมส์บอนด์', en: 'Phang Nga Bay & James Bond Island' },
     seoTitle: { th: 'เช่าเรือไปอ่าวพังงา เกาะเจมส์บอนด์ เรือส่วนตัว | Boat Trip Thailand', en: 'Phang Nga Bay & James Bond Island Private Boat | Boat Trip Thailand' },
     seoDesc: { th: 'เช่าเรือส่วนตัวจากภูเก็ตไปอ่าวพังงา ชมเกาะเขาพิงกัน (เกาะเจมส์บอนด์) พายเรือแคนูลอดถ้ำ เกาะห้อง เกาะปันหยี น้ำทะเลเรียบ เที่ยวได้เกือบทั้งปี', en: 'Private boat from Phuket to Phang Nga Bay: James Bond Island, sea-cave canoeing at Hong islands and Koh Panyee village. Calm, sheltered water most of the year.' },
@@ -46,7 +46,7 @@ export const DESTINATIONS: Destination[] = [
   {
     slug: 'racha-island',
     match: /racha|raya/i,
-    hero: '/boats/leopard-40-ft-hero.webp',
+    hero: '/img/dest/racha.webp',
     name: { th: 'เกาะราชา', en: 'Racha Islands' },
     seoTitle: { th: 'เช่าเรือไปเกาะราชา ดำน้ำน้ำใส เรือส่วนตัว | Boat Trip Thailand', en: 'Racha Island Private Boat Charter from Phuket | Boat Trip Thailand' },
     seoDesc: { th: 'เช่าเรือส่วนตัวไปเกาะราชาใหญ่และราชาน้อย น้ำทะเลใสที่สุดใกล้ภูเก็ต ดำน้ำตื้น หาดทรายขาว ใช้เวลาเดินทางไม่นาน เหมาะทริปครึ่งวันและเต็มวัน', en: 'Private boat to Racha Yai and Racha Noi — some of the clearest water near Phuket. Snorkelling, white beaches and a short ride, perfect for half or full-day trips.' },
@@ -59,7 +59,7 @@ export const DESTINATIONS: Destination[] = [
   {
     slug: 'khai-island',
     match: /khai|naka|rang\s?yai/i,
-    hero: '/boats/coco-40-ft-hero.webp',
+    hero: '/img/dest/koh-kai.webp',
     name: { th: 'เกาะไข่ & เกาะใกล้ภูเก็ต', en: 'Khai Islands & islands near Phuket' },
     seoTitle: { th: 'เช่าเรือไปเกาะไข่ เกาะนาคาน้อย เกาะรังใหญ่ ทริปครึ่งวัน | Boat Trip Thailand', en: 'Khai Island Half-Day Private Boat from Phuket | Boat Trip Thailand' },
     seoDesc: { th: 'เช่าเรือส่วนตัวครึ่งวันไปเกาะไข่นอก ไข่นุ้ย เกาะนาคาน้อย เกาะรังใหญ่ ใกล้ภูเก็ต นั่งเรือไม่นาน ทรายขาวน้ำใส เหมาะครอบครัวและคนมีเวลาจำกัด', en: 'Half-day private boat to Khai Nok, Khai Nui, Naka Noi and Rang Yai — close to Phuket with white sand and clear water. Ideal for families and short trips.' },
