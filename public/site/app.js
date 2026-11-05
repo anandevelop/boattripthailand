@@ -1607,6 +1607,19 @@ const bfWaOk = v => /^\+?[\d\s().-]+$/.test(v.trim()) && v.replace(/\D/g, '').le
 /** same rule as the phone field in src/app/api/leads/route.ts */
 const bfPhoneOk = v => { const s = v.trim(); return s.length >= 6 && s.length <= 40 && /^[+\d\s().\-@a-zA-Z_]+$/.test(s); };
 /** message under a field ('' clears it); html may hold a "did you mean" button */
+/* no links in the booking forms: a pasted or dropped link is refused right away with the field's red hint
+   (the send check and the server check stay as the backstop) */
+(() => {
+  if (typeof document === 'undefined' || !document.addEventListener) return;
+  const target = el => el && el.matches && el.matches('textarea, input:not([type]), input[type=text], input[type=tel]')
+    && el.type !== 'email' && el.name !== 'email' && (el.closest('#bookingModal, .bf, .bf-form, #inlineBook') || el.id === 'bkName' || el.id === 'bkNote' || el.id === 'bkMethod');
+  const warn = el => { if (el.id && el.id.startsWith('bk') && typeof bkHint === 'function') bkHint(el, BF_MSG.link()); else bfHint(el, BF_MSG.link()); };
+  const guard = (e, txt) => { const el = e.target; if (!target(el) || !txt) return; if (bfHasLink({ name: el.name || (el.id === 'bkMethod' ? 'phone' : ''), value: txt })) { e.preventDefault(); warn(el); } };
+  document.addEventListener('paste', e => guard(e, (e.clipboardData || window.clipboardData)?.getData('text') || ''), true);
+  document.addEventListener('drop', e => guard(e, e.dataTransfer?.getData('text') || ''), true);
+  // typed in by hand: show the hint as soon as it becomes a link
+  document.addEventListener('input', e => { const el = e.target; if (target(el) && bfHasLink(el.name ? el : { name: el.id === 'bkMethod' ? 'phone' : '', value: el.value })) warn(el); }, true);
+})();
 function bfHint(el, html, onFix) {
   const fld = el.closest('.bf-fld'); if (!fld) return;
   let h = fld.querySelector(':scope > .bf-hint');
