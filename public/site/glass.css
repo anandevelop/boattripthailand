@@ -1581,3 +1581,14 @@ html.mo :is(article,li,a):hover .img-fallback>img,html.mo :is(article,li,a).img-
 /* home search: the time-slot / type field is gone (sales agree the time) — 3 fields + button */
 /* only when the page really has 3 fields (a cached older page with the 4th field keeps the 4-column grid) */
 @media (min-width:1024px){.qs2-bar:not(:has(select#qsTrip)){grid-template-columns:1.25fr 1.2fr 1fr auto}}
+/* hero trust line: full wording on computer, a short one-row version on phones (licence | no online payment) */
+.h2-trust .t-s{display:none}
+@media (max-width:680px){
+  #hero.hero2 .h2-trust{flex-direction:row;flex-wrap:nowrap;justify-content:center;gap:0;font-size:13px;margin-top:12px}
+  #hero.hero2 .h2-trust li{display:flex!important;align-items:center;gap:6px;padding:0 14px;white-space:nowrap}
+  #hero.hero2 .h2-trust li.lg{display:none!important}
+  #hero.hero2 .h2-trust li:last-child{order:-1}
+  #hero.hero2 .h2-trust li+li{border-left:0}
+  #hero.hero2 .h2-trust li:first-child{border-left:1px solid rgb(255 255 255 / .35)}
+  #hero.hero2 .h2-trust .t-l{display:none}#hero.hero2 .h2-trust .t-s{display:inline}
+}
