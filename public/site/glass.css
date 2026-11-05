@@ -1569,3 +1569,6 @@ html.mo :is(article,li,a):hover .img-fallback>img,html.mo :is(article,li,a).img-
 #hero.hero2 .h2-ctrl{left:max(24px,calc((100% - 1000px) / 2));right:max(24px,calc((100% - 1000px) / 2))}
 .h2-arw{width:36px;height:36px}.h2-arw svg{width:16px;height:16px}.h2-nav{gap:8px}
 @media (max-width:680px){#hero.hero2 .h2-ctrl{left:16px;right:16px}.h2-arw{width:32px;height:32px}.h2-arw svg{width:15px;height:15px}}
+/* home hero: taller photo (computer 440 → 580, phone 340 → 460) */
+#hero.hero2 #heroBox{height:clamp(480px,64vh,580px)}
+@media (max-width:680px){#hero.hero2 #heroBox{height:460px}}
