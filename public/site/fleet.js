@@ -1440,3 +1440,41 @@ function fxAskSaved() {
   const note = typeof modalForm !== 'undefined' && modalForm && modalForm.note;
   if (note) note.value = L('เรือที่บันทึกไว้: ', 'Saved boats: ') + bs.map(b => niceTitle(b.title)).join(', ') + L(' · ช่วยแนะนำลำที่เหมาะกับกลุ่มเราหน่อย', ' · please help us choose');
 }
+
+/* ---------- site-wide motion: sections fade up as they scroll in, cards follow one by one, views slide in on navigation ----------
+   Only below-the-fold elements are hidden first (nothing above the fold flashes), only in the browser (the server HTML is untouched),
+   and nothing moves with "reduce motion". The about page and anything already using .reveal keep their own animation. */
+(() => {
+  if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined' || typeof MutationObserver === 'undefined') return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const root = document.documentElement; root.classList.add('mo');
+  const HEAD = 'h2, h2 + p';
+  const ITEMS = ':is(.grid, ul, ol, [class*="-grid"], [class*="-list"], [class*="-cards"], [class*="-row"]) > :is(a, li, article, figure, div)';
+  const SKIP = '#view-about, .ab, .reveal, [data-noanim], nav, header, footer, form, dialog, .modal, #bookingModal, #cmdK, .bp-book, .fx-finder, .fx-bar, .fx-tabs, .fx-pop, .bt-gal, .ab-bento, #cookieBar, #floatCta, #toast';
+  const show = el => el.classList.add('mo-in');
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } }), { rootMargin: '0px 0px -6% 0px', threshold: .06 });
+  const tag = scope => {
+    if (!scope || scope.offsetParent === null && scope !== document.body) return;
+    const vh = innerHeight;
+    scope.querySelectorAll(HEAD + ',' + ITEMS).forEach(el => {
+      if (el.dataset.mo || el.closest(SKIP) || el.classList.contains('hidden')) return;
+      el.dataset.mo = '1';
+      const r = el.getBoundingClientRect();
+      if (!r.height || r.top < vh * .92) return;              // already on screen (or not laid out): leave it as it is
+      const sibs = el.parentElement ? [...el.parentElement.children].indexOf(el) : 0;
+      if (el.matches(ITEMS)) el.style.setProperty('--mo-d', `${Math.min(sibs % 6, 5) * 70}ms`);
+      el.classList.add('mo-on'); io.observe(el);
+    });
+  };
+  const views = () => document.querySelectorAll('[id^="view-"]:not(.hidden), #team');
+  let t = 0; const later = () => { clearTimeout(t); t = setTimeout(() => views().forEach(tag), 120); };
+  new MutationObserver(later).observe(document.body, { childList: true, subtree: true });
+  addEventListener('load', later); later();
+  // safety net: anything still waiting but on screen (e.g. revealed by a tab) shows up
+  const sweep = () => document.querySelectorAll('.mo-on:not(.mo-in)').forEach(el => { const r = el.getBoundingClientRect(); if (r.top < innerHeight * .96 && r.bottom > 0) show(el); });
+  let sw = 0; addEventListener('scroll', () => { if (!sw) sw = requestAnimationFrame(() => { sw = 0; sweep(); }); }, { passive: true });
+  setInterval(sweep, 800);
+  // views slide in when you move between pages (not on the first load)
+  if (typeof showView === 'function') { const _sv = showView; let first = true; showView = function (name) { _sv.apply(this, arguments); if (first) { first = false; return; }
+    const v = document.getElementById('view-' + name); if (!v) return; v.classList.remove('mo-enter'); void v.offsetWidth; v.classList.add('mo-enter'); later(); }; }
+})();

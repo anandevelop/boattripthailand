@@ -1543,3 +1543,12 @@ html[lang="th"] :is(#heroTitle,.bp,.dp-pop,#bookingModal .modal-enter,.bf,.qs2-w
   .th-ppl ul{flex:1;display:flex;flex-direction:column;justify-content:space-between}
   .th-ppl li{flex:1}
 }
+
+/* site-wide motion (fleet.js, end): fade-up on scroll, staggered cards, view slide-in, image hover zoom */
+html.mo .mo-on{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.8,.2,1) var(--mo-d,0ms),transform .7s cubic-bezier(.2,.8,.2,1) var(--mo-d,0ms)}
+html.mo .mo-on.mo-in{opacity:1;transform:none}
+html.mo .mo-enter{animation:moView .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes moView{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+html.mo :is(article,li,a).img-fallback>img,html.mo :is(article,li,a) .img-fallback>img{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+html.mo :is(article,li,a):hover .img-fallback>img,html.mo :is(article,li,a).img-fallback:hover>img{transform:scale(1.045)}
+@media (prefers-reduced-motion:reduce){html.mo .mo-on{opacity:1;transform:none;transition:none}html.mo .mo-enter{animation:none}}
