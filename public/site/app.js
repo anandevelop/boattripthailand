@@ -1955,106 +1955,126 @@ const MARINA_CANON = m => { const s = (m||'').toLowerCase();
   if (s.includes('coco')) return 'Coco Pier Panwa';
   if (s.includes('nakalay') || s.includes('kalim')) return 'Nakalay Pier (Kalim)';
   return prettyMarina(m); };
+/* ---------- About us: answer-first hero (bento), company facts, values and steps with small animated scenes, team, piers on a real map, FAQ ---------- */
+const AB_SVG = {
+  lic: () => `<svg class="ab-g g-lic" viewBox="0 0 220 130" aria-hidden="true"><rect class="card" x="40" y="22" width="140" height="90" rx="12"/><rect class="pho" x="54" y="38" width="30" height="36" rx="6"/><circle class="phh" cx="69" cy="51" r="7"/><path class="phb" d="M58 72c2-8 20-8 22 0"/><rect class="l l1" x="94" y="40" width="70" height="7" rx="3.5"/><rect class="l l2" x="94" y="54" width="52" height="7" rx="3.5"/><rect class="l l3" x="54" y="86" width="110" height="7" rx="3.5"/><g class="stamp"><circle cx="160" cy="92" r="22"/><circle class="in2" cx="160" cy="92" r="16"/><text x="160" y="95">TAT</text></g></svg>`,
+  rcp: () => `<svg class="ab-g g-rcp" viewBox="0 0 220 130" aria-hidden="true"><rect class="slot" x="56" y="14" width="108" height="10" rx="5"/><g class="paper"><path d="M64 20h92v96l-8-5-8 5-8-5-8 5-8-5-8 5-8-5-8 5-8-5-8 5-8-5z"/><rect class="l" x="74" y="32" width="44" height="6" rx="3"/><rect class="r" x="128" y="32" width="18" height="6" rx="3"/><rect class="l" x="74" y="46" width="36" height="6" rx="3"/><rect class="r" x="128" y="46" width="18" height="6" rx="3"/><rect class="l" x="74" y="60" width="28" height="6" rx="3"/><text class="vat" x="146" y="66">VAT 7%</text><path class="dash" d="M74 76h72"/><rect class="tot" x="74" y="84" width="72" height="12" rx="6"/></g><g class="tag"><path d="M170 60l22 0 0 22-28 28-22-22z"/><circle cx="184" cy="68" r="3.5"/></g></svg>`,
+  pick: () => `<svg class="ab-g g-pick" viewBox="0 0 220 130" aria-hidden="true"><path class="sea" d="M0 104c20 0 20-8 40-8s20 8 40 8 20-8 40-8 20 8 40 8 20-8 40-8 20 8 40 8 20-8 40-8 20 8 40 8v30H0z"/><g class="boat b1"><path d="M22 86h44l-8 12H30z"/><path class="sail" d="M42 84V52l18 32z"/></g><g class="boat b2"><path d="M86 84h50l-9 14H95z"/><rect class="cab" x="98" y="72" width="24" height="12" rx="3"/></g><g class="boat b3"><path d="M156 86h44l-8 12h-28z"/><path class="sail" d="M176 84V56l16 28z"/></g><g class="sel"><rect x="80" y="40" width="62" height="70" rx="16"/><circle class="ck" cx="142" cy="42" r="11"/><path class="ckm" d="M137 42l4 4 6-7"/></g><g class="ppl"><circle cx="100" cy="22" r="5"/><circle cx="112" cy="20" r="5"/><circle cx="124" cy="22" r="5"/></g></svg>`,
+  chat: () => `<svg class="ab-g g-chat" viewBox="0 0 220 130" aria-hidden="true"><g class="m1"><rect x="20" y="22" width="104" height="30" rx="15"/><rect class="tx" x="34" y="34" width="60" height="6" rx="3"/></g><g class="typing"><rect x="96" y="62" width="58" height="26" rx="13"/><circle cx="112" cy="75" r="3.5"/><circle cx="125" cy="75" r="3.5"/><circle cx="138" cy="75" r="3.5"/></g><g class="m2"><rect x="84" y="62" width="110" height="30" rx="15"/><rect class="tx" x="98" y="74" width="66" height="6" rx="3"/><path class="ck2" d="M172 78l3 3 6-6"/></g><g class="clock"><circle class="tr" cx="46" cy="98" r="18"/><circle class="pr" cx="46" cy="98" r="18"/><text x="46" y="102">30'</text></g><g class="apps"><circle class="wa" cx="180" cy="110" r="8"/><circle class="ln" cx="200" cy="110" r="8"/></g></svg>`,
+  ask: () => `<svg class="ab-s s-ask" viewBox="0 0 220 120" aria-hidden="true"><rect class="frm" x="30" y="14" width="160" height="92" rx="16"/><rect class="ic" x="44" y="28" width="22" height="22" rx="6"/><path class="cal" d="M49 36h12M51 31v4M59 31v4"/><rect class="v" x="74" y="34" width="70" height="10" rx="5"/><text class="t" x="150" y="43">${L('12 พ.ย.', '12 Nov')}</text><rect class="ic" x="44" y="58" width="22" height="22" rx="6"/><circle class="pp" cx="55" cy="66" r="3.5"/><path class="pp2" d="M49 75c1.5-4 10.5-4 12 0"/><text class="n n1" x="104" y="74">2</text><text class="n n2" x="104" y="74">6</text><text class="n n3" x="104" y="74">12</text><text class="u" x="110" y="74">${L('คน', 'guests')}</text><g class="cur"><path d="M0 0l0 14 4-4 3 7 3-1-3-7 6 0z"/></g></svg>`,
+  opt: () => `<svg class="ab-s s-opt" viewBox="0 0 220 120" aria-hidden="true">${[1, 2, 3].map(k => `<g class="oc o${k}"><rect x="0" y="0" width="64" height="80" rx="12"/><rect class="im" x="6" y="6" width="52" height="38" rx="8"/><rect class="tl" x="8" y="52" width="${[34, 40, 30][k - 1]}" height="6" rx="3"/><rect class="pr" x="8" y="64" width="${[26, 30, 22][k - 1]}" height="8" rx="4"/>${k === 2 ? `<g class="best"><rect x="26" y="-10" width="46" height="18" rx="9"/><text x="49" y="2.5">${L('แนะนำ', 'Best')}</text></g>` : ''}</g>`).join('')}</svg>`,
+  conf: () => `<svg class="ab-s s-chat" viewBox="0 0 220 120" aria-hidden="true"><rect class="phn" x="70" y="6" width="80" height="112" rx="16"/><rect class="scr" x="76" y="16" width="68" height="94" rx="10"/><g class="b1"><rect x="80" y="24" width="44" height="14" rx="7"/></g><g class="b2"><rect x="94" y="44" width="46" height="14" rx="7"/></g><g class="b3"><rect x="80" y="64" width="38" height="14" rx="7"/></g><g class="ok"><circle cx="110" cy="92" r="11"/><path d="M105 92l4 4 6-7"/></g><g class="wa"><circle cx="40" cy="44" r="13"/><path d="M34 50l2-5a7 7 0 1 1 3 3z"/></g><g class="ln"><rect x="168" y="60" width="28" height="22" rx="8"/><text x="182" y="75">LINE</text></g></svg>`,
+  sea: () => `<svg class="ab-s s-sea" viewBox="0 0 220 120" aria-hidden="true"><circle class="sun" cx="178" cy="34" r="14"/><path class="isl" d="M150 86c6-18 22-26 34-14 6-6 16-4 20 6l16 8z"/><g class="bt"><path class="hl" d="M0 0h40l-8 11H8z"/><path class="sl" d="M18-2V-30l16 28z"/><path class="sl2" d="M16-2V-22L4-2z"/><path class="wk" d="M-4 8c-8 0-12-3-20-3"/></g><path class="w w1" d="M0 96c15 0 15-6 30-6s15 6 30 6 15-6 30-6 15 6 30 6 15-6 30-6 15 6 30 6 15-6 30-6 15 6 30 6 15-6 30-6 15 6 30 6v30H0z"/><path class="w w2" d="M0 104c15 0 15-5 30-5s15 5 30 5 15-5 30-5 15 5 30 5 15-5 30-5 15 5 30 5 15-5 30-5 15 5 30 5 15-5 30-5 15 5 30 5v30H0z"/><g class="bird"><path d="M0 0q4-4 8 0q4-4 8 0"/></g></svg>`,
+};
+const abEsc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const abPiers = () => Object.entries(FLEET.reduce((o, b) => { const k = MARINA_CANON(b.marina); o[k] = (o[k] || 0) + 1; return o; }, {})).sort((a, b) => b[1] - a[1]);
+/** the FAQ shown on the about page (also its FAQPage schema) */
+function abFaq() {
+  const piers = abPiers(), lo = Math.min(...FLEET.filter(b => b.from_).map(b => b.from_));
+  return [
+    [L('Boat Trip Thailand คือใคร?', 'Who is Boat Trip Thailand?'), L(`บริษัทนำเที่ยวในภูเก็ต (${SET.company}) ใบอนุญาต ททท. ${SET.tat} ให้บริการเช่าเรือส่วนตัวแบบเหมาลำ ${FLEET.length} ลำ จาก ${piers.length} ท่าเรือทั่วภูเก็ต ราคาเริ่ม ${baht(lo)} ต่อลำ`, `A Phuket tour company (${SET.company}, TAT licence ${SET.tat}) offering ${FLEET.length} private charter boats from ${piers.length} piers around Phuket, from ${baht(lo)} per boat.`)],
+    [L('จองกับ Boat Trip Thailand ปลอดภัยไหม?', 'Is it safe to book with Boat Trip Thailand?'), L(`เราเป็นบริษัทนำเที่ยวที่จดทะเบียนกับ ททท. (${SET.tat}) ทุกทริปมีกัปตันมืออาชีพ ลูกเรือ และประกันภัยผู้โดยสาร`, `We are a TAT-registered tour company (${SET.tat}); every trip has a professional captain, crew and passenger insurance.`)],
+    [L('สำนักงานอยู่ที่ไหน?', 'Where is your office?'), L(ADDRESS_TH, ADDRESS_EN)],
+    [L('ติดต่อทีมงานได้ช่วงไหน?', 'When can I reach the team?'), L(`ทุกวัน 09:00–21:00 น. ทาง WhatsApp, LINE ${SET.line} และโทรศัพท์ ${SET.phone} ภาษาไทยและอังกฤษ`, `Every day 09:00–21:00 on WhatsApp, LINE ${SET.line} and phone ${SET.phone}, in Thai and English.`)],
+    [L('ต้องจ่ายเงินบนเว็บไหม?', 'Do I pay on the website?'), L('ไม่ต้อง ส่งคำขอจองฟรี ทีมงานยืนยันเรือว่างและราคาก่อน แล้วจึงคุยเรื่องการชำระเงิน', 'No. Booking requests are free; the team confirms the boat and price first, then arranges payment with you.')],
+  ];
+}
 function renderAbout() {
-  const v = $('#view-about');
-  const marinas = Object.entries(FLEET.reduce((o,b) => { const k = MARINA_CANON(b.marina); o[k] = (o[k]||0)+1; return o; }, {})).sort((a,b)=>b[1]-a[1]);
-  const maxPax = Math.max(...FLEET.map(b=>b.pax||0));
-  const minP = Math.min(...FLEET.filter(b=>b.from_).map(b=>b.from_));
-  const stats = [[FLEET.length, L('ลำในเครือข่าย','boats in our network')],[marinas.length, L('ท่าเรือ & มารีน่า','piers & marinas')],[maxPax, L('คนสูงสุดต่อลำ','guests max per boat')],[TYPES.length, L('ประเภทเรือ','boat types')]];
-  const values = [
-    ['badge-check', L('ใบอนุญาตถูกต้อง','Licensed & insured'), L(`บริษัทนำเที่ยวที่จดทะเบียนกับ ททท. (${SET.tat}) ทุกทริปมีกัปตันมืออาชีพ ลูกเรือ และประกันภัยผู้โดยสาร`,`A TAT-registered tour company (${SET.tat}). Every trip includes a professional captain, crew and passenger insurance.`)],
-    ['receipt-text', L('ราคาโปร่งใส','Transparent pricing'), L('แสดงราคาจริงจากโบรชัวร์ทุกฤดูกาล รวม VAT 7% คำนวณค่าคนเพิ่มให้ก่อนจอง ไม่มีค่าธรรมเนียมแอบแฝง','Real brochure rates for every season, VAT included, extra-guest charges shown before you book — no hidden fees.')],
-    ['compass', L('ช่วยเลือกเรือที่ใช่','Honest boat matching'), L('เราแนะนำเรือตามจำนวนคน งบ และสไตล์ทริปของคุณ ไม่ใช่ลำที่แพงที่สุด','We recommend boats by group size, budget and trip style — not by whichever is most expensive.')],
-    ['message-circle', L('ตอบไวทุกวัน','Fast, human replies'), L('ทีมขายตอบทาง WhatsApp, LINE และโทรศัพท์ทุกวัน 09:00–21:00 น. ทั้งภาษาไทยและอังกฤษ','Our sales team replies on WhatsApp, LINE and phone daily 09:00–21:00, in Thai and English.')],
-  ];
-  const steps = [
-    [L('บอกความต้องการ','Tell us your plan'), L('วันที่ จำนวนคน และสิ่งที่อยากทำ','Date, group size and what you want to do')],
-    [L('รับตัวเลือกเรือ','Get boat options'), L('ทีมงานเสนอเรือที่เหมาะพร้อมราคาจริง','We shortlist suitable boats with real prices')],
-    [L('คุยกับเซลล์และยืนยัน','Chat & confirm'), L('เซลล์ตัวจริงดูแลทาง WhatsApp / LINE ตั้งแต่ถามจนออกเรือ','A real person looks after you on WhatsApp / LINE until you sail')],
-    [L('ออกทะเล','Set sail'), L('ลูกเรือดูแลตลอดทริป เราติดตามจนกลับถึงฝั่ง','Crew look after you; we follow up until you are back')],
-  ];
-  const imgs = ['leopard-90-ft','lobster-78-ft','coco-40-ft'].map(s=>bimg(s,'hero'));
-  v.innerHTML = `
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-12 lg:pb-16">
-    <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-2"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span aria-current="page" class="text-ink">${L('เกี่ยวกับเรา','About us')}</span></nav>
-    <div class="mt-6 grid lg:grid-cols-[1.05fr_1fr] gap-8 lg:gap-12 items-center">
-      <div>
-        <p class="text-xs uppercase tracking-[.2em] text-maroon">${L('เกี่ยวกับเรา','About us')} · Sea by Soul</p>
-        <h1 class="font-display font-medium text-3xl sm:text-4xl leading-tight mt-3">${L('ทีม Yacht Charter ภูเก็ต ที่อยากให้ทุกทริปทะเลเป็นความทรงจำที่ดี','A Phuket yacht charter team that wants every day at sea to be a good memory')}</h1>
-        <p class="text-muted mt-5 leading-relaxed">${L(`Boat Trip Thailand ให้บริการเช่าเรือยอร์ช คาตามารัน สปีดโบ๊ท และเรือหางยาวแบบส่วนตัว ${FLEET.length} ลำ จาก ${marinas.length} ท่าเรือทั่วภูเก็ต ไปเกาะพีพี อ่าวพังงา เกาะราชา กระบี่ และอีกมากมาย`, `Boat Trip Thailand arranges private yacht, catamaran, speedboat and long-tail charters — ${FLEET.length} boats from ${marinas.length} piers and marinas across Phuket, to Phi Phi, Phang Nga Bay, Racha, Krabi and beyond.`)}</p>
-        <p class="text-muted mt-3 leading-relaxed">${L('เราทำงานกับเจ้าของเรือและกัปตันโดยตรง จึงให้ข้อมูลเรือ ราคา และเงื่อนไขได้ตรงไปตรงมา ตั้งแต่ทริปครึ่งวันสำหรับครอบครัว ไปจนถึงงานปาร์ตี้และงานองค์กรบนเรือลำใหญ่','We work directly with boat owners and captains, so we can be straight with you about boats, prices and terms — from a half-day family trip to a party or corporate event on a large catamaran.')}</p>
-        <div class="mt-7 flex flex-wrap gap-3">
-          <a href="#/fleet" class="inline-flex items-center gap-2 bg-maroon text-white px-6 py-3 text-sm hover:bg-maroon-800 transition">${L('ดูเรือทั้งหมด','Browse the fleet')}<i data-lucide="arrow-right" class="w-4 h-4"></i></a>
-          <a href="#team" class="inline-flex items-center gap-2 ring-1 ring-ink px-6 py-3 text-sm hover:bg-ink hover:text-white transition">${L('คุยกับทีมงาน','Talk to our team')}</a>
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="col-span-2 aspect-[16/9] rounded-[24px] overflow-hidden img-fallback"><img src="${imgs[0]}" alt="${L('เรือยอร์ช Leopard 90 ft ในทะเลอันดามัน','Leopard 90 ft yacht on the Andaman Sea')}" class="w-full h-full object-cover" loading="lazy"/></div>
-        <div class="aspect-[4/3] rounded-[18px] overflow-hidden img-fallback"><img src="${imgs[1]}" alt="${L('เรือคาตามารัน Lobster 78 ft','Lobster 78 ft catamaran')}" class="w-full h-full object-cover" loading="lazy"/></div>
-        <div class="aspect-[4/3] rounded-[18px] overflow-hidden img-fallback"><img src="${imgs[2]}" alt="${L('เรือใบ Coco 40 ft','Coco 40 ft sailing catamaran')}" class="w-full h-full object-cover" loading="lazy"/></div>
-      </div>
+  const v = $('#view-about'); if (!v) return;
+  const piers = abPiers(), maxPax = Math.max(...FLEET.map(b => b.pax || 0)), lo = Math.min(...FLEET.filter(b => b.from_).map(b => b.from_));
+  const types = TYPES.filter(k => FLEET.some(b => b.type === k)).map(k => { const bs = FLEET.filter(b => b.type === k); return { k, n: bs.length, b: popFirst(bs).find(b => bimg(b.slug, 'hero')) }; });
+  const pool = popFirst(FLEET).filter(b => bimg(b.slug, 'hero')).map(b => b.slug), heroB = ['vtech-68-ft', 'dean-44-ft', 'leopard-51-ft'].map(s => bySlug(s) && bimg(s, 'hero') ? s : null);
+  heroB.forEach((s, i) => { if (!s) heroB[i] = pool.find(x => !heroB.includes(x)) || pool[0]; });
+  const nm = s => { const b = bySlug(s); return b ? niceTitle(b.title) : ''; }, nmT = s => { const b = bySlug(s); return b ? `${niceTitle(b.title)} · ${typeLabel(b.type)}` : ''; };
+  const on = typeof teamIsOnline === 'function' && teamIsOnline();
+  const dests = (typeof DPAGES !== 'undefined' ? DPAGES : []).map(d => String((d.name || {})[LANG === 'en' ? 'en' : 'th'] || '').split(' & ')[0]).filter(Boolean);
+  const trust = [L('กัปตันมืออาชีพ + ลูกเรือทุกทริป', 'Professional captain + crew on every trip'), L('ราคาเหมาลำ รวม VAT 7%', 'Whole-boat prices, VAT included'), L('ไม่ต้องจ่ายบนเว็บ', 'No payment online'), L('ตอบใน 30 นาที ทุกวัน 09–21 น.', 'Replies in 30 min, daily 09–21'), L('ไทย · English', 'Thai · English'), L(`ใบอนุญาต ททท. ${SET.tat}`, `TAT licence ${SET.tat}`)];
+  const values = [['lic', L('ใบอนุญาตถูกต้อง', 'Licensed & insured'), L(`จดทะเบียนกับ ททท. (${SET.tat}) ทุกทริปมีกัปตันมืออาชีพ ลูกเรือ และประกันภัยผู้โดยสาร`, `TAT-registered (${SET.tat}); every trip has a professional captain, crew and passenger insurance.`)],
+    ['rcp', L('ราคาโปร่งใส', 'Transparent pricing'), L('ราคาจริงจากโบรชัวร์ทุกฤดูกาล รวม VAT 7% คำนวณค่าคนเพิ่มให้ก่อนจอง', 'Real brochure rates for every season, VAT included; extra-guest charges worked out before you book.')],
+    ['pick', L('ช่วยเลือกเรือที่ใช่', 'Honest boat matching'), L('แนะนำตามจำนวนคน งบ และสไตล์ทริป ไม่ใช่ลำที่แพงที่สุด', 'We match boats to your group, budget and style — not to the most expensive.')],
+    ['chat', L('ตอบไวทุกวัน', 'Fast, human replies'), L('WhatsApp · LINE · โทร 09:00–21:00 น. ไทยและอังกฤษ', 'WhatsApp · LINE · phone, 09:00–21:00, Thai and English.')]];
+  const steps = [['ask', L('บอกความต้องการ', 'Tell us your plan'), L('วันที่ จำนวนคน และสิ่งที่อยากทำ', 'Date, group size and what you want to do')],
+    ['opt', L('รับตัวเลือกเรือ', 'Get boat options'), L('เรือที่เหมาะพร้อมราคาจริง ภายใน 30 นาที', 'Suitable boats with real prices within 30 minutes')],
+    ['conf', L('คุยกับเซลล์และยืนยัน', 'Chat & confirm'), L('ทาง WhatsApp / LINE / โทร', 'On WhatsApp / LINE / phone')],
+    ['sea', L('ออกทะเล', 'Set sail'), L('ลูกเรือดูแลตลอดทริป เราติดตามจนกลับถึงฝั่ง', 'The crew look after you; we follow up until you are back')]];
+  const facts = [[L('ชื่อบริษัท', 'Company'), SET.company], [L('ใบอนุญาตนำเที่ยว', 'TAT licence'), SET.tat], [L('สำนักงาน', 'Office'), L(ADDRESS_TH, ADDRESS_EN)], [L('พื้นที่บริการ', 'Area served'), L('ภูเก็ต · พังงา · กระบี่', 'Phuket · Phang Nga · Krabi')],
+    [L('เรือ', 'Boats'), L(`${FLEET.length} ลำ · ${types.length} ประเภท · สูงสุด ${maxPax} คน/ลำ`, `${FLEET.length} boats · ${types.length} types · up to ${maxPax} guests`)], [L('ท่าเรือ', 'Piers'), L(`${piers.length} ท่าเรือ & มารีน่า`, `${piers.length} piers & marinas`)], [L('ภาษา', 'Languages'), L('ไทย · English', 'Thai · English')], [L('เวลาทำการ', 'Hours'), L('ทุกวัน 09:00–21:00 น.', 'Daily 09:00–21:00')]];
+  const pierLL = n => { const p = (typeof PIERS !== 'undefined' ? PIERS : []).find(x => x.c === n); return p ? p.ll : null; };
+  const pj = abEsc(JSON.stringify(piers.map(([p, n]) => [p, n, pierLL(p)])));
+  const h1 = L('Boat Trip Thailand บริษัทเช่าเรือ ส่วนตัวในภูเก็ต', 'Boat Trip Thailand — private boat charter in Phuket');
+  v.innerHTML = `<div class="ab">
+  <section class="ab-wrap ab-hero">
+    <div class="ab-ht">
+      <nav aria-label="Breadcrumb" class="ab-bc"><a href="#/">${t('home')}</a><i data-lucide="chevron-right"></i><span aria-current="page">${L('เกี่ยวกับเรา', 'About us')}</span></nav>
+      <p class="ab-eye ab-up" style="--d:.05s">${L('เกี่ยวกับเรา', 'About us')} · Sea by Soul</p>
+      <h1>${h1.split(' ').map((w, i) => `<span class="ab-w"><span style="--d:${(i * .08).toFixed(2)}s">${w}</span></span>`).join(' ')}</h1>
+      <p class="ab-ans ab-up" style="--d:.55s">${L(`<b>Boat Trip Thailand</b> คือบริษัทนำเที่ยวที่จดทะเบียนกับ ททท. (${SET.tat}) ให้บริการเช่า${types.map(x => typeLabel(x.k)).join(' ')} แบบเหมาลำ <b>${FLEET.length} ลำ จาก ${piers.length} ท่าเรือทั่วภูเก็ต</b>${dests.length ? ' ไป' + dests.join(' ') : ''} ทำงานกับเจ้าของเรือและกัปตันโดยตรง ราคาเริ่ม ${baht(lo)} ต่อลำ`,
+        `<b>Boat Trip Thailand</b> is a TAT-registered tour company (${SET.tat}) offering <b>${FLEET.length} private charter boats from ${piers.length} Phuket piers</b> — ${types.map(x => typeLabel(x.k).toLowerCase()).join(', ')}${dests.length ? ' — to ' + dests.join(', ') : ''}. We work directly with owners and captains; prices from ${baht(lo)} per boat.`)}</p>
+      <div class="ab-cta ab-up" style="--d:.75s"><a href="#/fleet" class="ab-b1">${L('ดูเรือทั้งหมด', 'Browse the fleet')}<i data-lucide="arrow-right"></i></a><a href="#ab-team" class="ab-b2" onclick="event.preventDefault();document.getElementById('ab-team').scrollIntoView({behavior:'smooth'})"><i data-lucide="message-circle"></i>${L('คุยกับทีมงาน', 'Talk to our team')}</a></div>
+      <div class="ab-htm ab-up" style="--d:.95s"><span class="ab-ava">${TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="" width="40" height="40" loading="lazy">`).join('')}</span><div><b>${on ? '<i class="ab-dot"></i>' : ''}${TEAM.map(m => m.name).join(' · ')}${on ? L(' ออนไลน์', ' online now') : ''}</b><small>${L('เซลล์ตัวจริง ดูแลตั้งแต่ถามราคาจนออกเรือ', 'Real people, with you from first question to sailing')}</small></div></div>
+    </div>
+    <div class="ab-bento">
+      <a href="#/boat/${heroB[0]}" class="x1 img-fallback"><img src="${bimg(heroB[0], 'hero', 1024)}" alt="${abEsc(nmT(heroB[0]))} ${L('เช่าเรือส่วนตัวภูเก็ต', 'private charter Phuket')}" fetchpriority="high"><span class="ab-tag">${abEsc(nmT(heroB[0]))}</span></a>
+      <a href="#/boat/${heroB[1]}" class="x2 img-fallback"><img src="${bimg(heroB[1], 'hero', 640)}" alt="${abEsc(nmT(heroB[1]))}" loading="lazy"><span class="ab-tag">${abEsc(nm(heroB[1]))}</span></a>
+      <div class="x3 reveal"><b class="count" data-to="${FLEET.length}">${FLEET.length}</b><small>${L(`ลำ · ${types.length} ประเภท`, `boats · ${types.length} types`)}</small><i class="ln"></i><em><i data-lucide="badge-check"></i>${L('ททท.', 'TAT')} ${SET.tat}</em></div>
+      <a href="#/boat/${heroB[2]}" class="x4 img-fallback"><img src="${bimg(heroB[2], 'hero', 1024)}" alt="${abEsc(nmT(heroB[2]))}" loading="lazy"><span class="ab-tag">${abEsc(nmT(heroB[2]))}</span></a>
     </div>
   </section>
+  <div class="ab-trust" aria-hidden="true"><div>${[0, 1].map(() => trust.map(x => `<span><i data-lucide="star"></i>${x}</span>`).join('')).join('')}</div></div>
 
-  <section class="border-y border-sand-200 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-2 lg:grid-cols-4 gap-6">
-      ${stats.map(([n,l])=>`<div class="reveal"><p class="font-display text-3xl sm:text-4xl text-maroon tabular-nums">${n}</p><p class="text-sm text-muted mt-1">${l}</p></div>`).join('')}
-    </div>
-  </section>
+  <section class="ab-wrap ab-sec reveal"><h2>${L('ข้อมูลบริษัทโดยย่อ', 'Company at a glance')}</h2>
+    <dl class="ab-facts">${facts.map(([k, x]) => `<div><dt>${k}</dt><dd>${x}</dd></div>`).join('')}</dl></section>
 
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-16">
-    <div class="max-w-2xl reveal"><p class="text-xs uppercase tracking-[.2em] text-maroon">${L('สิ่งที่เรายึดถือ','What we stand for')}</p><h2 class="font-display font-medium text-2xl sm:text-3xl mt-2">${L('ทำไมลูกค้าเลือกเช่าเรือกับเรา','Why guests charter with us')}</h2></div>
-    <ul class="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      ${values.map(([ic,h,p])=>`<li class="reveal bg-white ring-1 ring-sand-200 rounded-[18px] p-6"><span class="w-11 h-11 rounded-full bg-maroon-50 text-maroon grid place-items-center"><i data-lucide="${ic}" class="w-5 h-5"></i></span><h3 class="font-medium text-lg mt-4">${h}</h3><p class="text-sm text-muted mt-2 leading-relaxed">${p}</p></li>`).join('')}
-    </ul>
-  </section>
+  <section class="ab-wrap ab-sec ab-story reveal"><div><p class="ab-eye">${L('เรื่องของเรา', 'Our story')}</p><h2>${L('ทำงานกับเจ้าของเรือและกัปตันโดยตรง', 'Working directly with owners and captains')}</h2>
+      <p>${L('เราทำงานกับเจ้าของเรือและกัปตันโดยตรง จึงบอกข้อมูลเรือ ราคา และเงื่อนไขได้ตรงไปตรงมา ตั้งแต่ทริปครึ่งวันของครอบครัว ไปจนถึงปาร์ตี้และงานองค์กรบนเรือลำใหญ่', 'Because we work directly with boat owners and captains, we can be straight about each boat, its price and its terms — from a half-day family trip to a party or company event on a large yacht.')}</p></div>
+    <div class="ab-stat">${[[FLEET.length, L('ลำในเครือข่าย', 'boats in our network')], [piers.length, L('ท่าเรือ & มารีน่า', 'piers & marinas')], [maxPax, L('คนสูงสุดต่อลำ', 'guests on our largest boat')], [30, L('นาที ตอบเฉลี่ย', 'min average reply')]].map(([n, l]) => `<div><b class="count" data-to="${n}">${n}</b><small>${l}</small></div>`).join('')}</div></section>
 
-  <section class="bg-sand">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-16 grid lg:grid-cols-[1fr_1.2fr] gap-10">
-      <div class="reveal">
-        <p class="text-xs uppercase tracking-[.2em] text-maroon">${L('ท่าเรือของเรา','Where we depart')}</p>
-        <h2 class="font-display font-medium text-2xl sm:text-3xl mt-2">${L(`ออกเรือได้จาก ${marinas.length} ท่าเรือ`,`Depart from ${marinas.length} piers & marinas`)}</h2>
-        <p class="text-muted mt-3 leading-relaxed">${L('เลือกท่าเรือที่ใกล้ที่พักที่สุด หรือให้เราจัดรถตู้รับส่งส่วนตัวจากโรงแรมทั่วภูเก็ต','Pick the pier closest to your hotel, or let us arrange a private van transfer from anywhere in Phuket.')}</p>
-        <a href="#/fleet" class="mt-6 inline-flex items-center gap-2 text-sm text-maroon hover:underline underline-offset-4">${L(`เรือเริ่มต้น ${baht(minP)} ต่อทริป`,`Boats from ${baht(minP)} per charter`)}<i data-lucide="arrow-right" class="w-4 h-4"></i></a>
-      </div>
-      <ul class="grid sm:grid-cols-2 gap-3 reveal">
-        ${marinas.map(([m,n])=>`<li class="bg-white ring-1 ring-sand-200 rounded-[14px] px-4 py-3 flex items-center justify-between gap-3"><span class="flex items-center gap-2 min-w-0"><i data-lucide="anchor" class="w-4 h-4 text-maroon shrink-0"></i><span class="truncate">${m}</span></span><span class="text-xs text-muted tabular-nums shrink-0">${n} ${L('ลำ','boats')}</span></li>`).join('')}
-      </ul>
-    </div>
-  </section>
+  <section class="ab-wrap ab-sec reveal"><p class="ab-eye">${L('สิ่งที่เรายึดถือ', 'What we stand for')}</p><h2>${L('ทำไมลูกค้าเลือกเช่าเรือกับเรา', 'Why guests charter with us')}</h2>
+    <ul class="ab-vals">${values.map(([g, h, p], i) => `<li style="--k:${i}">${AB_SVG[g]()}<h3>${h}</h3><p>${p}</p></li>`).join('')}</ul></section>
 
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-16">
-    <div class="max-w-2xl reveal"><p class="text-xs uppercase tracking-[.2em] text-maroon">${L('การทำงานของเรา','How it works')}</p><h2 class="font-display font-medium text-2xl sm:text-3xl mt-2">${L('จองเรือกับเราใน 4 ขั้นตอน','Charter with us in 4 steps')}</h2></div>
-    <ol class="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      ${steps.map(([h,p],i)=>`<li class="reveal rounded-[18px] bg-sand p-6"><span class="font-display text-3xl text-maroon tabular-nums">0${i+1}</span><h3 class="font-medium mt-3">${h}</h3><p class="text-sm text-muted mt-1">${p}</p></li>`).join('')}
-    </ol>
-  </section>
+  <section class="ab-wrap ab-sec reveal" id="ab-team"><p class="ab-eye">${L('ทีมงาน', 'Our team')}</p><h2>${L('คนที่จะดูแลทริปของคุณ', 'The people who will look after your trip')}</h2><p class="ab-sub">${L('เซลล์ตัวจริง ไม่ใช่บอท · คุยกับคนเดิมตั้งแต่ถามราคาจนออกเรือ', 'Real people, not bots — the same person from your first question until you sail.')}</p>
+    <div class="ab-team">${TEAM.map((m, i) => `<article style="--k:${i}"><span class="ab-av"><img src="${TEAM_IMG[m.id]}" alt="${m.name} – ${m.role[1]}, Boat Trip Thailand" width="110" height="110" loading="lazy">${on ? '<em></em>' : ''}</span><b>${m.name}</b><small>${m.role[LANG === 'en' ? 1 : 0]} · ${L('ไทย / English', 'Thai / English')}</small>
+      <div class="ab-tb"><a href="${waLink(m)}" target="_blank" rel="noopener" class="wa"><i data-lucide="message-circle"></i>WhatsApp</a><a href="tel:${m.tel}"><i data-lucide="phone"></i>${m.telFmt}</a></div></article>`).join('')}</div></section>
 
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 pb-12 lg:pb-16">
-    <div class="grid lg:grid-cols-[1.4fr_1fr] gap-4">
-      <div class="reveal rounded-[24px] bg-maroon text-white p-8 sm:p-10 on-dark relative overflow-hidden">
-        <p class="text-xs uppercase tracking-[.2em] text-white/80">Sea by Soul</p>
-        <h2 class="font-display font-medium text-2xl sm:text-3xl mt-2">${L('พร้อมวางแผนทริปทะเลของคุณหรือยัง?','Ready to plan your day at sea?')}</h2>
-        <p class="text-white/85 mt-3 max-w-lg">${L('บอกวันที่และจำนวนคน ทีมงานจะเสนอเรือที่เหมาะพร้อมราคาภายใน 30 นาที','Tell us your date and group size — we will send suitable boats and prices within 30 minutes.')}</p>
-        <div class="mt-6 flex flex-wrap gap-3">
-          <button onclick="openSmart()" class="inline-flex items-center gap-2 bg-white text-ink px-6 py-3 text-sm hover:bg-sand transition"><i data-lucide="sparkles" class="w-4 h-4 text-maroon"></i>Smart Match</button>
-          <a href="${TEL}" class="inline-flex items-center gap-2 ring-1 ring-white/60 px-6 py-3 text-sm hover:bg-white/10 transition"><i data-lucide="phone" class="w-4 h-4"></i>${SET.phone}</a>
-        </div>
-      </div>
-      <div class="reveal rounded-[24px] ring-1 ring-sand-200 bg-white p-8" itemscope itemtype="https://schema.org/TravelAgency">
-        <p class="text-xs uppercase tracking-[.2em] text-maroon">${L('ข้อมูลบริษัท','Company details')}</p>
-        <dl class="mt-4 space-y-3 text-sm">
-          <div class="flex justify-between gap-4 border-b border-dashed border-sand-200 pb-3"><dt class="text-muted">${L('ชื่อบริษัท','Company')}</dt><dd class="text-right" itemprop="legalName">${SET.company}</dd></div>
-          <div class="flex justify-between gap-4 border-b border-dashed border-sand-200 pb-3"><dt class="text-muted">${L('ใบอนุญาต ททท.','TAT licence')}</dt><dd class="text-right">${SET.tat}</dd></div>
-          <div class="flex justify-between gap-4 border-b border-dashed border-sand-200 pb-3"><dt class="text-muted">${L('ที่อยู่','Address')}</dt><dd class="text-right" itemprop="address"><a href="${MAP_URL}" target="_blank" rel="noopener" class="hover:text-maroon">${L(ADDRESS_TH, ADDRESS_EN)}</a></dd></div>
-          <div class="flex justify-between gap-4 border-b border-dashed border-sand-200 pb-3"><dt class="text-muted">${L('โทร','Phone')}</dt><dd class="text-right"><a href="${TEL}" class="hover:text-maroon" itemprop="telephone">${SET.phone}</a></dd></div>
-          <div class="flex justify-between gap-4 border-b border-dashed border-sand-200 pb-3"><dt class="text-muted">LINE</dt><dd class="text-right"><a href="${SET.lineUrl}" target="_blank" rel="noopener" class="hover:text-maroon">${SET.line}</a></dd></div>
-          <div class="flex justify-between gap-4"><dt class="text-muted">Email</dt><dd class="text-right break-all"><a href="mailto:${SET.email}" class="hover:text-maroon" itemprop="email">${SET.email}</a></dd></div>
-        </dl>
-      </div>
-    </div>
-  </section>`;
-  icons();
+  <section class="ab-wrap ab-sec reveal"><p class="ab-eye">${L('เรือและท่าเรือ', 'Boats & piers')}</p><h2>${L(`เรือ ${types.length} ประเภท ออกจาก ${piers.length} ท่าเรือ`, `${types.length} boat types from ${piers.length} piers`)}</h2>
+    <div class="ab-types">${types.map((x, i) => `<a href="#/fleet?type=${x.k}" class="img-fallback" style="--k:${i}">${x.b ? `<img src="${bimg(x.b.slug, 'hero', 480)}" alt="${typeLabel(x.k)} ${L('เช่าเรือส่วนตัวภูเก็ต', 'private charter Phuket')}" loading="lazy">` : ''}<span><b>${typeLabel(x.k)}</b><small>${x.n} ${L('ลำ', 'boats')}</small></span></a>`).join('')}</div>
+    <div class="ab-pm"><ul class="ab-piers">${piers.map(([p, n], i) => `<li style="--k:${i}"><i></i>${abEsc(p)}<small>${n} ${L('ลำ', 'boats')}</small></li>`).join('')}</ul>
+      <div class="ab-map" id="abMap" data-p="${pj}"><a class="ab-mapf" href="${MAP_URL}" target="_blank" rel="noopener"><i data-lucide="map-pin"></i>${L('ดูแผนที่สำนักงาน', 'Office on Google Maps')}</a></div></div></section>
+
+  <section class="ab-wrap ab-sec reveal"><p class="ab-eye">${L('การทำงานของเรา', 'How it works')}</p><h2>${L('จองเรือกับเราใน 4 ขั้นตอน', 'Charter with us in 4 steps')}</h2>
+    <div class="ab-sline" aria-hidden="true"><i></i><span></span></div>
+    <ol class="ab-steps">${steps.map(([g, h, p], i) => `<li style="--k:${i}"><span class="n">0${i + 1}</span>${AB_SVG[g]()}<h3>${h}</h3><p>${p}</p></li>`).join('')}</ol></section>
+
+  <section class="ab-wrap ab-sec reveal"><h2>${L('คำถามเกี่ยวกับบริษัท', 'About the company')}</h2>
+    <div class="ab-faq">${abFaq().map(([q, a], i) => `<details${i ? '' : ' open'}><summary>${q}</summary><p>${a}</p></details>`).join('')}</div></section>
+
+  <section class="ab-wrap ab-sec ab-nap reveal"><div><h2>${L('ติดต่อเรา', 'Contact us')}</h2>
+      <dl><div><dt>${L('ชื่อบริษัท', 'Company')}</dt><dd>${SET.company}</dd></div><div><dt>${L('ที่อยู่', 'Address')}</dt><dd><a href="${MAP_URL}" target="_blank" rel="noopener">${L(ADDRESS_TH, ADDRESS_EN)}</a></dd></div><div><dt>${L('โทร', 'Phone')}</dt><dd><a href="${TEL}">${SET.phone}</a></dd></div><div><dt>LINE</dt><dd><a href="${SET.lineUrl}" target="_blank" rel="noopener">${SET.line}</a></dd></div><div><dt>Email</dt><dd><a href="mailto:${SET.email}">${SET.email}</a></dd></div></dl></div>
+    <div class="ab-end"><b>${L('พร้อมวางแผนทริปทะเลหรือยัง?', 'Ready to plan your day at sea?')}</b><p>${L('บอกวันที่และจำนวนคน ทีมงานเสนอเรือพร้อมราคาภายใน 30 นาที', 'Tell us your date and group size — we will send suitable boats and prices within 30 minutes.')}</p>
+      <div><button type="button" onclick="openSmart()" class="ab-b1 lt"><i data-lucide="sparkles"></i>Smart Match</button><a href="${WA_URL}" target="_blank" rel="noopener" class="ab-b2 dk"><i data-lucide="message-circle"></i>WhatsApp</a></div></div></section>
+  </div>`;
+  icons(); if (typeof observeReveal === 'function') observeReveal();
+  if (typeof IntersectionObserver !== 'undefined') abMap();
+}
+/* piers on a real map (MapLibre, loaded only when the section comes into view) */
+function abMap() {
+  const el = $('#abMap'); if (!el || el.__m) return;
+  const io = new IntersectionObserver(es => { if (!es[0].isIntersecting) return; io.disconnect();
+    const go = () => { if (!window.maplibregl || el.__m) return; let P = []; try { P = JSON.parse(el.dataset.p); } catch (e) { }
+      const lis = [...document.querySelectorAll('.ab-piers li')], M = [], bb = new maplibregl.LngLatBounds();
+      if (!P.some(p => p[2])) return;
+      const map = el.__m = new maplibregl.Map({ container: el, style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json', center: [98.35, 7.9], zoom: 9, attributionControl: { compact: true }, cooperativeGestures: true });
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+      const sel = i => { M.forEach((m, k) => m && m.getElement().classList.toggle('on', k === i)); lis.forEach((l, k) => l.classList.toggle('on', k === i)); };
+      P.forEach((p, i) => { if (!p[2]) return; bb.extend([p[2][1], p[2][0]]);
+        const e = document.createElement('div'); e.className = 'ab-pmk'; e.style.setProperty('--d', (i * .3) + 's'); e.innerHTML = `<i></i><b>${abEsc(p[0])}<small>${p[1]} ${L('ลำ', 'boats')}</small></b>`;
+        e.onclick = () => { sel(i); map.flyTo({ center: [p[2][1], p[2][0]], zoom: 13.5, pitch: 45, speed: .9 }); };
+        M[i] = new maplibregl.Marker({ element: e }).setLngLat([p[2][1], p[2][0]]).addTo(map); });
+      lis.forEach((l, i) => { if (M[i]) { l.classList.add('go'); l.onclick = () => M[i].getElement().click(); } });
+      const fit = () => map.fitBounds(bb, { padding: 50, pitch: 30, duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 2800 });
+      map.loaded() ? fit() : map.once('load', fit); };
+    (typeof pierLib === 'function' ? pierLib() : Promise.resolve()).then(go).catch(() => { }); }, { rootMargin: '200px' });
+  io.observe(el);
 }
 
 /* =========================================================
@@ -3093,6 +3113,18 @@ function applySeo(view, boat) {
     ld['@graph'].push({ '@type':'Product', '@id':SITE+path+'#boat', name:niceTitle(boat.title)+' – '+typeLabel(boat.type)+' charter', description:desc, ...(imgs.length ? { image:imgs } : {}), brand:{ '@id':SITE+'/#org' }, category:typeLabel(boat.type),
       offers:{ '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:boat.from_ || (prices.length ? Math.min(...prices) : undefined), ...(prices.length ? { highPrice:Math.max(...prices) } : {}), offerCount:Math.max(1, prices.length), availability:'https://schema.org/InStock', url:SITE+path } });
     try { const qa = bpFaq(boat); if (qa.length) ld['@graph'].push({ '@type':'FAQPage', '@id':SITE+path+'#faq', mainEntity: qa.map(([q, a]) => ({ '@type':'Question', name:plain(q), acceptedAnswer:{ '@type':'Answer', text:plain(a) } })) }); } catch (e) { }
+  }
+  if (view === 'about') {
+    // the about page: AboutPage about the organisation, its team, licence and hours, the breadcrumb and the FAQ shown on the page
+    const url = SITE + (k === 'en' ? '/en' : '') + '/about-us', plain = h => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const org = ld['@graph'].find(g => g['@type'] === 'TravelAgency');
+    if (org) Object.assign(org, { knowsLanguage:['th','en'],
+      employee:TEAM.map(m => ({ '@type':'Person', name:m.name, jobTitle:m.role[1], telephone:m.tel, ...(TEAM_IMG[m.id] ? { image:SITE + TEAM_IMG[m.id] } : {}) })),
+      hasCredential:{ '@type':'EducationalOccupationalCredential', name:'TAT tour operator licence ' + SET.tat, recognizedBy:{ '@type':'GovernmentOrganization', name:'Department of Tourism, Thailand' } },
+      openingHoursSpecification:{ '@type':'OpeningHoursSpecification', dayOfWeek:['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'], opens:'09:00', closes:'21:00' } });
+    ld['@graph'].push({ '@type':'AboutPage', '@id':url+'#page', url, name:title, description:desc, inLanguage:k, isPartOf:{ '@id':SITE+'/#website' }, about:{ '@id':SITE+'/#org' }, mainEntity:{ '@id':SITE+'/#org' } },
+      { '@type':'BreadcrumbList', itemListElement:[{ '@type':'ListItem', position:1, name:t('home'), item:SITE+(k === 'en' ? '/en' : '/') },{ '@type':'ListItem', position:2, name:L('เกี่ยวกับเรา','About us'), item:url }] });
+    try { ld['@graph'].push({ '@type':'FAQPage', '@id':url+'#faq', mainEntity:abFaq().map(([q, a]) => ({ '@type':'Question', name:plain(q), acceptedAnswer:{ '@type':'Answer', text:plain(a) } })) }); } catch (e) { }
   }
   if (view === 'fleet') {
     const url = SITE + (k === 'en' ? '/en' : '') + '/yacht-charter', plain = h => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
