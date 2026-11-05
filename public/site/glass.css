@@ -1629,3 +1629,10 @@ html.mo :is(article,li,a):hover .img-fallback>img,html.mo :is(article,li,a).img-
 .qs2-go{padding:0 28px;font-size:15.5px}
 @media (max-width:1023px){.qs2-bar .qs-f{padding:8px 10px}.qs2-ic{width:34px;height:34px;padding:8px}.qs2-stp{gap:8px}}
 @media (max-width:1023px){.qs2-bar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.qs2-ic{width:20px;height:20px;padding:0;background:none}.qs2-bar .qs-f{gap:10px}.qs2-stp{gap:6px}.qs2-stp>span{min-width:36px}.qs2-stp .qs-step{width:26px;height:26px}}
+/* guest stepper as one soft pill: [ – 11 คน + ] */
+.qs2-stp{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:99px;background:rgb(35 20 22 / .05);box-shadow:inset 0 0 0 1px rgb(35 20 22 / .06);margin-top:2px}
+.qs2-stp .qs-step{width:26px;height:26px;background:#fff;box-shadow:0 1px 3px rgb(35 20 22 / .14);color:#70000e}
+.qs2-stp .qs-step svg{width:13px;height:13px}
+.qs2-stp .qs-step:hover{background:#70000e;color:#fff}
+.qs2-stp>span{min-width:52px;text-align:center;font-size:14.5px!important;font-weight:500}
+@media (max-width:1023px){.qs2-stp>span{min-width:44px}.qs2-stp .qs-step{width:26px;height:26px}}
