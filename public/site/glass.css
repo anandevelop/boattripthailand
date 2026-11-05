@@ -1534,3 +1534,12 @@ body:has(#view-about:not(.hidden)) #team{display:none}
 @font-face{font-family:'BTT Punct';font-style:normal;font-display:swap;font-weight:600;src:url(/site/fonts/ibm-plex-sans-thai-latin-600-normal.woff2) format('woff2');unicode-range:U+0021,U+003F}
 html[lang="th"] body,html[lang="th"] .font-display,html[lang="th"] .font-sans{font-family:'BTT Punct',Futura,Jost,'IBM Plex Sans Thai',Verdana,sans-serif}
 html[lang="th"] :is(#heroTitle,.bp,.dp-pop,#bookingModal .modal-enter,.bf,.qs2-wrap,#team,.bk-sec,#faq,#boats .tm-title,#boats .tm-sub,.hf-bar){font-family:'BTT Punct',Jost,'IBM Plex Sans Thai',system-ui,sans-serif}
+/* contact hub: both columns the same height — the three channel rows share the height, the people list spreads to fill */
+@media (min-width:1024px){
+  .th-grid{align-items:stretch}
+  .th-chs{grid-template-rows:repeat(3,minmax(0,1fr));align-content:stretch}
+  .th-ch{height:100%}
+  .th-ppl{display:flex;flex-direction:column}
+  .th-ppl ul{flex:1;display:flex;flex-direction:column;justify-content:space-between}
+  .th-ppl li{flex:1}
+}
