@@ -1788,7 +1788,7 @@ function renderHeroText() {
     + `<span class="ht-line"><span style="animation-delay:.36s"><span class="hero-hl"><span id="heroRot">${rot[0]}</span></span></span></span>`;
   $('#heroSub').textContent = L(`เรือส่วนตัว ${FLEET.length} ลำ · ภูเก็ต กระบี่ พังงา`, `${FLEET.length} private boats · Phuket, Krabi, Phang Nga`);
   $('#heroCta1').textContent = L('ให้เราช่วยเลือก','Smart Match');
-  const tr2 = $('#heroTrust2'); if (tr2) tr2.innerHTML = [['send', L('ส่งคำขอฟรี ไม่ต้องจ่ายบนเว็บ', 'Free request · no payment online')], ['calendar-check', L('ทีมงานเช็กคิวและยืนยันราคาให้', 'Our team checks availability and confirms the price')], SET.tat && ['badge-check', L(`ใบอนุญาตธุรกิจนำเที่ยว TAT ${SET.tat}`, `TAT licence ${SET.tat}`)]].filter(Boolean).map(([ic, x]) => `<li><i data-lucide="${ic}"></i>${x}</li>`).join('');
+  const tr2 = $('#heroTrust2'); if (tr2) tr2.innerHTML = [['send', L('จองฟรี ไม่ต้องจ่ายบนเว็บ', 'Free request, no online payment')], ['calendar-check', L('ยืนยันราคาใน 30 นาที', 'Price confirmed in 30 min')], SET.tat && ['badge-check', L(`ใบอนุญาต ททท. ${SET.tat}`, `TAT licence ${SET.tat}`)]].filter(Boolean).map(([ic, x]) => `<li><i data-lucide="${ic}"></i>${x}</li>`).join('');
   $('#heroCta2').textContent = L('ดูเรือทั้งหมด','Browse the fleet');
   $('#promoPrice') && ($('#promoPrice').textContent = baht(375000));
   if (HOME) renderHomeContent();
