@@ -1572,3 +1572,6 @@ html.mo :is(article,li,a):hover .img-fallback>img,html.mo :is(article,li,a).img-
 /* home hero: taller photo (computer 440 → 580, phone 340 → 460) */
 #hero.hero2 #heroBox{height:clamp(480px,64vh,580px)}
 @media (max-width:680px){#hero.hero2 #heroBox{height:460px}}
+/* hero progress bars back to the smaller size (28 px wide, 6 px apart) */
+#hero.hero2 .h2-ctrl #heroDots{gap:6px}#hero.hero2 .h2-ctrl #heroDots>button{width:28px;height:4px}
+@media (max-width:680px){#hero.hero2 .h2-ctrl #heroDots>button{width:22px}}
