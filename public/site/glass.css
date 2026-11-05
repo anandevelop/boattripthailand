@@ -1578,3 +1578,5 @@ html.mo :is(article,li,a):hover .img-fallback>img,html.mo :is(article,li,a).img-
 /* hero controls start where the search capsule's rounded ends finish */
 #hero.hero2 .h2-ctrl{left:calc(max(24px,(100% - 1000px) / 2) + 34px);right:calc(max(24px,(100% - 1000px) / 2) + 34px)}
 @media (max-width:680px){#hero.hero2 .h2-ctrl{left:30px;right:30px}}
+/* home search: the time-slot / type field is gone (sales agree the time) — 3 fields + button */
+@media (min-width:1024px){.qs2-bar{grid-template-columns:1.25fr 1.2fr 1fr auto}}

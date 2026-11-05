@@ -173,17 +173,7 @@
           <button type="button" class="qs-step" onclick="stepGuests(1)" aria-label="+"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
         </span></span>
       </div>
-      <label class="qs-f">
-        <i data-lucide="clock-3" class="qs2-ic"></i>
-        <span class="qs2-t"><span class="qs-l" data-i18n="qs.trip">รอบเรือ / ประเภท</span>
-        <select id="qsTrip" class="qs-v">
-          <option value="all" data-i18n="qs.tripAll">ทุกรอบ</option>
-          <option value="half" data-i18n="qs.half">ครึ่งวัน (4 ชม.)</option>
-          <option value="full" data-i18n="qs.full">เต็มวัน (8 ชม.)</option>
-          <option value="sunset" data-i18n="qs.sunset">ซันเซ็ต (2–3 ชม.)</option>
-          <option value="overnight" data-i18n="qs.overnight">ค้างคืน (2 วัน 1 คืน)</option>
-        </select></span>
-      </label>
+      <input type="hidden" id="qsTrip" value="all" />
       <button type="submit" class="qs2-go"><i data-lucide="search" class="w-[18px] h-[18px]"></i><span data-i18n="qs.search">ค้นหา</span></button>
     </form>
   </div>
