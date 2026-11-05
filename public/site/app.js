@@ -199,7 +199,7 @@ const I18N = {
     'hero.sub':'50+ private yachts, catamarans and speedboats — plus tours, shows and activities across Phuket, all in one place.',
     'hero.cta1':'View all boats','hero.cta2':'Explore activities',
     'qs.tabBoat':'Charter a boat','qs.tabAct':'Tours & Activities','qs.note':'Confirmed in 30 min · No booking fee','qs.trip':'Trip type','qs.tripAll':'All trips',
-    'qs.half':'Half day (4h)','qs.full':'Full day (8h)','qs.sunset':'Sunset (2–3h)','qs.overnight':'Overnight (2D1N)','qs.dest':'Destination','qs.date':'Date','qs.guests':'Guests','qs.search':'Search','qs2.boat':'Charter a boat','qs2.tours':'Tours & activities','qs2.dests':'Destinations','qs2.smart':'Help me choose','qs2.anyDest':'All destinations','qs2.pop':'Popular','qs2.chat':'Chat on','qs2.help':'and our team will help you pick a boat',
+    'qs.half':'Half day (4h)','qs.full':'Full day (8h)','qs.sunset':'Sunset (2–3h)','qs.overnight':'Overnight (2D1N)','qs.dest':'Where to','qs.date':'When','qs.guests':'Guests','qs.search2':'Find boats','qs.search':'Search','qs2.boat':'Charter a boat','qs2.tours':'Tours & activities','qs2.dests':'Destinations','qs2.smart':'Help me choose','qs2.anyDest':'All destinations','qs2.pop':'Popular','qs2.chat':'Chat on','qs2.help':'and our team will help you pick a boat',
     'unit.pax':'pax','stat.boats':'boats in our fleet','stat.marina':'marinas & piers','stat.group':'guests per boat','stat.tat':'TAT licensed',
     'cat.kicker':'Explore Phuket','cat.title':'What are we doing today?','cat.sub':'Pick a category and we\'ll curate the best experiences for you.',
     'boats.kicker':'Our Fleet','boats.title':'Featured Boats','boats.sub':'From thrill-seeking speedboats to a 90 ft superyacht — every charter includes captain, crew and insurance.',

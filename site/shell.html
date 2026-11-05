@@ -151,7 +151,7 @@
     <form id="quickSearch" class="qs-bar qs2-bar">
       <label class="qs-f qs2-dest">
         <i data-lucide="map-pin" class="qs2-ic"></i>
-        <span class="qs2-t"><span class="qs-l" data-i18n="qs.dest">จุดหมาย</span>
+        <span class="qs2-t"><span class="qs-l" data-i18n="qs.dest">อยากไปเกาะไหน</span>
         <select id="qsDest" class="qs-v">
           <option value="" data-i18n="qs2.anyDest">ทุกปลายทาง</option>
           <option>Phi Phi</option><option>Racha Yai</option><option>Phang Nga Bay</option>
@@ -161,20 +161,20 @@
       </label>
       <label class="qs-f">
         <i data-lucide="calendar" class="qs2-ic"></i>
-        <span class="qs2-t"><span class="qs-l" data-i18n="qs.date">วันที่</span>
+        <span class="qs2-t"><span class="qs-l" data-i18n="qs.date">ไปวันไหน</span>
         <input id="qsDate" type="date" class="qs-v" /></span>
       </label>
       <div class="qs-f">
         <i data-lucide="users" class="qs2-ic"></i>
-        <span class="qs2-t"><span class="qs-l" data-i18n="qs.guests">จำนวนคน</span>
-        <span class="flex items-center justify-between gap-2">
+        <span class="qs2-t"><span class="qs-l" data-i18n="qs.guests">ไปกี่คน</span>
+        <span class="qs2-stp">
           <button type="button" class="qs-step" onclick="stepGuests(-1)" aria-label="-"><i data-lucide="minus" class="w-3.5 h-3.5"></i></button>
           <span class="text-[15px] font-medium tabular-nums"><span id="qsGuests">2</span> <span data-i18n="unit.pax">คน</span></span>
           <button type="button" class="qs-step" onclick="stepGuests(1)" aria-label="+"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
         </span></span>
       </div>
       <input type="hidden" id="qsTrip" value="all" />
-      <button type="submit" class="qs2-go"><i data-lucide="search" class="w-[18px] h-[18px]"></i><span data-i18n="qs.search">ค้นหา</span></button>
+      <button type="submit" class="qs2-go"><i data-lucide="search" class="w-[18px] h-[18px]"></i><span data-i18n="qs.search2">ค้นหาเรือ</span></button>
     </form>
   </div>
   <!-- stats -->
