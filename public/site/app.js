@@ -210,7 +210,7 @@ const I18N = {
     'promo.tag':'OVERNIGHT CHARTER','promo.title':'Sleep on the sea, wake up to an Andaman sunrise','promo.sub':'2 days 1 night aboard the VTECH 68 ft yacht — all meals, park fees and transfers included.','promo.cta':'View package',
     'price.from':'From','book.kicker':'Plan your trip','book.title':'Tell us where you want to go','book.sub':'Our team will get back to you with a quote and a tailored itinerary within 30 minutes (09:00–21:00).','book.call':'Call to book',
     'modal.title':'Book a Boat & Activity',
-    'f.item':'Boat / activity of interest','f.name':'Full name','f.namePh':'e.g. John Smith','f.phone':'Phone / LINE ID','f.date':'Travel date','f.guests':'Guests','f.adult':'Adults','f.kid':'Kids',
+    'f.item':'Boat / activity of interest','f.name':'Full name','f.namePh':'e.g. John Smith','f.phone':'Phone number','f.date':'Travel date','f.guests':'Guests','f.adult':'Adults','f.kid':'Kids',
     'f.slot':'Time slot','f.fullday':'Full day 10:00–18:00','f.overnight':'Overnight','f.note':'Notes / special requests','f.notePh':'e.g. birthday celebration, hotel pick-up, food allergies…',
     'f.consent':'Our sales team will contact you on WhatsApp / LINE / phone to check availability and suggest options for this request.','f.marketing':'Send me news, offers and last-minute availability (unsubscribe anytime)','f.err':'Please fill in your name, phone and travel date','f.email':'Email','f.opt':'(optional)','f.submit':'Send booking request',
     'foot.about':'Private yacht, catamaran and speedboat charters with full-service tours and activities in Phuket, Krabi and Phang Nga.',
@@ -1600,13 +1600,21 @@ const BF_MSG = {
   disposable: () => L('ไม่รับอีเมลชั่วคราว กรุณาใช้อีเมลที่ใช้งานจริง', 'Please use your real email, not a temporary one'),
   domain: () => L('อีเมลนี้รับข้อความไม่ได้ ลองตรวจตัวสะกดอีกครั้ง', 'This email can’t receive messages — please check the spelling'),
   wa: () => L('ใส่เบอร์ WhatsApp เป็นตัวเลข เช่น +66 81 234 5678', 'Enter the WhatsApp number in digits, e.g. +66 81 234 5678'),
-  phone: () => L('ใส่เบอร์โทรหรือ LINE ID เพียงหนึ่งรายการ อย่างน้อย 6 ตัว เช่น 081 234 5678', 'Enter one phone number or LINE ID, at least 6 characters, e.g. +66 81 234 5678'),
+  phone: () => L('ใส่เบอร์โทรเป็นตัวเลข อย่างน้อย 6 หลัก เช่น 081 234 5678', 'Enter a phone number in digits, at least 6, e.g. 81 234 5678'),
   invalid: () => L('ข้อมูลในช่องนี้ไม่ถูกต้องหรือยาวเกินไป', 'Please check this field — it may be too long'),
 };
 const bfWaOk = v => /^\+?[\d\s().-]+$/.test(v.trim()) && v.replace(/\D/g, '').length >= 7;
 /** same rule as the phone field in src/app/api/leads/route.ts */
-const bfPhoneOk = v => { const s = v.trim(); return s.length >= 6 && s.length <= 40 && /^[+\d\s().\-@a-zA-Z_]+$/.test(s); };
+// the booking form's phone field takes a number only (digits, spaces, - ( ) ); LINE IDs go in the boat page card or the note
+const bfPhoneOk = v => { const s = v.trim(), n = s.replace(/\D/g, '').length; return /^[\d\s().-]+$/.test(s) && n >= 6 && n <= 15; };
 /** message under a field ('' clears it); html may hold a "did you mean" button */
+/* booking form phone + WhatsApp: number characters only (Thai / letters typed by mistake are dropped as you type or paste) */
+(() => {
+  if (typeof document === 'undefined' || !document.addEventListener) return;
+  document.addEventListener('input', e => { const el = e.target; if (!el || !el.closest || !el.closest('#bookingModal, .bf, .bf-form, #inlineBook')) return;
+    if (el.name === 'phone') { const v = el.value.replace(/[^\d\s().-]/g, ''); if (v !== el.value) { el.value = v; if (typeof bfHint === 'function') bfHint(el, BF_MSG.phone()); } }
+    else if (el.name === 'whatsapp') { const v = el.value.replace(/[^\d\s().+-]/g, '').replace(/(?!^)\+/g, ''); if (v !== el.value) el.value = v; } }, true);
+})();
 /* no links in the booking forms: a pasted or dropped link is refused right away with the field's red hint
    (the send check and the server check stay as the backstop) */
 (() => {
