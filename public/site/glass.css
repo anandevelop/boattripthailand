@@ -1575,3 +1575,6 @@ html.mo :is(article,li,a):hover .img-fallback>img,html.mo :is(article,li,a).img-
 /* hero progress bars back to the smaller size (28 px wide, 6 px apart) */
 #hero.hero2 .h2-ctrl #heroDots{gap:6px}#hero.hero2 .h2-ctrl #heroDots>button{width:28px;height:4px}
 @media (max-width:680px){#hero.hero2 .h2-ctrl #heroDots>button{width:22px}}
+/* hero controls start where the search capsule's rounded ends finish */
+#hero.hero2 .h2-ctrl{left:calc(max(24px,(100% - 1000px) / 2) + 34px);right:calc(max(24px,(100% - 1000px) / 2) + 34px)}
+@media (max-width:680px){#hero.hero2 .h2-ctrl{left:30px;right:30px}}
