@@ -1262,3 +1262,5 @@ html.nav-up .bp-book { top: 72px; }
 }
 /* the scroller clips the cards' soft shadow: room for it inside (padding), cancelled outside (negative margin) */
 .bp-sims { padding: 6px 16px 44px !important; margin: -6px -16px -34px !important; scroll-padding-inline: 16px; }
+/* home price table: boat count sits with the type (was a loose middle column) */
+.hx-tc { display:inline-block; margin-right:8px; padding:1px 8px; border-radius:99px; background:#f4efec; color:#3d3133; font-size:12px; line-height:1.6; vertical-align:1px; }

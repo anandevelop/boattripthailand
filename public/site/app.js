@@ -1881,10 +1881,9 @@ function renderHomeAnswer() {
     </div>
     <div class="hx-tw"><table class="hx-t">
       <caption><span>${L('ราคาเริ่มต้นตามประเภทเรือ', 'Starting price by boat type')}</span><span>${L('ต่อลำ', 'per boat')}</span></caption>
-      <thead class="sr-only"><tr><th scope="col">${L('ประเภท', 'Type')}</th><th scope="col">${L('จำนวน', 'Boats')}</th><th scope="col">${L('เริ่มต้น', 'From')}</th></tr></thead>
+      <thead class="sr-only"><tr><th scope="col">${L('ประเภท', 'Type')}</th><th scope="col">${L('เริ่มต้น', 'From')}</th></tr></thead>
       <tbody>${rows.map(r => { const im = pic(r.ty); return `<tr>
-        <th scope="row"><a href="#/fleet?type=${r.ty}" class="hx-tl">${im ? `<img src="${im}" alt="${typeLabel(r.ty)} ${L('เช่าเรือส่วนตัวภูเก็ต', 'private charter Phuket')}" loading="lazy" width="76" height="56"/>` : '<span class="hx-ti"></span>'}<span><b>${typeLabel(r.ty)}</b><small>${USE[r.ty] || ''}</small></span></a></th>
-        <td class="hx-tn">${r.n} ${L('ลำ', 'boats')}</td>
+        <th scope="row"><a href="#/fleet?type=${r.ty}" class="hx-tl">${im ? `<img src="${im}" alt="${typeLabel(r.ty)} ${L('เช่าเรือส่วนตัวภูเก็ต', 'private charter Phuket')}" loading="lazy" width="76" height="56"/>` : '<span class="hx-ti"></span>'}<span><b>${typeLabel(r.ty)}</b><small><span class="hx-tc">${r.n} ${L('ลำ', 'boats')}</span>${USE[r.ty] || ''}</small></span></a></th>
         <td class="hx-tp"><small>${L('เริ่ม', 'from')}</small><b>${r.from ? baht(r.from) : '—'}</b></td>
         <td class="hx-tg" aria-hidden="true"><i data-lucide="chevron-right"></i></td></tr>`; }).join('')}</tbody>
     </table></div>
