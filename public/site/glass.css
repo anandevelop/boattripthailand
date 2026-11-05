@@ -1552,3 +1552,16 @@ html.mo .mo-enter{animation:moView .45s cubic-bezier(.2,.8,.2,1)}
 html.mo :is(article,li,a).img-fallback>img,html.mo :is(article,li,a) .img-fallback>img{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
 html.mo :is(article,li,a):hover .img-fallback>img,html.mo :is(article,li,a).img-fallback:hover>img{transform:scale(1.045)}
 @media (prefers-reduced-motion:reduce){html.mo .mo-on{opacity:1;transform:none;transition:none}html.mo .mo-enter{animation:none}}
+/* home hero: progress bars bottom-left, previous / next (and pause) bottom-right, above the search capsule */
+#hero.hero2 .h2-ctrl{top:auto;left:28px;right:24px;bottom:58px;justify-content:space-between}
+#hero.hero2 .h2-ctrl #heroDots{display:flex!important;gap:8px}
+#hero.hero2 .h2-ctrl #heroDots>button{width:44px;height:3px;background:rgb(255 255 255 / .35)}
+.h2-nav{display:flex;align-items:center;gap:10px}
+.h2-arw{width:48px;height:48px;border-radius:50%!important;display:grid;place-items:center;color:#fff;background:rgb(20 6 8 / .22);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgb(255 255 255 / .4),inset 0 0 0 1px rgb(255 255 255 / .35);transition:background .25s,transform .25s}
+.h2-arw:hover{background:rgb(255 255 255 / .25);transform:translateY(-2px)}.h2-arw svg{width:20px;height:20px}
+#hero.hero2 .h2-pause{width:36px;height:36px}
+@media (max-width:680px){
+  #hero.hero2 .h2-ctrl{left:16px;right:14px;bottom:44px}
+  #hero.hero2 .h2-ctrl #heroDots>button{width:22px}
+  .h2-arw{width:40px;height:40px}.h2-arw svg{width:18px;height:18px}.h2-nav{gap:8px}#hero.hero2 .h2-pause{width:32px;height:32px}
+}

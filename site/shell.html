@@ -139,7 +139,7 @@
     <div class="h2-ctrl">
       <div id="heroCap" hidden aria-live="polite"></div>
       <div id="heroDots" class="flex items-center gap-1.5"></div>
-      <button id="heroPause" onclick="heroToggle()" class="h2-pause" aria-label="Pause slideshow" aria-pressed="false"><i data-lucide="pause" class="w-3.5 h-3.5"></i></button>
+      <span class="h2-nav"><button id="heroPause" onclick="heroToggle()" class="h2-pause" aria-label="Pause slideshow" aria-pressed="false"><i data-lucide="pause" class="w-3.5 h-3.5"></i></button><button type="button" onclick="heroGo(heroIdx-1)" class="h2-arw" aria-label="Previous slide"><i data-lucide="arrow-left"></i></button><button type="button" onclick="heroGo(heroIdx+1)" class="h2-arw" aria-label="Next slide"><i data-lucide="arrow-right"></i></button></span>
     </div>
   </div>
 </section>
