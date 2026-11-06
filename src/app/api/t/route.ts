@@ -24,6 +24,7 @@ export async function POST(req: Request) {
   const nf = raw.startsWith('404:'), p0 = (nf ? raw.slice(4) : raw).split(/[?#]/)[0].slice(0, 200);
   if (!p0.startsWith('/') || /^\/(admin|api|_next)(\/|$)/.test(p0)) return ok;
   let path = p0.length > 1 ? p0.replace(/\/+$/, '') : p0; try { path = decodeURIComponent(path); } catch { /* keep */ }
+  if (/[<>"'`\\\u0000-\u001f]/.test(path)) return ok;   // security: no markup / quote characters from the beacon (the admin shows these paths)
   if (nf) path = '404:' + path;
   const source = SOURCES.includes(String(b.s)) ? String(b.s) : 'other';
   const device = ['mobile', 'tablet', 'desktop'].includes(String(b.d)) ? String(b.d) : 'desktop';
