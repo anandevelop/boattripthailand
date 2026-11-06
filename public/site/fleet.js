@@ -1429,7 +1429,7 @@ if ((VH.hash || '').startsWith('#/fleet')) { renderFleetPage(); if (typeof after
 function fxColsPref() { try { return localStorage.getItem('btt_fx_cols') === '1' ? 1 : 2; } catch (e) { return 2; } }
 function fxApplyCols(n) {
   const g = document.getElementById('fxGrid'); if (!g) return;
-  const c = n != null && n <= 2 ? 1 : fxColsPref();
+  const c = 2;   // grid only (the one-per-row view was removed); n / fxColsPref kept for old callers
   g.dataset.cols = String(c);
   document.querySelectorAll('.fx-cols button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.cols === c)));
 }

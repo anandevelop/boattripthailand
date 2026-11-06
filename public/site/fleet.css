@@ -975,3 +975,5 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
   #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-price .fx-view.fx-view { display: grid !important; width: 30px; height: 30px; flex: none; }
   #fxGrid:not([data-cols="1"]) > .fx-card:not(.fx-pick) .fx-view svg { width: 14px; height: 14px; }
 }
+/* boat list: grid only — hide the one-per-row / grid toggle */
+.fx-cols { display: none !important; }
