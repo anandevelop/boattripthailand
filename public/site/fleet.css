@@ -909,3 +909,10 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
   #view-fleet .fx-grid { padding-bottom: 8px; }
 }
 .fx-seo td.tnum { white-space: nowrap; }
+/* H1 holds only the heading text; the boat count sits beside it (not part of the heading for search engines) */
+.fx-h1w { display: block; }
+.fx-h1w h1 { display: inline; }
+.fx-h1w #fxN { position: relative; top: -1.15em; display: inline-block; margin-left: 6px; font-size: clamp(12px, 1.2vw, 16px); line-height: 1; color: var(--fx-m); font-weight: 500; vertical-align: baseline; }
+.fx-h1w #fxN small { font-size: .78em; color: var(--fx-muted); }
+.fx-ans strong { font-weight: 500; color: var(--fx-ink); }
+.fx-h1w .nowrap { white-space: nowrap; }
