@@ -1665,3 +1665,16 @@ html[lang="en"] body{letter-spacing:.005em}
 html[lang="th"] body,html[lang="th"] body :not(code,pre,kbd,samp,[class*="mono"]){font-family:'BTT Lite TH',Jost,'IBM Plex Sans Thai',system-ui,sans-serif!important}
 /* phone search: date and guests cells share the row height, so their top dividers line up */
 @media (max-width:1023px){.qs2-bar>.qs-f{align-self:stretch}}
+/* phone header · compact: 54px bar, 34px logo, smaller wordmark and icons */
+@media (max-width:639px){
+  #navRow{height:54px;padding-left:12px;padding-right:8px;gap:8px}
+  #navPill{border-radius:20px !important}
+  #navRow .nav-logo{width:34px;height:34px}
+  #navRow>a:first-child{gap:8px}
+  #navRow>a:first-child .font-display{font-size:12.5px;line-height:15px}
+  #navRow>a:first-child .font-display+span{font-size:7px;line-height:10px}
+  #navbar .nv-ico,#menuBtn{width:34px;height:34px}
+  #navbar .nv-ico svg{width:16px;height:16px}
+  .lang-chip{height:34px;font-size:11px}.lang-chip svg{width:14px;height:14px}
+  #menuBtn .burger{transform:scale(.85)} #menuBtn svg{width:18px;height:18px}
+}
