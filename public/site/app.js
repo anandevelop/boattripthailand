@@ -210,7 +210,7 @@ const I18N = {
     'promo.tag':'OVERNIGHT CHARTER','promo.title':'Sleep on the sea, wake up to an Andaman sunrise','promo.sub':'2 days 1 night aboard the VTECH 68 ft yacht — all meals, park fees and transfers included.','promo.cta':'View package',
     'price.from':'From','book.kicker':'Plan your trip','book.title':'Tell us where you want to go','book.sub':'Our team will get back to you with a quote and a tailored itinerary within 30 minutes (09:00–21:00).','book.call':'Call to book',
     'modal.title':'Book a Boat & Activity',
-    'f.item':'Boat / activity of interest','f.name':'Full name','f.namePh':'e.g. John Smith','f.phone':'Phone number','f.date':'Travel date','f.guests':'Guests','f.adult':'Adults','f.kid':'Kids',
+    'f.item':'Boat / activity of interest','f.name':'Full name','f.namePh':'e.g. John Smith','f.phone':'Phone number','skip':'Skip to main content','f.date':'Travel date','f.guests':'Guests','f.adult':'Adults','f.kid':'Kids',
     'f.slot':'Time slot','f.fullday':'Full day 10:00–18:00','f.overnight':'Overnight','f.note':'Notes / special requests','f.notePh':'e.g. birthday celebration, hotel pick-up, food allergies…',
     'f.consent':'Our sales team will contact you on WhatsApp / LINE / phone to check availability and suggest options for this request.','f.marketing':'Send me news, offers and last-minute availability (unsubscribe anytime)','f.err':'Please fill in your name, phone and travel date','f.email':'Email','f.opt':'(optional)','f.submit':'Send booking request',
     'foot.about':'Private yacht, catamaran and speedboat charters with full-service tours and activities in Phuket, Krabi and Phang Nga.',
@@ -2904,7 +2904,7 @@ let heroPaused = false;
 function heroToggle() {
   heroPaused = !heroPaused; const btn = $('#heroPause');
   $('#heroBox').classList.toggle('paused', heroPaused);
-  btn.setAttribute('aria-pressed', heroPaused); btn.setAttribute('aria-label', heroPaused ? 'Play slideshow' : 'Pause slideshow');
+  btn.setAttribute('aria-pressed', heroPaused); btn.setAttribute('aria-label', heroPaused ? L('เล่นสไลด์รูป', 'Play slideshow') : L('หยุดสไลด์รูป', 'Pause slideshow'));
   btn.innerHTML = `<i data-lucide="${heroPaused ? 'play' : 'pause'}" class="w-4 h-4"></i>`; icons();
   if (heroPaused) clearTimeout(heroTimer); else heroGo(heroIdx);
 }

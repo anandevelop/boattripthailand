@@ -397,6 +397,7 @@ function fxFormExtras(form) {
   sel.innerHTML = `<option value="">🌐</option>` + FX_CC.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
   sel.value = LANG === 'th' ? '+66' : '';
   ph.parentNode.insertBefore(wrap, ph); wrap.append(sel, ph);
+  if (!ph.getAttribute('aria-label')) ph.setAttribute('aria-label', L('เบอร์โทร', 'Phone number'));   // the wrapping <label> now names the country select first
   sel.onchange = () => { const rest = ph.value.replace(/^\+\d{1,4}\s*/, ''); ph.value = (sel.value ? sel.value + ' ' : '') + rest; ph.focus(); };
   // the reply language is the language the site is open in (the lead's lang field)
   fxConsentText(form);
@@ -1486,3 +1487,20 @@ function fxAskSaved() {
   if (typeof showView === 'function') { const _sv = showView; let first = true; showView = function (name) { _sv.apply(this, arguments); if (first) { first = false; return; }
     const v = document.getElementById('view-' + name); if (!v) return; v.classList.remove('mo-enter'); void v.offsetWidth; v.classList.add('mo-enter'); later(); }; }
 })();
+
+/* ---------- accessibility pass (ui-ux-pro-max): decorative icons hidden from screen readers, one tab stop per boat card, localised hero labels ---------- */
+function fxA11y(root) {
+  root.querySelectorAll('svg:not([aria-hidden]):not([role="img"])').forEach(s => { if (!s.getAttribute('aria-label') && !s.querySelector('title')) s.setAttribute('aria-hidden', 'true'); });
+  root.querySelectorAll('.fx-card .fx-ph-link:not([tabindex]), .fx-card .fx-view:not([tabindex])').forEach(a => { a.tabIndex = -1; a.setAttribute('aria-hidden', 'true'); });   // same link as the boat name
+}
+if (!FX_SSR && typeof MutationObserver === 'function') {
+  let q = false;
+  const run = () => { q = false; fxA11y(document); };
+  const go = () => {
+    run();
+    const hp = document.getElementById('heroPause'); if (hp && hp.getAttribute('aria-pressed') !== 'true') hp.setAttribute('aria-label', L('หยุดสไลด์รูป', 'Pause slideshow'));
+    const hs = document.getElementById('hero'); if (hs) hs.setAttribute('aria-label', L('เรือแนะนำ', 'Featured yachts'));
+    new MutationObserver(() => { if (!q) { q = true; requestAnimationFrame(run); } }).observe(document.body, { childList: true, subtree: true });
+  };
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', go) : go();
+}

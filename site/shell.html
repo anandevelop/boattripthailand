@@ -49,7 +49,7 @@
 <link rel="stylesheet" href="/site/fleet.css?v=__V__" />
 </head>
 <body class="font-sans">
-<a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:bg-ink focus:text-white focus:px-4 focus:py-2">Skip to content</a>
+<a href="#main" data-th="ข้ามไปเนื้อหาหลัก" data-i18n="skip" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:bg-ink focus:text-white focus:px-4 focus:py-2">ข้ามไปเนื้อหาหลัก</a>
 
 <div id="routeProg" class="fixed top-0 inset-x-0 h-0.5 bg-maroon z-[80]" aria-hidden="true"></div>
 
@@ -124,7 +124,7 @@
 <span id="top"></span>
 <div id="view-home">
 <!-- ============ HERO (full-bleed slideshow) ============ -->
-<section id="hero" class="hero2" aria-roledescription="carousel" aria-label="Featured yachts">
+<section id="hero" class="hero2" aria-roledescription="carousel" aria-label="เรือแนะนำ">
   <div id="heroBox" class="relative overflow-hidden bg-ink on-dark touch-pan-y">
     <div id="heroStage" class="absolute inset-0"></div>
     <div class="h2-shade" aria-hidden="true"></div>
@@ -139,7 +139,7 @@
     <div class="h2-ctrl">
       <div id="heroCap" hidden aria-live="polite"></div>
       <div id="heroDots" class="flex items-center gap-1.5"></div>
-      <span class="h2-nav"><button id="heroPause" onclick="heroToggle()" class="h2-pause" aria-label="Pause slideshow" aria-pressed="false"><i data-lucide="pause" class="w-3.5 h-3.5"></i></button><button type="button" onclick="heroGo(heroIdx-1)" class="h2-arw" aria-label="Previous slide"><i data-lucide="arrow-left"></i></button><button type="button" onclick="heroGo(heroIdx+1)" class="h2-arw" aria-label="Next slide"><i data-lucide="arrow-right"></i></button></span>
+      <span class="h2-nav"><button id="heroPause" onclick="heroToggle()" class="h2-pause" aria-label="หยุดสไลด์รูป" aria-pressed="false"><i data-lucide="pause" class="w-3.5 h-3.5"></i></button><button type="button" onclick="heroGo(heroIdx-1)" class="h2-arw" aria-label="Previous slide"><i data-lucide="arrow-left"></i></button><button type="button" onclick="heroGo(heroIdx+1)" class="h2-arw" aria-label="Next slide"><i data-lucide="arrow-right"></i></button></span>
     </div>
   </div>
 </section>
