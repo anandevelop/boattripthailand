@@ -1691,3 +1691,5 @@ footer a { display: inline-flex; align-items: center; min-height: 24px; }
 .hx-more, a[href="/blog"].text-maroon { display: inline-flex; align-items: center; min-height: 44px; }
 a.tabular-nums[href^="tel:"] { display: inline-flex; align-items: center; min-height: 32px; }
 @media (max-width: 767px) { footer li > a { min-height: 36px; } }
+/* floating "จองเรือด่วน" button removed on every page (kept in the markup because app.js still toggles it) */
+#floatCta { display: none !important; }
