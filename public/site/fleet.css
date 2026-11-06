@@ -924,3 +924,19 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
 .fx-go .fx-goi svg { width: 17px; height: 17px; }
 .fx-go em { font-style: normal; font-size: 12.5px; height: 28px; padding: 0 11px; border-radius: 999px; display: grid; place-items: center; background: #fff; color: var(--fx-m); margin-left: 2px; }
 .fx-fw.stuck .fx-go { height: 46px; } .fx-fw.stuck .fx-go .fx-goi { width: 34px; height: 34px; } .fx-fw.stuck .fx-go em { height: 24px; }
+/* phone: show the search fields like the home page instead of a collapsed "find your boat" button
+   layout — where (full) · when | guests · budget (full) · search button (full) */
+@media (max-width: 760px) {
+  .fx-fw { position: relative; top: auto; }
+  .fx-mfind { display: none !important; }
+  .fx-finder { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; padding: 6px; border-radius: 24px; }
+  .fx-finder .fx-seg { padding: 10px 12px; border-radius: 16px; min-height: 60px; }
+  .fx-finder .fx-seg + .fx-seg::after { top: 18%; bottom: 18%; }
+  .fx-finder .fx-seg[data-pop="fxPDest"] { grid-column: 1 / -1; border-bottom: 1px solid rgb(35 20 22 / .1); border-radius: 18px 18px 0 0; }
+  .fx-finder .fx-seg[data-pop="fxPDest"] + .fx-seg::after { display: none; }
+  .fx-finder .fx-seg[data-pop="fxPBud"] { grid-column: 1 / -1; border-top: 1px solid rgb(35 20 22 / .1); border-radius: 0; }
+  .fx-finder .fx-seg[data-pop="fxPBud"]::after { display: none; }
+  .fx-finder .fx-step { gap: 6px; }
+  .fx-go { grid-column: 1 / -1; justify-content: center; margin: 6px 0 0; height: 52px; }
+  .fx-pop { left: 0 !important; right: 0; width: auto !important; min-width: 0; }
+}
