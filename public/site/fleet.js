@@ -211,7 +211,7 @@ function fxBuild(v) {
         <div class="fx-seg" onclick="fxOpenDate(event)"><small>${FXI('calendar')}${L('ไปวันไหน', 'When')}<span id="fxSeason"></span></small><input type="date" id="fxDate" class="fx-dv" min="${todayISO()}" aria-label="${L('วันที่ไป', 'Date')}"></div>
         <div class="fx-seg" style="cursor:default"><small>${FXI('users')}${L('ไปกี่คน', 'Guests')}</small><div class="fx-step"><button type="button" onclick="fxStep(-1)" aria-label="${L('ลด', 'Fewer')}">${FXI('minus')}</button><b class="tnum fx-vpax"></b><button type="button" onclick="fxStep(1)" aria-label="${L('เพิ่ม', 'More')}">${FXI('plus')}</button></div></div>
         <button class="fx-seg" data-pop="fxPBud"><small>${FXI('wallet')}${L('งบต่อลำ', 'Budget per boat')}</small><b id="fxVBud"></b></button>
-        <a class="fx-go" href="#fxResults" onclick="event.preventDefault();fxToResults()">${FXI('sparkles')}<span id="fxGoT"></span></a>
+        <a class="fx-go" href="#fxResults" onclick="event.preventDefault();fxToResults()"><i class="fx-goi">${FXI('search')}</i><span>${L('ค้นหาเรือ', 'Search boats')}</span><em class="tnum" id="fxGoT"></em></a>
       </div>
       <button class="fx-mfind" onclick="fxSheet(true)">${FXI('search')}<div><b>${L('หาเรือที่ใช่', 'Find your boat')}</b><small id="fxMSum"></small></div><span class="f">${FXI('sliders-horizontal')}</span></button>
       <div class="fx-pop" id="fxPDest" onclick="event.stopPropagation()"><h4>${L('อยากไปเกาะไหน · เลือกได้หลายที่', 'Where to · pick one or more')}</h4><div class="fx-dests" id="fxDests"></div></div>
@@ -264,7 +264,7 @@ function fxDraw() {
     : `<div class="fx-empty">${FXI('ship')}<b>${FX.fav ? L('ยังไม่มีเรือในรายการโปรด', 'No saved boats yet') : L('ยังไม่มีเรือที่ตรงทุกข้อ', 'No boat matches everything yet')}</b><p>${L('ลองเพิ่มงบ หรือลดจำนวนจุดหมาย · ทีมเราหาเรือนอกรายการให้ได้', 'Try a higher budget or fewer stops · our team can also find boats not listed here.')}</p><div><button class="fx-reset" onclick="fxReset()">${L('ล้างตัวกรอง', 'Clear filters')}</button><button class="fx-book" onclick="fxBook('')">${L('ให้ทีมหาเรือให้', 'Ask our team')}</button></div></div>`;
   fxApplyCols(n);
   $('#fxCount').textContent = L(`พบ ${n} ลำ`, `${n} boats`);
-  $('#fxGoT').textContent = L(`ดู ${n} ลำ`, `See ${n} boats`); $('#fxSGo').textContent = L(`ดู ${n} ลำ`, `See ${n} boats`);
+  $('#fxGoT').textContent = L(`${n} ลำ`, `${n} boats`); $('#fxSGo').textContent = L(`ดู ${n} ลำ`, `See ${n} boats`);
   const H = $('#fxH1'), N = $('#fxN'); if (H) H.innerHTML = FX.fav ? L('เรือที่บันทึกไว้', 'Saved boats') : fxTitleH(); if (N) N.innerHTML = `${FX.fav ? FAV.length : act && !big && n < FLEET.length ? `${n}<small>/${FLEET.length}</small>` : FLEET.length}`;
   // tabs with live counts + the sliding glass pill
   $('#fxTabs').innerHTML = '<span class="fx-ind" id="fxInd"></span>' + FX_TYPES.map(k => [k, FLEET.filter(b => (k === 'all' || b.type === k) && fxPass(b, true)).length]).sort((a, b) => (a[0] !== 'all' && !a[1]) - (b[0] !== 'all' && !b[1])).map(([k, c]) => `<button class="fx-tab ${FX.type === k ? 'on' : ''} ${k !== 'all' && !c && FX.type !== k ? 'z' : ''}" onclick="fxType('${k}')">${k === 'all' ? t('all') : typeLabel(k)}<i class="tnum">${c}</i></button>`).join('');

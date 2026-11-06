@@ -916,3 +916,11 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
 .fx-h1w #fxN small { font-size: .78em; color: var(--fx-muted); }
 .fx-ans strong { font-weight: 500; color: var(--fx-ink); }
 .fx-h1w .nowrap { white-space: nowrap; }
+/* search button · same pill as the home search ("ค้นหาเรือ"), live boat count as a soft badge */
+.fx-go { height: 54px; padding: 0 8px 0 7px; border-radius: 999px; gap: 10px; font-size: 15px; background: linear-gradient(180deg, #86101f, #5e000c); }
+.fx-go:hover { background: linear-gradient(180deg, #92162a, #680010); }
+.fx-go:active { transform: scale(.97); }
+.fx-go .fx-goi { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgb(255 255 255 / .14); font-style: normal; }
+.fx-go .fx-goi svg { width: 17px; height: 17px; }
+.fx-go em { font-style: normal; font-size: 12.5px; height: 28px; padding: 0 11px; border-radius: 999px; display: grid; place-items: center; background: #fff; color: var(--fx-m); margin-left: 2px; }
+.fx-fw.stuck .fx-go { height: 46px; } .fx-fw.stuck .fx-go .fx-goi { width: 34px; height: 34px; } .fx-fw.stuck .fx-go em { height: 24px; }
