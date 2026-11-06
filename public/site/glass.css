@@ -1684,8 +1684,8 @@ html[lang="th"] body,html[lang="th"] body :not(code,pre,kbd,samp,[class*="mono"]
 html :focus-visible { outline: 2.5px solid #70000e !important; outline-offset: 3px !important; }
 #hero :focus-visible, footer :focus-visible, .th-ch.wa:focus-visible, .ab-end :focus-visible { outline-color: #fff !important; }
 /* hero slide bars: same 4px look, 24px tall hit area (WCAG 2.2 target size) */
-#hero [onclick^="heroGo"] { height: 24px !important; padding: 10px 0; background-clip: content-box; border-radius: 0; }
-#hero [onclick^="heroGo"] .hero-dot { top: 10px !important; bottom: 10px !important; }
+#hero.hero2 .h2-ctrl #heroDots > button { height: 24px !important; padding: 10px 0 !important; background-clip: content-box !important; border-radius: 0 !important; }
+#hero.hero2 .h2-ctrl #heroDots > button .hero-dot { top: 10px !important; bottom: 10px !important; border-radius: 2px; }
 /* standalone links: at least 24px tall, 44px for the "see all" links, roomier footer lists on phones */
 footer a { display: inline-flex; align-items: center; min-height: 24px; }
 .hx-more, a[href="/blog"].text-maroon { display: inline-flex; align-items: center; min-height: 44px; }
