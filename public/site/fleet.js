@@ -210,6 +210,7 @@ function fxBuild(v) {
         <button class="fx-seg" data-pop="fxPDest"><small>${FXI('map-pin')}${L('อยากไปเกาะไหน', 'Where to')}</small><b id="fxVDest"></b></button>
         <div class="fx-seg" onclick="fxOpenDate(event)"><small>${FXI('calendar')}${L('ไปวันไหน', 'When')}<span id="fxSeason"></span></small><input type="date" id="fxDate" class="fx-dv" min="${todayISO()}" aria-label="${L('วันที่ไป', 'Date')}"></div>
         <div class="fx-seg" style="cursor:default"><small>${FXI('users')}${L('ไปกี่คน', 'Guests')}</small><div class="fx-step"><button type="button" onclick="fxStep(-1)" aria-label="${L('ลด', 'Fewer')}">${FXI('minus')}</button><b class="tnum fx-vpax"></b><button type="button" onclick="fxStep(1)" aria-label="${L('เพิ่ม', 'More')}">${FXI('plus')}</button></div></div>
+        <button class="fx-seg" data-pop="fxPBud"><small>${FXI('wallet')}${L('งบต่อลำ', 'Budget per boat')}</small><b id="fxVBud"></b></button>
         <a class="fx-go" href="#fxResults" onclick="event.preventDefault();fxToResults()">${FXI('sparkles')}<span id="fxGoT"></span></a>
       </div>
       <button class="fx-mfind" onclick="fxSheet(true)">${FXI('search')}<div><b>${L('หาเรือที่ใช่', 'Find your boat')}</b><small id="fxMSum"></small></div><span class="f">${FXI('sliders-horizontal')}</span></button>
@@ -348,9 +349,9 @@ function fxShowPop(id, seg) {
 }
 if (!FX_SSR) document.addEventListener('click', e => { if (fxPop && !e.target.closest('.fx-pop')) fxShowPop(null); });
 function fxOpenDate(e) { e.stopPropagation(); fxShowPop(null); const i = $('#fxDate'); if (i && i._dpVis && e.target !== i._dpVis) dpOpen(i); }
-// search bar keeps only where / when / how many; stay, duration and budget still work from old links and show as clearable chips
+// search bar keeps where / when / how many / budget; stay and duration still work from old links and show as clearable chips
 function fxSheet(on) {
-  const pops = ['#fxPDest'].map(s => $(s));
+  const pops = ['#fxPDest', '#fxPBud'].map(s => $(s));
   if (on) { fxShowPop(null); pops.forEach(p => $('#fxSBody').appendChild(p)); $('#fxVeil').classList.add('on'); document.body.style.overflow = 'hidden'; }
   else { pops.forEach(p => $('#fxBox').appendChild(p)); $('#fxVeil').classList.remove('on'); document.body.style.overflow = ''; }
 }
