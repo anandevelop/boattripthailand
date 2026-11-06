@@ -198,11 +198,13 @@ function fxBuild(v) {
   v.innerHTML = `
   <div class="fx-amb" aria-hidden="true">${amb ? `<img src="${amb}" alt="">` : ''}</div>
   <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-10 pb-16">
+    <div class="fx-hero">${(() => { const u = '/img/dest/racha.webp', r = w => typeof rs === 'function' ? rs(u, w) : u; return `<img class="fx-hbg" src="${r(1600)}" srcset="${r(768)} 768w, ${r(1280)} 1280w, ${r(1600)} 1600w" sizes="(max-width: 1280px) 100vw, 1280px" alt="" width="1600" height="1000" fetchpriority="high" decoding="async">`; })()}
     <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-1.5"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span class="text-ink" aria-current="page">${t('fleet')}</span></nav>
     <div class="fx-head">
       <div><div class="fx-h1w"><h1 id="fxH1">${fxTitleH()}</h1><sup id="fxN" class="tnum" aria-hidden="true">${FLEET.length}</sup></div>
         <p class="fx-sub fx-ans">${fxAnswer()}</p></div>
       <div class="fx-stats"><div><b class="tnum">${new Set(FLEET.map(b => typeof MARINA_CANON === 'function' ? MARINA_CANON(b.marina) : b.marinaP)).size}</b>${L('ท่าเรือ', 'piers & marinas')}</div><div><b class="tnum">${fxMaxPax()}</b>${L('คนต่อลำสูงสุด', 'guests on our largest boat')}</div><div><b>${L('ททท.', 'TAT')}</b>${L('ใบอนุญาต', 'licence')} ${fxEsc(SET.tat || '34/03754')}</div></div>
+    </div>
     </div>
 
     <div class="fx-fw" id="fxFw"><div class="fx-box" id="fxBox">

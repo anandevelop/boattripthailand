@@ -977,3 +977,32 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
 }
 /* boat list: grid only — hide the one-per-row / grid toggle */
 .fx-cols { display: none !important; }
+/* ---- fleet header: aerial Andaman photo under a deep-sea gradient, white type; search capsule overlaps its bottom edge ---- */
+.fx-hero { position: relative; isolation: isolate; overflow: hidden; border-radius: 32px; padding: 26px 34px 92px; color: #fff; background: #0a2f39; }
+.fx-hero .fx-hbg { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center 62%; }
+.fx-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background:
+  linear-gradient(180deg, rgb(6 34 42 / .93) 0%, rgb(8 44 54 / .82) 38%, rgb(10 62 72 / .5) 70%, rgb(6 34 42 / .78) 100%),
+  radial-gradient(70% 55% at 80% 6%, rgb(255 214 170 / .2), transparent 60%); }
+.fx-hero nav[aria-label="Breadcrumb"], .fx-hero nav[aria-label="Breadcrumb"] a { color: rgb(255 255 255 / .72); }
+.fx-hero nav[aria-label="Breadcrumb"] a:hover { color: #fff; }
+.fx-hero nav[aria-label="Breadcrumb"] [aria-current] { color: #fff; }
+.fx-hero .fx-head { margin-top: 26px; align-items: flex-end; }
+#view-fleet .fx-hero #fxH1 { color: #fff; font-size: 56px !important; line-height: 1.06; letter-spacing: -.02em; }
+@media (max-width: 1180px) { #view-fleet .fx-hero #fxH1 { font-size: 44px !important; } }
+/* the search capsule sits on the photo: solid white so it reads cleanly */
+.fx-hero + .fx-fw .fx-finder, .fx-hero + .fx-fw .fx-mfind { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 24px 50px -26px rgb(8 42 51 / .6), 0 0 0 1px rgb(35 20 22 / .06); }
+.fx-hero .fx-h1w #fxN { color: #bfe7e4; }
+.fx-hero .fx-h1w #fxN small { color: rgb(255 255 255 / .6); }
+.fx-hero .fx-ans { color: rgb(255 255 255 / .82); max-width: 60ch; }
+.fx-hero .fx-ans strong, .fx-hero .fx-ans b { color: #fff; }
+.fx-hero .fx-stats { color: rgb(255 255 255 / .72); }
+.fx-hero .fx-stats b { color: #fff; }
+.fx-hero :focus-visible { outline-color: #fff !important; }
+.fx-hero + .fx-fw { margin-top: -50px; padding: 0 22px; }
+@media (max-width: 760px) {
+  .fx-hero { border-radius: 24px; padding: 18px 18px 64px; margin: 0 -4px; }
+  .fx-hero .fx-head { margin-top: 16px; }
+  #view-fleet .fx-hero #fxH1 { font-size: 30px !important; line-height: 1.12; }
+  .fx-hero .fx-ans { font-size: 14px; }
+  .fx-hero + .fx-fw { margin-top: -40px; padding: 0 8px; }
+}
