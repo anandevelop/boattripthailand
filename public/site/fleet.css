@@ -948,3 +948,9 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
   .fx-go .fx-goi svg { width: 18px; height: 18px; }
   .fx-go em { height: 26px; padding: 0 10px; margin-left: 4px; }
 }
+/* boat card specs: icon + value, no dot separators */
+.fx-specs { gap: 14px; }
+.fx-specs > span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.fx-specs svg { width: 14px; height: 14px; flex: none; color: rgb(35 20 22 / .55); stroke-width: 1.75; }
+.fx-specs .m > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+@media (max-width: 760px) { .fx-specs { gap: 10px; } .fx-specs svg { width: 13px; height: 13px; } }
