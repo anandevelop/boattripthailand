@@ -940,3 +940,11 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
   .fx-go { grid-column: 1 / -1; justify-content: center; margin: 6px 0 0; height: 52px; }
   .fx-pop { left: 0 !important; right: 0; width: auto !important; min-width: 0; }
 }
+/* search button: one calm piece — count as a soft tint of the button, not a white chip */
+.fx-go em { background: rgb(255 255 255 / .16); color: #fff; font-weight: 400; }
+@media (max-width: 760px) {
+  .fx-go { gap: 8px; padding: 0 20px; }
+  .fx-go .fx-goi { width: auto; height: auto; background: none; }
+  .fx-go .fx-goi svg { width: 18px; height: 18px; }
+  .fx-go em { height: 26px; padding: 0 10px; margin-left: 4px; }
+}
