@@ -1006,3 +1006,5 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
   .fx-hero .fx-ans { font-size: 14px; }
   .fx-hero + .fx-fw { margin-top: -40px; padding: 0 8px; }
 }
+/* boat count lives in the stats row now, not as a superscript on the H1 */
+.fx-stats #fxN small { font-size: .6em; opacity: .7; margin-left: 2px; }
