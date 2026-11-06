@@ -206,16 +206,13 @@ function fxBuild(v) {
 
     <div class="fx-fw" id="fxFw"><div class="fx-box" id="fxBox">
       <div class="fx-finder" id="fxFinder">
-        <div class="fx-seg" onclick="fxOpenDate(event)"><small>${FXI('calendar')}${L('วันที่ไป', 'Date')}<span id="fxSeason"></span></small><input type="date" id="fxDate" class="fx-dv" min="${todayISO()}" aria-label="${L('วันที่ไป', 'Date')}"></div>
-        <button class="fx-seg" data-pop="fxPDest"><small>${FXI('map-pin')}${L('อยากไปไหน', 'Where to')}</small><b id="fxVDest"></b></button>
-        <button class="fx-seg" data-pop="fxPStay"><small>${FXI('bed-double')}${L('พักที่ไหน', 'Staying in')}</small><b id="fxVStay"></b></button>
+        <button class="fx-seg" data-pop="fxPDest"><small>${FXI('map-pin')}${L('อยากไปเกาะไหน', 'Where to')}</small><b id="fxVDest"></b></button>
+        <div class="fx-seg" onclick="fxOpenDate(event)"><small>${FXI('calendar')}${L('ไปวันไหน', 'When')}<span id="fxSeason"></span></small><input type="date" id="fxDate" class="fx-dv" min="${todayISO()}" aria-label="${L('วันที่ไป', 'Date')}"></div>
         <div class="fx-seg" style="cursor:default"><small>${FXI('users')}${L('ไปกี่คน', 'Guests')}</small><div class="fx-step"><button type="button" onclick="fxStep(-1)" aria-label="${L('ลด', 'Fewer')}">${FXI('minus')}</button><b class="tnum fx-vpax"></b><button type="button" onclick="fxStep(1)" aria-label="${L('เพิ่ม', 'More')}">${FXI('plus')}</button></div></div>
-        <button class="fx-seg" data-pop="fxPDur"><small>${FXI('clock')}${L('ระยะเวลา', 'Duration')}</small><b id="fxVDur"></b></button>
-        <button class="fx-seg" data-pop="fxPBud"><small>${FXI('wallet')}${L('งบต่อลำ', 'Budget per boat')}</small><b id="fxVBud"></b></button>
         <a class="fx-go" href="#fxResults" onclick="event.preventDefault();fxToResults()">${FXI('sparkles')}<span id="fxGoT"></span></a>
       </div>
       <button class="fx-mfind" onclick="fxSheet(true)">${FXI('search')}<div><b>${L('หาเรือที่ใช่', 'Find your boat')}</b><small id="fxMSum"></small></div><span class="f">${FXI('sliders-horizontal')}</span></button>
-      <div class="fx-pop" id="fxPDest" onclick="event.stopPropagation()"><h4>${L('อยากไปไหน · เลือกได้หลายที่', 'Where to · pick one or more')}</h4><div class="fx-dests" id="fxDests"></div></div>
+      <div class="fx-pop" id="fxPDest" onclick="event.stopPropagation()"><h4>${L('อยากไปเกาะไหน · เลือกได้หลายที่', 'Where to · pick one or more')}</h4><div class="fx-dests" id="fxDests"></div></div>
       <div class="fx-pop" id="fxPStay" onclick="event.stopPropagation()" style="width:420px"><h4>${L('พักที่ไหน · ดูเวลาขับรถไปท่าเรือของแต่ละลำ', 'Where are you staying? · see the drive to each boat\'s pier')}</h4><div class="fx-stays" id="fxStays"></div><p class="fx-pnote">${L('เวลาโดยประมาณ ไม่รวมช่วงรถติด', 'Rough times, without rush-hour traffic')}</p></div>
       <div class="fx-pop" id="fxPDur" onclick="event.stopPropagation()"><h4>${L('ระยะเวลา', 'Duration')}</h4><div class="fx-chips" id="fxDurs"></div></div>
       <div class="fx-pop" id="fxPBud" onclick="event.stopPropagation()" style="width:340px"><h4>${L('งบต่อลำ (รวมค่าคนเกินแล้ว)', 'Budget per boat (extra guests included)')}</h4>
@@ -238,7 +235,7 @@ function fxBuild(v) {
   </section>
   <div class="fx-veil" id="fxVeil" onclick="if(event.target===this)fxSheet(false)"><div class="fx-sheet">
     <div class="fx-srow" style="margin-bottom:14px"><h3>${L('หาเรือที่ใช่', 'Find your boat')}</h3><button class="fx-x" onclick="fxSheet(false)" aria-label="${L('ปิด', 'Close')}">${FXI('x')}</button></div>
-    <div class="fx-srow"><h4>${L('วันที่ไป', 'Date')}</h4><input type="date" id="fxDate2" min="${todayISO()}" aria-label="${L('วันที่ไป', 'Date')}"></div>
+    <div class="fx-srow"><h4>${L('ไปวันไหน', 'When')}</h4><input type="date" id="fxDate2" min="${todayISO()}" aria-label="${L('วันที่ไป', 'Date')}"></div>
     <div class="fx-srow"><h4>${L('ไปกี่คน', 'Guests')}</h4><div class="fx-step"><button type="button" onclick="fxStep(-1)">${FXI('minus')}</button><b class="tnum fx-vpax"></b><button type="button" onclick="fxStep(1)">${FXI('plus')}</button></div></div>
     <div id="fxSBody"></div>
     <div class="fx-sfoot"><button class="fx-reset" onclick="fxReset()">${L('ล้าง', 'Clear')}</button><button class="fx-book" onclick="fxSheet(false);fxToResults()" id="fxSGo"></button></div>
@@ -346,8 +343,9 @@ function fxShowPop(id, seg) {
 }
 if (!FX_SSR) document.addEventListener('click', e => { if (fxPop && !e.target.closest('.fx-pop')) fxShowPop(null); });
 function fxOpenDate(e) { e.stopPropagation(); fxShowPop(null); const i = $('#fxDate'); if (i && i._dpVis && e.target !== i._dpVis) dpOpen(i); }
+// search bar keeps only where / when / how many; stay, duration and budget still work from old links and show as clearable chips
 function fxSheet(on) {
-  const pops = ['#fxPDest', '#fxPStay', '#fxPDur', '#fxPBud'].map(s => $(s));
+  const pops = ['#fxPDest'].map(s => $(s));
   if (on) { fxShowPop(null); pops.forEach(p => $('#fxSBody').appendChild(p)); $('#fxVeil').classList.add('on'); document.body.style.overflow = 'hidden'; }
   else { pops.forEach(p => $('#fxBox').appendChild(p)); $('#fxVeil').classList.remove('on'); document.body.style.overflow = ''; }
 }
