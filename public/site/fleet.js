@@ -102,7 +102,8 @@ const fxNear = b => { const d = fxDrive(b); return d ? d.hi : 999; };
 function fxList() {
   const rank = b => b.fxRank >= 0 ? b.fxRank : 99;
   const by = { smart: fxActive() ? (a, b) => (a.fxRank >= 0 ? 0 : 1) - (b.fxRank >= 0 ? 0 : 1) || fxScore(b) - fxScore(a) : (a, b) => rank(a) - rank(b) || (b.ft || 0) - (a.ft || 0),
-    pp: (a, b) => fxPer(a) - fxPer(b), low: (a, b) => fxPrice(a).total - fxPrice(b).total, high: (a, b) => fxPrice(b).total - fxPrice(a).total, size: (a, b) => (b.ft || 0) - (a.ft || 0), near: (a, b) => fxNear(a) - fxNear(b) || fxPrice(a).total - fxPrice(b).total }[FX.sort] || (() => 0);
+    pp: (a, b) => fxPer(a) - fxPer(b), low: (a, b) => fxPrice(a).total - fxPrice(b).total, high: (a, b) => fxPrice(b).total - fxPrice(a).total, size: (a, b) => (b.ft || 0) - (a.ft || 0), small: (a, b) => (a.ft || 999) - (b.ft || 999), pax: (a, b) => (b.pax || 0) - (a.pax || 0) || (b.ft || 0) - (a.ft || 0),
+    half: (a, b) => (b.fxDur.includes('half') - a.fxDur.includes('half')) || fxPrice(a).total - fxPrice(b).total, name: (a, b) => niceTitle(a.title).localeCompare(niceTitle(b.title), 'en', { numeric: true }), near: (a, b) => fxNear(a) - fxNear(b) || fxPrice(a).total - fxPrice(b).total }[FX.sort] || (() => 0);
   return FLEET.filter(b => fxPass(b)).sort(by);
 }
 
@@ -116,7 +117,7 @@ function fxRead() {
   if (FX_DUR[q.get('dur')]) FX.dur = q.get('dur');
   if (+q.get('budget') >= FX_MIN) FX.bud = Math.min(FX_MAX, +q.get('budget'));
   if (FX_TYPES.includes(q.get('type'))) FX.type = q.get('type');
-  if (['pp', 'low', 'high', 'size'].includes(q.get('sort')) || (q.get('sort') === 'near' && FX.stay)) FX.sort = q.get('sort');
+  if (['pp', 'low', 'high', 'size', 'small', 'pax', 'half', 'name'].includes(q.get('sort')) || (q.get('sort') === 'near' && FX.stay)) FX.sort = q.get('sort');
 }
 function fxWrite() {
   const q = new URLSearchParams();
@@ -225,8 +226,10 @@ function fxBuild(v) {
       <div class="fx-tabs" id="fxTabs"></div>
       <div class="r"><span class="tnum" id="fxCount"></span>
         <label class="fx-sort"><span class="sr-only">${L('เรียงลำดับ', 'Sort')}</span><select id="fxSort">
-          <option value="smart">${L('เรียงแบบฉลาด ✦', 'Smart order ✦')}</option><option value="pp">${L('ราคาต่อคน ต่ำ → สูง', 'Price per guest, low → high')}</option>
-          <option value="low">${L('ราคาต่อลำ ต่ำ → สูง', 'Price per boat, low → high')}</option><option value="high">${L('ราคาต่อลำ สูง → ต่ำ', 'Price per boat, high → low')}</option><option value="size">${L('เรือใหญ่ก่อน', 'Largest first')}</option><option value="near" id="fxSortNear">${L('ใกล้ที่พักก่อน', 'Closest to my stay')}</option></select>${FXI('chevron-down')}</label>
+          <option value="smart">${L('เรียงแบบฉลาด', 'Smart order')}</option>
+          <optgroup label="${L('ราคา', 'Price')}"><option value="low">${L('ราคาต่อลำ ต่ำ → สูง', 'Price per boat, low → high')}</option><option value="high">${L('ราคาต่อลำ สูง → ต่ำ', 'Price per boat, high → low')}</option><option value="pp">${L('ราคาต่อคน ต่ำ → สูง', 'Price per guest, low → high')}</option><option value="half">${L('มีทริปครึ่งวันก่อน', 'Half-day trips first')}</option></optgroup>
+          <optgroup label="${L('ขนาดเรือ', 'Boat size')}"><option value="size">${L('เรือใหญ่ก่อน', 'Largest first')}</option><option value="small">${L('เรือเล็กก่อน', 'Smallest first')}</option><option value="pax">${L('รับคนได้มากก่อน', 'Most guests first')}</option></optgroup>
+          <optgroup label="${L('อื่น ๆ', 'Other')}"><option value="name">${L('ชื่อเรือ A → Z', 'Boat name A → Z')}</option></optgroup></select>${FXI('chevron-down')}</label>
         <span class="fx-cols" role="group" aria-label="${L('มุมมอง', 'View')}"><button type="button" data-cols="1" onclick="fxCols(1)" aria-label="${L('แถวละ 1 ลำ', 'One per row')}">${FXI('rows-2')}</button><button type="button" data-cols="2" onclick="fxCols(2)" aria-label="${L('แถวละ 2 ลำ', 'Two per row')}">${FXI('layout-grid')}</button></span></div>
     </div>
     <div class="fx-ins" id="fxIns" hidden><span class="fx-spark">${FXI('sparkles')}</span><span id="fxInsT"></span><button class="fx-share" onclick="fxShare()">${FXI('link')}<span>${L('แชร์ผลค้นหา', 'Share this search')}</span></button><button class="fx-clr" onclick="fxReset()">${L('ล้าง', 'Clear')}</button></div>
@@ -279,7 +282,9 @@ function fxDraw() {
   $('#fxSeason').innerHTML = se ? ` · <span class="fx-season ${se}">${se[0].toUpperCase() + se.slice(1)}</span>` : '';
   fxSetV('#fxVDest', dl.length ? dl.join(', ') : L('ทุกเกาะ', 'Anywhere'), !dl.length);
   fxSetV('#fxVStay', FX.stay ? fxStayL(FX.stay) : L('ไม่ระบุ', 'Not set'), !FX.stay);
-  const sn = $('#fxSortNear'); if (sn) sn.disabled = !FX.stay;
+  { const sel = $('#fxSort'); let sn = $('#fxSortNear');   // "closest to my stay" only exists when a stay came in from an old link
+    if (FX.stay && !sn && sel) { sn = document.createElement('option'); sn.value = 'near'; sn.id = 'fxSortNear'; sn.textContent = L('ใกล้ที่พักก่อน', 'Closest to my stay'); sel.insertBefore(sn, sel.children[1]); }
+    else if (!FX.stay && sn) sn.remove(); }
   fxSetV('#fxVDur', FX.dur ? fxL(FX_DUR[FX.dur]) : L('ได้ทั้งหมด', 'Any'), !FX.dur);
   fxSetV('#fxVBud', FX.bud >= FX_MAX ? L('ไม่จำกัด', 'No limit') : L('ไม่เกิน ', 'Up to ') + baht(FX.bud), FX.bud >= FX_MAX);
   $$('.fx-vpax').forEach(e => e.textContent = `${FX.pax} ${t('guests')}`);
