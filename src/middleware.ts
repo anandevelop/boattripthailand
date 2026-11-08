@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { noindexSite, reqHost } from '@/lib/indexing';
 
 /**
- * 1. 301 redirects from the old WordPress URLs (table `redirects`, cached 5 min)
+ * 1. 301 redirects from the old WordPress URLs (table `redirects`, cached 1 min / until the next admin save)
  * 2. trailing slash → none, /th/xxx → /xxx (Thai is the default language, English lives under /en)
  * 3. โหมดปิดปรับปรุง: visitors get a 503 page with the contact channels; signed-in staff see the site
  * 4. /boats and /img: the same URL, a lighter file — AVIF (or WebP for PNG/JPG) when the browser accepts it.
@@ -15,13 +15,15 @@ export const config = { runtime: 'nodejs', matcher: ['/boats/:path*', '/img/:pat
 
 let cache: { at: number; map: Map<string, { to: string; code: number }> } | null = null;
 async function redirectMap() {
-  if (cache && Date.now() - cache.at < 300_000) return cache.map;
+  // reloaded every minute, and right after an admin save (clearSiteCache in lib/site-render marks the time on globalThis)
+  const changed = (globalThis as { __bttRedirAt?: number }).__bttRedirAt ?? 0;
+  if (cache && cache.at > changed && Date.now() - cache.at < 60_000) return cache.map;
   try {
     const { db } = await import('@/db');
     const { redirects } = await import('@/db/schema');
     const rows = await db.select().from(redirects);
     cache = { at: Date.now(), map: new Map(rows.map(r => [r.from, { to: r.to, code: r.code }])) };
-  } catch (e) { console.error('[redirects]', e); cache = { at: Date.now() - 240_000, map: cache?.map ?? new Map() }; }
+  } catch (e) { console.error('[redirects]', e); cache = { at: Date.now() - 45_000, map: cache?.map ?? new Map() }; }
   return cache.map;
 }
 async function hit(from: string) {

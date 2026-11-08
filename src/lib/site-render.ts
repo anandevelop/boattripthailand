@@ -1,5 +1,6 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
+import { gunzipSync, gzipSync } from 'node:zlib';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -17,23 +18,34 @@ import { publicSeo, seoConfig } from './seo';
  * Public site = the approved mockup (site/shell.html + public/site/app.js), rendered on the
  * server so every URL ships complete HTML + SEO tags, then the same script runs in the browser.
  */
+type Assets = { shell: string; app: vm.Script; fleet: vm.Script; lucide: vm.Script; version: string };
+type Bundle = { at: number; data: SiteData; js: string; version: string };
+type Entry = { at: number; gen: number; gz: Buffer };
+/*
+ * Next.js bundles this module separately into every route that imports it (the site, /site-home.js, /site-data.js, the
+ * admin API …). The caches and the render queue live on globalThis so all of them share ONE copy: an admin save clears
+ * the cache the site route actually serves from, and two routes never render at the same time.
+ */
+const S = ((globalThis as unknown as { __bttSsr?: unknown }).__bttSsr ??= {
+  assets: null, dataCache: null, dataLoading: null, gen: 0, queued: 0, qTail: Promise.resolve(),
+  pages: new Map(), inflight: new Map(), home: new Map(), homeLatest: {},
+}) as { assets: Assets | null; dataCache: Bundle | null; dataLoading: Promise<Bundle> | null; gen: number; queued: number; qTail: Promise<unknown>;
+  pages: Map<string, Entry>; inflight: Map<string, Promise<string>>; home: Map<string, string>; homeLatest: Record<string, string> };
 const ROOT = process.cwd();
 const read = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
-let assets: { shell: string; app: vm.Script; fleet: vm.Script; lucide: vm.Script; version: string } | null = null;
 function loadAssets() {
-  if (assets && process.env.NODE_ENV === 'production') return assets;
+  if (S.assets && process.env.NODE_ENV === 'production') return S.assets;
   const appPath = path.join(ROOT, 'public/site/app.js');
   // fleet.js (หน้าเรือทั้งหมด) runs right after app.js, in the browser and here
   const version = String(Math.floor(Math.max(statSync(appPath).mtimeMs, statSync(path.join(ROOT, 'public/site/fleet.js')).mtimeMs)));
-  if (assets && assets.version === version) return assets;
-  assets = { shell: read('site/shell.html').replaceAll('__V__', version).replaceAll('https://boattripthailand.com', SITE), app: new vm.Script(read('public/site/app.js'), { filename: 'app.js' }), fleet: new vm.Script(read('public/site/fleet.js'), { filename: 'fleet.js' }), lucide: new vm.Script(read('public/site/lucide.full.min.js'), { filename: 'lucide.js' }), version };
-  return assets;
+  if (S.assets && S.assets.version === version) return S.assets;
+  S.assets = { shell: read('site/shell.html').replaceAll('__V__', version).replaceAll('https://boattripthailand.com', SITE), app: new vm.Script(read('public/site/app.js'), { filename: 'app.js' }), fleet: new vm.Script(read('public/site/fleet.js'), { filename: 'fleet.js' }), lucide: new vm.Script(read('public/site/lucide.full.min.js'), { filename: 'lucide.js' }), version };
+  return S.assets;
 }
 
 /* ---------------- data (cached) ---------------- */
 type SiteData = { __SET__: Record<string, unknown>; __HOME__: unknown; __ACTS__: unknown[]; __SEO__: unknown; FLEET: unknown[]; EXTRA: unknown; SEASONS: unknown; BIMG: Record<string, Record<string, string>>; GALLERY: Record<string, string[]>; SHOWIMG: Record<string, string[]>; TEAM_IMG: Record<string, string>; POSTS: PostIdx[]; DEST_PAGES: unknown[] };
 type PostIdx = { id: number; cat: string; date: string; cover: string | null; title: { th: string; en: string }; slug: { th: string; en: string }; excerpt: { th: string; en: string }; kw: { th: string; en: string }; has: { th: boolean; en: boolean }; read: { th: number; en: number } };
-let dataCache: { at: number; data: SiteData; js: string; version: string } | null = null;
 const strip = (h?: string) => (h ?? '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 type B = { html?: string; items?: { q: string; a: string }[] };
 const readMin = (bl: B[], lang: 'th' | 'en') => { const t = bl.map(b => strip(b.html || b.items?.map(i => i.q + ' ' + i.a).join(' '))).join(' '); return Math.max(2, Math.round(lang === 'th' ? t.replace(/\s/g, '').length / 600 : t.split(' ').length / 220)); };
@@ -72,7 +84,10 @@ export function ver(u: string) {
 
 /** shared data for every page, served as one cacheable script: /site-data.js?v=<version> */
 export async function siteDataBundle() {
-  if (dataCache && Date.now() - dataCache.at < 300_000) return dataCache;
+  if (S.dataCache && Date.now() - S.dataCache.at < 300_000) return S.dataCache;
+  return (S.dataLoading ??= loadBundle().finally(() => { S.dataLoading = null; }));
+}
+async function loadBundle(): Promise<Bundle> {
   const [bs, cals, ps, cfg, home, acts, seo] = await Promise.all([db.select().from(boats).where(eq(boats.active, true)).orderBy(asc(boats.sortOrder)), db.select().from(seasonCalendars), db.select().from(posts).where(eq(posts.published, true)), db.select().from(settings).where(eq(settings.key, 'admin.sitecfg')), homeContent(), activitiesContent(), seoConfig()]);
   const extra = JSON.parse(read('data/boats.json')).extra;
   const FLEET = bs.map(b => ({ slug: b.slug, title: b.name, subtitle: b.subtitle ?? '', type: b.type, ft: b.ft, pax: b.pax, from_: b.fromPrice, marina: b.marina ?? '', pattaya: /pattaya/i.test(b.marina ?? ''), pages: [], info: b.data.info ?? [], includes: b.data.includes ?? [], complimentary: b.data.complimentary ?? [], not_included: b.data.not_included ?? [], time_slots: b.data.time_slots ?? [], notes: b.data.notes ?? [], remarks: [], tables: b.data.tables ?? [], i18n: (b.data as { i18n?: unknown }).i18n ?? null }));
@@ -87,8 +102,8 @@ export async function siteDataBundle() {
   const data = { __SET__: publicSettings(cfg[0]?.value), __HOME__: home, __ACTS__: acts.filter(a => a.active !== false), __SEO__: publicSeo(seo), FLEET, EXTRA: extra, SEASONS, BIMG, GALLERY, SHOWIMG, TEAM_IMG, POSTS, DEST_PAGES: DESTINATIONS.map(({ match, ...d }) => ({ ...d, hero: ver(d.hero), match: match.source })) };
   // big blocks as JSON.parse('…'): browsers parse a JSON string much faster than the same data written as a JS object literal
   const js = Object.entries(data).map(([k, v]) => { const j = JSON.stringify(v); return `window.${k}=${(j.length > 8000 ? `JSON.parse(${JSON.stringify(j)})` : j).replace(/</g, '\\u003c')};`; }).join('\n');
-  dataCache = { at: Date.now(), data, js, version: createHash('sha1').update(js).digest('hex').slice(0, 12) };
-  return dataCache;
+  S.dataCache = { at: Date.now(), data, js, version: createHash('sha1').update(js).digest('hex').slice(0, 12) };
+  return S.dataCache;
 }
 
 export async function postBody(id: number) {
@@ -107,33 +122,98 @@ export async function routeExists(pathname: string) {
   return false;
 }
 
+/** /blog?page=N past the last page → 404 (24 per page after the featured article, as in app.js renderBlog) */
+export async function blogPageOk(url: URL) {
+  if (!/^\/(en\/)?blog\/?$/.test(url.pathname) || !url.searchParams.has('page')) return true;
+  const n = Number(url.searchParams.get('page'));
+  return Number.isInteger(n) && n >= 1 && n <= Math.max(1, Math.ceil(((await siteData()).POSTS.length - 1) / 24));
+}
+
 /* ---------------- server render ---------------- */
-const pageCache = new Map<string, { at: number; html: string }>();
+/*
+ * A render is synchronous (vm + linkedom): ~0.2–0.5 s warm, several seconds cold. When a crawler opens many URLs at once
+ * every render used to run back to back in one block — robots.txt, images and the API all waited — and slow renders hit
+ * the vm timeout (500). Now:
+ *   · one render at a time, with a turn of the event loop between renders, so other requests keep flowing
+ *   · one render per URL however many requests ask for it at the same moment (single flight)
+ *   · an expired page, or one changed in the admin while the server is busy, is served from the last copy while a
+ *     fresh one is made (stale-while-revalidate); a failed render also falls back to the last copy
+ *   · the cache key ignores tracking params (?utm_… ?fbclid …) and every query on pages that don't read one
+ *   · pages are kept gzipped (Thai text is 2 bytes per character as a JS string: ~10× smaller)
+ */
+const pageCache = S.pages, inflight = S.inflight;
 const TTL = Number(process.env.SITE_CACHE_SECONDS || 300) * 1000;
+const MAX_PAGES = Number(process.env.SITE_CACHE_PAGES || 2000);
+/* the query params each listing reads (fleet.js fxRead, app.js renderBlog / tours); anything else — ?utm_… ?fbclid …, typos,
+   random cache-busters — renders the same page, so it must not make a new cache entry (or a new render) */
+const QS_KEEP: Record<string, string[]> = { 'yacht-charter': ['budget', 'date', 'dur', 'fav', 'pax', 'q', 'sort', 'stay', 'to', 'type'], blog: ['page'], tours: ['cat'] };
+/** the part of a URL that changes the rendered page */
+export function pageKey(url: URL) {
+  const m = url.search && url.pathname.match(/^\/(?:en\/)?(yacht-charter|blog|tours)\/?$/), keep = m ? QS_KEEP[m[1]] : null;
+  if (!keep) return url.pathname;
+  const q = keep.filter(k => url.searchParams.has(k)).map(k => [k, (url.searchParams.get(k) || '').slice(0, 80)] as [string, string])
+    .filter(([k, v]) => k !== 'page' || (/^\d{1,3}$/.test(v) && +v > 1));
+  return url.pathname + (q.length ? '?' + new URLSearchParams(q).toString() : '');
+}
+const unzip = (e: Entry) => gunzipSync(e.gz).toString('utf8');
+/** run fn after every render queued before it, one turn of the event loop later */
+function enqueue<T>(fn: () => T): Promise<T> {
+  S.queued++;
+  const p = S.qTail.then(() => new Promise<void>(r => setImmediate(r))).then(fn).finally(() => { S.queued--; });
+  S.qTail = p.catch(() => undefined);
+  return p;
+}
+export const renderQueue = () => S.queued;
 
 export async function renderSite(url: URL, cfg: Record<string, string>) {
   const a = loadAssets();
-  // app.js version in the key so an edited app.js shows up immediately
-  const key = a.version + url.pathname + url.search;
+  const pk = pageKey(url), key = a.version + pk;   // app.js version in the key so an edited app.js shows up immediately
   const hit = pageCache.get(key);
-  if (hit && Date.now() - hit.at < TTL) return hit.html;
-  const bundle = await siteDataBundle(), data = bundle.data;
-  // current article: ship its body inline so it renders without a second request
-  let post: { id: number; blocks: unknown; seoT: unknown; seoD: unknown } | null = null;
-  const m = url.pathname.replace(/^\/en(?=\/|$)/, '').match(/^\/blog\/(.+?)\/?$/);
-  if (m) {
-    let s = m[1]; try { s = decodeURIComponent(s); } catch { /* keep */ }
-    const p = data.POSTS.find(x => x.slug.th === s || x.slug.en === s);
-    const body = p ? await postBody(p.id) : null;
-    if (p && body) post = { id: p.id, ...body };
-  }
-  const lang = /^\/en(\/|$)/.test(url.pathname) ? 'en' : 'th';
-  const html = run(a, url, data, { __CFG__: cfg, __POST__: post }, lang).replace('__DV__', bundle.version);
-  pageCache.set(key, { at: Date.now(), html });
-  if (pageCache.size > 800) { const old = [...pageCache.entries()].sort((x, y) => x[1].at - y[1].at).slice(0, 200); old.forEach(([k]) => pageCache.delete(k)); }
-  return html;
+  if (hit && hit.gen === S.gen && Date.now() - hit.at < TTL) return unzip(hit);
+  const job = fresh(key, new URL(pk, url), cfg, a);
+  if (!hit) return job;
+  // expired by time → last copy now, new one in the background. Changed in the admin → wait for the new one,
+  // unless the server is busy rendering (crawl burst), then the last copy too.
+  if (hit.gen === S.gen || S.queued > 2) { job.catch(e => console.error('[ssr]', pk, e)); return unzip(hit); }
+  try { return await job; } catch (e) { console.error('[ssr]', pk, e); return unzip(hit); }
 }
-export function clearSiteCache() { pageCache.clear(); dataCache = null; }
+function fresh(key: string, url: URL, cfg: Record<string, string>, a: Assets) {
+  const running = inflight.get(key);
+  if (running) return running;
+  const g = S.gen;
+  const p = (async () => {
+    const bundle = await siteDataBundle(), data = bundle.data;
+    // current article: ship its body inline so it renders without a second request
+    let post: { id: number; blocks: unknown; seoT: unknown; seoD: unknown } | null = null;
+    const m = url.pathname.replace(/^\/en(?=\/|$)/, '').match(/^\/blog\/(.+?)\/?$/);
+    if (m) {
+      let s = m[1]; try { s = decodeURIComponent(s); } catch { /* keep */ }
+      const pi = data.POSTS.find(x => x.slug.th === s || x.slug.en === s);
+      const body = pi ? await postBody(pi.id) : null;
+      if (pi && body) post = { id: pi.id, ...body };
+    }
+    const lang = /^\/en(\/|$)/.test(url.pathname) ? 'en' : 'th';
+    const html = await enqueue(() => run(a, url, data, { __CFG__: cfg, __POST__: post }, lang).replace('__DV__', bundle.version));
+    pageCache.delete(key);
+    pageCache.set(key, { at: Date.now(), gen: g, gz: gzipSync(html) });
+    if (pageCache.size > MAX_PAGES) for (const k of pageCache.keys()) { if (pageCache.size <= MAX_PAGES * 0.8) break; pageCache.delete(k); }   // oldest first
+    return html;
+  })().finally(() => inflight.delete(key));
+  inflight.set(key, p);
+  return p;
+}
+/** content changed in the admin: pages re-render on their next visit (the old copy stays as a fallback) */
+export function clearSiteCache() { S.gen++; S.dataCache = null; (globalThis as { __bttRedirAt?: number }).__bttRedirAt = Date.now(); }   // + redirects reload (middleware)
+
+/* the hidden home view that pages other than home need (see run): one cacheable script per version instead of ~190 KB in every page */
+const HOME = S.home, HOME_LATEST = S.homeLatest;   // hash → script · lang → latest hash
+export async function homeScript(h: string, lang: 'th' | 'en', cfg: Record<string, string>) {
+  if (HOME.has(h)) return { js: HOME.get(h)!, exact: true };
+  if (!HOME_LATEST[lang]) await renderSite(new URL((lang === 'en' ? '/en' : '') + '/about-us', SITE), cfg);
+  const latest = HOME_LATEST[lang];
+  return { js: (latest && HOME.get(latest)) || '', exact: latest === h };
+}
+
 
 /** URL an admin opens to preview an article (draft or published) at its real address. */
 export const previewPath = (p: { id: number; slugTh: string | null; slugEn: string | null }, lang: 'th' | 'en') =>
@@ -154,12 +234,12 @@ export async function renderPostPreview(url: URL, id: number, cfg: Record<string
   idx.slug[lang] = s;
   const bundle = await siteDataBundle();
   const data = { ...bundle.data, POSTS: [idx, ...bundle.data.POSTS.filter(x => x.id !== id)] };
-  const html = run(loadAssets(), url, data, { __CFG__: cfg, __POST__: { id, blocks: p.blocks, seoT: p.seoTitle, seoD: p.seoDesc }, __PREVIEW__: idx }, lang).replace('__DV__', bundle.version);
+  const html = run(loadAssets(), url, data, { __CFG__: cfg, __POST__: { id, blocks: p.blocks, seoT: p.seoTitle, seoD: p.seoDesc }, __PREVIEW__: idx }, lang, true).replace('__DV__', bundle.version);
   const banner = `<div style="position:fixed;top:0;inset-inline:0;z-index:9999;background:#b4501a;color:#fff;font:500 12.5px/1.4 system-ui,sans-serif;text-align:center;padding:6px 12px">${p.published ? 'ตัวอย่างบทความ · ข้อมูลล่าสุดที่บันทึกไว้' : 'ตัวอย่างบทความ · ยังไม่เผยแพร่ ลูกค้ายังไม่เห็นหน้านี้'}</div>`;
   return { html: html.replace('</head>', '<meta name="robots" content="noindex, nofollow"></head>').replace(/<body([^>]*)>/, `<body$1>${banner}`) };
 }
 
-function run(a: NonNullable<typeof assets>, url: URL, data: SiteData, page: Record<string, unknown>, lang: string) {
+function run(a: Assets, url: URL, data: SiteData, page: Record<string, unknown>, lang: string, inlineHome = false) {
   const dataJs = Object.entries(page).map(([k, v]) => `window.${k}=${JSON.stringify(v).replace(/</g, '\\u003c')};`).join('');
   const { window, document } = parseHTML(a.shell.replace('__DATA__', ''));
   const listeners: Record<string, ((e: unknown) => void)[]> = {};
@@ -183,8 +263,8 @@ function run(a: NonNullable<typeof assets>, url: URL, data: SiteData, page: Reco
   Object.assign(sandbox, structuredClone({ ...data, ...page }));
   const ctx = vm.createContext(sandbox);
   a.lucide.runInContext(ctx);
-  a.app.runInContext(ctx, { timeout: 5000 });
-  a.fleet.runInContext(ctx, { timeout: 5000 });
+  a.app.runInContext(ctx, { timeout: 20000 });   // generous: a busy or cold server must not turn a page into a 500
+  a.fleet.runInContext(ctx, { timeout: 20000 });
   for (let round = 0; round < 5 && timers.length; round++) { const batch = timers.splice(0).sort((x, y) => x.ms - y.ms); for (const t of batch) { try { t.fn(); } catch (e) { console.error('[ssr timer]', e); } } }
   vm.runInContext('typeof afterRoute === "function" && afterRoute(); typeof icons === "function" && icons(); typeof fxSsrDone === "function" && fxSsrDone();', ctx);
   document.documentElement.setAttribute('lang', lang);
@@ -194,10 +274,22 @@ function run(a: NonNullable<typeof assets>, url: URL, data: SiteData, page: Reco
   let homeJs = '';
   const vh = document.getElementById('view-home');
   if (vh && vh.classList.contains('hidden') && vh.innerHTML.trim()) {
-    homeJs = `window.__HOME_HTML__=${JSON.stringify(vh.innerHTML).replace(/</g, '\\u003c')};`;
+    // per-visitor parts filled during this render ("recently viewed" = the boat being rendered) — the browser fills its own
+    const rw = vh.querySelector('#recentWrap'); if (rw) { rw.innerHTML = ''; rw.classList.add('hidden'); }
+    const js = `window.__HOME_HTML__=${JSON.stringify(vh.innerHTML).replace(/</g, '\\u003c')};`;
     vh.innerHTML = ''; vh.setAttribute('data-deferred', '1');
+    // loaded (not deferred) right before app.js, which puts it back first thing; the admin preview keeps it inline
+    const appTag = inlineHome ? null : [...document.querySelectorAll('script[src]')].find(x => (x.getAttribute('src') || '').startsWith('/site/app.js'));
+    if (appTag) {
+      const h = createHash('sha1').update(js).digest('hex').slice(0, 12);
+      if (!HOME.has(h)) { HOME.set(h, js); if (HOME.size > 40) HOME.delete(HOME.keys().next().value!); }
+      HOME_LATEST[lang] = h;
+      const sc = document.createElement('script'); sc.setAttribute('src', `/site-home.js?l=${lang}&h=${h}`); appTag.parentNode!.insertBefore(sc, appTag);
+    } else homeJs = js;
   }
   const dataTag = document.getElementById('btt-data');
   if (dataTag) dataTag.textContent = dataJs + homeJs;
-  return '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  // Cloudflare Email Obfuscation would turn every address into /cdn-cgi/l/email-protection links (seen as broken links by
+  // crawlers); the email_off markers keep plain mailto: links whatever the zone setting is
+  return '<!DOCTYPE html>\n' + document.documentElement.outerHTML.replace(/<body([^>]*)>/, '<body$1><!--email_off-->').replace(/<\/body>(?![\s\S]*<\/body>)/, '<!--/email_off--></body>');
 }
