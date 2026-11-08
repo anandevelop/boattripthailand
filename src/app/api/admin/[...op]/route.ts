@@ -417,6 +417,14 @@ async function postOp(u: User, id: number, b: Record<string, unknown>) {
   // a live article owns its URLs: drop redirects left on them (e.g. by deleting an older article with the same slug)
   const own = [v.slugTh && `/blog/${v.slugTh}`, v.slugEn && `/en/blog/${v.slugEn}`].filter((x): x is string => !!x);
   if (v.published && own.length) await db.delete(redirects).where(inArray(redirects.from, own));
+  // URL changed on a live article: 301 the old address to the new one (and repoint older redirects, so never a chain)
+  if (cur?.published && v.published) for (const [k, pre] of [['slugTh', '/blog/'], ['slugEn', '/en/blog/']] as const) {
+    const was = cur[k], now = v[k];
+    if (!was || !now || was === now) continue;
+    const from = pre + was, to = pre + now;
+    await db.update(redirects).set({ to }).where(eq(redirects.to, from));
+    await db.insert(redirects).values({ from, to, code: 301 }).onConflictDoUpdate({ target: redirects.from, set: { to, code: 301 } });
+  }
   const ch = !cur ? [{ f: 'บทความ', from: null, to: title.th || title.en }] : [
     ...(cur.published !== v.published || +(cur.publishAt ?? 0) !== +(v.publishAt ?? 0) ? [{ f: 'สถานะ', from: postState(cur), to: postState(v) }] : []),
     ...(JSON.stringify(cur.title) !== JSON.stringify(title) ? [{ f: 'ชื่อเรื่อง', from: cur.title.th || cur.title.en, to: title.th || title.en }] : []),

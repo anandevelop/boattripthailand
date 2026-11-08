@@ -103,8 +103,21 @@ function seoAlternates() {
   set('th', SITE_ORIGIN + hashToPath(VHASH, 'th')); set('en', SITE_ORIGIN + hashToPath(VHASH, 'en')); set('x-default', SITE_ORIGIN + hashToPath(VHASH, 'th'));
   if (VHASH === '#/404' || VHASH === '#/design') { const m = document.head.querySelector('meta[name="robots"]'); if (m) m.setAttribute('content', 'noindex, follow'); }
 }
+/* <title>: one brand suffix (| Boat Trip Thailand) and at most 65 characters — a template title that is too long loses
+   "เริ่ม/from", then dashes, then the price; titles written in /admin are only shortened the same way */
+const TITLE_MAX = 65;
+function fitTitle(t) {
+  t = String(t || '').replace(/\s*\|\s*BTT$/, ' | Boat Trip Thailand');
+  const steps = [x => x.replace(/ (– )?(เริ่ม|from) (฿|\$)/, ' $3'), x => x.replace(/ – /g, ' '), x => x.replace(/ (฿|\$)[\d,.]+(?= \|)/, '')];
+  for (const f of steps) { if (t.length <= TITLE_MAX) break; t = f(t); }
+  return t;
+}
+function fitTitles() {
+  const t = fitTitle(document.title); if (t === document.title) return;
+  document.title = t; setMeta('og:title', t, 'property'); setMeta('twitter:title', t);
+}
 function afterRoute() {
-  realLinks(); seoAlternates(); document.documentElement.lang = LANG;
+  fitTitles(); realLinks(); seoAlternates(); document.documentElement.lang = LANG;
   document.querySelectorAll('.lang-btn').forEach(b => { const on = b.dataset.lang === LANG; b.classList.toggle('chip-active', on); b.classList.toggle('text-muted', !on); b.setAttribute('aria-pressed', on); });
   syncLangChip();
 }
@@ -476,7 +489,7 @@ function renderTours() {
     <section class="tr-faq"><h2 class="font-display">${L('คำถามที่พบบ่อย', 'FAQ')}</h2>
       <div>${TR_FAQ().map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${q}<i data-lucide="plus" class="w-4 h-4 text-maroon shrink-0"></i></summary><p>${a}</p></details>`).join('')}</div></section>
   </div>`;
-  const title = CATS[cat] ? `${h1} | Boat Trip Thailand` : L(`ทัวร์ & กิจกรรมในภูเก็ต ${ACTS.length} รายการ · โชว์ ทัวร์เกาะ สปา | Boat Trip Thailand`, `Phuket Tours & Activities – ${ACTS.length} shows, island tours & spas | Boat Trip Thailand`);
+  const title = CATS[cat] ? `${h1} | Boat Trip Thailand` : L(`ทัวร์ & กิจกรรมภูเก็ต ${ACTS.length} รายการ | Boat Trip Thailand`, `Phuket Tours & Activities – ${ACTS.length} shows, island tours & spas | Boat Trip Thailand`);
   const desc = L(`รวมทัวร์และกิจกรรมในภูเก็ต ${ACTS.length} รายการ เช่น ภูเก็ตแฟนตาซี ไซมอน คาบาเรต์ ทัวร์ทะเล กิจกรรมทางน้ำ สปา และที่พัก จองพร้อมเช่าเรือส่วนตัวได้ในคำขอเดียว`, `${ACTS.length} Phuket tours and activities — Phuket FantaSea, Simon Cabaret, island tours, water sports, spas and stays — bookable together with a private boat in one request.`);
   document.title = title; setMeta('description', desc); setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property');
   const url = SITE_ORIGIN + hashToPath(CATS[cat] ? `#/tours?cat=${cat}` : '#/tours');
@@ -927,7 +940,7 @@ function bentoHTML(b) {
     ${tile(1, 'bt-1')}${tile(2, 'bt-2')}${tile(3, 'bt-3', n === 4 ? all : '')}${tile(4, 'bt-4', n > 4 ? all : '')}
   </div>
   ${n > 1 ? `<button type="button" class="bt-mall" onclick="openLightbox('${b.slug}',0)">
-    <span class="bt-stack">${g.slice(1, 3).map(s => `<img src="${rs(s, 160)}" alt="" loading="lazy"/>`).join('')}</span>
+    <span class="bt-stack">${g.slice(1, 3).map((s, i) => `<img src="${rs(s, 160)}" alt="${esc(niceTitle(b.title))} ${L('รูปที่', 'photo')} ${i + 2}" loading="lazy"/>`).join('')}</span>
     <span class="min-w-0"><b>${L('ดูรูปทั้งหมด', 'View all')} ${n} ${L('รูป', 'photos')}</b><span>${L('แตะเพื่อดูภาพเต็มจอ', 'Tap to view full screen')}</span></span>
     <i data-lucide="chevron-right"></i></button>` : ''}`;
 }
@@ -1515,7 +1528,7 @@ function drawLightbox() {
   const g = gallery(lbSlug); lbIdx = (lbIdx+g.length)%g.length;
   const im = $('#lbImg'); im.classList.remove('is-in'); im.src = g[lbIdx]; im.alt = (bySlug(lbSlug)?.title || '') + ' — photo ' + (lbIdx+1); void im.offsetWidth; im.classList.add('is-in');
   $('#lbCount').textContent = `${lbIdx+1} / ${g.length}`;
-  $('#lbThumbs').innerHTML = g.map((src,i)=>`<button onclick="lbIdx=${i};drawLightbox()" class="lb-th ${i===lbIdx?'is-on':''}" aria-label="Photo ${i+1}" aria-current="${i===lbIdx}"><img src="${rs(src, 160)}" alt=""/></button>`).join('');
+  $('#lbThumbs').innerHTML = g.map((src,i)=>`<button onclick="lbIdx=${i};drawLightbox()" class="lb-th ${i===lbIdx?'is-on':''}" aria-label="${L('รูปที่', 'Photo')} ${i+1}" aria-current="${i===lbIdx}"><img src="${rs(src, 160)}" alt=""/></button>`).join('');
   $('#lbThumbs .is-on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 
@@ -2030,7 +2043,7 @@ function renderAbout() {
       <p class="ab-ans ab-up" style="--d:.55s">${L(`<b>Boat Trip Thailand</b> คือบริษัทนำเที่ยวที่จดทะเบียนกับ ททท. (${SET.tat}) ให้บริการเช่า${types.map(x => typeLabel(x.k)).join(' ')} แบบเหมาลำ <b>${FLEET.length} ลำ จาก ${piers.length} ท่าเรือทั่วภูเก็ต</b>${dests.length ? ' ไป' + dests.join(' ') : ''} ทำงานกับเจ้าของเรือและกัปตันโดยตรง ราคาเริ่ม ${baht(lo)} ต่อลำ`,
         `<b>Boat Trip Thailand</b> is a TAT-registered tour company (${SET.tat}) offering <b>${FLEET.length} private charter boats from ${piers.length} Phuket piers</b> — ${types.map(x => typeLabel(x.k).toLowerCase()).join(', ')}${dests.length ? ' — to ' + dests.join(', ') : ''}. We work directly with owners and captains; prices from ${baht(lo)} per boat.`)}</p>
       <div class="ab-cta ab-up" style="--d:.75s"><a href="#/fleet" class="ab-b1">${L('ดูเรือทั้งหมด', 'Browse the fleet')}<i data-lucide="arrow-right"></i></a><a href="#ab-team" class="ab-b2" onclick="event.preventDefault();document.getElementById('ab-team').scrollIntoView({behavior:'smooth'})"><i data-lucide="message-circle"></i>${L('คุยกับทีมงาน', 'Talk to our team')}</a></div>
-      <div class="ab-htm ab-up" style="--d:.95s"><span class="ab-ava">${TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="" width="40" height="40" loading="lazy">`).join('')}</span><div><b>${on ? '<i class="ab-dot"></i>' : ''}${TEAM.map(m => m.name).join(' · ')}${on ? L(' ออนไลน์', ' online now') : ''}</b><small>${L('เซลล์ตัวจริง ดูแลตั้งแต่ถามราคาจนออกเรือ', 'Real people, with you from first question to sailing')}</small></div></div>
+      <div class="ab-htm ab-up" style="--d:.95s"><span class="ab-ava">${TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="${esc(m.name)}" width="40" height="40" loading="lazy">`).join('')}</span><div><b>${on ? '<i class="ab-dot"></i>' : ''}${TEAM.map(m => m.name).join(' · ')}${on ? L(' ออนไลน์', ' online now') : ''}</b><small>${L('เซลล์ตัวจริง ดูแลตั้งแต่ถามราคาจนออกเรือ', 'Real people, with you from first question to sailing')}</small></div></div>
     </div>
     <div class="ab-bento">
       <a href="#/boat/${heroB[0]}" class="x1 img-fallback"><img src="${bimg(heroB[0], 'hero', 1024)}" alt="${abEsc(nmT(heroB[0]))} ${L('เช่าเรือส่วนตัวภูเก็ต', 'private charter Phuket')}" fetchpriority="high"><span class="ab-tag">${abEsc(nmT(heroB[0]))}</span></a>
@@ -2949,7 +2962,7 @@ function renderSmartTeaser() {
       <h2 class="font-display text-2xl sm:text-3xl mt-2">${L('ไม่แน่ใจว่าลำไหน? ตอบ 3 ข้อ เราเลือกให้','Not sure which boat? Answer 3 questions')}</h2>
       <p class="text-sm text-muted mt-3 max-w-lg">${L(`ระบบจับคู่จากข้อมูลจริงของเรือทั้ง ${FLEET.length} ลำ — จำนวนคน งบ สไตล์ทริป และเส้นทาง แล้วแนะนำ 3 ลำที่ใช่ที่สุดพร้อมเหตุผล`, `We match your group, budget, style and route against real data for all ${FLEET.length} boats — and explain every pick.`)}</p>
       <button onclick="openSmart()" class="mt-6 px-6 py-3 bg-maroon text-white hover:bg-maroon-800 inline-flex items-center gap-2">${L('เริ่มเลย · 30 วินาที','Start · 30 seconds')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
-    <div class="grid grid-cols-3 gap-2">${['the-origin-90-ft','lobster-78-ft','r5-47-ft'].map((s,i) => `<div class="aspect-[3/4] overflow-hidden img-fallback ${i===1?'translate-y-4':''}"><img loading="lazy" src="${bimg(s,'a')}" alt="" class="w-full h-full object-cover"/></div>`).join('')}</div>
+    <div class="grid grid-cols-3 gap-2">${['the-origin-90-ft','lobster-78-ft','r5-47-ft'].map((s,i) => `<div class="aspect-[3/4] overflow-hidden img-fallback ${i===1?'translate-y-4':''}"><img loading="lazy" src="${bimg(s,'a')}" alt="${esc(niceTitle(bySlug(s)?.title || s))}" class="w-full h-full object-cover"/></div>`).join('')}</div>
   </div></div>`;
 }
 
@@ -3095,17 +3108,17 @@ function seoFinal(id) {
 function applySeo(view, boat) {
   const k = LANG === 'en' ? 'en' : 'th';
   let title = SEO_META[k].title, desc = SEO_META[k].desc, path = '/';
-  if (view === 'boat' && boat) { title = `${niceTitle(boat.title)} ${L('เช่าเรือ','Yacht Charter')} ${boat.pattaya ? 'Pattaya' : 'Phuket'} – ${L('เริ่ม','from')} ${baht(boat.from_)} | BTT`; desc = L(`${niceTitle(boat.title)} ${typeLabel(boat.type)} รับได้ ${boat.pax||'-'} คน ออกจาก ${boat.marinaP} ราคาเริ่มต้น ${baht(boat.from_)} รวมกัปตันและประกัน ดูโปรแกรมและราคาทุกฤดูกาล`, `${niceTitle(boat.title)} ${typeLabel(boat.type)} for up to ${boat.pax||'-'} guests from ${boat.marinaP}. From ${baht(boat.from_)} incl. crew & insurance. See every program and seasonal rate.`); path = '/yacht-charter/' + boat.slug;
+  if (view === 'boat' && boat) { { const loc = boat.pattaya ? L('พัทยา', 'Pattaya') : L('ภูเก็ต', 'Phuket'); title = `${niceTitle(boat.title)} ${L('เช่าเรือ' + loc, 'Yacht Charter ' + loc)}${boat.from_ ? ` ${L('เริ่ม', 'from')} ${baht(boat.from_)}` : ''} | Boat Trip Thailand`; } desc = L(`${niceTitle(boat.title)} ${typeLabel(boat.type)} รับได้ ${boat.pax||'-'} คน ออกจาก ${boat.marinaP} ราคาเริ่มต้น ${baht(boat.from_)} รวมกัปตันและประกัน ดูโปรแกรมและราคาทุกฤดูกาล`, `${niceTitle(boat.title)} ${typeLabel(boat.type)} for up to ${boat.pax||'-'} guests from ${boat.marinaP}. From ${baht(boat.from_)} incl. crew & insurance. See every program and seasonal rate.`); path = '/yacht-charter/' + boat.slug;
     // SEO title / description written in /admin win over the template
     title = i18nPick(boat.i18n?.seoTitle, title); desc = i18nPick(boat.i18n?.seoDesc, desc); }
   if (view === 'privacy') { title = L('นโยบายความเป็นส่วนตัว | Boat Trip Thailand','Privacy Policy | Boat Trip Thailand'); desc = L('นโยบายความเป็นส่วนตัวของ Boat Trip Thailand ตาม PDPA: ข้อมูลที่เก็บ วัตถุประสงค์ การเปิดเผย และสิทธิของคุณ','Boat Trip Thailand privacy policy under the PDPA: what we collect, why, who we share it with and your rights.'); path = '/privacy-policy'; }
   if (view === 'terms') { title = L('ข้อกำหนดและเงื่อนไข | Boat Trip Thailand','Terms & Conditions | Boat Trip Thailand'); desc = L('เงื่อนไขการจองเรือ การชำระเงิน การยกเลิก กฎบนเรือ และความรับผิดของ Boat Trip Thailand','Booking, payment, cancellation, on-board rules and liability terms for Boat Trip Thailand charters.'); path = '/terms-and-conditions'; }
   if (view === 'cookies') { title = L('การตั้งค่าคุกกี้ | Boat Trip Thailand','Cookie Preferences | Boat Trip Thailand'); desc = L('เลือกประเภทคุกกี้ที่อนุญาตบนเว็บไซต์ Boat Trip Thailand','Choose which cookies you allow on the Boat Trip Thailand website.'); path = '/cookie-preferences'; }
-  if (view === 'about') { title = L('เกี่ยวกับเรา – Boat Trip Thailand | Yacht Charter ภูเก็ต','About Us – Boat Trip Thailand | Yacht Charter Phuket'); desc = L(`รู้จัก Boat Trip Thailand ผู้ให้บริการ yacht charter ภูเก็ต เรือส่วนตัว ${FLEET.length} ลำ ใบอนุญาต ททท. ${SET.tat} ราคาโปร่งใส ทีมงานตอบไวทุกวัน`,`Meet Boat Trip Thailand, a TAT-licensed (${SET.tat}) yacht charter company in Phuket with ${FLEET.length} private boats, transparent pricing and a fast, friendly team.`); path = '/about-us'; }
+  if (view === 'about') { title = L('เกี่ยวกับเรา – Yacht Charter ภูเก็ต | Boat Trip Thailand','About Us – Yacht Charter Phuket | Boat Trip Thailand'); desc = L(`รู้จัก Boat Trip Thailand ผู้ให้บริการ yacht charter ภูเก็ต เรือส่วนตัว ${FLEET.length} ลำ ใบอนุญาต ททท. ${SET.tat} ราคาโปร่งใส ทีมงานตอบไวทุกวัน`,`Meet Boat Trip Thailand, a TAT-licensed (${SET.tat}) yacht charter company in Phuket with ${FLEET.length} private boats, transparent pricing and a fast, friendly team.`); path = '/about-us'; }
   if (view === 'fleet') {
     // its own search terms (price / comparison / rental) so it doesn't compete with the home page for "yacht charter phuket"
     const n = FLEET.length, lo = Math.min(...FLEET.map(b => b.from_).filter(Boolean)), types = TYPES.filter(t => FLEET.some(b => b.type === t)).map(typeLabel);
-    title = L(`เช่าเรือภูเก็ต ${n} ลำ ราคาเริ่ม ${baht(lo)} – เปรียบเทียบยอร์ช คาตามารัน สปีดโบ๊ท | BTT`, `Phuket Boat Rental – ${n} Private Boats from ${baht(lo)}, Compare Prices | BTT`);
+    title = L(`เช่าเรือภูเก็ต ${n} ลำ ราคาเริ่ม ${baht(lo)} | Boat Trip Thailand`, `Phuket Boat Rental: ${n} Private Boats from ${baht(lo)} | Boat Trip Thailand`);
     desc = L(`เปรียบเทียบราคาเช่าเรือส่วนตัวในภูเก็ต ${n} ลำ ทั้ง${types.join(' ')} ดูจำนวนคน ท่าเรือ และโปรแกรมเกาะของแต่ละลำ ราคาเหมาลำเริ่ม ${baht(lo)} รวมกัปตันและลูกเรือ`,
       `Compare ${n} private boats for rent in Phuket — ${types.map(x => x.toLowerCase()).join(', ')}. Guests, pier and island programs for each boat, whole-boat prices from ${baht(lo)} with captain and crew.`);
     path = '/yacht-charter'; }
@@ -3181,7 +3194,7 @@ function renderTeam() {
   const el = $('#team'); if (!el) return;
   const k = LANG === 'en' ? 1 : 0, on = teamIsOnline(), b = currentView === 'boat' && bySlug(currentSlug);
   const msg = b ? L(`สวัสดีครับ/ค่ะ สนใจเช่าเรือ ${niceTitle(b.title)}`, `Hi, I'm interested in chartering ${niceTitle(b.title)}.`) : L('สวัสดีครับ/ค่ะ สนใจเช่าเรือส่วนตัว', "Hi, I'd like to plan a private boat charter.");
-  const faces = TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="" loading="lazy" decoding="async"/>`).join('');
+  const faces = TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="${esc(m.name)}" loading="lazy" decoding="async"/>`).join('');
   const ch = (cls, href, ic, t, s, ext = '') => `<a href="${href}" class="th-ch ${cls}"${ext}><span class="th-ci"><i data-lucide="${ic}"></i></span><span class="th-ct"><b>${t}</b><small>${s}</small></span><i data-lucide="arrow-right" class="th-go"></i></a>`;
   // contact hub: big channel buttons (WhatsApp first, in its own green) + talk to a named person · styles .th-* in glass.css
   el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 lg:py-20">
@@ -3223,7 +3236,7 @@ function renderTeam() {
 function renderTeamLive() {
   const ict = new Date(Date.now() + (new Date().getTimezoneOffset() + 420) * 60000), h = ict.getHours() + ict.getMinutes() / 60;
   const on = h >= 9 && h < 21;
-  const faces = TEAM.map((m, i) => `<img src="${TEAM_IMG[m.id]}" alt="" loading="lazy" decoding="async" class="w-6 h-6 rounded-circle object-cover ring-2 ring-white ${i ? '-ml-2' : ''}"/>`).join('');
+  const faces = TEAM.map((m, i) => `<img src="${TEAM_IMG[m.id]}" alt="${esc(m.name)}" loading="lazy" decoding="async" class="w-6 h-6 rounded-circle object-cover ring-2 ring-white ${i ? '-ml-2' : ''}"/>`).join('');
   const label = on ? L('ทีมออนไลน์ · ตอบใน 30 นาที','Team online · replies in 30 min') : L('กลับมา 09:00 น. · ฝากข้อความได้','Back at 09:00 · leave a message');
   const dot = `<span class="live-dot w-1.5 h-1.5 rounded-circle ${on ? 'bg-maroon text-maroon' : 'bg-line-strong text-line-strong'}"></span>`;
   $('#teamLive').innerHTML = `<span class="flex">${faces}</span>${dot}<span class="text-xs text-muted whitespace-nowrap">${label}</span>`;
@@ -3264,7 +3277,17 @@ if (window.__PREVIEW__) { const i = POSTS.findIndex(x => x.id === window.__PREVI
 if (window.__POST__) { const cur = POSTS.find(x => x.id === window.__POST__.id); if (cur) Object.assign(cur, window.__POST__); }
 const esc = escH;
 const BCAT = { guide: { th: 'คู่มือเช่าเรือ', en: 'Charter guides', icon: 'compass' }, route: { th: 'เส้นทาง & เกาะ', en: 'Routes & islands', icon: 'map' }, boat: { th: 'ประเภทเรือ', en: 'Boat types', icon: 'sailboat' }, event: { th: 'งานอีเวนต์บนเรือ', en: 'Events at sea', icon: 'party-popper' }, news: { th: 'ข่าว & โปรโมชัน', en: 'News & offers', icon: 'megaphone' } };
-const BL = { cat: '', q: '', shown: 13 };
+const BL = { cat: '', q: '', shown: 12 };
+const BLOG_PER = 24;
+/** ?page=N of the blog list (1 when missing or not a number) */
+function blogPage() { const h = VH.hash || '', i = h.indexOf('?'), n = parseInt(new URLSearchParams(i < 0 ? '' : h.slice(i + 1)).get('page'), 10); return n > 1 ? n : 1; }
+function blogPager(pg, pages) {
+  if (pages < 2) return '';
+  const href = n => n > 1 ? `#/blog?page=${n}` : '#/blog', nums = [...new Set([1, pg - 1, pg, pg + 1, pages])].filter(n => n >= 1 && n <= pages).sort((a, b) => a - b);
+  let out = '', last = 0;
+  for (const n of nums) { if (n - last > 1) out += '<span class="blog-pg-gap" aria-hidden="true">…</span>'; out += n === pg ? `<span class="blog-pg-n is-on" aria-current="page">${n}</span>` : `<a class="blog-pg-n" href="${href(n)}" aria-label="${L('หน้า', 'Page')} ${n}">${n}</a>`; last = n; }
+  return `<nav class="blog-pg" aria-label="${L('หน้าบทความ', 'Blog pages')}">${pg > 1 ? `<a class="blog-pg-n blog-pg-x" href="${href(pg - 1)}" rel="prev">${L('ก่อนหน้า', 'Previous')}</a>` : ''}${out}${pg < pages ? `<a class="blog-pg-n blog-pg-x" href="${href(pg + 1)}" rel="next">${L('ถัดไป', 'Next')}</a>` : ''}</nav>`;
+}
 const plang = () => LANG === 'en' ? 'en' : 'th';
 const pHas = (p, k = plang()) => !!(p.title[k] && (p.blocks ? p.blocks[k].length : p.has && p.has[k]));
 const pT = (p, f) => p[f][plang()] || p[f][plang() === 'en' ? 'th' : 'en'] || '';
@@ -3291,7 +3314,9 @@ function postCard(p, big) {
 function renderBlog() {
   const v = $('#view-blog'), all = postsVisible(), q = BL.q.toLowerCase();
   const list = all.filter(p => (!BL.cat || p.cat === BL.cat) && (!q || (pT(p, 'title') + ' ' + pT(p, 'excerpt') + ' ' + (p.kw.th || '') + ' ' + (p.kw.en || '')).toLowerCase().includes(q)));
-  const feat = !BL.cat && !q ? list[0] : null, rest = feat ? list.slice(1) : list, shown = rest.slice(0, BL.shown - (feat ? 1 : 0));
+  // no filter: real pages /blog?page=2 … with plain <a href> links, so crawlers reach every article. Filter / search: load more.
+  const paged = !BL.cat && !q, pg = blogPage(), feat = paged && pg === 1 ? list[0] : null, rest = paged ? list.slice(1) : list;
+  const pages = Math.max(1, Math.ceil(rest.length / BLOG_PER)), shown = paged ? rest.slice((pg - 1) * BLOG_PER, pg * BLOG_PER) : rest.slice(0, BL.shown);
   const cnt = k => all.filter(p => p.cat === k).length;
   v.innerHTML = `
     <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-10">
@@ -3300,15 +3325,15 @@ function renderBlog() {
         <div><h1 class="font-display text-3xl sm:text-4xl leading-tight">${L('บทความ & คู่มือเช่าเรือ', 'Guides & stories from the Andaman')}</h1><p class="text-sm text-muted mt-2 max-w-2xl">${L(`เคล็ดลับเช่าเรือยอร์ชภูเก็ต เส้นทางเกาะ และไอเดียทริป ${all.length} บทความจากทีมงานของเรา`, `${all.length} articles on chartering in Phuket, island routes and trip ideas from our team`)}</p></div>
         <label class="flex items-center gap-2 h-11 px-4 rounded-full ring-1 ring-sand-200 bg-white md:w-80 focus-within:ring-maroon/40"><i data-lucide="search" class="w-4 h-4 text-muted"></i><input id="blogQ" class="bg-transparent w-full text-sm outline-none" placeholder="${L('ค้นหาบทความ…', 'Search articles…')}" value="${esc(BL.q)}"/></label>
       </div>
-      <div class="mt-6 flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">${[['', L('ทั้งหมด', 'All'), all.length, 'layout-grid'], ...Object.entries(BCAT).filter(([k]) => cnt(k)).map(([k, c]) => [k, c[plang()], cnt(k), c.icon])].map(([k, l, n, ic]) => `<button class="blog-chip ${BL.cat === k ? 'is-on' : ''}" onclick="BL.cat='${k}';BL.shown=13;renderBlog()"><i data-lucide="${ic}" class="w-4 h-4" stroke-width="1.5"></i>${l}<span class="opacity-50 tabular-nums">${n}</span></button>`).join('')}</div>
+      <div class="mt-6 flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">${[['', L('ทั้งหมด', 'All'), all.length, 'layout-grid'], ...Object.entries(BCAT).filter(([k]) => cnt(k)).map(([k, c]) => [k, c[plang()], cnt(k), c.icon])].map(([k, l, n, ic]) => `<button class="blog-chip ${BL.cat === k ? 'is-on' : ''}" onclick="BL.cat='${k}';BL.shown=12;renderBlog()"><i data-lucide="${ic}" class="w-4 h-4" stroke-width="1.5"></i>${l}<span class="opacity-50 tabular-nums">${n}</span></button>`).join('')}</div>
     </section>
     <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-16 lg:pb-20">
       ${feat ? `<div class="pb-10 mb-10 border-b border-sand-200">${postCard(feat, true)}</div>` : ''}
       ${q || BL.cat ? `<p class="text-sm text-muted mb-5">${L('พบ', 'Found')} ${list.length} ${L('บทความ', 'articles')}${q ? ` · “${esc(BL.q)}”` : ''} <button class="underline text-maroon ml-2" onclick="BL.cat='';BL.q='';renderBlog()">${L('ล้าง', 'Clear')}</button></p>` : ''}
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">${shown.map(p => postCard(p)).join('') || `<p class="text-muted col-span-full py-16 text-center">${L('ไม่พบบทความ', 'No articles found')}</p>`}</div>
-      ${rest.length > shown.length ? `<div class="mt-12 text-center"><button class="h-11 px-6 rounded-full ring-1 ring-sand-200 hover:ring-maroon/40 text-sm inline-flex items-center gap-2" onclick="BL.shown+=12;renderBlog()">${L('ดูบทความเพิ่ม', 'Load more')} <span class="text-muted">${shown.length}/${rest.length}</span></button></div>` : ''}
+      ${paged ? blogPager(pg, pages) : rest.length > shown.length ? `<div class="mt-12 text-center"><button class="h-11 px-6 rounded-full ring-1 ring-sand-200 hover:ring-maroon/40 text-sm inline-flex items-center gap-2" onclick="BL.shown+=12;renderBlog()">${L('ดูบทความเพิ่ม', 'Load more')} <span class="text-muted">${shown.length}/${rest.length}</span></button></div>` : ''}
     </section>`;
-  const qi = $('#blogQ'); qi.oninput = () => { clearTimeout(qi._t); qi._t = setTimeout(() => { BL.q = qi.value; BL.shown = 13; renderBlog(); const n = $('#blogQ'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 300); };
+  const qi = $('#blogQ'); qi.oninput = () => { clearTimeout(qi._t); qi._t = setTimeout(() => { BL.q = qi.value; BL.shown = 12; renderBlog(); const n = $('#blogQ'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 300); };
   icons();
 }
 /* ---------- article ---------- */
@@ -3398,13 +3423,24 @@ function seoPost(p) {
   $('#ldjson').textContent = JSON.stringify(ld);
   seoFinal('a-' + p.id);
 }
-function seoBlog() { const k = plang(), title = L('บทความ คู่มือเช่าเรือยอร์ชภูเก็ต & เส้นทางเกาะ | Boat Trip Thailand', 'Phuket Yacht Charter Guides & Island Routes | Boat Trip Thailand'); document.title = title; setMeta('description', L('รวมบทความเช่าเรือยอร์ชภูเก็ต ราคา เส้นทางเกาะ ช่วงเวลาที่ดีที่สุด และไอเดียจัดทริปบนเรือ', 'Phuket yacht charter guides: prices, island routes, best time to go and ideas for your day at sea.')); setMeta('og:title', title, 'property'); $('#canonical').href = SITE + (k === 'en' ? '/en' : '') + '/blog'; setMeta('robots', BL.q ? 'noindex, follow' : 'index, follow');
+function seoBlog() { const k = plang(), title = L('บทความเช่าเรือยอร์ชภูเก็ต & เส้นทางเกาะ | Boat Trip Thailand', 'Phuket Yacht Charter Guides & Island Routes | Boat Trip Thailand'); document.title = title; setMeta('description', L('รวมบทความเช่าเรือยอร์ชภูเก็ต ราคา เส้นทางเกาะ ช่วงเวลาที่ดีที่สุด และไอเดียจัดทริปบนเรือ', 'Phuket yacht charter guides: prices, island routes, best time to go and ideas for your day at sea.')); setMeta('og:title', title, 'property'); $('#canonical').href = SITE + (k === 'en' ? '/en' : '') + '/blog'; setMeta('robots', BL.q ? 'noindex, follow' : 'index, follow');
   const url = SITE + (k === 'en' ? '/en' : '') + '/blog', list = POSTS.filter(p => p.slug && (p.slug[k] || p.slug.th)).slice(0, 30);
   $('#ldjson').textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
     { '@type': 'CollectionPage', '@id': url + '#page', url, name: title, inLanguage: k, isPartOf: { '@type': 'WebSite', name: 'Boat Trip Thailand', url: SITE + '/' },
       mainEntity: { '@type': 'ItemList', itemListElement: list.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: SITE + (k === 'en' ? '/en' : '') + '/blog/' + (p.slug[k] || p.slug.th), name: pT(p, 'title') })) } },
     { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: t('home'), item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: L('บทความ', 'Blog'), item: url }] }] }); }
-{ const _sb = seoBlog; seoBlog = function () { _sb(); if (!BL.q) seoFinal('s-blog'); }; }   // search results stay noindex
+{ const _sb = seoBlog; seoBlog = function () { _sb(); if (!BL.q) seoFinal('s-blog');   // search results stay noindex
+    const pg = blogPage(); if (pg < 2) return;
+    // /blog?page=N: its own title + canonical (not page 1's), noindex past the last page
+    const k = plang(), pages = Math.ceil(Math.max(0, postsVisible().length - 1) / BLOG_PER), sfx = ` – ${L('หน้า', 'Page')} ${pg}`;
+    const t = document.title.replace(/( \| Boat Trip Thailand)?$/, sfx + '$1'); document.title = t; setMeta('og:title', t, 'property'); setMeta('twitter:title', t);
+    const d = (document.querySelector('meta[name="description"]') || {}).content; if (d) setMeta('description', `${L('หน้า', 'Page')} ${pg}: ${d}`);
+    const url = SITE + (k === 'en' ? '/en' : '') + '/blog?page=' + pg; $('#canonical').href = url; setMeta('og:url', url, 'property');
+    if (pg > pages) setMeta('robots', 'noindex, follow');
+    try { const ld = JSON.parse($('#ldjson').textContent), page = ld['@graph'][0], list = postsVisible().slice(1).slice((pg - 1) * BLOG_PER, pg * BLOG_PER);
+      Object.assign(page, { '@id': url + '#page', url, name: t }); page.mainEntity.itemListElement = list.map((p, i) => ({ '@type': 'ListItem', position: (pg - 1) * BLOG_PER + i + 2, url: SITE + (k === 'en' ? '/en' : '') + '/blog/' + (p.slug[k] || p.slug.th), name: pT(p, 'title') }));
+      $('#ldjson').textContent = JSON.stringify(ld); } catch (e) { }
+  }; }
 /* home: latest articles strip */
 function renderHomeBlog() {
   const el = $('#homeBlog'); if (!el) return; const L3 = postsVisible().slice(0, 3); if (!L3.length) { el.innerHTML = ''; return; }
@@ -3495,7 +3531,7 @@ function renderDestIndex() {
     <div class="dx-cta"><div><p class="font-display">${L('ยังเลือกเกาะไม่ได้?', 'Still deciding?')}</p><span>${L('บอกวันที่ จำนวนคน และสิ่งที่อยากทำ ทีมแนะนำเกาะและเรือให้ฟรี ตอบภายใน 30 นาที', 'Tell us your date, group size and what you want to do — we suggest the island and boat for free, usually within 30 minutes.')}</span></div>
       <button type="button" onclick="openBooking()">${L('ถามทีมงาน', 'Ask our team')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
   </section>`;
-  const title = L('เช่าเรือเที่ยวเกาะภูเก็ต พีพี อ่าวพังงา ราชา เกาะไข่ | Boat Trip Thailand', 'Phuket Island Trips by Private Boat – Phi Phi, Phang Nga, Racha, Khai | Boat Trip Thailand');
+  const title = L('เช่าเรือเที่ยวเกาะภูเก็ต พีพี พังงา ราชา | Boat Trip Thailand', 'Phuket Island Trips by Private Boat – Phi Phi, Phang Nga, Racha, Khai | Boat Trip Thailand');
   const desc = L(`เลือกปลายทางเช่าเรือส่วนตัวจากภูเก็ต ${DPAGES.length} กลุ่มเกาะ เปรียบเทียบเวลาเดินทาง เรือที่ไป ${total} ลำ ราคาเริ่มต้น และท่าเรือ`, `Choose a private boat destination from Phuket — compare travel time, ${total} boats, starting prices and marinas for Phi Phi, Phang Nga Bay, Racha and Khai.`);
   document.title = title; setMeta('description', desc);
   setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property'); if (DPAGES[0]) setMeta('og:image', SITE_ORIGIN + DPAGES[0].hero, 'property');
@@ -3516,7 +3552,7 @@ function renderDest(slug) {
   const title = k === 'en' ? `${d.name.en} private boat charter` : `เช่าเรือไป${d.name.th}`;
   v.innerHTML = `
   <section class="relative overflow-hidden on-dark bg-ink">
-    <img src="${rs(d.hero, 1600)}" srcset="${rs(d.hero)} 768w, ${rs(d.hero, 1280)} 1280w, ${rs(d.hero, 1600)} 1600w" sizes="100vw" alt="" class="absolute inset-0 w-full h-full object-cover"/>
+    <img src="${rs(d.hero, 1600)}" srcset="${rs(d.hero)} 768w, ${rs(d.hero, 1280)} 1280w, ${rs(d.hero, 1600)} 1600w" sizes="100vw" alt="${esc(k === 'en' ? d.name.en : d.name.th)}" class="absolute inset-0 w-full h-full object-cover"/>
     <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" aria-hidden="true"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-16 lg:pb-24 text-white">
       <nav aria-label="Breadcrumb" class="text-xs text-white/75 flex items-center gap-1.5"><a href="#/" class="hover:text-white">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><a href="#/destinations" class="hover:text-white">${L('จุดหมาย', 'Destinations')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span class="text-white" aria-current="page">${d.name[k]}</span></nav>
