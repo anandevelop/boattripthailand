@@ -242,7 +242,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6">
     <div class="flex justify-end"><div id="actFilterLabel" class="text-xs text-muted"></div></div>
     <div id="actGrid" class="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"></div>
-    <div class="mt-8 text-center"><button id="actMore" onclick="actAll=!actAll;renderActs();if(!actAll)document.getElementById('activities').scrollIntoView({behavior:'smooth'})" class="inline-flex items-center gap-2 h-11 px-6 ring-1 ring-sand-200 text-ink hover:ring-maroon hover:text-maroon transition text-[13px]"></button></div>
+    <div class="mt-8 text-center"><button id="actMore" onclick="if(innerWidth<640){navTo(activeCat?'#/tours?cat='+activeCat:'#/tours');return}actAll=!actAll;renderActs();if(!actAll)document.getElementById('activities').scrollIntoView({behavior:'smooth'})" class="inline-flex items-center gap-2 h-11 px-6 ring-1 ring-sand-200 text-ink hover:ring-maroon hover:text-maroon transition text-[13px]"></button></div>
   </div>
 </section>
 

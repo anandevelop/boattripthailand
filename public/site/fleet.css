@@ -1026,3 +1026,10 @@ html.bp-bar-off .bp-mbar { transform: translateY(140%); opacity: 0; pointer-even
 }
 /* phones: shorter hero so the search card and its button fit the first screen */
 @media (max-width: 680px) { #hero.hero2 #heroBox { height: clamp(300px, calc(100svh - 370px), 460px) !important; } }
+
+/* home activities on phones: one swipeable row (10 cards) instead of a tall 2-column grid; "ดูทั้งหมด" opens /tours */
+@media (max-width: 639px) {
+  #activities #actGrid { display: flex !important; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; margin-inline: -16px; padding: 2px 16px 10px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  #activities #actGrid::-webkit-scrollbar { display: none; }
+  #activities #actGrid > * { flex: 0 0 44%; scroll-snap-align: start; scroll-margin-left: 16px; }
+}

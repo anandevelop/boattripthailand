@@ -388,7 +388,7 @@ function renderActs() {
   const media = (a,i) => actImgs(a).length ? `<img src="${actImgs(a)[0]}" alt="${(LANG==='en'?a.en:a.th)} – ${a.loc}, Phuket" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700"/>` : SEA.includes(a.cat)
     ? `<img src="${bimg(seaBoats[(i*7)%seaBoats.length].slug, i%2?'b':'a')}" alt="${(LANG==='en'?a.en:a.th)} – ${a.loc}, Phuket" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700"/>`
     : `<span class="absolute inset-0 act-ph"></span><i data-lucide="${CATS[a.cat].icon}" class="absolute right-[-10%] top-[8%] w-[70%] h-[70%] text-white/[.07]" stroke-width="1"></i>`;
-  const lim = innerWidth < 640 ? 6 : 12, shown = actAll ? list : list.slice(0, lim);
+  const lim = innerWidth < 640 ? 10 : 12, shown = actAll ? list : list.slice(0, lim);
   $('#actGrid').innerHTML = shown.map((a,i) => `
     <article class="act-card fade-up group relative aspect-[3/4] overflow-hidden img-fallback" style="animation-delay:${Math.min(i,10)*40}ms">
       ${media(a,i)}
