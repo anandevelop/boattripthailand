@@ -2056,22 +2056,19 @@ function renderAbout() {
   const pj = abEsc(JSON.stringify(piers.map(([p, n]) => [p, n, pierLL(p)])));
   const h1 = L('Boat Trip Thailand บริษัทเช่าเรือ ส่วนตัวในภูเก็ต', 'Boat Trip Thailand — private boat charter in Phuket');
   v.innerHTML = `<div class="ab">
-  <section class="ab-wrap ab-hero">
-    <div class="ab-ht">
+  <section class="ab-wrap ab-hero2">
+    <div class="ab-hx">
+      <img class="ab-hbg" src="${bimg(heroB[0], 'hero', 1600)}" srcset="${bimg(heroB[0], 'hero', 768)} 768w, ${bimg(heroB[0], 'hero', 1280)} 1280w, ${bimg(heroB[0], 'hero', 1600)} 1600w" sizes="(max-width: 1280px) 100vw, 1280px" alt="${abEsc(nmT(heroB[0]))} ${L('เช่าเรือส่วนตัวภูเก็ต', 'private charter Phuket')}" width="1600" height="1000" fetchpriority="high" decoding="async">
       <nav aria-label="Breadcrumb" class="ab-bc"><a href="#/">${t('home')}</a><i data-lucide="chevron-right"></i><span aria-current="page">${L('เกี่ยวกับเรา', 'About us')}</span></nav>
-      <p class="ab-eye ab-up" style="--d:.05s">${L('เกี่ยวกับเรา', 'About us')} · Sea by Soul</p>
-      <h1>${h1.split(' ').map((w, i) => `<span class="ab-w"><span style="--d:${(i * .08).toFixed(2)}s">${w}</span></span>`).join(' ')}</h1>
-      <p class="ab-ans ab-up" style="--d:.55s">${L(`<b>Boat Trip Thailand</b> คือบริษัทนำเที่ยวที่จดทะเบียนกับ ททท. (${SET.tat}) ให้บริการเช่า${types.map(x => typeLabel(x.k)).join(' ')} แบบเหมาลำ <b>${FLEET.length} ลำ จาก ${piers.length} ท่าเรือทั่วภูเก็ต</b>${dests.length ? ' ไป' + dests.join(' ') : ''} ทำงานกับเจ้าของเรือและกัปตันโดยตรง ราคาเริ่ม ${baht(lo)} ต่อลำ`,
-        `<b>Boat Trip Thailand</b> is a TAT-registered tour company (${SET.tat}) offering <b>${FLEET.length} private charter boats from ${piers.length} Phuket piers</b> — ${types.map(x => typeLabel(x.k).toLowerCase()).join(', ')}${dests.length ? ' — to ' + dests.join(', ') : ''}. We work directly with owners and captains; prices from ${baht(lo)} per boat.`)}</p>
-      <div class="ab-cta ab-up" style="--d:.75s"><a href="#/fleet" class="ab-b1">${L('ดูเรือทั้งหมด', 'Browse the fleet')}<i data-lucide="arrow-right"></i></a><a href="#ab-team" class="ab-b2" onclick="event.preventDefault();document.getElementById('ab-team').scrollIntoView({behavior:'smooth'})"><i data-lucide="message-circle"></i>${L('คุยกับทีมงาน', 'Talk to our team')}</a></div>
-      <div class="ab-htm ab-up" style="--d:.95s"><span class="ab-ava">${TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="${esc(m.name)}" width="40" height="40" loading="lazy">`).join('')}</span><div><b>${on ? '<i class="ab-dot"></i>' : ''}${TEAM.map(m => m.name).join(' · ')}${on ? L(' ออนไลน์', ' online now') : ''}</b><small>${L('เซลล์ตัวจริง ดูแลตั้งแต่ถามราคาจนออกเรือ', 'Real people, with you from first question to sailing')}</small></div></div>
+      <div class="ab-hc">
+        <p class="ab-eye ab-up" style="--d:.05s">${L('เกี่ยวกับเรา', 'About us')} · Sea by Soul</p>
+        <h1>${h1.split(' ').map((w, i) => `<span class="ab-w"><span style="--d:${(i * .08).toFixed(2)}s">${w}</span></span>`).join(' ')}</h1>
+        <p class="ab-hsub ab-up" style="--d:.5s">${L('ทำงานกับเจ้าของเรือและกัปตันโดยตรง ไม่ผ่านคนกลาง ให้คุณได้เรือที่ใช่ในราคาที่โปร่งใส', 'We work directly with boat owners and captains, no middlemen, so you get the right boat at a transparent price')}</p>
+        <div class="ab-chips ab-up" style="--d:.62s"><span><b>${FLEET.length}</b> ${L('ลำ', 'boats')}</span><span><b>${types.length}</b> ${L('ประเภทเรือ', 'boat types')}</span><span><b>${piers.length}</b> ${L('ท่าเรือ', 'piers')}</span><span><i data-lucide="badge-check"></i>${L('ใบอนุญาต ททท.', 'TAT licence')} ${SET.tat}</span></div>
+        <div class="ab-cta ab-up" style="--d:.75s"><a href="#/fleet" class="ab-b1">${L('ดูเรือทั้งหมด', 'Browse the fleet')}<i data-lucide="arrow-right"></i></a><a href="#ab-team" class="ab-b2" onclick="event.preventDefault();document.getElementById('ab-team').scrollIntoView({behavior:'smooth'})"><i data-lucide="message-circle"></i>${L('คุยกับทีมงาน', 'Talk to our team')}</a></div>
+      </div>
     </div>
-    <div class="ab-bento">
-      <a href="#/boat/${heroB[0]}" class="x1 img-fallback"><img src="${bimg(heroB[0], 'hero', 1024)}" alt="${abEsc(nmT(heroB[0]))} ${L('เช่าเรือส่วนตัวภูเก็ต', 'private charter Phuket')}" fetchpriority="high"><span class="ab-tag">${abEsc(nmT(heroB[0]))}</span></a>
-      <a href="#/boat/${heroB[1]}" class="x2 img-fallback"><img src="${bimg(heroB[1], 'hero', 640)}" alt="${abEsc(nmT(heroB[1]))}" loading="lazy"><span class="ab-tag">${abEsc(nm(heroB[1]))}</span></a>
-      <div class="x3 reveal"><b class="count" data-to="${FLEET.length}">${FLEET.length}</b><small>${L(`ลำ · ${types.length} ประเภท`, `boats · ${types.length} types`)}</small><i class="ln"></i><em><i data-lucide="badge-check"></i>${L('ททท.', 'TAT')} ${SET.tat}</em></div>
-      <a href="#/boat/${heroB[2]}" class="x4 img-fallback"><img src="${bimg(heroB[2], 'hero', 1024)}" alt="${abEsc(nmT(heroB[2]))}" loading="lazy"><span class="ab-tag">${abEsc(nmT(heroB[2]))}</span></a>
-    </div>
+    <div class="ab-htm ab-up" style="--d:.95s"><span class="ab-ava">${TEAM.map(m => `<img src="${TEAM_IMG[m.id]}" alt="${esc(m.name)}" width="40" height="40" loading="lazy">`).join('')}</span><div><b>${TEAM.map(m => m.name).join(' · ')}</b><small>${L('เซลล์ตัวจริง ดูแลตั้งแต่ถามราคาจนออกเรือ', 'Real people, with you from first question to sailing')}</small></div></div>
   </section>
   <div class="ab-trust" aria-hidden="true"><div>${[0, 1].map(() => trust.map(x => `<span><i data-lucide="star"></i>${x}</span>`).join('')).join('')}</div></div>
 
@@ -2079,6 +2076,8 @@ function renderAbout() {
     <dl class="ab-facts">${facts.map(([k, x]) => `<div><dt>${k}</dt><dd>${x}</dd></div>`).join('')}</dl></section>
 
   <section class="ab-wrap ab-sec ab-story reveal"><div><p class="ab-eye">${L('เรื่องของเรา', 'Our story')}</p><h2>${L('ทีมภูเก็ตที่อยากให้ทุกทริปทะเลเป็นความทรงจำที่ดี', 'A Phuket team that wants every day at sea to be a good memory')}</h2>
+      <p class="ab-ans">${L(`<b>Boat Trip Thailand</b> คือบริษัทนำเที่ยวที่จดทะเบียนกับ ททท. (${SET.tat}) ให้บริการเช่า${types.map(x => typeLabel(x.k)).join(' ')} แบบเหมาลำ <b>${FLEET.length} ลำ จาก ${piers.length} ท่าเรือทั่วภูเก็ต</b>${dests.length ? ' ไป' + dests.join(' ') : ''} ทำงานกับเจ้าของเรือและกัปตันโดยตรง ราคาเริ่ม ${baht(lo)} ต่อลำ`,
+        `<b>Boat Trip Thailand</b> is a TAT-registered tour company (${SET.tat}) offering <b>${FLEET.length} private charter boats from ${piers.length} Phuket piers</b> — ${types.map(x => typeLabel(x.k).toLowerCase()).join(', ')}${dests.length ? ' — to ' + dests.join(', ') : ''}. We work directly with owners and captains; prices from ${baht(lo)} per boat.`)}</p>
       <p>${L(`<b>${SET.company}</b> เป็นบริษัทนำเที่ยวในภูเก็ต สำนักงานอยู่ที่ตำบลเกาะแก้ว และจดทะเบียนกับกรมการท่องเที่ยว ใบอนุญาตเลขที่ ${SET.tat} เราตั้งใจทำเรื่องเดียวให้ดี คือการเช่าเรือส่วนตัว ให้ทุกกลุ่มได้ออกทะเลอันดามันในแบบของตัวเอง จะไปเกาะไหน ออกกี่โมง อยู่ทะเลนานแค่ไหน คุณเป็นคนเลือก`,
         `<b>${SET.company}</b> is a tour company based in Koh Kaew, Phuket, registered with Thailand's Department of Tourism (licence ${SET.tat}). We focus on one thing: private boat charters, so every group can see the Andaman Sea their own way — which islands, what time you leave and how long you stay out is up to you.`)}</p>
       <p>${L(`เราทำงานกับเจ้าของเรือและกัปตันโดยตรง วันนี้มีเรือในเครือข่าย ${FLEET.length} ลำ ตั้งแต่เรือหางยาวไปจนถึงเรือยอร์ชลำใหญ่ ออกจาก ${piers.length} ท่าเรือรอบเกาะ เพราะรู้จักเรือแต่ละลำจริง เราจึงแนะนำลำที่เหมาะกับจำนวนคน งบ และสไตล์ทริปของคุณได้ ไม่ใช่ลำที่แพงที่สุด และบอกราคาจากโบรชัวร์ของแต่ละฤดูกาล รวม VAT และค่าคนเพิ่ม ให้รู้ครบก่อนจอง`,

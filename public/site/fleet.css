@@ -1178,3 +1178,37 @@ body > .fx-fw { overflow: visible !important; }
    under the finder (the hero photo replaced it) · html carries the base colour so nothing ever shows white behind the page */
 .fx-amb { display: none !important; }
 html { background: #f3eeec; }
+
+/* ---------- about page hero (2026-11): full photo, centred text, chips, team pill on the bottom edge — same family as the boat list hero ---------- */
+.ab-hero2 { padding-top: 24px; padding-bottom: 8px; }
+.ab-hx { position: relative; isolation: isolate; overflow: hidden; border-radius: 32px; min-height: 540px; display: flex; flex-direction: column; color: #fff; padding: 24px 40px 72px; background: #0a2f39; }
+.ab-hbg { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center 55%; }
+.ab-hx::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 70% at 50% 50%, rgb(8 22 30 / .55), rgb(8 22 30 / .32)), linear-gradient(180deg, rgb(8 22 30 / .45), rgb(8 22 30 / .2) 45%, rgb(8 22 30 / .72)); }
+.ab-hx .ab-bc, .ab-hx .ab-bc a { color: rgb(255 255 255 / .75); } .ab-hx .ab-bc span { color: #fff; } .ab-hx .ab-bc a:hover { color: #fff; }
+.ab-hc { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-top: 24px; }
+.ab-hc .ab-eye { color: rgb(255 255 255 / .82); }
+html[lang="th"] .ab-hc .ab-eye { letter-spacing: .08em; }
+#view-about .ab .ab-hc h1 { color: #fff; font-size: 50px !important; line-height: 1.16; max-width: 900px; text-shadow: 0 2px 24px rgb(0 0 0 / .25); }
+.ab-hsub { margin: 14px 0 0; max-width: 680px; font-size: 17px; line-height: 27px; color: rgb(255 255 255 / .86); }
+.ab-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; }
+.ab-chips span { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; background: rgb(255 255 255 / .12); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .22); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font-size: 13.5px; white-space: nowrap; }
+.ab-chips b { font-weight: 500; } .ab-chips svg { width: 15px; height: 15px; }
+.ab-hc .ab-cta { justify-content: center; margin-top: 28px; }
+.ab-hc .ab-b1 { background: #fff; color: #70000e; box-shadow: 0 14px 30px -16px rgb(0 0 0 / .5); } .ab-hc .ab-b1 svg { color: #70000e; }
+.ab-hc .ab-b2 { background: transparent; color: #fff; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .5); } .ab-hc .ab-b2 svg { color: #fff; }
+.ab-hc .ab-b2:hover { background: rgb(255 255 255 / .12); }
+.ab-hero2 .ab-htm { position: relative; z-index: 1; width: max-content; max-width: calc(100% - 32px); margin: -34px auto 0; padding: 10px 22px 10px 12px; border: 0; border-radius: 999px; background: #fff; box-shadow: 0 24px 50px -28px rgb(58 0 7 / .5), 0 0 0 1px rgb(35 20 22 / .04); text-align: left; }
+@media (max-width: 1180px) { #view-about .ab .ab-hc h1 { font-size: 42px !important; } }
+@media (max-width: 760px) {
+  .ab-hero2 { padding-top: 12px; }
+  .ab-hx { min-height: 500px; border-radius: 24px; padding: 16px 18px 52px; margin: 0 -4px; }
+  .ab-hx::after { background: linear-gradient(180deg, rgb(8 22 30 / .55), rgb(8 22 30 / .6) 40%, rgb(8 22 30 / .85)); }
+  .ab-hc { justify-content: flex-end; padding-top: 30px; }
+  #view-about .ab .ab-hc h1 { font-size: 28px !important; line-height: 1.22; }
+  .ab-hsub { font-size: 14.5px; line-height: 22px; margin-top: 10px; }
+  .ab-chips { gap: 6px; margin-top: 14px; } .ab-chips span { height: 28px; padding: 0 10px; font-size: 12px; }
+  .ab-chips span:nth-child(2) { display: none; }
+  .ab-hc .ab-cta { width: 100%; flex-direction: column; gap: 8px; margin-top: 18px; } .ab-hc .ab-cta a { flex: none; height: 46px; justify-content: center; }
+  .ab-hero2 .ab-htm { margin-top: -26px; padding: 8px 14px 8px 8px; gap: 10px; }
+  .ab-hero2 .ab-htm .ab-ava img { width: 32px; height: 32px; } .ab-hero2 .ab-htm small { font-size: 12px; }
+}
