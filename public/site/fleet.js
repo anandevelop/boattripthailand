@@ -198,7 +198,7 @@ function fxBuild(v) {
   v.innerHTML = `
   <div class="fx-amb" aria-hidden="true">${amb ? `<img src="${amb}" alt="">` : ''}</div>
   <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-10 pb-16">
-    <div class="fx-hero">${(() => { const u = '/img/dest/racha.webp', r = w => typeof rs === 'function' ? rs(u, w) : u; return `<img class="fx-hbg" src="${r(1600)}" srcset="${r(768)} 768w, ${r(1280)} 1280w, ${r(1600)} 1600w" sizes="(max-width: 1280px) 100vw, 1280px" alt="" width="1600" height="1000" fetchpriority="high" decoding="async">`; })()}
+    <div class="fx-hero">${(() => { const u = '/img/dest/racha.webp', r = w => typeof rs === 'function' ? rs(u, w) : u; return `<img class="fx-hbg" src="${r(1600)}" srcset="${r(768)} 768w, ${r(1280)} 1280w, ${r(1600)} 1600w" sizes="(max-width: 640px) 45vw, (max-width: 1280px) 100vw, 1280px" alt="" width="1600" height="1000" fetchpriority="high" decoding="async">`; })()}
     <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-1.5"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span class="text-ink" aria-current="page">${t('fleet')}</span></nav>
     <div class="fx-head">
       <div><div class="fx-h1w"><h1 id="fxH1">${fxTitleH()}</h1></div>
@@ -1427,15 +1427,19 @@ function fxNavLabels() {
 }
 { const _ar = afterRoute; afterRoute = function () { _ar(); try { fxNavLabels(); } catch (e) { } }; }
 /* the sort menu is as wide as the chosen option (a native select is as wide as its longest option) */
-function fxSortFit() {
-  const sel = document.getElementById('fxSort'); if (!sel || FX_SSR) return;
-  const o = sel.options[sel.selectedIndex]; if (!o) return;
-  const m = fxSortFit.m || (fxSortFit.m = Object.assign(document.createElement('span'), { style: 'position:absolute;visibility:hidden;white-space:pre;left:-9999px;top:0' }));
-  if (!m.isConnected) document.body.appendChild(m);
-  const cs = getComputedStyle(sel); m.style.font = cs.font; m.style.letterSpacing = cs.letterSpacing; m.textContent = o.textContent;
-  sel.style.width = Math.ceil(m.getBoundingClientRect().width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + 'px';
+function fxSortFit() {   // measured off the critical path (it reads computed styles), and only when the label changes
+  if (FX_SSR || fxSortFit.q) return; fxSortFit.q = 1;
+  (window.requestIdleCallback || (f => setTimeout(f, 200)))(() => { fxSortFit.q = 0; fxSortFit.run(); });
 }
-if (!FX_SSR && document.fonts && document.fonts.ready) document.fonts.ready.then(() => fxSortFit());
+fxSortFit.run = function () {
+  const sel = document.getElementById('fxSort'); if (!sel) return;
+  const o = sel.options[sel.selectedIndex]; if (!o || fxSortFit.last === o.textContent) return; fxSortFit.last = o.textContent;
+  // canvas text width: no style recalc / layout of the page (the select is 13px Jost / IBM Plex Sans Thai, padding 8 + 22)
+  const c = fxSortFit.c || (fxSortFit.c = document.createElement('canvas').getContext('2d'));
+  c.font = '400 13px Jost, "IBM Plex Sans Thai", system-ui, sans-serif';
+  sel.style.width = Math.ceil(c.measureText(o.textContent).width + 32) + 'px';
+}
+if (!FX_SSR && document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fxSortFit.last = ''; fxSortFit(); });
 /* ---------- start ---------- */
 if (!FX_SSR) {
   addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
@@ -1529,3 +1533,11 @@ if (!FX_SSR && typeof MutationObserver === 'function') {
   };
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', go) : go();
 }
+
+/* last step of every route (runs after all other afterRoute wrappers, in the browser and the server render):
+   og:url always equals the page's canonical (several views never set it, so it kept the home URL);
+   the cookie settings page stays out of the index */
+{ const _ar = afterRoute; afterRoute = function () { _ar(); try {
+  const c = document.getElementById('canonical'); if (c && c.getAttribute('href')) setMeta('og:url', c.getAttribute('href'), 'property');
+  if (/^#\/cookies/.test(VH.hash || '')) setMeta('robots', 'noindex, follow');
+} catch (e) { } }; }

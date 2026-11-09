@@ -489,7 +489,7 @@ function renderTours() {
     <section class="tr-faq"><h2 class="font-display">${L('คำถามที่พบบ่อย', 'FAQ')}</h2>
       <div>${TR_FAQ().map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${q}<i data-lucide="plus" class="w-4 h-4 text-maroon shrink-0"></i></summary><p>${a}</p></details>`).join('')}</div></section>
   </div>`;
-  const title = CATS[cat] ? `${h1} | Boat Trip Thailand` : L(`ทัวร์ & กิจกรรมภูเก็ต ${ACTS.length} รายการ | Boat Trip Thailand`, `Phuket Tours & Activities – ${ACTS.length} shows, island tours & spas | Boat Trip Thailand`);
+  const title = CATS[cat] ? `${h1} | Boat Trip Thailand` : L(`ทัวร์ & กิจกรรมภูเก็ต ${ACTS.length} รายการ | Boat Trip Thailand`, `Phuket Tours & Activities (${ACTS.length}) | Boat Trip Thailand`);
   const desc = L(`รวมทัวร์และกิจกรรมในภูเก็ต ${ACTS.length} รายการ เช่น ภูเก็ตแฟนตาซี ไซมอน คาบาเรต์ ทัวร์ทะเล กิจกรรมทางน้ำ สปา และที่พัก จองพร้อมเช่าเรือส่วนตัวได้ในคำขอเดียว`, `${ACTS.length} Phuket tours and activities — Phuket FantaSea, Simon Cabaret, island tours, water sports, spas and stays — bookable together with a private boat in one request.`);
   document.title = title; setMeta('description', desc); setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property');
   const url = SITE_ORIGIN + hashToPath(CATS[cat] ? `#/tours?cat=${cat}` : '#/tours');
@@ -3142,7 +3142,7 @@ function applySeo(view, boat) {
   if (view === 'fleet') {
     // its own search terms (price / comparison / rental) so it doesn't compete with the home page for "yacht charter phuket"
     const n = FLEET.length, lo = Math.min(...FLEET.map(b => b.from_).filter(Boolean)), types = TYPES.filter(t => FLEET.some(b => b.type === t)).map(typeLabel);
-    title = L(`เช่าเรือภูเก็ต ${n} ลำ ราคาเริ่ม ${baht(lo)} | Boat Trip Thailand`, `Phuket Boat Rental: ${n} Private Boats from ${baht(lo)} | Boat Trip Thailand`);
+    title = L(`เช่าเรือภูเก็ต ${n} ลำ ราคาเริ่ม ${baht(lo)} | Boat Trip Thailand`, `Phuket Boat Rental: ${n} Boats from ${baht(lo)} | Boat Trip Thailand`);
     desc = L(`เปรียบเทียบราคาเช่าเรือส่วนตัวในภูเก็ต ${n} ลำ ทั้ง${types.join(' ')} ดูจำนวนคน ท่าเรือ และโปรแกรมเกาะของแต่ละลำ ราคาเหมาลำเริ่ม ${baht(lo)} รวมกัปตันและลูกเรือ`,
       `Compare ${n} private boats for rent in Phuket — ${types.map(x => x.toLowerCase()).join(', ')}. Guests, pier and island programs for each boat, whole-boat prices from ${baht(lo)} with captain and crew.`);
     path = '/yacht-charter'; }
@@ -3158,8 +3158,7 @@ function applySeo(view, boat) {
       address:{ '@type':'PostalAddress', streetAddress:'79/29 Moo 4, Koh Kaew', addressLocality:'Muang Phuket', addressRegion:'Phuket', postalCode:'83000', addressCountry:'TH' }, hasMap:MAP_URL, areaServed:['Phuket','Krabi','Phang Nga'],
       priceRange:`${baht(Math.min(...FLEET.filter(b=>b.from_).map(b=>b.from_)))} – ${baht(Math.max(...FLEET.filter(b=>b.from_).map(b=>b.from_)))}`, knowsAbout:['Yacht charter','Catamaran charter','Speedboat charter','Island hopping'],
       contactPoint: TEAM.map(m => ({ '@type':'ContactPoint', name:m.name, contactType:'sales', telephone:m.tel })) },
-    { '@type':'WebSite', '@id':SITE+'/#website', url:SITE+'/', name:'Boat Trip Thailand', inLanguage:['th','en'], publisher:{ '@id':SITE+'/#org' },
-      potentialAction:{ '@type':'SearchAction', target:SITE+'/yacht-charter?q={search_term_string}', 'query-input':'required name=search_term_string' } },
+    { '@type':'WebSite', '@id':SITE+'/#website', url:SITE+'/', name:'Boat Trip Thailand', inLanguage:['th','en'], publisher:{ '@id':SITE+'/#org' } },
     // FAQ structured data must match the FAQ shown on that page: the home FAQ on home only, each boat's own FAQ on its page
     ...(view === 'home' ? [{ '@type':'FAQPage', '@id':SITE+'/#faq', mainEntity: FAQ.map(f => ({ '@type':'Question', name:f.q[k==='en'?1:0], acceptedAnswer:{ '@type':'Answer', text:f.a[k==='en'?1:0]() } })) }] : []),
     ...(view === 'home' ? [{ '@type':'ItemList', '@id':SITE+'/#featured', name:L('เรือแนะนำสำหรับ yacht charter','Featured yacht charters'), itemListElement: FEATURED.map(bySlug).filter(Boolean).map((b,i) => ({ '@type':'ListItem', position:i+1, url:SITE+'/yacht-charter/'+b.slug,
@@ -3322,6 +3321,21 @@ const pUrl = p => '#/blog/' + encodeURIComponent(p.slug[plang()] || p.slug.th ||
 const pBySlug = s => POSTS.find(p => p.slug.th === s || p.slug.en === s);
 window.pFallbackImg = i => { const L = FLEET.filter(b => bimg(b.slug, 'a')); return bimg(L[(i * 7) % L.length].slug, i % 2 ? 'b' : 'a'); };
 const pImg = (p, cls = '', eager) => `<img src="${p.cover || pFallbackImg(p.id)}" alt="${esc(pT(p, 'title'))}" ${eager ? '' : 'loading="lazy"'} class="${cls}" data-pid="${p.id}" onerror="if(!this.dataset.fb){this.dataset.fb=1;if(window.pFallbackImg)this.src=pFallbackImg(${p.id})}"/>`;
+/* related articles: the closest topics (shared words in the English title / keyword / slug, same category a bit higher,
+   close publish dates as the tie-break) — not the same newest three under every article, so every article gets links in */
+const REL_STOP = new Set('the and for with your you are how what why when where which best top phuket boat boats yacht yachts charter charters guide private trip trips from tour tours thailand island islands near day vs'.split(' '));
+function relWords(x) { return new Set(`${x.title.en || ''} ${(x.kw && x.kw.en) || ''} ${x.slug.en || ''}`.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2 && !REL_STOP.has(w))); }
+function relPosts(p, n = 3) {
+  const W = relWords(p), d0 = Date.parse(p.date) || 0;
+  return postsVisible().filter(x => x.id !== p.id).map(x => { let sc = 0; relWords(x).forEach(w => { if (W.has(w)) sc++; }); if (x.cat === p.cat) sc += .5; return [sc - Math.abs((Date.parse(x.date) || 0) - d0) / 3e11, x]; })
+    .sort((a, b) => b[0] - a[0]).slice(0, n).map(x => x[1]);
+}
+/* previous / next article by date: a plain link chain through the whole blog */
+function postNeighbours(p) {
+  const all = postsVisible(), i = all.findIndex(x => x.id === p.id); if (i < 0) return '';
+  const newer = all[i - 1], older = all[i + 1], lnk = (x, lab, cls) => x ? `<a href="#/blog/${encodeURIComponent(x.slug[plang()] || x.slug.th || x.slug.en)}" class="post-nb ${cls}"><small>${lab}</small><span>${esc(pT(x, 'title'))}</span></a>` : '<span></span>';
+  return `<nav class="post-nbs" aria-label="${L('บทความก่อนหน้าและถัดไป', 'Previous and next article')}">${lnk(older, L('← บทความก่อนหน้า', '← Previous article'), 'l')}${lnk(newer, L('บทความถัดไป →', 'Next article →'), 'r')}</nav>`;
+}
 function postsVisible() { return POSTS.filter(p => pHas(p) || pHas(p, plang() === 'en' ? 'th' : 'en')).sort((a, b) => b.date.localeCompare(a.date)); }
 function postCard(p, big) {
   const c = BCAT[p.cat] || BCAT.guide;
@@ -3397,7 +3411,7 @@ function renderPost(slug) {
   }
   const k = plang(), miss = !pHas(p, k), B = pBlocks(p), c = BCAT[p.cat] || BCAT.guide;
   const toc = B.map((b, i) => (b.t === 'h' && b.lv === 2) || (b.t === 'faq' && b.title) ? [i, pText(b.html || b.title)] : null).filter(Boolean);
-  const rel = POSTS.filter(x => x !== p && x.cat === p.cat).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3), rb = relatedBoats(p);
+  const rel = relPosts(p), rb = relatedBoats(p), nb = postNeighbours(p);
   const share = encodeURIComponent(SITE + (k === 'en' ? '/en' : '') + '/blog/' + (p.slug[k] || p.slug.th));
   v.innerHTML = `
     <article itemscope itemtype="https://schema.org/BlogPosting">
@@ -3428,7 +3442,7 @@ function renderPost(slug) {
       </aside>
     </section>
     </article>
-    ${rel.length ? `<section class="bg-sand py-14 lg:py-16"><div class="max-w-7xl mx-auto px-4 sm:px-6"><div class="flex items-end justify-between gap-4 mb-8"><h2 class="font-display text-2xl sm:text-3xl">${L('บทความที่เกี่ยวข้อง', 'Related articles')}</h2><a href="#/blog" class="text-sm text-maroon inline-flex items-center gap-1">${L('ดูทั้งหมด', 'View all')}<i data-lucide="arrow-right" class="w-4 h-4"></i></a></div><div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">${rel.map(x => postCard(x)).join('')}</div></div></section>` : ''}`;
+    ${rel.length ? `<section class="bg-sand py-14 lg:py-16"><div class="max-w-7xl mx-auto px-4 sm:px-6">${nb}<div class="flex items-end justify-between gap-4 mb-8"><h2 class="font-display text-2xl sm:text-3xl">${L('บทความที่เกี่ยวข้อง', 'Related articles')}</h2><a href="#/blog" class="text-sm text-maroon inline-flex items-center gap-1">${L('ดูทั้งหมด', 'View all')}<i data-lucide="arrow-right" class="w-4 h-4"></i></a></div><div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">${rel.map(x => postCard(x)).join('')}</div></div></section>` : ''}`;
   /* active TOC item while scrolling */
   const links = $$('#postToc a'); if (links.length && 'IntersectionObserver' in window) { const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.dataset.s === e.target.id)); }), { rootMargin: '-20% 0px -70% 0px' }); links.forEach(a => { const el = document.getElementById(a.dataset.s); el && io.observe(el); }); }
   if (typeof track === 'function') track('ViewContent', { content_ids: [p.slug.en || p.slug.th], content_type: 'article', content_category: p.cat });
@@ -3455,8 +3469,8 @@ function seoBlog() { const k = plang(), title = L('บทความเช่�
 { const _sb = seoBlog; seoBlog = function () { _sb(); if (!BL.q) seoFinal('s-blog');   // search results stay noindex
     const pg = blogPage(); if (pg < 2) return;
     // /blog?page=N: its own title + canonical (not page 1's), noindex past the last page
-    const k = plang(), pages = Math.ceil(Math.max(0, postsVisible().length - 1) / BLOG_PER), sfx = ` – ${L('หน้า', 'Page')} ${pg}`;
-    const t = document.title.replace(/( \| Boat Trip Thailand)?$/, sfx + '$1'); document.title = t; setMeta('og:title', t, 'property'); setMeta('twitter:title', t);
+    const k = plang(), pages = Math.ceil(Math.max(0, postsVisible().length - 1) / BLOG_PER);
+    const t = L(`บทความเช่าเรือภูเก็ต หน้า ${pg} | Boat Trip Thailand`, `Phuket Boat Charter Guides, Page ${pg} | Boat Trip Thailand`); document.title = t; setMeta('og:title', t, 'property'); setMeta('twitter:title', t);
     const d = (document.querySelector('meta[name="description"]') || {}).content; if (d) setMeta('description', `${L('หน้า', 'Page')} ${pg}: ${d}`);
     const url = SITE + (k === 'en' ? '/en' : '') + '/blog?page=' + pg; $('#canonical').href = url; setMeta('og:url', url, 'property');
     if (pg > pages) setMeta('robots', 'noindex, follow');
@@ -3554,7 +3568,7 @@ function renderDestIndex() {
     <div class="dx-cta"><div><p class="font-display">${L('ยังเลือกเกาะไม่ได้?', 'Still deciding?')}</p><span>${L('บอกวันที่ จำนวนคน และสิ่งที่อยากทำ ทีมแนะนำเกาะและเรือให้ฟรี ตอบภายใน 30 นาที', 'Tell us your date, group size and what you want to do — we suggest the island and boat for free, usually within 30 minutes.')}</span></div>
       <button type="button" onclick="openBooking()">${L('ถามทีมงาน', 'Ask our team')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
   </section>`;
-  const title = L('เช่าเรือเที่ยวเกาะภูเก็ต พีพี พังงา ราชา | Boat Trip Thailand', 'Phuket Island Trips by Private Boat – Phi Phi, Phang Nga, Racha, Khai | Boat Trip Thailand');
+  const title = L('เช่าเรือเที่ยวเกาะภูเก็ต พีพี พังงา ราชา | Boat Trip Thailand', 'Phuket Island Trips by Private Boat | Boat Trip Thailand');
   const desc = L(`เลือกปลายทางเช่าเรือส่วนตัวจากภูเก็ต ${DPAGES.length} กลุ่มเกาะ เปรียบเทียบเวลาเดินทาง เรือที่ไป ${total} ลำ ราคาเริ่มต้น และท่าเรือ`, `Choose a private boat destination from Phuket — compare travel time, ${total} boats, starting prices and marinas for Phi Phi, Phang Nga Bay, Racha and Khai.`);
   document.title = title; setMeta('description', desc);
   setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property'); if (DPAGES[0]) setMeta('og:image', SITE_ORIGIN + DPAGES[0].hero, 'property');
