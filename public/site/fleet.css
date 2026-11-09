@@ -1033,3 +1033,9 @@ html.bp-bar-off .bp-mbar { transform: translateY(140%); opacity: 0; pointer-even
   #activities #actGrid::-webkit-scrollbar { display: none; }
   #activities #actGrid > * { flex: 0 0 44%; scroll-snap-align: start; scroll-margin-left: 16px; }
 }
+/* home latest articles on phones: one swipeable row instead of three tall cards stacked */
+@media (max-width: 639px) {
+  #homeBlog .grid { display: flex !important; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px !important; margin-inline: -16px; padding: 2px 16px 12px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  #homeBlog .grid::-webkit-scrollbar { display: none; }
+  #homeBlog .grid > * { flex: 0 0 80%; min-width: 0; scroll-snap-align: start; scroll-margin-left: 16px; }
+}
