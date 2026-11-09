@@ -1457,10 +1457,6 @@ function fxPillSync(n) {
   p.innerHTML = `${FXI('sliders-horizontal')}<span>${L('ค้นหา · ตัวกรอง', 'Search · filters')}</span>${nf ? `<i class="fxp-n tnum">${nf}</i>` : ''}<em class="tnum">${fxPillN} ${L('ลำ', 'boats')}</em>`;
   fxPillCheck();
 }
-function fxPillPlace() {
-  const p = document.getElementById('fxPill'), r = document.getElementById('navRow')?.getBoundingClientRect(); if (!p || !r) return;
-  p.style.top = (innerWidth > 760 ? r.top + r.height / 2 : r.bottom + 10) + 'px';
-}
 function fxPillCheck() {
   const v = document.getElementById('view-fleet'), fw = document.getElementById('fxFw'), html = document.documentElement;
   const on = !!(v && !v.classList.contains('hidden') && fw && fw.getBoundingClientRect().bottom < 0 && !FX.fav);
@@ -1491,7 +1487,7 @@ if (!FX_SSR) {
 }
 /* ---------- start ---------- */
 if (!FX_SSR) {
-  addEventListener('scroll', fxPillCheck, { passive: true }); addEventListener('resize', fxPillPlace);
+  addEventListener('scroll', fxPillCheck, { passive: true });
   addEventListener('resize', () => { fxInd = null; fxMoveInd(); });
   try { if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); } catch (e) { }
 }
