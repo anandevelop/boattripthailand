@@ -265,7 +265,7 @@ function fxDraw() {
     : list.length ? (FX.fav ? fxSavedAsk(list) : '') + order.map((b, i) => fxCard(b, b === pick ? 'pick' : b === value ? 'value' : '', i, list)).join('')
     : `<div class="fx-empty">${FXI('ship')}<b>${FX.fav ? L('ยังไม่มีเรือในรายการโปรด', 'No saved boats yet') : L('ยังไม่มีเรือที่ตรงทุกข้อ', 'No boat matches everything yet')}</b><p>${L('ลองเพิ่มงบ หรือลดจำนวนจุดหมาย · ทีมเราหาเรือนอกรายการให้ได้', 'Try a higher budget or fewer stops · our team can also find boats not listed here.')}</p><div><button class="fx-reset" onclick="fxReset()">${L('ล้างตัวกรอง', 'Clear filters')}</button><button class="fx-book" onclick="fxBook('')">${L('ให้ทีมหาเรือให้', 'Ask our team')}</button></div></div>`;
   fxApplyCols(n);
-  $('#fxCount').textContent = L(`พบ ${n} ลำ`, `${n} boats`);
+  $('#fxCount').textContent = L(`พบ ${n} ลำ`, `${n} boats`); fxPillSync(n);
   $('#fxGoT').textContent = L(`${n} ลำ`, `${n} boats`); $('#fxSGo').textContent = L(`ดู ${n} ลำ`, `See ${n} boats`);
   const H = $('#fxH1'), N = $('#fxN'); if (H) H.innerHTML = FX.fav ? L('เรือที่บันทึกไว้', 'Saved boats') : fxTitleH(); if (N) N.innerHTML = `${FX.fav ? FAV.length : act && !big && n < FLEET.length ? `${n}<small>/${FLEET.length}</small>` : FLEET.length}`;
   // tabs with live counts + the sliding glass pill
@@ -1440,9 +1440,58 @@ fxSortFit.run = function () {
   sel.style.width = Math.ceil(c.measureText(o.textContent).width + 32) + 'px';
 }
 if (!FX_SSR && document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fxSortFit.last = ''; fxSortFit(); });
+/* ---------- boat list: once the finder has scrolled away, a compact summary pill takes its place
+   (in the middle of the header on desktop, under the header on phones). Tap → the full finder drops in under the header
+   (desktop) or the filter sheet opens (phone). The finder itself no longer sticks. ---------- */
+let fxPillN = 0;
+function fxPillSync(n) {
+  if (FX_SSR) return; if (n != null) fxPillN = n;
+  let p = document.getElementById('fxPill');
+  if (!p) { p = document.createElement('button'); p.type = 'button'; p.id = 'fxPill'; p.onclick = fxPillOpen; document.body.appendChild(p); }
+  const dl = [...FX.dest].map(fxDL), dest = dl.length ? dl[0] + (dl.length > 1 ? ` +${dl.length - 1}` : '') : L('ทุกเกาะ', 'Anywhere');
+  const date = FX.date ? fxDate(FX.date) : L('ทุกวัน', 'Any date'), pax = `${FX.pax} ${t('guests')}`, bud = FX.bud < FX_MAX ? L('ไม่เกิน ', 'Up to ') + baht(FX.bud) : L('ไม่จำกัดงบ', 'Any budget');
+  const seg = (ic, v, dim) => `<span class="fxp-s${dim ? ' dim' : ''}">${FXI(ic)}<span>${fxEsc(v)}</span></span>`;
+  p.setAttribute('aria-label', L(`ปรับการค้นหา: ${dest}, ${date}, ${pax}, ${bud} · ${fxPillN} ลำ`, `Edit search: ${dest}, ${date}, ${pax}, ${bud} · ${fxPillN} boats`));
+  p.innerHTML = `<span class="fxp-d">${seg('map-pin', dest, !dl.length)}${seg('calendar', date, !FX.date)}${seg('users', pax)}${seg('wallet', bud, FX.bud >= FX_MAX)}</span>`
+    + `<span class="fxp-m"><b>${fxEsc(dest)}</b> · ${fxEsc(date)} · ${fxEsc(pax)} · ${fxEsc(bud)}</span>`
+    + `<span class="fxp-go">${FXI('search')}<span class="fxp-gt">${L('ปรับ', 'Edit')}</span><em class="tnum">${fxPillN} ${L('ลำ', 'boats')}</em></span>`;
+  fxPillCheck();
+}
+function fxPillPlace() {
+  const p = document.getElementById('fxPill'), r = document.getElementById('navRow')?.getBoundingClientRect(); if (!p || !r) return;
+  p.style.top = (innerWidth > 760 ? r.top + r.height / 2 : r.bottom + 10) + 'px';
+}
+function fxPillCheck() {
+  const v = document.getElementById('view-fleet'), fw = document.getElementById('fxFw'), html = document.documentElement;
+  const on = !!(v && !v.classList.contains('hidden') && fw && fw.getBoundingClientRect().bottom < (innerWidth > 760 ? 84 : 70) && !FX.fav);
+  if (on !== html.classList.contains('fx-compact')) { html.classList.toggle('fx-compact', on); fxPillPlace(); }
+  if (html.classList.contains('fx-open') && Math.abs(scrollY - (fxPillOpen.y || 0)) > 60) fxPillClose();
+}
+function fxPillOpen() {
+  if (innerWidth <= 760) { fxSheet(true); return; }
+  const fw = document.getElementById('fxFw'), html = document.documentElement, y = scrollY; if (!fw || html.classList.contains('fx-open')) return;
+  const sp = document.createElement('div'), cs = getComputedStyle(fw); sp.id = 'fxSpacer'; sp.style.height = fw.offsetHeight + 'px'; sp.style.marginTop = cs.marginTop; sp.style.marginBottom = cs.marginBottom; sp.style.overflowAnchor = 'none'; fw.before(sp);
+  document.body.appendChild(fw); scrollTo({ top: y, behavior: 'instant' });   // out of the page flow: an ancestor's transform would pin a fixed box to it
+  const veil = document.createElement('div'); veil.id = 'fxPVeil'; veil.onclick = fxPillClose; document.body.appendChild(veil);
+  fxPillOpen.y = y; html.classList.add('fx-open');
+  const r = document.getElementById('navRow')?.getBoundingClientRect(); fw.style.top = ((r ? r.bottom : 72) + 10) + 'px';
+  setTimeout(() => { const sg = fw.querySelector('.fx-seg[data-pop]'); if (sg) fxShowPop(sg.dataset.pop, sg); }, 0);   // open "where to" straight away (after this click has finished bubbling)
+}
+function fxPillClose() {
+  const html = document.documentElement; if (!html.classList.contains('fx-open')) return;
+  html.classList.remove('fx-open'); document.getElementById('fxPVeil')?.remove();
+  const fw = document.getElementById('fxFw'), sp = document.getElementById('fxSpacer'), y = scrollY;
+  if (fw) { fw.style.top = ''; if (sp) sp.replaceWith(fw); scrollTo({ top: y, behavior: 'instant' }); }
+  if (typeof fxShowPop === 'function' && fxPop) fxShowPop(null);
+}
+if (!FX_SSR) {
+  addEventListener('keydown', e => { if (e.key === 'Escape') fxPillClose(); });
+  { const _tr = fxToResults; fxToResults = function () { fxPillClose(); _tr(); }; }
+  { const _ar = afterRoute; afterRoute = function () { _ar(); try { fxPillClose(); fxPillCheck(); } catch (e) { } }; }
+}
 /* ---------- start ---------- */
 if (!FX_SSR) {
-  addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
+  addEventListener('scroll', fxPillCheck, { passive: true }); addEventListener('resize', fxPillPlace);
   addEventListener('resize', () => { fxInd = null; fxMoveInd(); });
   try { if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); } catch (e) { }
 }
