@@ -1785,7 +1785,7 @@ window.addEventListener('scroll', () => $('#navbar').classList.toggle('is-compac
 function setLang(l) {
   bpSheetOff(); LANG = l; document.documentElement.lang = l; locFleet();
   $$('.lang-btn').forEach(b => { const on = b.dataset.lang===l; b.classList.toggle('chip-active', on); b.classList.toggle('text-muted', !on); b.setAttribute('aria-pressed', on); });
-  syncLangChip(); applyI18n(); renderAll(); inlineForm = buildForm($('#inlineFormWrap')); dpRelabel();
+  syncLangChip(); applyI18n(); renderAll(); if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); dpRelabel();
 }
 $$('.lang-btn').forEach(b => b.onclick = () => { if (b.dataset.lang !== LANG) { const l = b.dataset.lang; history.pushState(null, '', hashToPath(VH.hash, l)); setLang(l); toast(t('toastLang')); } });
 if ($('#langChip')) $('#langChip').onclick = () => { const l = LANG === 'th' ? 'en' : 'th'; history.pushState(null, '', hashToPath(VH.hash, l)); setLang(l); toast(t('toastLang')); };
@@ -3683,5 +3683,5 @@ $('#boatSort').onchange = e => { boatSort = e.target.value; renderBoats(); };
 const d = new Date(); d.setDate(d.getDate()+3); $('#qsDate').value = d.toISOString().split('T')[0]; $('#qsDate').min = new Date().toISOString().split('T')[0]; $('#qsDate').addEventListener('change', e => e.target.dataset.touched = 1); datePick($('#qsDate'));
 const HOME_FIRST = !/^#\/(boat|fleet|design|about|privacy|terms|cookies|blog|dest|404)/.test(VH.hash || '#/');
 applyI18n(); if (HOME_FIRST) renderAll(); else { renderNavText(); updateCompareUI(); }
-inlineForm = buildForm($('#inlineFormWrap')); route(false); icons(); loadPixel();
+if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); route(false); icons(); loadPixel();
 if (!HOME_FIRST) renderHomeLater();

@@ -1024,7 +1024,5 @@ html.bp-bar-off .bp-mbar { transform: translateY(140%); opacity: 0; pointer-even
 @media (max-width: 767px) {
   .dx-tw, #view-blog .no-scrollbar.overflow-x-auto { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
 }
-/* home: phone / LINE / WhatsApp already sit in the team section right below — the plan-your-trip block keeps just the form */
-#booking .ct-list { display: none; }
 /* phones: shorter hero so the search card and its button fit the first screen */
 @media (max-width: 680px) { #hero.hero2 #heroBox { height: clamp(300px, calc(100svh - 370px), 460px) !important; } }
