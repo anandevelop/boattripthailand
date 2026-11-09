@@ -12,8 +12,10 @@ import { settings } from '@/db/schema';
  */
 export const HOME_KEY = 'site.home';
 type Bi = { th: string; en: string };
+/** a home hero slide: a boat (name + link) and the photo shown — '' = the boat's cover photo */
+export type Slide = { boat: string; img: string };
 export type Home = {
-  hero: { kicker: Bi; title: Bi; words: Bi[]; sub: Bi; cta1: Bi; cta2: Bi };
+  hero: { kicker: Bi; title: Bi; words: Bi[]; sub: Bi; cta1: Bi; cta2: Bi; slides: Slide[] };
   promo: { tag: Bi; title: Bi; sub: Bi; cta: Bi; boat: string; price: number | null; start: string; end: string };
   faq: [Bi, Bi][];
   seo: { title: Bi; desc: Bi; kw: Bi };
@@ -36,9 +38,11 @@ export function cleanHome(v: unknown): Home {
   const words = (Array.isArray(h.words) ? h.words : []).map(w => bi(w, 60)).filter(w => w.th || w.en).slice(0, 8);
   const faq = (Array.isArray(c.faq) ? c.faq : []).map(x => (Array.isArray(x) ? [bi(x[0], 300), bi(x[1], 2000)] : null))
     .filter((x): x is [Bi, Bi] => !!x && !!(x[0].th || x[0].en)).slice(0, 30);
+  const slides = (Array.isArray(h.slides) ? h.slides : []).map(x => { const o = (x ?? {}) as Record<string, unknown>; const img = s(o.img, 500); return { boat: s(o.boat, 120), img: /^\/(boats|img|uploads)\/[^"'<>\s]+$/.test(img) ? img : '' }; })
+    .filter(x => /^[a-z0-9-]+$/.test(x.boat)).slice(0, 10);
   const price = Number(p.price);
   return {
-    hero: { kicker: bi(h.kicker, 80), title: bi(h.title, 120), words: words.length ? words : D.hero.words, sub: bi(h.sub, 200), cta1: bi(h.cta1, 40), cta2: bi(h.cta2, 40) },
+    hero: { kicker: bi(h.kicker, 80), title: bi(h.title, 120), words: words.length ? words : D.hero.words, sub: bi(h.sub, 200), cta1: bi(h.cta1, 40), cta2: bi(h.cta2, 40), slides: slides.length ? slides : D.hero.slides },
     promo: { tag: bi(p.tag, 40), title: bi(p.title, 160), sub: bi(p.sub, 400), cta: bi(p.cta, 40), boat: s(p.boat, 120), price: Number.isFinite(price) && price > 0 ? Math.round(price) : null, start: day(p.start), end: day(p.end) },
     faq,
     seo: { title: bi(q.title, 200), desc: bi(q.desc, 400), kw: bi(q.kw, 80) },

@@ -2906,11 +2906,14 @@ function paintCmd(q = $('#cmdInput').value.trim().toLowerCase(), total) {
 function runCmd(i) { const it = cmdItems[i]; if (!it) return; closeModals(); if (it.href === 'smart') openSmart(); else VH.hash = it.href; }
 
 /* ---------- Hero slideshow ---------- */
-const HERO = ['leopard-90-ft','splo-74-ft','siam-princess-70-ft','the-origin-90-ft','lobster-78-ft','vtech-68-ft'];
+/* home hero slides: chosen in /admin → เนื้อหาเว็บไซต์ → Hero (boat + photo); a slide whose boat is gone or hidden is skipped */
+const HERO_SL = ((HOME && HOME.hero && HOME.hero.slides) || []).filter(x => x && bySlug(x.boat));
+const HERO = HERO_SL.length ? HERO_SL.map(x => x.boat) : ['leopard-90-ft','splo-74-ft','siam-princess-70-ft','the-origin-90-ft','lobster-78-ft','vtech-68-ft'].filter(s => bySlug(s));
+const heroImg = (i, w) => { const u = HERO_SL[i] && HERO_SL[i].img; return u ? rs(u, w) : bimg(HERO[i], 'hero', w); };
 let heroIdx = 0, heroTimer;
 function renderHero() {
   const el = $('#heroStage'); if (!el) return;
-  el.innerHTML = HERO.map((s, i) => { const b = bySlug(s); return `<img src="${bimg(s,'hero',1600)}" srcset="${bimg(s,'hero',768)} 768w, ${bimg(s,'hero',1280)} 1280w, ${bimg(s,'hero',1600)} 1600w" sizes="100vw" alt="${niceTitle(b.title)} – ${typeLabel(b.type)} charter in Phuket" ${i?'loading="lazy"':'fetchpriority="high"'} class="hero-slide absolute inset-0 w-full h-full object-cover" aria-hidden="${i!==0}"/>`; }).join('');
+  el.innerHTML = HERO.map((s, i) => { const b = bySlug(s); return `<img src="${heroImg(i,1600)}" srcset="${heroImg(i,768)} 768w, ${heroImg(i,1280)} 1280w, ${heroImg(i,1600)} 1600w" sizes="100vw" alt="${niceTitle(b.title)} – ${typeLabel(b.type)} charter in Phuket" ${i?'loading="lazy"':'fetchpriority="high"'} class="hero-slide absolute inset-0 w-full h-full object-cover" aria-hidden="${i!==0}"/>`; }).join('');
   $('#heroDots').innerHTML = HERO.map((s, i) => `<button onclick="heroGo(${i})" aria-label="${L('สไลด์','Slide')} ${i+1}: ${niceTitle(bySlug(s).title)}" class="w-7 h-1 rounded-full bg-white/35 relative overflow-hidden"><span class="hero-dot absolute inset-y-0 left-0 bg-white rounded-full"></span></button>`).join('');
   bindHeroSwipe();
   heroGo(heroIdx || 0);

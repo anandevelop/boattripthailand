@@ -6582,6 +6582,49 @@ function seoSpeed() {
 /* overview card → link to the full tab */
 { const _pc = psiCard; psiCard = function () { return _pc().replace(/<\/div>$/, `<button class="text-[11.5px] text-maroon mt-2" onclick="SEOV.tab='speed';vSeo()">ดู PageSpeed ทุกหน้า →</button></div>`); }; }
 
+/* =====================================================================
+   HOME HERO SLIDES: each slide = a boat (its name + link) and the photo shown.
+   Saved with the rest of the hero (settings site.home → hero.slides); img '' = the boat's cover photo.
+   ===================================================================== */
+if (WEB.hero && (!Array.isArray(WEB.hero.slides) || !WEB.hero.slides.length)) WEB.hero.slides = (CONTENT.heroSlides || []).map(b => ({ boat: b, img: '' }));
+const slThumb = (u, w = 480) => (/^\/(boats|img|uploads)\//.test(u || '') ? `/r/${w}${u}` : u || '');
+const slImg = x => (x.img ? slThumb(x.img) : THUMBS[x.boat] || '');
+function heroSlidesBox() {
+  const S = WEB.hero.slides, nav = (n, d, ic, lab, on) => `<button class="btn btn-g !px-1.5 !h-7" ${on ? '' : 'disabled style="opacity:.3"'} onclick="${d}" aria-label="${lab}" title="${lab}"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i></button>`;
+  return `<p class="font-medium mt-7 mb-1">สไลด์รูปหน้าแรก</p>
+    <p class="text-[12px] text-muted mb-3">แต่ละสไลด์ = เรือ 1 ลำ (ชื่อเรือและลิงก์ไปหน้าเรือ) + รูปที่เลือก · กดที่รูปเพื่อเปลี่ยน · ใช้รูปแนวนอน กว้าง 1600px ขึ้นไป · สูงสุด 10 สไลด์ · กด “เผยแพร่” เพื่อให้หน้าเว็บเปลี่ยน</p>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">${S.map((x, n) => { const b = bySlug(x.boat), off = !b || b.active === false; return `<div class="rounded-xl overflow-hidden ring-1 ${off ? 'ring-[#e9b9bd]' : 'ring-line'} bg-white flex flex-col">
+      <button type="button" class="relative group" onclick="heroSlPick(${n})" title="เปลี่ยนรูป"><img src="${esc(slImg(x))}" alt="" class="w-full aspect-[16/10] object-cover bg-sand"/>
+        <span class="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/45 text-white text-[12px] opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition"><i data-lucide="image" class="w-4 h-4"></i>เปลี่ยนรูป</span>
+        ${x.img ? '' : '<span class="absolute left-1.5 top-1.5 text-[10px] leading-4 px-1.5 rounded bg-black/55 text-white">รูปปกเรือ</span>'}</button>
+      <div class="p-2 grid gap-1.5"><select class="inp !h-8 !text-[12px]" aria-label="เรือของสไลด์ที่ ${n + 1}" onchange="heroSlBoat(${n},this.value)">${FLEET.map(f => `<option value="${f.slug}" ${f.slug === x.boat ? 'selected' : ''}>${esc(f.name)}${f.active === false ? ' (ซ่อนอยู่)' : ''}</option>`).join('')}</select>
+        ${off ? '<p class="text-[11px] text-[#a3222c]">เรือนี้ซ่อนอยู่ · สไลด์นี้จะไม่แสดง</p>' : ''}
+        <div class="flex items-center justify-between"><span class="text-[11px] text-muted tnum">${n + 1}/${S.length}</span><span class="flex gap-0.5">${nav(n, `heroSlMove(${n},-1)`, 'chevron-left', 'เลื่อนขึ้นก่อน', n > 0)}${nav(n, `heroSlMove(${n},1)`, 'chevron-right', 'เลื่อนไปหลัง', n < S.length - 1)}${nav(n, `heroSlDel(${n})`, 'trash-2', 'ลบสไลด์', S.length > 1)}</span></div></div></div>`; }).join('')}
+      ${S.length < 10 ? '<button type="button" class="rounded-xl border-2 border-dashed border-sand-200 grid place-items-center text-muted hover:text-maroon min-h-[150px]" onclick="heroSlAdd()"><span class="grid place-items-center gap-1 text-[12px]"><i data-lucide="plus" class="w-5 h-5"></i>เพิ่มสไลด์</span></button>' : ''}</div>`;
+}
+function heroSlRedraw() { const w = $('#heroSlWrap'); if (w) { w.innerHTML = heroSlidesBox(); icons(); } }
+function heroSlBoat(n, slug) { const x = WEB.hero.slides[n]; if (x.boat !== slug) { x.boat = slug; x.img = ''; } heroSlRedraw(); }
+function heroSlMove(n, d) { const S = WEB.hero.slides, m = n + d; if (m < 0 || m >= S.length) return; [S[n], S[m]] = [S[m], S[n]]; heroSlRedraw(); }
+function heroSlDel(n) { if (WEB.hero.slides.length > 1) WEB.hero.slides.splice(n, 1); heroSlRedraw(); }
+function heroSlAdd() { const used = WEB.hero.slides.map(x => x.boat), b = FLEET.find(f => f.active !== false && !used.includes(f.slug)) || FLEET[0]; if (b) WEB.hero.slides.push({ boat: b.slug, img: '' }); heroSlRedraw(); }
+function heroSlPick(n) {
+  const x = WEB.hero.slides[n], b = bySlug(x.boat), imgs = ((b && b.imgs) || []).filter(Boolean), cur = u => (x.img || '').split('?')[0] === (u || '').split('?')[0];
+  heroSlPick.imgs = imgs;
+  openModal(`<div class="p-5"><div class="flex items-center justify-between gap-3"><p class="font-medium">รูปสไลด์ที่ ${n + 1} · ${esc(b ? b.name : x.boat)}</p><button class="btn btn-g !px-2" onclick="closeModal()" aria-label="ปิด"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+    <p class="text-[12px] text-muted mt-1">รูปของเรือลำนี้ (เพิ่มรูปได้ที่ จัดการเรือ → รูปภาพ) หรือเลือกจากคลังสื่อ</p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 max-h-[56vh] overflow-y-auto p-1">
+      <button type="button" class="text-left rounded-[10px] ring-2 ${x.img ? 'ring-transparent' : 'ring-maroon'}" onclick="heroSlSet(${n},'')"><img src="${esc(THUMBS[x.boat] || '')}" alt="" class="w-full aspect-[16/10] object-cover rounded-t-[10px] bg-sand"/><span class="block text-[11px] px-1.5 py-1">รูปปกเรือ (ค่าเริ่มต้น)</span></button>
+      ${imgs.map((u, k) => `<button type="button" class="rounded-[10px] ring-2 ${cur(u) ? 'ring-maroon' : 'ring-transparent'}" onclick="heroSlSet(${n},heroSlPick.imgs[${k}])"><img loading="lazy" src="${esc(slThumb(u, 320))}" alt="" class="w-full aspect-[16/10] object-cover rounded-[10px] bg-sand"/></button>`).join('')}</div>
+    <div class="flex justify-end mt-4"><button class="btn btn-o" onclick="mediaPicker(s=>heroSlSet(${n},s[0]),{title:'เลือกรูปสไลด์จากคลังสื่อ'})"><i data-lucide="images" class="w-3.5 h-3.5"></i>เลือกจากคลังสื่อ</button></div></div>`);
+}
+function heroSlSet(n, u) { WEB.hero.slides[n].img = u || ''; closeModal(); heroSlRedraw(); }
+{ const _vc = vContent; vContent = function () {
+  _vc(); if (WEB.tab !== 'hero' || !WEB.hero.slides) return;
+  const h = [...$$('#view .fade p.font-medium')].find(p => p.textContent.trim().startsWith('สไลด์รูปเรือ')), g = h && h.nextElementSibling;
+  if (!h || !g) return;
+  g.remove(); h.outerHTML = `<div id="heroSlWrap">${heroSlidesBox()}</div>`; icons();
+}; PAGES.find(p => p[0] === 'content')[3] = vContent; }
+
 (function start() {
   const me = Object.assign({}, TEAM.find(t => t.id === BOOT.me.id) || BOOT.me, { perms: BOOT.me.perms });
   finishLogin(me, '', { t: Date.now() });
