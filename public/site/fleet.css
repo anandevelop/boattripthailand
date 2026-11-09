@@ -1174,3 +1174,7 @@ html.fx-open body > .fx-fw { position: fixed !important; left: 50%; transform: t
 body > .fx-fw .fx-finder { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 24px 50px -26px rgb(8 42 51 / .6), 0 0 0 1px rgb(35 20 22 / .06); }
 body > .fx-fw .tnum { font-variant-numeric: tabular-nums; }
 body > .fx-fw { overflow: visible !important; }
+/* one page background everywhere: the boat list's old blurred "ambient" band faded to white over the grey page and left a hard edge
+   under the finder (the hero photo replaced it) · html carries the base colour so nothing ever shows white behind the page */
+.fx-amb { display: none !important; }
+html { background: #f3eeec; }
