@@ -1039,3 +1039,9 @@ html.bp-bar-off .bp-mbar { transform: translateY(140%); opacity: 0; pointer-even
   #homeBlog .grid::-webkit-scrollbar { display: none; }
   #homeBlog .grid > * { flex: 0 0 80%; min-width: 0; scroll-snap-align: start; scroll-margin-left: 16px; }
 }
+/* boat list sort: a small quiet text control instead of a big glass pill */
+.fx-bar .r .fx-sort { flex: 0 0 auto; display: inline-flex; align-items: center; margin-left: auto; }
+.fx-bar .r .fx-sort select { width: auto; height: 32px; padding: 0 22px 0 8px; border-radius: 8px; background: transparent !important; box-shadow: none !important; font-size: 13px; color: var(--fx-ink); transition: background .2s; }
+.fx-bar .r .fx-sort select:hover { background: rgb(35 20 22 / .05) !important; }
+.fx-bar .r .fx-sort select:focus-visible { outline: 2px solid #70000e; outline-offset: 2px; }
+.fx-bar .r .fx-sort svg { right: 6px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; opacity: .55; }

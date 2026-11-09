@@ -294,6 +294,7 @@ function fxDraw() {
   $('#fxMSum').textContent = [FX.date ? fxDate(FX.date) : L('ทุกวัน', 'Any date'), `${FX.pax} ${t('guests')}`, dl.length ? dl.join(', ') : L('ทุกเกาะ', 'Anywhere'), FX.stay ? L('พัก', '') + fxStayL(FX.stay) : '', FX.dur ? fxL(FX_DUR[FX.dur]) : '', FX.bud < FX_MAX ? '≤ ' + baht(FX.bud) : ''].filter(Boolean).join(' · ');
   ['#fxDate', '#fxDate2'].forEach(id => { const i = $(id); if (i && i.value !== FX.date) i.value = FX.date; });
   if ($('#fxSort').value !== FX.sort) $('#fxSort').value = FX.sort;
+  fxSortFit();
   fxPops(); fxWrite(); icons(); updateCompareUI(); updateFavUI();
 }
 const fxSetV = (s, txt, dim) => { const e = $(s); if (!e) return; e.textContent = txt; e.classList.toggle('dim', dim); };
@@ -1425,6 +1426,16 @@ function fxNavLabels() {
   if (f) f.setAttribute('aria-label', L('เรือที่บันทึกไว้', 'Saved boats'));
 }
 { const _ar = afterRoute; afterRoute = function () { _ar(); try { fxNavLabels(); } catch (e) { } }; }
+/* the sort menu is as wide as the chosen option (a native select is as wide as its longest option) */
+function fxSortFit() {
+  const sel = document.getElementById('fxSort'); if (!sel || FX_SSR) return;
+  const o = sel.options[sel.selectedIndex]; if (!o) return;
+  const m = fxSortFit.m || (fxSortFit.m = Object.assign(document.createElement('span'), { style: 'position:absolute;visibility:hidden;white-space:pre;left:-9999px;top:0' }));
+  if (!m.isConnected) document.body.appendChild(m);
+  const cs = getComputedStyle(sel); m.style.font = cs.font; m.style.letterSpacing = cs.letterSpacing; m.textContent = o.textContent;
+  sel.style.width = Math.ceil(m.getBoundingClientRect().width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + 'px';
+}
+if (!FX_SSR && document.fonts && document.fonts.ready) document.fonts.ready.then(() => fxSortFit());
 /* ---------- start ---------- */
 if (!FX_SSR) {
   addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
