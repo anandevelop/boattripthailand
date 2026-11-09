@@ -1066,3 +1066,24 @@ html.bp-bar-off .bp-mbar { transform: translateY(140%); opacity: 0; pointer-even
 .text-sm { font-size: 14px; line-height: 21px; }
 .text-\[10\.5px\], .text-\[11px\], .text-\[11\.5px\] { font-size: 12px !important; }
 .text-\[10px\]:not([class*="tracking-"]) { font-size: 11.5px !important; }
+/* ---------- desktop type (≥1024px): people sit further from the screen — main text 15px, secondary info 13px ---------- */
+@media (min-width: 1024px) {
+  .text-xs { font-size: 12.5px; line-height: 18px; }
+  .text-sm { font-size: 15px; line-height: 22px; }
+  #navLinks .nav-a { font-size: 15px !important; }
+  /* boat cards */
+  .fx-specs, .fx-specs span { font-size: 13px !important; }
+  .fx-price .lbl { font-size: 13px !important; }
+  .fx-price .amt { font-size: 18px !important; }
+  .fx-price .amt span { font-size: 13px !important; }
+  .fx-badge { font-size: 12.5px !important; }
+  /* finder bars (boat list + home) */
+  #fxFinder .fx-seg small, .qs2 .qs-l { font-size: 12.5px !important; }
+  #fxFinder .fx-seg b, .qs2 .qs-v { font-size: 16.5px !important; }
+  #fxCount, .fx-bar .r .fx-sort select, #fxTabs button { font-size: 14px !important; }
+  /* boat page */
+  .secnav a { font-size: 14.5px !important; }
+  .bp-lead { font-size: 15.5px !important; line-height: 1.75 !important; }
+  .bp-panel small { font-size: 13px !important; }
+  .bp-from, .bp-fld > span { font-size: 13px !important; }
+}
