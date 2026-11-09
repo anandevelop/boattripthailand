@@ -1452,9 +1452,9 @@ function fxPillSync(n) {
   const date = FX.date ? fxDate(FX.date) : L('ทุกวัน', 'Any date'), pax = `${FX.pax} ${t('guests')}`, bud = FX.bud < FX_MAX ? L('ไม่เกิน ', 'Up to ') + baht(FX.bud) : L('ไม่จำกัดงบ', 'Any budget');
   const seg = (ic, v, dim) => `<span class="fxp-s${dim ? ' dim' : ''}">${FXI(ic)}<span>${fxEsc(v)}</span></span>`;
   p.setAttribute('aria-label', L(`ปรับการค้นหา: ${dest}, ${date}, ${pax}, ${bud} · ${fxPillN} ลำ`, `Edit search: ${dest}, ${date}, ${pax}, ${bud} · ${fxPillN} boats`));
-  p.innerHTML = `<span class="fxp-d">${seg('map-pin', dest, !dl.length)}${seg('calendar', date, !FX.date)}${seg('users', pax)}${seg('wallet', bud, FX.bud >= FX_MAX)}</span>`
-    + `<span class="fxp-m"><b>${fxEsc(dest)}</b> · ${fxEsc(date)} · ${fxEsc(pax)} · ${fxEsc(bud)}</span>`
-    + `<span class="fxp-go">${FXI('search')}<span class="fxp-gt">${L('ปรับ', 'Edit')}</span><em class="tnum">${fxPillN} ${L('ลำ', 'boats')}</em></span>`;
+  void seg;   // floating button: search + filter count, the summary is in its label
+  const nf = FX.dest.size + (FX.date ? 1 : 0) + (FX.bud < FX_MAX ? 1 : 0) + (FX.paxSet ? 1 : 0) + (FX.type !== 'all' ? 1 : 0);
+  p.innerHTML = `${FXI('sliders-horizontal')}<span>${L('ค้นหา · ตัวกรอง', 'Search · filters')}</span>${nf ? `<i class="fxp-n tnum">${nf}</i>` : ''}<em class="tnum">${fxPillN} ${L('ลำ', 'boats')}</em>`;
   fxPillCheck();
 }
 function fxPillPlace() {
@@ -1463,8 +1463,8 @@ function fxPillPlace() {
 }
 function fxPillCheck() {
   const v = document.getElementById('view-fleet'), fw = document.getElementById('fxFw'), html = document.documentElement;
-  const on = !!(v && !v.classList.contains('hidden') && fw && fw.getBoundingClientRect().bottom < (innerWidth > 760 ? 84 : 70) && !FX.fav);
-  if (on !== html.classList.contains('fx-compact')) { html.classList.toggle('fx-compact', on); fxPillPlace(); }
+  const on = !!(v && !v.classList.contains('hidden') && fw && fw.getBoundingClientRect().bottom < 0 && !FX.fav);
+  if (on !== html.classList.contains('fx-compact')) html.classList.toggle('fx-compact', on);
   if (html.classList.contains('fx-open') && Math.abs(scrollY - (fxPillOpen.y || 0)) > 60) fxPillClose();
 }
 function fxPillOpen() {
