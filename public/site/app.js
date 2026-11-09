@@ -1849,27 +1849,32 @@ const TYPE_ICON = {
   // Thai longtail: tall curved prow, canopy on posts, long-shaft engine
   longtail: `<svg viewBox="0 0 120 56" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"><path d="M20 36c20 7 58 7 76 0"/><path d="M20 36h76"/><path d="M96 36c6-3 9-12 12-24"/><path d="M108 12c2 1 2 4 0 6" opacity=".7"/><path d="M20 36l-3-5"/><path d="M36 36V25m44 11V25"/><path d="M32 25c16-4 36-4 52 0"/><path d="M9 26h9v5H9z"/><path d="M12 31L3 46"/><path d="M1 44l4 3"/><path d="M14 26l-5-6"/><path d="M6 49c6 0 6 1.6 12 1.6S24 49 30 49s6 1.6 12 1.6S48 49 54 49s6 1.6 12 1.6S72 49 78 49s6 1.6 12 1.6S96 49 102 49s6 1.6 12 1.6" opacity=".55"/></svg>`,
 };
+/* solid white silhouettes for the boat-type bar (side view, bow to the right, a waterline under each) */
+const TYPE_SIL = (() => {
+  const win = 'fill="#0b1a24" fill-opacity=".55"', line = '<path d="M2 38h116" stroke="currentColor" stroke-width="1" opacity=".55"/>';
+  const s = b => `<svg viewBox="0 0 120 40" fill="currentColor" aria-hidden="true">${b}${line}</svg>`;
+  return {
+    speed: s(`<path d="M10 27h66c12 0 23-2 34-9l-7 12c-2 2-4 3-7 3H15z"/><path d="M57 27v-4h9l5 4z"/><path d="M52 14h25v2H52z"/><path d="M54.5 16h1.6v11h-1.6zM72.5 16h1.6v11h-1.6z"/><path d="M4 21h7v9H4z"/><path d="M28 27v-2h16v2z" opacity=".7"/>`),
+    longtail: s(`<path d="M15 26h80c5-2 9-9 12-18l2.5.8c-2.5 10-6 18-13 22-21 5-60 5-81-1z"/><path d="M33 14h50v2.4H33z"/><path d="M36 16h1.6v10H36zM78 16h1.6v10H78z"/><path d="M6 20h9v5H6z"/><path d="M9 25l1.4.8L4 35l-1.4-.8z"/>`),
+    power: s(`<path d="M9 27h100l-7 6H15z"/><path d="M19 27v-8h66l13 8z"/><path d="M36 19v-5h34l6 5z"/><path d="M38 11h32v1.8H38z"/><path d="M40 12.8h1.4V14H40zM67 12.8h1.4V14H67z"/><path ${win} d="M26 21.5h52v2H26z"/><path ${win} d="M42 15.6h24v1.6H42z"/>`),
+    sail: s(`<path d="M13 28h92l-6 5H19z"/><path d="M36 28v-4h36l7 4z"/><path d="M57.4 2h1.6v24h-1.6z"/><path d="M56 6v18H37z"/><path d="M60.5 5l20 19h-20z"/><path ${win} d="M43 25.3h24v1.3H43z"/>`),
+    yacht: s(`<path d="M5 27h101c4 0 8-2 11-5l-7 11H16c-5 0-9-3-11-6z"/><path d="M20 27l6-8h57l15 8z"/><path d="M32 19l4-6h30l7 6z"/><path d="M42 13l2-4h19v4z"/><path d="M51.2 3h1.6v6h-1.6z"/><path ${win} d="M30 22h50v1.8H30z"/><path ${win} d="M40 15.4h24v1.4H40z"/><circle ${win} cx="27" cy="30" r="1"/><circle ${win} cx="33" cy="30" r="1"/><circle ${win} cx="39" cy="30" r="1"/>`),
+  };
+})();
 function renderTypeBand() {
   const el = $('#typeBand'); if (!el) return;
-  const k = LANG === 'en' ? 1 : 0;
-  const bg = bimg('ocean-pearl-42-ft','hero', 320);
+  const bg = bimg('ocean-pearl-42-ft', 'hero', 1280), order = ['speed', 'longtail', 'power', 'sail', 'yacht'].filter(ty => TYPES.includes(ty));
+  TYPES.forEach(ty => { if (!order.includes(ty)) order.push(ty); });
+  el.classList.add('tb2');
   el.innerHTML = `
-    <img src="${bg}" alt="" aria-hidden="true" loading="lazy" class="absolute inset-0 w-full h-full object-cover scale-[1.15] blur-[6px]"/>
-    <div class="absolute inset-0 bg-[#0b1a24]/65" aria-hidden="true"></div>
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 lg:py-24 text-white text-center">
-      <p class="text-[11px] uppercase tracking-[.32em] text-white/70 reveal">${L('ค้นหาตาม','Search by')}</p>
-      <h2 id="typeBandTitle" class="font-display text-3xl sm:text-4xl mt-3 reveal">${L('ประเภทเรือ','Boat type')}</h2>
-      <p class="text-sm text-white/75 mt-4 max-w-xl mx-auto reveal">${L(`รู้แล้วว่าอยากได้เรือแบบไหน? เลือกจากเรือส่วนตัว ${FLEET.length} ลำของเรา ทั่วภูเก็ต กระบี่ และพังงา`,`Know what you're looking for? Browse our ${FLEET.length} private boats across Phuket, Krabi and Phang Nga.`)}</p>
-      <ul id="tbRow" class="tb-row mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10">
-        ${TYPES.map((ty,i) => { const n = FLEET.filter(b => b.type === ty).length; return `<li class="reveal" style="transition-delay:${i*70}ms">
-          <a href="#/fleet?type=${ty}" class="tb-item group block">
-            <span class="tb-ico block mx-auto">${TYPE_ICON[ty]}</span>
-            <span class="block mt-4 text-lg font-medium">${typeLabel(ty)}</span>
-            <span class="block text-sm text-white/70 mt-1">${n} ${L('ลำ','boats')} · ${L('เริ่ม','from')} ${baht(minFrom(ty))}</span>
-          </a></li>`; }).join('')}
-      </ul>
-      <div class="tb-bar" aria-hidden="true"><i id="tbThumb"></i></div>
-      <a href="#/fleet" class="mt-12 inline-flex items-center gap-2 h-11 px-6 bg-white text-ink hover:bg-white/90 transition text-[13px]">${L('ดูเรือทั้งหมด','View all boats')} <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
+    <img src="${bg}" alt="" aria-hidden="true" loading="lazy" class="absolute inset-0 w-full h-full object-cover"/>
+    <div class="tb2-shade" aria-hidden="true"></div>
+    <div class="tb2-wrap">
+      <div class="tb2-head reveal"><div><p class="tb2-kick">${L('ค้นหาตามประเภทเรือ', 'Search by boat type')}</p><h2 id="typeBandTitle" class="font-display">${L('เลือกเรือแบบที่ใช่', 'Pick your kind of boat')}</h2></div>
+        <a href="#/fleet" class="tb2-all">${L('ดูเรือทั้งหมด', 'View all boats')} ${FLEET.length} ${L('ลำ', '')} <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a></div>
+      <div class="tb2-bar reveal">${order.map(ty => { const n = FLEET.filter(b => b.type === ty).length; if (!n) return ''; return `<a href="#/fleet?type=${ty}" class="tb2-it">
+          <span class="tb2-ico">${TYPE_SIL[ty] || ''}</span>
+          <span class="tb2-txt"><b>${typeLabel(ty)}</b><small>${n} ${L('ลำ', n === 1 ? 'boat' : 'boats')}, ${L('เริ่ม', 'from')} ${baht(minFrom(ty))}</small></span></a>`; }).join('')}</div>
     </div>`;
 }
 /* phone: the type cards scroll sideways; the small bar under them shows where you are (like an app's shortcut row) */
