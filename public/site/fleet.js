@@ -201,9 +201,9 @@ function fxBuild(v) {
     <div class="fx-hero">${(() => { const u = '/img/dest/racha.webp', r = w => typeof rs === 'function' ? rs(u, w) : u; return `<img class="fx-hbg" src="${r(1600)}" srcset="${r(768)} 768w, ${r(1280)} 1280w, ${r(1600)} 1600w" sizes="(max-width: 640px) 45vw, (max-width: 1280px) 100vw, 1280px" alt="" width="1600" height="1000" fetchpriority="high" decoding="async">`; })()}
     <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-1.5"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span class="text-ink" aria-current="page">${t('fleet')}</span></nav>
     <div class="fx-head">
-      <div><div class="fx-h1w"><h1 id="fxH1">${fxTitleH()}</h1></div>
-        <p class="fx-sub fx-ans">${fxAnswer()}</p></div>
-      <div class="fx-stats"><div><b class="tnum" id="fxN">${FLEET.length}</b>${L('ลำ', 'boats')}</div><div><b class="tnum">${new Set(FLEET.map(b => typeof MARINA_CANON === 'function' ? MARINA_CANON(b.marina) : b.marinaP)).size}</b>${L('ท่าเรือ', 'piers & marinas')}</div><div><b class="tnum">${fxMaxPax()}</b>${L('คนต่อลำสูงสุด', 'guests on our largest boat')}</div><div><b>${L('ททท.', 'TAT')}</b>${L('ใบอนุญาต', 'licence')} ${fxEsc(SET.tat || '34/03754')}</div></div>
+      <div class="fx-h1w"><h1 id="fxH1">${fxTitleH()}</h1></div>
+      <p class="fx-heroline">${(() => { const f = fxFacts(); return L(`เหมาลำทั้งลำ ${baht(f.lo)} – ${baht(f.hi)} · รวมกัปตัน ลูกเรือ และ VAT แล้ว`, `Whole boat ${baht(f.lo)} – ${baht(f.hi)} · captain, crew and VAT included`); })()}</p>
+      <div class="fx-stats"><div><b class="tnum" id="fxN">${FLEET.length}</b> ${L('ลำ', 'boats')}</div><div><b class="tnum">${new Set(FLEET.map(b => typeof MARINA_CANON === 'function' ? MARINA_CANON(b.marina) : b.marinaP)).size}</b> ${L('ท่าเรือ', 'piers')}</div><div class="fx-st-pax">${L('สูงสุด', 'up to')} <b class="tnum">${fxMaxPax()}</b> ${L('คน/ลำ', 'guests')}</div><div>${L('ใบอนุญาต ททท.', 'TAT licence')} ${fxEsc(SET.tat || '34/03754')}</div></div>
     </div>
     </div>
 
@@ -225,6 +225,7 @@ function fxBuild(v) {
         <div class="fx-rl tnum"><span>${baht(FX_MIN)}</span><span>${baht(FX_MAX)}+</span></div></div>
     </div></div>
 
+    <p class="fx-sub fx-ans fx-ans-below">${fxAnswer()}</p>
     <div class="fx-bar" id="fxResults">
       <div class="fx-tabs" id="fxTabs"></div>
       <div class="r"><span class="tnum" id="fxCount"></span>

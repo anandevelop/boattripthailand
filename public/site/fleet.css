@@ -1127,3 +1127,27 @@ html[lang="th"] .tr-card .tr-eye { letter-spacing: .04em; }
   .tr-card .tr-pr b { font-size: 15px; } .tr-card .tr-ask { font-size: 12.5px; }
   .tr-go { width: 32px; height: 32px; } .tr-go svg { width: 14px; height: 14px; }
 }
+
+/* ---------- boat list hero · layout A: centred title, one-line price, stats as chips; the long answer sits under the finder ---------- */
+#view-fleet .fx-hero { min-height: 440px; padding: 24px 40px 96px; display: flex; flex-direction: column; }
+.fx-hero::after { background: linear-gradient(180deg, rgb(8 22 30 / .6), rgb(8 22 30 / .38) 50%, rgb(8 22 30 / .68)) !important; }
+#view-fleet .fx-hero .fx-head { flex: 1; margin-top: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0; }
+#view-fleet .fx-hero #fxH1 { font-size: 50px !important; line-height: 1.15; letter-spacing: -.01em; }
+.fx-heroline { margin: 14px 0 0; font-size: 17px; line-height: 27px; color: rgb(255 255 255 / .86); }
+#view-fleet .fx-hero .fx-stats { display: flex !important; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; }
+#view-fleet .fx-hero .fx-stats > div { display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 14px; border-radius: 999px; background: rgb(255 255 255 / .12); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .22); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font-size: 13.5px; color: #fff; white-space: nowrap; }
+#view-fleet .fx-hero .fx-stats b { display: inline; font-size: 13.5px; font-weight: 500; line-height: 1; color: #fff; }
+#view-fleet .fx-hero .fx-stats #fxN small { font-size: .9em; opacity: .75; margin: 0; }
+.fx-ans-below { max-width: none !important; margin: 22px 22px 0 !important; font-size: 14px !important; line-height: 23px; color: var(--fx-muted, #6b5e60) !important; }
+.fx-ans-below strong, .fx-ans-below b { color: var(--fx-ink, #231416); font-weight: 500; }
+@media (max-width: 1180px) { #view-fleet .fx-hero #fxH1 { font-size: 40px !important; } }
+@media (max-width: 760px) {
+  #view-fleet .fx-hero { min-height: 300px; padding: 16px 16px 58px; }
+  #view-fleet .fx-hero #fxH1 { font-size: 28px !important; line-height: 1.2; }
+  .fx-heroline { margin-top: 8px; font-size: 14px; line-height: 21px; }
+  #view-fleet .fx-hero .fx-stats { gap: 6px; margin-top: 14px; }
+  #view-fleet .fx-hero .fx-stats > div { height: 28px; padding: 0 10px; font-size: 12px; }
+  #view-fleet .fx-hero .fx-stats b { font-size: 12px; }
+  #view-fleet .fx-hero .fx-stats .fx-st-pax { display: none; }
+  .fx-ans-below { margin: 14px 8px 0 !important; font-size: 13px !important; line-height: 21px; }
+}
