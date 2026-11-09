@@ -3701,7 +3701,7 @@ $('#cmdClear').addEventListener('click', () => { $('#cmdInput').value=''; drawCm
 $('#cmdInput').addEventListener('keydown', e => { if (e.key==='ArrowDown') { e.preventDefault(); cmdIdx=Math.min(cmdItems.length-1,cmdIdx+1); paintCmd(); $('#cmd-'+cmdIdx)?.scrollIntoView({block:'nearest'}); } if (e.key==='ArrowUp') { e.preventDefault(); cmdIdx=Math.max(0,cmdIdx-1); paintCmd(); $('#cmd-'+cmdIdx)?.scrollIntoView({block:'nearest'}); } if (e.key==='Enter') { e.preventDefault(); runCmd(cmdIdx); } });
 
 $$('[data-bimg]').forEach(img => { const [s,k] = img.dataset.bimg.split(':'); img.src = bimg(s,k); });
-$('#boatSort').onchange = e => { boatSort = e.target.value; renderBoats(); };
+if ($('#boatSort')) $('#boatSort').onchange = e => { boatSort = e.target.value; renderBoats(); };   // the home list has no sort menu any more
 const d = new Date(); d.setDate(d.getDate()+3); $('#qsDate').value = d.toISOString().split('T')[0]; $('#qsDate').min = new Date().toISOString().split('T')[0]; $('#qsDate').addEventListener('change', e => e.target.dataset.touched = 1); datePick($('#qsDate'));
 const HOME_FIRST = !/^#\/(boat|fleet|design|about|privacy|terms|cookies|blog|dest|404)/.test(VH.hash || '#/');
 applyI18n(); if (HOME_FIRST) renderAll(); else { renderNavText(); updateCompareUI(); }

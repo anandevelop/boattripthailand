@@ -201,16 +201,8 @@
     </div>
     <div class="hf-bar">
       <div id="boatFilters" class="hf-seg no-scrollbar" role="group" aria-label="Boat type"></div>
-      <label class="hf-sort"><i data-lucide="arrow-up-down"></i>
-        <select id="boatSort" aria-label="Sort">
-          <option value="pop" data-i18n="sort.pop">เรียง: ยอดนิยม</option>
-          <option value="low" data-i18n="sort.low">ราคา: ต่ำ → สูง</option>
-          <option value="high" data-i18n="sort.high">ราคา: สูง → ต่ำ</option>
-          <option value="size" data-i18n="sort.size">ขนาดเรือ</option>
-        </select>
-      </label>
+      <div id="boatShowLabel" class="text-xs text-muted shrink-0 self-end sm:self-center" aria-live="polite"></div>
     </div>
-    <div class="flex justify-end mt-4"><div id="boatShowLabel" class="text-xs text-muted" aria-live="polite"></div></div>
     <div id="searchSummary" class="hidden mt-6 items-center gap-3 bg-lagoon-50 text-lagoon-700 rounded-lg px-4 py-3 text-sm"></div>
     <div id="boatGrid" class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-5"></div>
     <div id="boatEmpty" class="hidden text-center py-16 text-muted"><i data-lucide="waves" class="w-10 h-10 mx-auto mb-3"></i><p data-i18n="boats.empty">ไม่พบเรือที่ตรงกับเงื่อนไข ลองปรับตัวกรองดูนะ</p></div>
