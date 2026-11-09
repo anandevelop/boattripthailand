@@ -779,7 +779,7 @@ function renderBoats() {
   }
   if (boatSort !== 'pop') list = sortList(list, boatSort); else list = popFirst(list);
   $('#boatEmpty').classList.toggle('hidden', list.length>0);
-  $('#boatGrid').innerHTML = list.slice(0, search ? 60 : 12).map(boatCard).join('');
+  $('#boatGrid').innerHTML = list.slice(0, search ? 60 : 8).map(boatCard).join('');   // home: a short pick, the full list lives on /yacht-charter
   icons();
 }
 
@@ -1570,11 +1570,12 @@ function stepGuests(d) { guests = Math.min(60, Math.max(1, guests + d)); $('#qsG
 $('#quickSearch').addEventListener('submit', e => {
   e.preventDefault();
   if ($('.qs-tab.tab-active')?.dataset.qs === 'activity') { document.getElementById('categories').scrollIntoView({behavior:'smooth'}); return; }
-  search = { trip: $('#qsTrip').value, dest: $('#qsDest').value, date: $('#qsDate').value, guests };
-  track('Search', { search_string: [search.trip, search.dest].filter(Boolean).join(' '), num_guests: guests });
-  boatFilter = search.trip==='overnight' ? 'overnight' : 'all';
-  renderBoatFilters(); renderBoats();
-  document.getElementById('boats').scrollIntoView({behavior:'smooth'});
+  const dest = $('#qsDest').value, date = $('#qsDate').value;
+  track('Search', { search_string: dest, num_guests: guests });
+  // the boat list page has every filter (budget, type, sort): open it with this search instead of filtering the home list
+  const to = typeof FX_DEST !== 'undefined' && dest ? Object.keys(FX_DEST).find(k => FX_DEST[k][0].test(dest)) : '';
+  const q = new URLSearchParams(); if (to) q.set('to', to); if (/^\d{4}-\d{2}-\d{2}$/.test(date)) q.set('date', date); q.set('pax', guests);
+  navTo('#/fleet?' + q);
 });
 $$('.qs-tab').forEach(b => b.onclick = () => { $$('.qs-tab').forEach(x => { x.classList.remove('tab-active'); x.classList.add('text-muted'); }); b.classList.add('tab-active'); b.classList.remove('text-muted'); });
 
@@ -2559,6 +2560,7 @@ function dpText(iso) {
 function dpSync(inp) {
   const v = inp._dpVis; if (!v) return;
   v.value = dpText(inp.value); v.placeholder = L('เลือกวันที่', 'Select date');
+  if (!v.getAttribute('aria-label') && !(v.labels && v.labels.length)) v.setAttribute('aria-label', inp.getAttribute('aria-label') || (inp.labels && inp.labels[0] && inp.labels[0].textContent.trim()) || L('วันที่', 'Date'));
   if (inp.value && v.getAttribute('aria-invalid') === 'true') v.setAttribute('aria-invalid', 'false');
 }
 function dpSet(inp, iso, silent) {

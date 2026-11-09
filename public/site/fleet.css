@@ -1008,3 +1008,23 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
 }
 /* boat count lives in the stats row now, not as a superscript on the H1 */
 .fx-stats #fxN small { font-size: .6em; opacity: .7; margin-left: 2px; }
+
+/* ---------- usability pass (2026-11) ---------- */
+/* home "เรือไฮไลท์" on phones: one swipeable row instead of eight full-width cards stacked down the page */
+@media (max-width: 639px) {
+  #boats #boatGrid.fx-grid { display: flex !important; grid-template-columns: none !important; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin-inline: -16px; padding: 4px 16px 12px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  #boats #boatGrid.fx-grid::-webkit-scrollbar { display: none; }
+  #boats #boatGrid.fx-grid > * { flex: 0 0 78%; max-width: 320px; scroll-snap-align: start; }
+}
+/* boat page: the bottom bar slides away over the contact section and footer (fleet.js bp-bar-off) */
+.bp-mbar { transition: transform .3s ease, opacity .3s ease; }
+html.bp-bar-off .bp-mbar { transform: translateY(140%); opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .bp-mbar { transition: none; } }
+/* tables / chip rows wider than the phone: fade the right edge so it reads as "swipe for more" */
+@media (max-width: 767px) {
+  .dx-tw, #view-blog .no-scrollbar.overflow-x-auto { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+}
+/* home: phone / LINE / WhatsApp already sit in the team section right below — the plan-your-trip block keeps just the form */
+#booking .ct-list { display: none; }
+/* phones: shorter hero so the search card and its button fit the first screen */
+@media (max-width: 680px) { #hero.hero2 #heroBox { height: clamp(300px, calc(100svh - 370px), 460px) !important; } }

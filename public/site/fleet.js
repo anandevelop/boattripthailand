@@ -1413,6 +1413,18 @@ let FX_POST = null;
 /* the first page was set up before this file loaded */
 try { const h = VH.hash || ''; if (h.startsWith('#/boat/')) applySeo('boat', bySlug(decodeURIComponent(h.slice(7)))); else if (h.startsWith('#/blog/')) { const p = pBySlug(decodeURIComponent(h.slice(7))); if (p) seoPost(p); } else if (h.startsWith('#/fleet')) applySeo('fleet'); else fxYearFix(); } catch (e) { }
 
+/* ---------- boat page (phone): the price + book bar steps aside where the contact section / footer take over ---------- */
+if (!FX_SSR && 'IntersectionObserver' in window) {
+  const seen = new Set(), io = new IntersectionObserver(es => { es.forEach(e => e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)); document.documentElement.classList.toggle('bp-bar-off', seen.size > 0); }, { rootMargin: '0px 0px -60px 0px' });
+  ['#team', 'footer'].forEach(s => { const el = document.querySelector(s); if (el) io.observe(el); });
+}
+/* header icon names follow the page language (shell.html has them in English) */
+function fxNavLabels() {
+  const s = document.querySelector('header button[onclick="openCmd()"]'), f = document.querySelector('header a[href="#/fleet?fav"], header a[href$="/yacht-charter?fav"]');
+  if (s) s.setAttribute('aria-label', L('ค้นหาเรือ เกาะ ท่าเรือ', 'Search boats, islands, piers'));
+  if (f) f.setAttribute('aria-label', L('เรือที่บันทึกไว้', 'Saved boats'));
+}
+{ const _ar = afterRoute; afterRoute = function () { _ar(); try { fxNavLabels(); } catch (e) { } }; }
 /* ---------- start ---------- */
 if (!FX_SSR) {
   addEventListener('scroll', () => { const fw = $('#fxFw'); if (fw) fw.classList.toggle('stuck', fw.getBoundingClientRect().top <= 83); }, { passive: true });
