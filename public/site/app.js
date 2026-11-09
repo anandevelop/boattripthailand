@@ -3228,7 +3228,6 @@ function renderTeam() {
         <h2 id="teamTitle" class="th-title">${L('ติดต่อทางไหนก็ได้ ทีมเดียวกันตอบ', 'Any channel, the same team replies')}</h2>
         <p class="th-sub">${L('เลือกช่องทางที่สะดวก บอกวันที่และจำนวนคน ทีมขายตัวจริงช่วยเลือกเรือและบอกราคาจริงให้ ทุกวัน 09:00–21:00 น.', 'Pick the channel you like and tell us your date and group size — a real person matches the boat and sends real prices, daily 09:00–21:00.')}</p>
       </div>
-      <div class="th-live${on ? ' on' : ''}"><span class="th-faces">${faces}</span><span><b><i class="th-dot" aria-hidden="true"></i>${on ? L('ออนไลน์ตอนนี้', 'Online now') : L('ออฟไลน์', 'Offline')}</b><small>${on ? L('ตอบเฉลี่ยภายใน 30 นาที', 'Replies within ~30 min') : L('กลับมา 09:00 น. · ฝากข้อความได้', 'Back at 09:00 · leave a message')}</small></span></div>
     </div>
     <div class="th-grid">
       <div class="th-chs reveal">
