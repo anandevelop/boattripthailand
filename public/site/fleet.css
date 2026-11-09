@@ -1099,3 +1099,31 @@ html body { font-weight: 300; }
 html body, html body :not(code,pre,kbd,samp,[class*="mono"]):not(h1,h2,h3,h1 *,h2 *,h3 *,.font-display,.font-display *) { font-family: 'BTT Body', 'BTT Lite TH', 'IBM Plex Sans Thai', system-ui, sans-serif !important; font-size-adjust: none !important; }
 html body .font-display, html body h1, html body h2, html body h3 { font-weight: 400; }
 .bp-lead, .tm-sub, .th-sub { font-size: 16px !important; line-height: 24px !important; }
+
+/* ---------- tours & activities cards: same build as the boat cards (white card, name on the photo, icon details, price + arrow) ---------- */
+.tr-card { border-radius: 22px; background: #fff; overflow: hidden; box-shadow: 0 0 0 1px rgb(35 20 22 / .06), 0 14px 40px -26px rgb(58 0 7 / .45); transition: transform .3s, box-shadow .3s; }
+.tr-card:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgb(112 0 14 / .14), 0 22px 46px -26px rgb(58 0 7 / .5); }
+.tr-card .tr-img { border-radius: 0 !important; aspect-ratio: 4 / 3; }
+.tr-ov { position: absolute; inset: auto 0 0 0; padding: 40px 18px 14px; background: linear-gradient(180deg, transparent, rgb(12 8 9 / .62)); color: #fff; display: flex; flex-direction: column; gap: 2px; }
+.tr-card .tr-eye { margin: 0; font-size: 11.5px; letter-spacing: .12em; color: rgb(255 255 255 / .82); }
+html[lang="th"] .tr-card .tr-eye { letter-spacing: .04em; }
+.tr-card .tr-nm { margin: 0; color: #fff; font-size: 17px; font-weight: 400; text-shadow: 0 1px 12px rgb(0 0 0 / .3); }
+.tr-bd { display: flex; flex-direction: column; gap: 12px; flex: 1; padding: 14px 18px 16px; }
+.tr-card .tr-meta { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: #6b5e60; white-space: normal; }
+.tr-card .tr-meta > span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.tr-card .tr-meta svg { width: 14px; height: 14px; flex: none; color: #8a7a7c; }
+.tr-ft { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tr-card .tr-pr { margin: 0; font-size: 13px; color: #6b5e60; }
+.tr-card .tr-pr b { font-size: 17px; font-weight: 500; color: #231416; margin-left: 2px; }
+.tr-card .tr-ask { color: #231416; font-size: 14px; }
+.tr-go { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 999px; box-shadow: inset 0 0 0 1px rgb(35 20 22 / .12); color: #231416; transition: background .2s, color .2s; }
+.tr-go svg { width: 16px; height: 16px; }
+.tr-card:hover .tr-go { background: #70000e; color: #fff; box-shadow: none; }
+@media (max-width: 767px) {
+  .tr-card { border-radius: 18px; }
+  .tr-ov { padding: 30px 12px 10px; } .tr-card .tr-nm { font-size: 14.5px; } .tr-card .tr-eye { font-size: 10.5px; }
+  .tr-bd { padding: 10px 12px 12px; gap: 8px; }
+  .tr-card .tr-meta { font-size: 12px; } .tr-card .tr-meta svg { width: 12px; height: 12px; }
+  .tr-card .tr-pr b { font-size: 15px; } .tr-card .tr-ask { font-size: 12.5px; }
+  .tr-go { width: 32px; height: 32px; } .tr-go svg { width: 14px; height: 14px; }
+}

@@ -425,13 +425,14 @@ function trCard(a, i) {
   const img = imgs.length ? `<img src="${rs(imgs[0])}" alt="${esc(name)} – ${esc(a.loc || 'Phuket')}" loading="lazy"/>`
     : SEA.includes(a.cat) && seaBoats.length ? `<img src="${bimg(seaBoats[(i * 7) % seaBoats.length].slug, i % 2 ? 'b' : 'a')}" alt="${esc(name)}" loading="lazy"/>`
     : `<span class="act-ph"></span><i data-lucide="${CATS[a.cat].icon}" class="tr-phi" stroke-width="1"></i>`;
-  const meta = [LANG === 'en' ? a.loc : (a.locTh || a.loc), LANG === 'en' ? a.dur : (a.durTh ?? a.dur)].filter(Boolean).join(' · ');
+  const loc = LANG === 'en' ? a.loc : (a.locTh || a.loc), dur = LANG === 'en' ? a.dur : (a.durTh ?? a.dur);
+  // same build as the boat cards: photo with type + name on it, details with icons, price + arrow at the foot
   return `<button type="button" class="tr-card" onclick="${a.desc ? `openAct('${a.pic}')` : `openBooking('act:${esc(a.en)}')`}">
-      <span class="tr-img img-fallback">${img}</span>
-      <span class="tr-eye">${trCatName(a.cat)}</span>
-      <span class="tr-nm">${esc(name)}</span>
-      ${meta ? `<span class="tr-meta">${esc(meta)}</span>` : ''}
-      <span class="tr-pr">${trPrice(a)}</span>
+      <span class="tr-img img-fallback">${img}<span class="tr-ov"><span class="tr-eye">${trCatName(a.cat)}</span><span class="tr-nm">${esc(name)}</span></span></span>
+      <span class="tr-bd">
+        ${loc || dur ? `<span class="tr-meta">${loc ? `<span><i data-lucide="map-pin"></i>${esc(loc)}</span>` : ''}${dur ? `<span><i data-lucide="clock"></i>${esc(dur)}</span>` : ''}</span>` : ''}
+        <span class="tr-ft"><span class="tr-pr">${trPrice(a)}</span><span class="tr-go" aria-hidden="true"><i data-lucide="arrow-up-right"></i></span></span>
+      </span>
     </button>`;
 }
 function trGo(c) { navTo(c ? `#/tours?cat=${c}` : '#/tours'); }
