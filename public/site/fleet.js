@@ -225,7 +225,6 @@ function fxBuild(v) {
         <div class="fx-rl tnum"><span>${baht(FX_MIN)}</span><span>${baht(FX_MAX)}+</span></div></div>
     </div></div>
 
-    <p class="fx-sub fx-ans fx-ans-below">${fxAnswer()}</p>
     <div class="fx-bar" id="fxResults">
       <div class="fx-tabs" id="fxTabs"></div>
       <div class="r"><span class="tnum" id="fxCount"></span>
