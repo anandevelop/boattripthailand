@@ -780,6 +780,8 @@ function renderBoats() {
   if (boatSort !== 'pop') list = sortList(list, boatSort); else list = popFirst(list);
   $('#boatEmpty').classList.toggle('hidden', list.length>0);
   $('#boatGrid').innerHTML = list.slice(0, search ? 60 : 8).map(boatCard).join('');   // home: a short pick, the full list lives on /yacht-charter
+  { const shown = Math.min(list.length, search ? 60 : 8), total = filterList(FLEET, boatFilter).length, el = $('#boatShowLabel');
+    if (el) el.innerHTML = `${t('showing')}: <b class="text-ink">${boatFilter === 'all' ? t('all') : typeLabel(boatFilter)}</b> · ${shown}${search || shown >= total ? '' : ` ${L('จาก', 'of')} ${total}`} ${t('boatsUnit')}`; }
   icons();
 }
 
