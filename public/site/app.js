@@ -1863,18 +1863,25 @@ const TYPE_SIL = (() => {
 })();
 function renderTypeBand() {
   const el = $('#typeBand'); if (!el) return;
-  const bg = bimg('ocean-pearl-42-ft', 'hero', 1280), order = ['speed', 'longtail', 'power', 'sail', 'yacht'].filter(ty => TYPES.includes(ty));
-  TYPES.forEach(ty => { if (!order.includes(ty)) order.push(ty); });
-  el.classList.add('tb2');
+  const k = LANG === 'en' ? 1 : 0;
+  const bg = bimg('ocean-pearl-42-ft','hero', 320);
   el.innerHTML = `
-    <img src="${bg}" alt="" aria-hidden="true" loading="lazy" class="absolute inset-0 w-full h-full object-cover"/>
-    <div class="tb2-shade" aria-hidden="true"></div>
-    <div class="tb2-wrap">
-      <div class="tb2-head reveal"><div><p class="tb2-kick">${L('ค้นหาตามประเภทเรือ', 'Search by boat type')}</p><h2 id="typeBandTitle" class="font-display">${L('เลือกเรือแบบที่ใช่', 'Pick your kind of boat')}</h2></div>
-        <a href="#/fleet" class="tb2-all">${L('ดูเรือทั้งหมด', 'View all boats')} ${FLEET.length} ${L('ลำ', '')} <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a></div>
-      <div class="tb2-bar reveal">${order.map(ty => { const n = FLEET.filter(b => b.type === ty).length; if (!n) return ''; return `<a href="#/fleet?type=${ty}" class="tb2-it">
-          <span class="tb2-ico">${TYPE_SIL[ty] || ''}</span>
-          <span class="tb2-txt"><b>${typeLabel(ty)}</b><small>${n} ${L('ลำ', n === 1 ? 'boat' : 'boats')}, ${L('เริ่ม', 'from')} ${baht(minFrom(ty))}</small></span></a>`; }).join('')}</div>
+    <img src="${bg}" alt="" aria-hidden="true" loading="lazy" class="absolute inset-0 w-full h-full object-cover scale-[1.15] blur-[6px]"/>
+    <div class="absolute inset-0 bg-[#0b1a24]/65" aria-hidden="true"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 lg:py-24 text-white text-center">
+      <p class="text-[11px] uppercase tracking-[.32em] text-white/70 reveal">${L('ค้นหาตาม','Search by')}</p>
+      <h2 id="typeBandTitle" class="font-display text-3xl sm:text-4xl mt-3 reveal">${L('ประเภทเรือ','Boat type')}</h2>
+      <p class="text-sm text-white/75 mt-4 max-w-xl mx-auto reveal">${L(`รู้แล้วว่าอยากได้เรือแบบไหน? เลือกจากเรือส่วนตัว ${FLEET.length} ลำของเรา ทั่วภูเก็ต กระบี่ และพังงา`,`Know what you're looking for? Browse our ${FLEET.length} private boats across Phuket, Krabi and Phang Nga.`)}</p>
+      <ul id="tbRow" class="tb-row mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10">
+        ${TYPES.map((ty,i) => { const n = FLEET.filter(b => b.type === ty).length; return `<li class="reveal" style="transition-delay:${i*70}ms">
+          <a href="#/fleet?type=${ty}" class="tb-item group block">
+            <span class="tb-ico block mx-auto">${TYPE_SIL[ty] || TYPE_ICON[ty]}</span>
+            <span class="block mt-4 text-lg font-medium">${typeLabel(ty)}</span>
+            <span class="block text-sm text-white/70 mt-1">${n} ${L('ลำ','boats')} · ${L('เริ่ม','from')} ${baht(minFrom(ty))}</span>
+          </a></li>`; }).join('')}
+      </ul>
+      <div class="tb-bar" aria-hidden="true"><i id="tbThumb"></i></div>
+      <a href="#/fleet" class="mt-12 inline-flex items-center gap-2 h-11 px-6 bg-white text-ink hover:bg-white/90 transition text-[13px]">${L('ดูเรือทั้งหมด','View all boats')} <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
     </div>`;
 }
 /* phone: the type cards scroll sideways; the small bar under them shows where you are (like an app's shortcut row) */
