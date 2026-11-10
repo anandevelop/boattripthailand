@@ -1397,7 +1397,9 @@ let FX_POST = null;
     }
     if (id && id.startsWith('a-') && FX_POST && String(FX_POST.id) === id.slice(2)) {
       const p = FX_POST, v = { title: pT(p, 'title'), excerpt: pT(p, 'excerpt'), year: fxYear(), sep, site };
-      const T = !String(p.seoT?.[k] || '').trim() && fxTpl(FX_SC.tpl?.article?.[k], v), D = !String(p.seoD?.[k] || '').trim() && fxTpl(FX_SC.dtpl?.article?.[k], v);
+      // articles never carry the site name (same rule as seoPost in app.js): a template with {{sep}} {{site}} drops it here
+      const noSite = t => { let x = String(t || '').trim(); for (const n of [site, 'Boat Trip Thailand', 'BTT']) { if (n && x.toLowerCase().endsWith(n.toLowerCase()) && x.length > n.length) x = x.slice(0, -n.length).replace(/[\s|–·»-]+$/, ''); } return x; };
+      const T = !String(p.seoT?.[k] || '').trim() && noSite(fxTpl(FX_SC.tpl?.article?.[k], v)), D = !String(p.seoD?.[k] || '').trim() && fxTpl(FX_SC.dtpl?.article?.[k], v);
       fxMetaSet(T, D);
       if (p.cover) { const u = /^https?:/.test(p.cover) ? p.cover : SITE_ORIGIN + p.cover; setMeta('twitter:image', u); }
       if (FX_SC.ext !== false) $$('#view-blog .post-body a[href^="http"]').forEach(a => { let h = ''; try { h = new URL(a.href).host; } catch (e) { } if (!h || /(^|\.)boattripthailand\.com$/i.test(h) || h === location.host) return;

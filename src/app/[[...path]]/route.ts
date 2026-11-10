@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   if (pid && url.pathname.replace(/^\/en(?=\/)/, '').startsWith('/blog/')) return preview(url, Number(pid));
   const ok = (await routeExists(url.pathname)) && (await blogPageOk(url));
   const target = ok ? url : new URL((url.pathname.startsWith('/en') ? '/en' : '') + '/404', url);
-  let html = await renderSite(target, await cfg());
+  let html = await renderSite(target, await cfg(), { warm: req.headers.get('user-agent') === 'BTT-warm' });
   const noindex = noindexSite(reqHost(req.headers));
   if (noindex) html = html.replace(/<meta name="robots" content="[^"]*"\s*\/?>/, '<meta name="robots" content="noindex, nofollow" />');
   return new Response(html, {

@@ -3449,7 +3449,9 @@ function renderPost(slug) {
   icons(); seoPost(p);
 }
 function seoPost(p) {
-  const k = plang(), title = p.seoT[k] || `${pT(p, 'title')} | Boat Trip Thailand`, desc = p.seoD[k] || pT(p, 'excerpt'), path = (k === 'en' ? '/en' : '') + '/blog/' + (p.slug[k] || p.slug.th);
+  // articles: the headline alone, never "| Boat Trip Thailand" (Google shows the site name next to it; with the suffix
+  // almost every article title would pass 65 characters) — a suffix typed in /admin is dropped too, so all articles match
+  const k = plang(), title = String(p.seoT[k] || pT(p, 'title')).replace(/\s*[|–-]\s*(Boat Trip Thailand|BTT)\s*$/i, '').trim(), desc = p.seoD[k] || pT(p, 'excerpt'), path = (k === 'en' ? '/en' : '') + '/blog/' + (p.slug[k] || p.slug.th);
   document.title = title; setMeta('description', desc); setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property'); setMeta('og:type', 'article', 'property'); setMeta('og:url', SITE + path, 'property'); if (p.cover) setMeta('og:image', p.cover, 'property');
   setMeta('robots', 'index, follow, max-image-preview:large'); $('#canonical').href = SITE + path;
   const faq = pBlocks(p).filter(b => b.t === 'faq').flatMap(b => b.items);
@@ -3719,4 +3721,4 @@ const d = new Date(); d.setDate(d.getDate()+3); $('#qsDate').value = d.toISOStri
 const HOME_FIRST = !/^#\/(boat|fleet|design|about|privacy|terms|cookies|blog|dest|404)/.test(VH.hash || '#/');
 applyI18n(); if (HOME_FIRST) renderAll(); else { renderNavText(); updateCompareUI(); }
 if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); route(false); icons(); loadPixel();
-if (!HOME_FIRST) renderHomeLater();
+if (!HOME_FIRST && !window.__SKIP_HOME__) renderHomeLater();   // server render: skipped when the home view is already built (site-render.ts)

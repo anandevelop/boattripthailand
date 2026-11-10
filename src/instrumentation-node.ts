@@ -19,7 +19,10 @@ if (!(globalThis as { __warm?: boolean }).__warm && process.env.NODE_ENV === 'pr
   setTimeout(async () => {
     try {
       const xml = await (await fetch(base + '/sitemap.xml', { headers })).text();
-      const urls = [...new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => { try { const u = new URL(m[1].replace(/&amp;/g, '&')); return u.pathname + u.search; } catch { return ''; } }).filter(Boolean))];
+      // every <loc> plus its language alternates (the /en pages are only listed as hreflang links), main pages first
+      const all = [...xml.matchAll(/<loc>([^<]+)<\/loc>|hreflang="[^"]+" href="([^"]+)"/g)].map(m => { try { const u = new URL((m[1] || m[2]).replace(/&amp;/g, '&')); return u.pathname + u.search; } catch { return ''; } }).filter(Boolean);
+      const rank = (u: string) => { const p = u.replace(/^\/en(?=\/|$)/, '') || '/'; return p.split('/').length <= 2 ? 0 : p.startsWith('/destinations/') ? 1 : p.startsWith('/yacht-charter/') ? 2 : 3; };
+      const urls = [...new Set(all)].sort((x, y) => rank(x) - rank(y));
       const t0 = Date.now();
       for (const u of urls) {
         try { await (await fetch(base + u, { headers })).arrayBuffer(); } catch { /* next */ }

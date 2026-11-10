@@ -28,9 +28,12 @@ type Entry = { at: number; gen: number; gz: Buffer };
  */
 const S = ((globalThis as unknown as { __bttSsr?: unknown }).__bttSsr ??= {
   assets: null, dataCache: null, dataLoading: null, gen: 0, queued: 0, qTail: Promise.resolve(),
-  pages: new Map(), inflight: new Map(), home: new Map(), homeLatest: {},
+  pages: new Map(), inflight: new Map(), home: new Map(), homeLatest: {}, homeByKey: {}, hi: [], lo: [], pumping: false,
 }) as { assets: Assets | null; dataCache: Bundle | null; dataLoading: Promise<Bundle> | null; gen: number; queued: number; qTail: Promise<unknown>;
-  pages: Map<string, Entry>; inflight: Map<string, Promise<string>>; home: Map<string, string>; homeLatest: Record<string, string> };
+  pages: Map<string, Entry>; inflight: Map<string, Promise<string>>; home: Map<string, string>; homeLatest: Record<string, string>;
+  homeByKey: Record<string, string>; hi: Job[]; lo: Job[]; pumping: boolean };
+type Job = { key: string; run: () => void };
+S.homeByKey ??= {}; S.hi ??= []; S.lo ??= [];
 const ROOT = process.cwd();
 const read = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
 function loadAssets() {
@@ -142,7 +145,7 @@ export async function blogPageOk(url: URL) {
  *   · pages are kept gzipped (Thai text is 2 bytes per character as a JS string: ~10× smaller)
  */
 const pageCache = S.pages, inflight = S.inflight;
-const TTL = Number(process.env.SITE_CACHE_SECONDS || 300) * 1000;
+const TTL = Number(process.env.SITE_CACHE_SECONDS || 3600) * 1000;   // admin saves clear the cache on their own; this only refreshes time-based text
 const MAX_PAGES = Number(process.env.SITE_CACHE_PAGES || 2000);
 /* the query params each listing reads (fleet.js fxRead, app.js renderBlog / tours); anything else — ?utm_… ?fbclid …, typos,
    random cache-busters — renders the same page, so it must not make a new cache entry (or a new render) */
@@ -156,28 +159,44 @@ export function pageKey(url: URL) {
   return url.pathname + (q.length ? '?' + new URLSearchParams(q).toString() : '');
 }
 const unzip = (e: Entry) => gunzipSync(e.gz).toString('utf8');
-/** run fn after every render queued before it, one turn of the event loop later */
-function enqueue<T>(fn: () => T): Promise<T> {
+/*
+ * Render queue, one render at a time with a turn of the event loop between renders. Two lanes: a visitor (or crawler)
+ * waiting for a page with no cached copy goes first; background refreshes of expired pages and the start-up warm-up go
+ * after. (A crawl of expired pages used to fill one lane with refreshes, and pages that were not cached at all — the /en
+ * pages, missing from the warm-up — waited behind them for 20–30 s.)
+ */
+function enqueue<T>(key: string, fn: () => T, low = false): Promise<T> {
   S.queued++;
-  const p = S.qTail.then(() => new Promise<void>(r => setImmediate(r))).then(fn).finally(() => { S.queued--; });
-  S.qTail = p.catch(() => undefined);
-  return p;
+  return new Promise<T>((res, rej) => {
+    (low ? S.lo : S.hi).push({ key, run: () => { try { res(fn()); } catch (e) { rej(e); } finally { S.queued--; } } });
+    if (!S.pumping) { S.pumping = true; setImmediate(pump); }
+  });
 }
+function pump() {
+  const j = S.hi.shift() || S.lo.shift();
+  if (!j) { S.pumping = false; return; }
+  const t = Date.now(); j.run(); const ms = Date.now() - t;
+  if (ms > 3000) console.warn(`[ssr] slow render ${ms} ms ${j.key.replace(/^\d+/, '')} · waiting ${S.hi.length} + ${S.lo.length} background`);
+  setImmediate(pump);
+}
+/** a visitor now waits for a page that sits in the low lane: move it up */
+function promote(key: string) { const i = S.lo.findIndex(j => j.key === key); if (i >= 0) S.hi.push(...S.lo.splice(i, 1)); }
 export const renderQueue = () => S.queued;
 
-export async function renderSite(url: URL, cfg: Record<string, string>) {
+export async function renderSite(url: URL, cfg: Record<string, string>, opts: { warm?: boolean } = {}) {
   const a = loadAssets();
   const pk = pageKey(url), key = a.version + pk;   // app.js version in the key so an edited app.js shows up immediately
   const hit = pageCache.get(key);
   if (hit && hit.gen === S.gen && Date.now() - hit.at < TTL) return unzip(hit);
-  const job = fresh(key, new URL(pk, url), cfg, a);
-  if (!hit) return job;
+  const stale = !!hit && hit.gen === S.gen;
+  const job = fresh(key, new URL(pk, url), cfg, a, !!opts.warm || stale);
+  if (!hit) { if (!opts.warm) promote(key); return job; }
   // expired by time → last copy now, new one in the background. Changed in the admin → wait for the new one,
   // unless the server is busy rendering (crawl burst), then the last copy too.
   if (hit.gen === S.gen || S.queued > 2) { job.catch(e => console.error('[ssr]', pk, e)); return unzip(hit); }
   try { return await job; } catch (e) { console.error('[ssr]', pk, e); return unzip(hit); }
 }
-function fresh(key: string, url: URL, cfg: Record<string, string>, a: Assets) {
+function fresh(key: string, url: URL, cfg: Record<string, string>, a: Assets, low = false) {
   const running = inflight.get(key);
   if (running) return running;
   const g = S.gen;
@@ -193,7 +212,7 @@ function fresh(key: string, url: URL, cfg: Record<string, string>, a: Assets) {
       if (pi && body) post = { id: pi.id, ...body };
     }
     const lang = /^\/en(\/|$)/.test(url.pathname) ? 'en' : 'th';
-    const html = await enqueue(() => run(a, url, data, { __CFG__: cfg, __POST__: post }, lang).replace('__DV__', bundle.version));
+    const html = await enqueue(key, () => run(a, url, data, { __CFG__: cfg, __POST__: post }, lang, false, `${lang}|${a.version}|${bundle.version}`).replace('__DV__', bundle.version), low);
     pageCache.delete(key);
     pageCache.set(key, { at: Date.now(), gen: g, gz: gzipSync(html) });
     if (pageCache.size > MAX_PAGES) for (const k of pageCache.keys()) { if (pageCache.size <= MAX_PAGES * 0.8) break; pageCache.delete(k); }   // oldest first
@@ -239,7 +258,7 @@ export async function renderPostPreview(url: URL, id: number, cfg: Record<string
   return { html: html.replace('</head>', '<meta name="robots" content="noindex, nofollow"></head>').replace(/<body([^>]*)>/, `<body$1>${banner}`) };
 }
 
-function run(a: Assets, url: URL, data: SiteData, page: Record<string, unknown>, lang: string, inlineHome = false) {
+function run(a: Assets, url: URL, data: SiteData, page: Record<string, unknown>, lang: string, inlineHome = false, homeKey = '') {
   const dataJs = Object.entries(page).map(([k, v]) => `window.${k}=${JSON.stringify(v).replace(/</g, '\\u003c')};`).join('');
   const { window, document } = parseHTML(a.shell.replace('__DATA__', ''));
   const listeners: Record<string, ((e: unknown) => void)[]> = {};
@@ -261,6 +280,10 @@ function run(a: Assets, url: URL, data: SiteData, page: Record<string, unknown>,
   };
   sandbox.window = sandbox; sandbox.self = sandbox; sandbox.globalThis = sandbox;
   Object.assign(sandbox, structuredClone({ ...data, ...page }));
+  // the hidden home view is the same for every page of one language + data version: render it once, then let the other
+  // pages skip it (about half of a page's render time) and point at the script already built from it
+  const knownHome = !inlineHome && homeKey ? S.homeByKey[homeKey] : '';
+  if (knownHome && HOME.has(knownHome)) sandbox.__SKIP_HOME__ = true;
   const ctx = vm.createContext(sandbox);
   a.lucide.runInContext(ctx);
   a.app.runInContext(ctx, { timeout: 20000 });   // generous: a busy or cold server must not turn a page into a 500
@@ -273,7 +296,11 @@ function run(a: Assets, url: URL, data: SiteData, page: Record<string, unknown>,
   // (app.js, first lines) because the app still uses the home view's elements on every page.
   let homeJs = '';
   const vh = document.getElementById('view-home');
-  if (vh && vh.classList.contains('hidden') && vh.innerHTML.trim()) {
+  const appTag0 = [...document.querySelectorAll('script[src]')].find(x => (x.getAttribute('src') || '').startsWith('/site/app.js'));
+  if (sandbox.__SKIP_HOME__ && vh && vh.classList.contains('hidden') && appTag0) {
+    vh.innerHTML = ''; vh.setAttribute('data-deferred', '1');
+    const sc = document.createElement('script'); sc.setAttribute('src', `/site-home.js?l=${lang}&h=${knownHome}`); appTag0.parentNode!.insertBefore(sc, appTag0);
+  } else if (vh && vh.classList.contains('hidden') && vh.innerHTML.trim()) {
     // per-visitor parts filled during this render ("recently viewed" = the boat being rendered) — the browser fills its own
     const rw = vh.querySelector('#recentWrap'); if (rw) { rw.innerHTML = ''; rw.classList.add('hidden'); }
     const js = `window.__HOME_HTML__=${JSON.stringify(vh.innerHTML).replace(/</g, '\\u003c')};`;
@@ -283,7 +310,7 @@ function run(a: Assets, url: URL, data: SiteData, page: Record<string, unknown>,
     if (appTag) {
       const h = createHash('sha1').update(js).digest('hex').slice(0, 12);
       if (!HOME.has(h)) { HOME.set(h, js); if (HOME.size > 40) HOME.delete(HOME.keys().next().value!); }
-      HOME_LATEST[lang] = h;
+      HOME_LATEST[lang] = h; if (homeKey) S.homeByKey[homeKey] = h;
       const sc = document.createElement('script'); sc.setAttribute('src', `/site-home.js?l=${lang}&h=${h}`); appTag.parentNode!.insertBefore(sc, appTag);
     } else homeJs = js;
   }
