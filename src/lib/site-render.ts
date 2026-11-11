@@ -88,9 +88,9 @@ export function ver(u: string) {
 /** shared data for every page, served as one cacheable script: /site-data.js?v=<version> */
 export async function siteDataBundle() {
   if (S.dataCache && Date.now() - S.dataCache.at < 300_000) return S.dataCache;
-  return (S.dataLoading ??= loadBundle().finally(() => { S.dataLoading = null; }));
+  return (S.dataLoading ??= loadBundle(S.gen).finally(() => { S.dataLoading = null; }));
 }
-async function loadBundle(): Promise<Bundle> {
+async function loadBundle(gen: number): Promise<Bundle> {
   const [bs, cals, ps, cfg, home, acts, seo] = await Promise.all([db.select().from(boats).where(eq(boats.active, true)).orderBy(asc(boats.sortOrder)), db.select().from(seasonCalendars), db.select().from(posts).where(eq(posts.published, true)), db.select().from(settings).where(eq(settings.key, 'admin.sitecfg')), homeContent(), activitiesContent(), seoConfig()]);
   const extra = JSON.parse(read('data/boats.json')).extra;
   const FLEET = bs.map(b => ({ slug: b.slug, title: b.name, subtitle: b.subtitle ?? '', type: b.type, ft: b.ft, pax: b.pax, from_: b.fromPrice, marina: b.marina ?? '', pattaya: /pattaya/i.test(b.marina ?? ''), pages: [], info: b.data.info ?? [], includes: b.data.includes ?? [], complimentary: b.data.complimentary ?? [], not_included: b.data.not_included ?? [], time_slots: b.data.time_slots ?? [], notes: b.data.notes ?? [], remarks: [], tables: b.data.tables ?? [], i18n: (b.data as { i18n?: unknown }).i18n ?? null }));
@@ -105,8 +105,9 @@ async function loadBundle(): Promise<Bundle> {
   const data = { __SET__: publicSettings(cfg[0]?.value), __HOME__: home, __ACTS__: acts.filter(a => a.active !== false), __SEO__: publicSeo(seo), FLEET, EXTRA: extra, SEASONS, BIMG, GALLERY, SHOWIMG, TEAM_IMG, POSTS, DEST_PAGES: DESTINATIONS.map(({ match, ...d }) => ({ ...d, hero: ver(d.hero), match: match.source })) };
   // big blocks as JSON.parse('…'): browsers parse a JSON string much faster than the same data written as a JS object literal
   const js = Object.entries(data).map(([k, v]) => { const j = JSON.stringify(v); return `window.${k}=${(j.length > 8000 ? `JSON.parse(${JSON.stringify(j)})` : j).replace(/</g, '\\u003c')};`; }).join('\n');
-  S.dataCache = { at: Date.now(), data, js, version: createHash('sha1').update(js).digest('hex').slice(0, 12) };
-  return S.dataCache;
+  const bundle = { at: Date.now(), data, js, version: createHash('sha1').update(js).digest('hex').slice(0, 12) };
+  if (gen === S.gen) S.dataCache = bundle;   // an admin save landed while this was loading: serve it once, never keep it
+  return bundle;
 }
 
 export async function postBody(id: number) {
@@ -222,7 +223,7 @@ function fresh(key: string, url: URL, cfg: Record<string, string>, a: Assets, lo
   return p;
 }
 /** content changed in the admin: pages re-render on their next visit (the old copy stays as a fallback) */
-export function clearSiteCache() { S.gen++; S.dataCache = null; (globalThis as { __bttRedirAt?: number }).__bttRedirAt = Date.now(); }   // + redirects reload (middleware)
+export function clearSiteCache() { S.gen++; S.dataCache = null; S.dataLoading = null; (globalThis as { __bttRedirAt?: number }).__bttRedirAt = Date.now(); }   // + redirects reload (middleware)
 
 /* the hidden home view that pages other than home need (see run): one cacheable script per version instead of ~190 KB in every page */
 const HOME = S.home, HOME_LATEST = S.homeLatest;   // hash → script · lang → latest hash

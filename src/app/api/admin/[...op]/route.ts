@@ -342,6 +342,8 @@ async function boatOp(u: User, slug: string, method: string, b: Record<string, u
     ...Object.keys(BOAT_LABEL).filter(k => k !== 'images' && JSON.stringify(base[k as keyof Boat] ?? null) !== JSON.stringify(v[k as keyof typeof v] ?? null)).map(k => ({ f: BOAT_LABEL[k], from: base[k as keyof Boat] ?? null, to: v[k as keyof typeof v] ?? null, ...(k === 'fromPrice' ? { kind: 'price' } : {}) })),
     ...(base.images.join() !== v.images.join() ? [{ f: 'รูปภาพ', from: `${base.images.length} รูป`, to: `${v.images.length} รูป` }] : []),
     ...priceChanges(base.data, v.data),
+    // Thai / English texts and the boat's own SEO title / description (data.i18n) — without this a text-only save never reached the site
+    ...(JSON.stringify((base.data as { i18n?: unknown }).i18n ?? null) !== JSON.stringify((v.data as { i18n?: unknown }).i18n ?? null) ? [{ f: 'ข้อความไทย / อังกฤษ และ SEO', from: '—', to: 'แก้ไขแล้ว' }] : []),
   ];
   let row: Boat;
   if (prev) {
