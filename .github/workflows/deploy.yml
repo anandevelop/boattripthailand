@@ -87,7 +87,7 @@ jobs:
       packages: read
     environment:
       name: production
-      url: ${{ vars.SITE_URL || 'https://new.boattripthailand.com' }}
+      url: ${{ vars.SITE_URL || 'https://boattripthailand.com' }}
     steps:
       - name: Set up SSH
         env:
@@ -185,7 +185,7 @@ jobs:
 
       - name: Check the live site
         env:
-          URL: ${{ vars.SITE_URL || 'https://new.boattripthailand.com' }}
+          URL: ${{ vars.SITE_URL || 'https://boattripthailand.com' }}
         run: |
           for i in 1 2 3 4 5; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$URL/api/health" || true)

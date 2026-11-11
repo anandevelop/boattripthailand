@@ -13,7 +13,7 @@ export function noindexSite(reqHost?: string | null): boolean {
   const f = (process.env.SEO_NOINDEX || '').trim().toLowerCase();
   if (f === '1' || f === 'true' || f === 'yes') return true;
   if (f === '0' || f === 'false' || f === 'no') return false;
-  if (!LIVE.has(hostOf(process.env.APP_URL || 'https://new.boattripthailand.com'))) return true;
+  if (!LIVE.has(hostOf(process.env.APP_URL || 'https://boattripthailand.com'))) return true;
   const h = (reqHost || '').split(',')[0].trim().split(':')[0].toLowerCase();
   return /^new\./.test(h);   // the app also answering on new.* after the move: keep that copy out of the index
 }

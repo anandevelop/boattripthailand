@@ -42,7 +42,7 @@ async function getSet<T>(key: string, def: T): Promise<T> {
 const putSet = (key: string, value: unknown) => db.insert(settings).values({ key, value }).onConflictDoUpdate({ target: settings.key, set: { value } });
 
 /** PageSpeed cannot reach localhost, so a dev setup measures the live domain */
-export const psiBase = () => (/localhost|127\.0\.0\.1/.test(SITE) ? 'https://new.boattripthailand.com' : SITE);
+export const psiBase = () => (/localhost|127\.0\.0\.1/.test(SITE) ? 'https://boattripthailand.com' : SITE);
 
 /* ---------- API key: .env wins · otherwise the one pasted in /admin (AES-GCM sealed in settings) ---------- */
 type KeyRow = { sealed: string; last4: string; at: string; by: string };
