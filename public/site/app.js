@@ -3223,7 +3223,7 @@ function applySeo(view, boat) {
   setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property'); setMeta('og:url', SITE + path, 'property');
   setMeta('og:locale', k === 'en' ? 'en_US' : 'th_TH', 'property');
   setMeta('twitter:title', title); setMeta('twitter:description', desc);
-  document.getElementById('canonical').href = SITE + (k === 'en' ? '/en' : '') + (path === '/' ? '/' : path);
+  document.getElementById('canonical').href = SITE + (k === 'en' ? (path === '/' ? '/en' : '/en' + path) : path);   // /en, not /en/ (that redirects to /en)
   // JSON-LD (FAQ follows the visible language)
   const ld = { '@context':'https://schema.org', '@graph':[
     { '@type':'TravelAgency', '@id':SITE+'/#org', name:'Boat Trip Thailand', alternateName:SET.company, url:SITE+'/', logo:SITE+'/logo.png', image:SITE+'/og/yacht-charter-phuket.jpg', telephone:TEL.slice(4), email:SET.email, slogan:'Sea by Soul',

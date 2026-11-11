@@ -13,6 +13,14 @@ const config = {
   skipTrailingSlashRedirect: true,
   images: { unoptimized: true },
   serverExternalPackages: ['pg', 'bcryptjs'],
+  // www → the main domain for files the middleware does not run on (pages: src/middleware.ts, in one hop with old URLs)
+  async redirects() {
+    const www = [{ type: 'host', value: 'www\\.(?<domain>.+)' }];
+    return [
+      { source: '/:file(robots\\.txt|sitemap\\.xml|llms\\.txt|favicon\\.ico|icon\\.png|site-data\\.js|site-home\\.js)', has: www, destination: 'https://:domain/:file', statusCode: 301 },
+      { source: '/:dir(boats|img|r|site|uploads|brand|feeds|api)/:path*', has: www, destination: 'https://:domain/:dir/:path*', statusCode: 301 },
+    ];
+  },
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },
