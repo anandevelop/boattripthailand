@@ -1402,6 +1402,44 @@ function bookFromDetail(slug) {
   setTimeout(() => f.name.focus(), 60);
 }
 /* ===== boat page booking card: ① your trip → ② contact → ③ sent — all in the card (phones: inside the booking sheet) ===== */
+/* ---------- anti-bot for the booking forms (src/lib/form-guard.ts) ----------
+   A signed one-time token from /api/leads/token, fetched once the visitor starts on a form and ≥ 3 s old when sent;
+   plus Cloudflare Turnstile when it is set up (window.__CFG__.ts = site key). leadSend() is the only way a form posts. */
+const LT = { k: '', at: 0, p: null, ts: null };
+function leadToken() {
+  if (LT.p) return LT.p;
+  if (LT.k && Date.now() - LT.at < 20 * 3600e3) return Promise.resolve();
+  LT.p = fetch('/api/leads/token', { cache: 'no-store', credentials: 'same-origin' }).then(r => r.json()).then(j => { LT.k = j.k || ''; LT.at = Date.now(); }).catch(() => { }).finally(() => { LT.p = null; });
+  return LT.p;
+}
+/** Turnstile widget next to the send button (only shows itself when Cloudflare wants a check) */
+function leadTs(btn) {
+  const key = (window.__CFG__ || {}).ts; if (!key || !btn) return null;
+  let box = btn.parentNode.querySelector(':scope > .cf-ts');
+  if (!box) { box = document.createElement('div'); box.className = 'cf-ts'; box.style.cssText = 'display:flex;justify-content:center;margin:0 0 10px;min-height:0'; btn.parentNode.insertBefore(box, btn); }
+  const draw = () => { if (box._id != null || !window.turnstile) return; box._id = turnstile.render(box, { sitekey: key, appearance: 'interaction-only', 'refresh-expired': 'auto', language: LANG === 'en' ? 'en' : 'th', callback: t => { box._t = t; }, 'expired-callback': () => { box._t = ''; }, 'error-callback': () => { box._t = ''; } }); };
+  if (window.turnstile) draw();
+  else { (LT.ts ??= new Promise(res => { const sc = document.createElement('script'); sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; sc.async = true; sc.onload = res; sc.onerror = res; document.head.appendChild(sc); })).then(draw); }
+  return box;
+}
+/** call when a form is opened / first touched */
+function leadPrep(btn) { if (typeof FX_SSR !== 'undefined' && FX_SSR) return; leadToken(); try { leadTs(btn); } catch (e) { } }
+async function leadSend(payload, btn) {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  for (let i = 0; i < 2; i++) {
+    if (i) { LT.k = ''; }
+    await leadToken();
+    const wait = 3200 - (Date.now() - LT.at); if (wait > 0) await sleep(wait);
+    payload.k = LT.k; LT.k = '';   // one use
+    const box = leadTs(btn);
+    if (box) { if (LT.ts) await LT.ts; for (let w = 0; w < 40 && window.turnstile && !box._t; w++) await sleep(250); payload.cf = box._t || ''; }   // script blocked → no wait
+    const r = await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (box && box._id != null) { try { box._t = ''; turnstile.reset(box._id); } catch (e) { } }
+    leadToken();   // the next one, ready for another request
+    if (r.status === 422 && !i) { const j = await r.clone().json().catch(() => ({})); if (j.error === 'token') continue; }
+    return r;
+  }
+}
 const BK = { pref: 'whatsapp', phone: '', line: '', email: '', ephone: '', shownAt: 0, busy: false };
 const BK_PREF = () => ({ whatsapp: 'WhatsApp', line: 'LINE', phone: L('โทร', 'Phone'), email: L('อีเมล', 'Email') });
 const bkEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1411,7 +1449,7 @@ function bpStep(n) {
   if (n === 2 && !$('#dDate').value) { const v = $('#dDate')._dpVis || $('#dDate'); v.setAttribute('aria-invalid', 'true'); v.focus(); v.click?.(); toast(L('เลือกวันที่ต้องการก่อนนะคะ', 'Please pick a date first')); return; }
   ['#bpS1', '#bpS2', '#bpS3'].forEach((id, i) => $(id)?.classList.toggle('hidden', i + 1 !== n));
   bpDots(n);
-  if (n === 2) { bkDraw(b); if (!BK.shownAt) { BK.shownAt = Date.now(); track('InitiateCheckout', { content_ids: [b.slug], content_type: 'product', content_name: b.title }); } setTimeout(() => $('#bkName')?.focus({ preventScroll: innerWidth <= 1040 }), 60); }
+  if (n === 2) { bkDraw(b); leadPrep($('#bkSend')); if (!BK.shownAt) { BK.shownAt = Date.now(); track('InitiateCheckout', { content_ids: [b.slug], content_type: 'product', content_name: b.title }); } setTimeout(() => $('#bkName')?.focus({ preventScroll: innerWidth <= 1040 }), 60); }
   const card = $('#bookingCard'); if (card) { const sh = card.closest('.bp-sheet'); if (sh) sh.scrollTop = 0; else if (card.getBoundingClientRect().top < 0) card.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
   icons();
 }
@@ -1479,7 +1517,7 @@ async function bpSend() {
   const btn = $('#bkSend'), label = btn.innerHTML; BK.busy = btn.disabled = true; btn.innerHTML = `<span class="spinner" aria-hidden="true"></span><span>${t('sending')}</span>`;
   const done = () => { BK.busy = btn.disabled = false; btn.innerHTML = label; icons(); };
   try {
-    const r = await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }), j = await r.json().catch(() => ({}));
+    const r = await leadSend(payload, btn), j = await r.json().catch(() => ({}));
     if (r.ok && j.ok) {
       track('Lead', { content_ids: [b.slug], content_name: 'boat:' + b.slug, value: b.from_ || 0, currency: 'THB', num_guests: T.pax });
       done(); bkDone(b, T, j.ref || ''); return;
@@ -1488,6 +1526,7 @@ async function bpSend() {
     const map = { name, phone: BK.pref === 'email' ? s : m, whatsapp: m, email: BK.pref === 'email' ? m : s, message: $('#bkNote') };
     const els = Object.keys(j.fields || {}).map(k => { const el = map[k]; if (el) bkHint(el, k === 'email' ? L('อีเมลนี้ใช้ไม่ได้ ลองตรวจอีกครั้ง', 'This email does not look right') : L('กรุณาตรวจช่องนี้อีกครั้ง', 'Please check this field')); return el; }).filter(Boolean);
     if (els.length) { els[0].focus(); return; }
+    if (j.error === 'captcha') return toast(L('กรุณายืนยันว่าไม่ใช่บอทเหนือปุ่มส่ง แล้วกดส่งอีกครั้ง', 'Please complete the check above the send button, then send again.'));
     toast(r.status === 429 ? L('ส่งบ่อยเกินไป กรุณารอสักครู่ หรือทักเราทาง WhatsApp / LINE', 'Too many requests. Please wait a moment or message us on WhatsApp / LINE.') : L('ส่งไม่สำเร็จ กรุณาลองใหม่ หรือทักเราทาง WhatsApp / LINE', 'Could not send. Please try again or message us on WhatsApp / LINE.'));
   } catch (e) { done(); toast(L('ส่งไม่สำเร็จ กรุณาลองใหม่ หรือทักเราทาง WhatsApp / LINE', 'Could not send. Please try again or message us on WhatsApp / LINE.')); }
 }
@@ -1702,6 +1741,7 @@ function buildForm(wrap) {
   BF_TEXT.forEach(n => form[n]?.addEventListener('input', () => { const el = form[n]; if (el.closest('.bf-fld')?.querySelector('.bf-hint') && !bfHasLink(el)) bfHint(el, ''); }));
   form.addEventListener('reset', () => $$('.bf-hint', form).forEach(h => h.remove()));
   form._shownAt = Date.now();
+  form.addEventListener('focusin', () => leadPrep($('button[type=submit]', form)), { once: true });
   form.addEventListener('submit', async e => {
     e.preventDefault();
     if (form._busy) return;   // Enter / click again while the email check or the send is still running
@@ -1725,12 +1765,13 @@ function buildForm(wrap) {
     payload.lang = LANG; payload.t = Date.now() - (form._shownAt || 0); payload.adults = +(payload.adults || 0); payload.children = +(payload.kids || 0); payload.message = note; delete payload.kids; delete payload.note; delete payload.marketing;
     const done = ok => { form._busy = btn.disabled = false; btn.removeAttribute('aria-busy'); btn.innerHTML = label; if (ok) { form.reset(); closeModals(); } };
     const fail = () => { done(false); toast(L('ส่งไม่สำเร็จ กรุณาลองใหม่ หรือทักเราทาง WhatsApp / LINE', 'Could not send. Please try again or message us on WhatsApp / LINE.')); };
-    fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    leadSend(payload, btn)
       .then(r => r.json().then(j => ({ ok: r.ok && j.ok, j })))
       .then(({ ok, j }) => {
         if (ok) { done(true); toast(t('sent') + (j.ref ? ' · ' + j.ref : '')); return; }
         // the server found something the browser didn't: mark those fields
         const els = Object.entries(j.fields || {}).map(([k, why]) => { const el = form[k === 'message' ? 'note' : k]; if (el) bfHint(el, (BF_MSG[why?.[0]] || BF_MSG[{ whatsapp: 'wa', phone: 'phone', email: 'format' }[k] || 'invalid'])()); return el; }).filter(Boolean);
+        if (j.error === 'captcha') { done(false); return toast(L('กรุณายืนยันว่าไม่ใช่บอทเหนือปุ่มส่ง แล้วกดส่งอีกครั้ง', 'Please complete the check above the send button, then send again.')); }
         if (!els.length) return fail();
         done(false); els[0].focus(); toast(L('กรุณาแก้ไขช่องที่มีข้อความสีแดง', 'Please fix the fields marked in red'));
       })
