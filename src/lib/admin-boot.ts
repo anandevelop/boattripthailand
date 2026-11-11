@@ -11,6 +11,7 @@ import { mediaToClient } from './media';
 import { homeContent } from './home';
 import { activitiesContent } from './activities';
 import { seoConfig } from './seo';
+import { DESTINATIONS } from './destinations';
 import { marketingConfig } from './marketing';
 import { surchargeWarning, surchargeWarnings } from './surcharge';
 import { appUrl } from './leads';
@@ -176,6 +177,7 @@ export async function adminBoot(me: User) {
     home: canContent ? await homeContent() : null,
     acts: canContent ? await activitiesContent() : null,
     seo: can(me, 'seo') ? await seoConfig() : null,
+    dests: DESTINATIONS.map(d => ({ slug: d.slug, name: d.name, t: d.seoTitle, d: d.seoDesc })),   // ศูนย์ SEO: destination pages and their built-in meta
     mkt: await marketingConfig(),   // message templates are used by sales in the lead drawer too
     media: (await db.select().from(media).orderBy(desc(media.createdAt))).map(mediaToClient),
   };

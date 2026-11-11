@@ -5,7 +5,7 @@ import { settings } from '@/db/schema';
 
 /**
  * /admin → SEO settings that reach the public site: meta for the fixed pages (s-fleet, s-blog, s-about …),
- * per-page robots / canonical / OG title (ids: s-home, b-<boat slug>, a-<post id>, s-<page>), robots.txt,
+ * per-page robots / canonical / OG title (ids: s-home, b-<boat slug>, a-<post id>, s-<page>, d-<destination slug>), robots.txt,
  * AI crawlers, /llms.txt, sitemap hreflang and site-verification codes.
  */
 export const SEO_KEY = 'seo.config';
@@ -30,12 +30,12 @@ export const SEO_DEFAULT: SeoConfig = {
 
 const s = (v: unknown, max: number) => (typeof v === 'string' ? v : '').trim().slice(0, max);
 const bi = (v: unknown, max: number): Bi => { const o = (v ?? {}) as Record<string, unknown>; return { th: s(o.th, max), en: s(o.en, max) }; };
-const ID = /^(s-[a-z]{2,20}|b-[a-z0-9-]{1,80}|a-\d{1,9})$/;
+const ID = /^(s-[a-z]{2,20}|d-[a-z0-9-]{1,40}|b-[a-z0-9-]{1,80}|a-\d{1,9})$/;
 const url = (v: unknown) => { const u = s(v, 500); return /^https:\/\/[^\s"'<>]+$/.test(u) ? u : ''; };
 
 export function cleanSeo(v: unknown): SeoConfig {
   const c = (v ?? {}) as Record<string, Record<string, unknown>>, out: SeoConfig = structuredClone(SEO_DEFAULT);
-  for (const [id, p] of Object.entries(c.pages ?? {}).slice(0, 50)) if (/^s-[a-z]{2,20}$/.test(id)) { const o = (p ?? {}) as Record<string, unknown>; out.pages[id] = { t: bi(o.t, 200), d: bi(o.d, 400) }; }
+  for (const [id, p] of Object.entries(c.pages ?? {}).slice(0, 100)) if (/^(s-[a-z]{2,20}|d-[a-z0-9-]{1,40})$/.test(id)) { const o = (p ?? {}) as Record<string, unknown>; out.pages[id] = { t: bi(o.t, 200), d: bi(o.d, 400) }; }
   out.sx = {};
   for (const [id, p] of Object.entries(c.sx ?? {}).slice(0, 2000)) if (ID.test(id)) {
     const o = (p ?? {}) as Record<string, unknown>, x = { index: o.index !== false, follow: o.follow !== false, canon: url(o.canon), ogT: bi(o.ogT, 200) };

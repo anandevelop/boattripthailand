@@ -491,10 +491,11 @@ function renderTours() {
       <div>${TR_FAQ().map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${q}<i data-lucide="plus" class="w-4 h-4 text-maroon shrink-0"></i></summary><p>${a}</p></details>`).join('')}</div></section>
   </div>`;
   const title = CATS[cat] ? `${h1} | Boat Trip Thailand` : L(`ทัวร์ & กิจกรรมภูเก็ต ${ACTS.length} รายการ | Boat Trip Thailand`, `Phuket Tours & Activities (${ACTS.length}) | Boat Trip Thailand`);
-  const desc = L(`รวมทัวร์และกิจกรรมในภูเก็ต ${ACTS.length} รายการ เช่น ภูเก็ตแฟนตาซี ไซมอน คาบาเรต์ ทัวร์ทะเล กิจกรรมทางน้ำ สปา และที่พัก จองพร้อมเช่าเรือส่วนตัวได้ในคำขอเดียว`, `${ACTS.length} Phuket tours and activities — Phuket FantaSea, Simon Cabaret, island tours, water sports, spas and stays — bookable together with a private boat in one request.`);
+  const desc = L(`รวมทัวร์และกิจกรรมในภูเก็ต ${ACTS.length} รายการ เช่น ภูเก็ตแฟนตาซี ไซมอน คาบาเรต์ ทัวร์ทะเล กิจกรรมทางน้ำ สปา และที่พัก จองพร้อมเช่าเรือส่วนตัวได้ในคำขอเดียว`, `${ACTS.length} Phuket tours and activities, from Phuket FantaSea and Simon Cabaret to island tours, water sports and spas, bookable with a private boat.`);
   document.title = title; setMeta('description', desc); setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property');
   const url = SITE_ORIGIN + hashToPath(CATS[cat] ? `#/tours?cat=${cat}` : '#/tours');
   $('#canonical').href = url;
+  if (!CATS[cat]) seoFinal('s-tours');   // ศูนย์ SEO → หน้าเพจ → ทัวร์ & กิจกรรม
   const list = CATS[cat] ? ACTS.filter(a => a.cat === cat) : ACTS;
   $('#ldjson').textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
     { '@type': 'CollectionPage', name: title, description: desc, url, mainEntity: { '@type': 'ItemList', numberOfItems: list.length, itemListElement: list.map((a, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'TouristTrip', name: LANG === 'en' ? a.en : a.th, description: (a.tag && a.tag[LANG === 'en' ? 'en' : 'th']) || undefined, touristType: CATS[a.cat].en, ...(a.price ? { offers: { '@type': 'Offer', price: a.price, priceCurrency: 'THB' } } : {}) } })) } },
@@ -3116,10 +3117,11 @@ function renderFaq() {
 }
 function setMeta(name, val, attr = 'name') { let m = document.head.querySelector(`meta[${attr}="${name}"]`); if (!m) { m = document.createElement('meta'); m.setAttribute(attr, name); document.head.appendChild(m); } m.setAttribute('content', val); }
 /* overrides from /admin → SEO (window.__SEO__): meta of the fixed pages, robots / canonical / OG title per page.
-   ids: s-home, s-fleet, s-blog, s-about, s-privacy, s-terms, s-cookies, b-<boat slug>, a-<post id> */
+   ids: s-home, s-fleet, s-blog, s-about, s-privacy, s-terms, s-cookies, s-contact, s-tours, s-destinations, d-<destination slug>, b-<boat slug>, a-<post id> */
 function seoFinal(id) {
   const S = window.__SEO__; if (!S || !id) return;
-  const pick = o => (o && (o.th || o.en) ? homeTxt(o) : '');   // Thai when a translation is missing; fills {boats} {from} …
+  // Thai when a translation is missing; fills {boats} {from} … and {acts} (tours) {dests} {destboats} (destinations)
+  const pick = o => (o && (o.th || o.en) ? homeTxt(o).replace(/\{(acts|dests|destboats)\}/g, (m, k) => { try { return k === 'acts' ? ACTS.length : k === 'dests' ? DPAGES.length : new Set(DPAGES.flatMap(d => destBoats(d.slug).map(b => b.slug))).size; } catch (e) { return m; } }) : '');
   const pg = S.pages && S.pages[id];
   if (pg) { const t = pick(pg.t), d = pick(pg.d);
     if (t) { document.title = t; setMeta('og:title', t, 'property'); setMeta('twitter:title', t); }
@@ -3132,7 +3134,7 @@ function seoFinal(id) {
 function applySeo(view, boat) {
   const k = LANG === 'en' ? 'en' : 'th';
   let title = SEO_META[k].title, desc = SEO_META[k].desc, path = '/';
-  if (view === 'boat' && boat) { { const loc = boat.pattaya ? L('พัทยา', 'Pattaya') : L('ภูเก็ต', 'Phuket'); title = `${niceTitle(boat.title)} ${L('เช่าเรือ' + loc, 'Yacht Charter ' + loc)}${boat.from_ ? ` ${L('เริ่ม', 'from')} ${baht(boat.from_)}` : ''} | Boat Trip Thailand`; } desc = L(`${niceTitle(boat.title)} ${typeLabel(boat.type)} รับได้ ${boat.pax||'-'} คน ออกจาก ${boat.marinaP} ราคาเริ่มต้น ${baht(boat.from_)} รวมกัปตันและประกัน ดูโปรแกรมและราคาทุกฤดูกาล`, `${niceTitle(boat.title)} ${typeLabel(boat.type)} for up to ${boat.pax||'-'} guests from ${boat.marinaP}. From ${baht(boat.from_)} incl. crew & insurance. See every program and seasonal rate.`); path = '/yacht-charter/' + boat.slug;
+  if (view === 'boat' && boat) { { const loc = boat.pattaya ? L('พัทยา', 'Pattaya') : L('ภูเก็ต', 'Phuket'); title = `${niceTitle(boat.title)} ${L('เช่าเรือ' + loc, 'Charter ' + loc)}${boat.from_ ? ` ${L('เริ่ม ', '')}${baht(boat.from_)}` : ''} | Boat Trip Thailand`; } desc = L(`${niceTitle(boat.title)} ${typeLabel(boat.type)} รับได้ ${boat.pax||'-'} คน ออกจาก ${boat.marinaP} ราคาเริ่มต้น ${baht(boat.from_)} รวมกัปตันและประกัน ดูโปรแกรมและราคาทุกฤดูกาล`, `${niceTitle(boat.title)} ${typeLabel(boat.type)} for up to ${boat.pax||'-'} guests from ${boat.marinaP}. From ${baht(boat.from_)} incl. crew & insurance. See every program and seasonal rate.`); path = '/yacht-charter/' + boat.slug;
     // SEO title / description written in /admin win over the template
     title = i18nPick(boat.i18n?.seoTitle, title); desc = i18nPick(boat.i18n?.seoDesc, desc); }
   if (view === 'privacy') { title = L('นโยบายความเป็นส่วนตัว | Boat Trip Thailand','Privacy Policy | Boat Trip Thailand'); desc = L('นโยบายความเป็นส่วนตัวของ Boat Trip Thailand ตาม PDPA: ข้อมูลที่เก็บ วัตถุประสงค์ การเปิดเผย และสิทธิของคุณ','Boat Trip Thailand privacy policy under the PDPA: what we collect, why, who we share it with and your rights.'); path = '/privacy-policy'; }
@@ -3575,6 +3577,7 @@ function renderDestIndex() {
   document.title = title; setMeta('description', desc);
   setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property'); if (DPAGES[0]) setMeta('og:image', SITE_ORIGIN + DPAGES[0].hero, 'property');
   $('#canonical').href = SITE_ORIGIN + hashToPath('#/destinations');
+  seoFinal('s-destinations');
   $('#ldjson').textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
     { '@type': 'CollectionPage', name: title, description: desc, url: SITE_ORIGIN + hashToPath('#/destinations'),
       mainEntity: { '@type': 'ItemList', itemListElement: D.map(({ d, bs, from }, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'TouristDestination', name: d.name[k], url: SITE_ORIGIN + hashToPath('#/dest/' + d.slug), image: SITE_ORIGIN + d.hero, description: d.seoDesc[k], ...(from ? { offers: { '@type': 'AggregateOffer', priceCurrency: 'THB', lowPrice: from, offerCount: bs.length } } : {}) } })) } },
@@ -3626,6 +3629,7 @@ function renderDest(slug) {
   document.title = d.seoTitle[k]; setMeta('description', d.seoDesc[k]);
   setMeta('og:title', d.seoTitle[k], 'property'); setMeta('og:description', d.seoDesc[k], 'property'); setMeta('og:image', SITE_ORIGIN + d.hero, 'property');
   $('#canonical').href = SITE_ORIGIN + hashToPath('#/dest/' + slug);
+  seoFinal('d-' + slug);
   $('#ldjson').textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
     { '@type': 'TouristTrip', name: d.name[k], description: d.seoDesc[k], touristType: 'Private boat charter', provider: { '@type': 'TravelAgency', name: 'Boat Trip Thailand' }, ...(from ? { offers: { '@type': 'AggregateOffer', priceCurrency: 'THB', lowPrice: from, offerCount: bs.length } } : {}) },
     { '@type': 'FAQPage', mainEntity: d.faq[k].map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },

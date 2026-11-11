@@ -1214,6 +1214,10 @@ function seoPages() {
   st('privacy', 'นโยบายความเป็นส่วนตัว', '/privacy-policy', STATIC_SEO.privacy, 'WebPage');
   st('terms', 'ข้อกำหนดและเงื่อนไข', '/terms-and-conditions', STATIC_SEO.terms, 'WebPage');
   st('cookies', 'การตั้งค่าคุกกี้', '/cookie-preferences', STATIC_SEO.cookies, 'WebPage');
+  st('contact', 'ติดต่อเรา', '/contact', STATIC_SEO.contact, 'ContactPage');
+  st('tours', 'ทัวร์ & กิจกรรม', '/tours', STATIC_SEO.tours, 'CollectionPage');
+  st('destinations', 'ปลายทาง (หน้ารวม)', '/destinations', STATIC_SEO.destinations, 'CollectionPage');
+  DEST_SEO.forEach(x => P.push({ id: 'd-' + x.slug, type: 'page', name: 'ปลายทาง · ' + (x.name.th || x.slug), url: tr('/destinations/' + x.slug, '/en/destinations/' + x.slug), t: x.t, d: x.d, schema: 'TouristTrip + FAQPage', go: '' }));
   FLEET.forEach(b => { const i = b.i18n; if (!i) return; P.push({ id: 'b-' + b.slug, type: 'boat', name: b.name, url: tr('/yacht-charter/' + b.slug, '/en/yacht-charter/' + b.slug), t: i.seoTitle, d: i.seoDesc, schema: 'Product + Offer', img: THUMBS[b.slug], go: `boatEdit('${b.slug}');BE.tab='seo';vBoatEdit('${b.slug}')`, hidden: !b.active }); });
   ART.forEach(a => P.push({ id: 'a-' + a.id, type: 'article', name: a.title.th || a.title.en, url: tr(a.slug.th ? '/blog/' + a.slug.th : '', a.slug.en ? '/en/blog/' + a.slug.en : ''), t: a.seoT, d: a.seoD, kw: a.kw, schema: 'BlogPosting', img: THUMBS[a.cover], art: a, go: `go('articles/${a.id}')`, draft: a.status !== 'published' && a.status !== 'scheduled' }));
   return P;
@@ -1263,7 +1267,7 @@ const LOG404 = [];   // filled from /api/admin/analytics (real 404 hits)
 const SCHEMA_ORG = { name: 'Boat Trip Thailand', type: 'TravelAgency', phone: TEAM[0].tel, email: '', street: '', city: 'Phuket', zip: '', lat: '', lng: '', hours: '08:00–20:00', social: ['', '', ''], logo: true, rating: false };
 const ROBOTS = { txt: `User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nDisallow: /*?q=\n\nSitemap: https://${SITE}/sitemap.xml`, ai: { GPTBot: true, ClaudeBot: true, PerplexityBot: true, 'Google-Extended': true, CCBot: false }, llms: true };
 const SMAP = { pages: true, boats: true, blog: true, activities: true, images: true, hreflang: true };
-const SSET = { sep: '|', site: tr('Boat Trip Thailand', 'Boat Trip Thailand'), tpl: { boat: tr('%name% เช่าเรือภูเก็ต เริ่ม %price% %sep% %site%', '%name% Yacht Charter Phuket from %price% %sep% %site%'), article: tr('%title% %sep% %site%', '%title% %sep% %site%'), act: tr('%name% ภูเก็ต %sep% %site%', '%name% Phuket %sep% %site%') }, gsc: '', bing: '', ga4: '', gtm: '', pixel: '', slash: false, lower: true, canon: true, noSearch: true, crumbs: true };
+const SSET = { sep: '|', site: tr('Boat Trip Thailand', 'Boat Trip Thailand'), tpl: { boat: tr('%name% เช่าเรือภูเก็ต เริ่ม %price% %sep% %site%', '%name% Charter Phuket %price% %sep% %site%'), article: tr('%title% %sep% %site%', '%title% %sep% %site%'), act: tr('%name% ภูเก็ต %sep% %site%', '%name% Phuket %sep% %site%') }, gsc: '', bing: '', ga4: '', gtm: '', pixel: '', slash: false, lower: true, canon: true, noSearch: true, crumbs: true };
 const SEOV = { tab: 'overview', type: '', issue: '', lang: 'th', q: '', page: 0, prev: 'b-leopard-90-ft' };
 
 /* ---------- main view ---------- */
@@ -4859,19 +4863,33 @@ Object.assign(STATIC_SEO, {
   terms: { t: tr('ข้อกำหนดและเงื่อนไข | Boat Trip Thailand', 'Terms & Conditions | Boat Trip Thailand'), d: tr('เงื่อนไขการจองเรือ การชำระเงิน การยกเลิก กฎบนเรือ และความรับผิดของ Boat Trip Thailand', 'Booking, payment, cancellation, on-board rules and liability terms for Boat Trip Thailand charters.') },
   cookies: { t: tr('การตั้งค่าคุกกี้ | Boat Trip Thailand', 'Cookie Preferences | Boat Trip Thailand'), d: tr('เลือกประเภทคุกกี้ที่อนุญาตบนเว็บไซต์ Boat Trip Thailand', 'Choose which cookies you allow on the Boat Trip Thailand website.') },
 });
+Object.assign(STATIC_SEO, {
+  contact: { t: tr('ติดต่อเรา – เช่าเรือยอร์ชภูเก็ต | Boat Trip Thailand', 'Contact – Yacht Charter Phuket | Boat Trip Thailand'),
+    d: tr('ติดต่อ Boat Trip Thailand โทร +66 61 172 5854 LINE @boattripthailand WhatsApp หรืออีเมล ทุกวัน 09:00–21:00 น. ขอใบเสนอราคาเช่าเรือภูเก็ต ตอบภายใน 30 นาที', 'Contact Boat Trip Thailand by phone +66 61 172 5854, LINE @boattripthailand, WhatsApp or email, daily 09:00–21:00. Charter quotes within 30 minutes.') },
+  tours: { t: tr('ทัวร์ & กิจกรรมภูเก็ต {acts} รายการ | Boat Trip Thailand', 'Phuket Tours & Activities ({acts}) | Boat Trip Thailand'),
+    d: tr('รวมทัวร์และกิจกรรมในภูเก็ต {acts} รายการ เช่น ภูเก็ตแฟนตาซี ไซมอน คาบาเรต์ ทัวร์ทะเล กิจกรรมทางน้ำ สปา และที่พัก จองพร้อมเช่าเรือส่วนตัวได้ในคำขอเดียว', '{acts} Phuket tours and activities, from Phuket FantaSea and Simon Cabaret to island tours, water sports and spas, bookable with a private boat.') },
+  destinations: { t: tr('เช่าเรือเที่ยวเกาะภูเก็ต พีพี พังงา ราชา | Boat Trip Thailand', 'Phuket Island Trips by Private Boat | Boat Trip Thailand'),
+    d: tr('เลือกปลายทางเช่าเรือส่วนตัวจากภูเก็ต {dests} กลุ่มเกาะ เปรียบเทียบเวลาเดินทาง เรือที่ไป {destboats} ลำ ราคาเริ่มต้น และท่าเรือ', 'Choose a private boat destination from Phuket — compare travel time, {destboats} boats, starting prices and marinas for Phi Phi, Phang Nga Bay, Racha and Khai.') },
+});
 delete STATIC_SEO.activities;
 const STATIC_DEF = clone(STATIC_SEO);
+/* destination pages (src/lib/destinations.ts): their built-in Title / Description, overridden from the SEO centre as d-<slug> */
+const DEST_SEO = (BOOT.dests || []).map(x => ({ slug: x.slug, name: x.name, t: clone(x.t), d: clone(x.d) }));
+const DEST_DEF = clone(DEST_SEO);
 if (BOOT.seo) { const c = BOOT.seo;
   Object.keys(SX).forEach(k => delete SX[k]);
   Object.entries(c.sx || {}).forEach(([id, x]) => { SX[id] = { index: x.index !== false, follow: x.follow !== false, canon: x.canon || '', ogT: x.ogT || tr(), schema: '' }; });
-  Object.entries(c.pages || {}).forEach(([id, p]) => { const k = id.slice(2); if (STATIC_SEO[k]) STATIC_SEO[k] = { t: p.t, d: p.d }; });
+  Object.entries(c.pages || {}).forEach(([id, p]) => { const k = id.slice(2);
+    if (id.startsWith('d-')) { const x = DEST_SEO.find(o => o.slug === k); if (x) ['t', 'd'].forEach(f => ['th', 'en'].forEach(l => { if (p[f]?.[l]) x[f][l] = p[f][l]; })); }   // a language left empty keeps the built-in text
+    else if (STATIC_SEO[k]) STATIC_SEO[k] = { t: p.t, d: p.d }; });
   Object.assign(ROBOTS, { txt: c.robots.txt, ai: { ...c.robots.ai }, llms: c.robots.llms });
   Object.assign(SMAP, c.smap);
   const merge = (a, b) => { for (const [k, v] of Object.entries(b || {})) a[k] = v && typeof v === 'object' && !Array.isArray(v) && a[k] && typeof a[k] === 'object' ? merge(a[k], v) : v; return a; };
   merge(SSET, c.sset);
 }
 const seoVal = () => ({
-  pages: Object.fromEntries(Object.entries(STATIC_SEO).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(STATIC_DEF[k])).map(([k, v]) => ['s-' + k, v])),
+  pages: Object.fromEntries([...Object.entries(STATIC_SEO).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(STATIC_DEF[k])).map(([k, v]) => ['s-' + k, v]),
+    ...DEST_SEO.filter((x, i) => JSON.stringify([x.t, x.d]) !== JSON.stringify([DEST_DEF[i].t, DEST_DEF[i].d])).map(x => ['d-' + x.slug, { t: x.t, d: x.d }])]),
   sx: Object.fromEntries(Object.entries(SX).map(([id, x]) => [id, { index: x.index !== false, follow: x.follow !== false, canon: (x.canon || '').trim(), ogT: x.ogT || tr() }])
     .filter(([, x]) => !x.index || !x.follow || x.canon || x.ogT.th || x.ogT.en)),   // pages left at the default are not stored
   robots: { txt: ROBOTS.txt, ai: ROBOTS.ai, llms: ROBOTS.llms }, smap: { hreflang: SMAP.hreflang, pages: SMAP.pages !== false, boats: SMAP.boats !== false, blog: SMAP.blog !== false, images: SMAP.images !== false }, sset: SSET,
@@ -5809,7 +5827,7 @@ function sstRow(group, kind, label, ph, area) {
       <p class="text-[11.5px] flex justify-between gap-3"><span class="truncate" style="color:#1a0dab">${esc(out)}</span><span class="tnum shrink-0" style="color:${n > mx ? '#a3222c' : n >= mn ? '#1e7a46' : '#9a5b00'}">${n}</span></p></div>`; }).join('')}</div>`;
 }
 const SST_PH = {
-  tpl: { boat: tr('{{name}} เช่าเรือภูเก็ต เริ่ม {{price}} {{sep}} {{site}}', '{{name}} Yacht Charter Phuket from {{price}} {{sep}} {{site}}'), article: tr('{{title}} {{sep}} {{site}}', '{{title}} {{sep}} {{site}}') },
+  tpl: { boat: tr('{{name}} เช่าเรือภูเก็ต เริ่ม {{price}} {{sep}} {{site}}', '{{name}} Charter Phuket {{price}} {{sep}} {{site}}'), article: tr('{{title}} {{sep}} {{site}}', '{{title}} {{sep}} {{site}}') },
   dtpl: { boat: tr('เช่า{{type}} {{name}} ส่วนตัวในภูเก็ต รับได้ {{pax}} คน ออกจาก {{marina}} ราคาเริ่มต้น {{price}} รวมกัปตันและลูกเรือ', 'Charter the {{name}}, a private {{type}} in Phuket for up to {{pax}} guests from {{marina}}. From {{price}} with captain and crew.'), article: tr('{{excerpt}}', '{{excerpt}}') },
 };
 SSET.dtpl ??= { boat: { ...SST_PH.dtpl.boat }, article: { ...SST_PH.dtpl.article } };   // first time: start from the suggested descriptions
