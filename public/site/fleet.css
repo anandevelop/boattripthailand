@@ -699,7 +699,7 @@ body > footer .flex.gap-2.mt-4 a { color: #70000e !important; }
 body > footer .flex.gap-2.mt-4 a svg.bi { width: 17px !important; height: 17px !important; transition: color .25s, transform .25s; }
 body > footer .flex.gap-2.mt-4 a:hover svg.bi { color: #fff !important; transform: scale(1.06); }
 /* booking contact cards: every tile in the site's maroon (like the phone tile), white marks */
-.ct-card svg.bi { color: #fff !important; }
+.ct-card svg.bi { }
 body > footer .flex.gap-2.mt-4 a:hover:has(.bi-facebook) { background: #0866FF !important; }
 body > footer .flex.gap-2.mt-4 a:hover:has(.bi-instagram) { background: linear-gradient(45deg, #F58529, #DD2A7B 55%, #8134AF) !important; }
 body > footer .flex.gap-2.mt-4 a:hover:has(.bi-youtube) { background: #FF0000 !important; }
@@ -752,7 +752,7 @@ a.group.block:has(> div.aspect-\[4\/3\] img[data-pid]) > p.text-sm { order: 3; m
 .cx-ch:hover { transform: translateY(-3px); box-shadow: 0 28px 54px -32px rgb(58 0 7 / .55), inset 0 0 0 1px rgb(255 255 255 / .8); }
 .cx-main { display: flex; flex-direction: column; gap: 14px; flex: 1; }
 .cx-ic { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; color: #fff; background: linear-gradient(160deg, #8a1a26, #70000e 60%, #4a0009); box-shadow: 0 10px 22px -10px rgb(112 0 14 / .8), inset 0 1px 0 rgb(255 255 255 / .22); }
-.cx-ic svg { width: 21px; height: 21px; color: #fff !important; }
+.cx-ic svg { width: 21px; height: 21px; }
 .cx-tx small { display: block; font-size: 12px; color: #6b5e60; }
 .cx-tx b { display: block; font-size: 16px; font-weight: 500; color: #231416; margin-top: 2px; overflow-wrap: anywhere; }
 .cx-tx em { display: block; font-style: normal; font-size: 12px; color: #6b5e60; margin-top: 4px; line-height: 1.5; }
@@ -1223,3 +1223,7 @@ html body #navRow > a:first-child .font-display + span { font-weight: 600 !impor
   html body #navRow > a:first-child .font-display { font-size: 13.5px !important; line-height: 16px !important; }
   html body #navRow > a:first-child .font-display + span { font-size: 8px !important; line-height: 11px !important; letter-spacing: .3em !important; }
 }
+/* ---------- footer wordmark: same crisp face as the header ---------- */
+html body footer .font-display.text-xl, html body footer .font-display.text-xl + p { font-family: 'BTT Logo', Jost, system-ui, sans-serif !important; font-size-adjust: none !important; -webkit-font-smoothing: antialiased; text-transform: uppercase; }
+html body footer .font-display.text-xl { font-weight: 500 !important; font-size: 21px !important; line-height: 24px !important; letter-spacing: .06em !important; }
+html body footer .font-display.text-xl + p { font-weight: 600 !important; font-size: 10.5px !important; line-height: 15px !important; letter-spacing: .34em !important; margin-top: 2px; }
