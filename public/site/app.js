@@ -3422,7 +3422,7 @@ function renderPost(slug) {
       <button onclick="BL.cat='${p.cat}';VH.hash='#/blog'" class="mt-6 text-[11px] uppercase tracking-[.18em] text-maroon">${c[k]}</button>
       <h1 class="font-display text-[28px] sm:text-[40px] leading-[1.15] text-ink mt-3" itemprop="headline">${esc(pT(p, 'title'))}</h1>
       <p class="text-muted text-[15px] sm:text-lg mt-4 leading-relaxed">${esc(pT(p, 'excerpt'))}</p>
-      <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted"><span class="flex items-center gap-2"><img src="data:image/png;base64,LOGON_B64" alt="" class="w-6 h-6 object-contain"/>${L('ทีมงาน Boat Trip Thailand', 'Boat Trip Thailand team')}</span><time datetime="${p.date}" itemprop="datePublished">${pDate(p.date)}</time><span>${L(`อ่าน ${pRead(p)} นาที`, `${pRead(p)} min read`)}</span></div>
+      <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted"><span class="flex items-center gap-2"><img src="${SET.logo || '/brand/logo.png'}" alt="" class="w-6 h-6 object-contain"/>${L('ทีมงาน Boat Trip Thailand', 'Boat Trip Thailand team')}</span><time datetime="${p.date}" itemprop="datePublished">${pDate(p.date)}</time><span>${L(`อ่าน ${pRead(p)} นาที`, `${pRead(p)} min read`)}</span></div>
       ${miss ? `<p class="mt-5 rounded-xl bg-sand px-4 py-3 text-sm text-muted">${L('บทความนี้มีเฉพาะภาษาอังกฤษ', 'This article is available in Thai only')}</p>` : ''}
     </section>
     <figure class="max-w-6xl mx-auto px-4 sm:px-6 mt-8"><div class="relative aspect-[16/9] lg:aspect-[21/9] overflow-hidden rounded-[22px] bg-sand">${pImg(p, 'absolute inset-0 w-full h-full object-cover', true)}</div></figure>
