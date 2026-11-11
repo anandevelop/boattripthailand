@@ -27,6 +27,24 @@ async function redirectMap() {
   } catch (e) { console.error('[redirects]', e); cache = { at: Date.now() - 45_000, map: cache?.map ?? new Map() }; }
   return cache.map;
 }
+/* boat slugs, for the old WordPress boat URLs that are not in the table (cached 5 min) */
+let boatCache: { at: number; set: Set<string> } | null = null;
+async function boatSlugs() {
+  if (boatCache && Date.now() - boatCache.at < 300_000) return boatCache.set;
+  try { const { db } = await import('@/db'); const { boats } = await import('@/db/schema'); boatCache = { at: Date.now(), set: new Set((await db.select({ s: boats.slug }).from(boats)).map(r => r.s)) }; }
+  catch (e) { console.error('[redirects] boats', e); boatCache = { at: Date.now() - 240_000, set: boatCache?.set ?? new Set() }; }
+  return boatCache.set;
+}
+/** old WordPress boat URL → new one: /yacht/<boat> → /en/yacht-charter/<boat>, /th/yacht/<boat>-th → /yacht-charter/<boat>;
+ *  the name as it was, or with "-ft" / "46ft" → "46-ft"; no such boat (any more) → the boat list */
+async function oldBoatUrl(key: string) {
+  const m = key.match(/^(\/th)?\/(yacht|yachts|type-yacht)(?:\/([^/]+))?$/); if (!m) return null;
+  const base = m[1] ? '/yacht-charter' : '/en/yacht-charter';
+  if (m[2] !== 'yacht' || !m[3]) return base;
+  const raw = m[3].toLowerCase().replace(/-th$/, ''), set = await boatSlugs();
+  const found = [raw, raw + '-ft', raw.replace(/(\d)ft$/, '$1-ft'), raw.replace(/-(th|en)$/, '')].find(x => set.has(x));
+  return found ? `${base}/${found}` : base;
+}
 async function hit(from: string) {
   try { const { db } = await import('@/db'); const { redirects } = await import('@/db/schema'); const { eq, sql } = await import('drizzle-orm'); await db.update(redirects).set({ hits: sql`${redirects.hits} + 1` }).where(eq(redirects.from, from)); } catch { /* ignore */ }
 }
@@ -66,6 +84,10 @@ async function route(req: NextRequest): Promise<NextResponse> {
   const r = map.get(key);
   if (r && r.code === 410) { void hit(key); return gone(); }
   if (r) { void hit(key); return go(follow(r.to), r.code === 302 ? 302 : 301); }
+
+  // old WordPress boat / boat-type pages that are not in the table
+  const ob = await oldBoatUrl(key);
+  if (ob) return go(follow(ob), 301);
 
   // trailing slash and the old /th/ prefix (Thai is the default language now) — together, in one 301, then any redirect of the result
   const slash = url.pathname.length > 1 && url.pathname.endsWith('/'), th = key === '/th' || key.startsWith('/th/');
