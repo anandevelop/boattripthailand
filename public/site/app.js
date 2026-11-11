@@ -1474,6 +1474,7 @@ function bkDraw(b) {
     <label class="bp-fld"><span>${L('เบอร์โทร', 'Phone Number')} <b class="bk-req">*</b></span><div class="bf-tel">${bkCc('bkPhoneCc', 'cc')}<input id="bkPhone" class="bp-inp" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="20" aria-label="${L('เบอร์โทร', 'Phone Number')}" placeholder="${bkTelPh(BK.cc)}" value="${bkEsc(BK.phone || '')}" oninput="BK.phone=this.value;bkHint(this,'')"/></div></label>
     <label class="bp-fld"><span>WhatsApp <small class="bk-opt">${L('(ไม่บังคับ · ถ้าต่างจากเบอร์โทร)', '(optional · if different from your phone)')}</small></span><div class="bf-tel">${bkCc('bkWaCc', 'wacc')}<input id="bkWa" class="bp-inp" type="tel" inputmode="tel" autocomplete="off" maxlength="20" aria-label="WhatsApp" placeholder="${bkTelPh(BK.wacc)}" value="${bkEsc(BK.wa || '')}" oninput="BK.wa=this.value;bkHint(this,'')"/></div></label>
     <label class="bp-fld"><span>${L('หมายเหตุ', 'Notes')} <small class="bk-opt">${L('(ไม่บังคับ)', '(optional)')}</small></span><textarea id="bkNote" class="bp-inp bk-ta" rows="2" maxlength="2000" placeholder="${L('เช่น ฉลองวันเกิด, ต้องการรถรับส่ง', 'e.g. birthday, need a transfer')}" oninput="BK.note=this.value">${bkEsc(BK.note || '')}</textarea></label>
+    <label class="bk-check bk-pv"><input type="checkbox" id="bkPv" ${BK.pv ? 'checked' : ''} onchange="BK.pv=this.checked;bkPvHint(false)"/><span>${L('ข้าพเจ้ายอมรับ', 'I accept the ')}<a href="#/privacy" target="_blank">${L('นโยบายความเป็นส่วนตัว', 'Privacy Policy')}</a>${L(' และยินยอมให้ติดต่อกลับเกี่ยวกับคำขอจองนี้', ' and agree to be contacted about this booking request')} <b class="bk-req">*</b></span></label>
     <label class="bk-check"><input type="checkbox" id="bkMk" ${BK.mk ? 'checked' : ''} onchange="BK.mk=this.checked"/><span>${L('รับข่าวสาร โปรโมชัน และคิวเรือว่างช่วงพิเศษ (ไม่บังคับ · ยกเลิกได้ทุกเมื่อ)', 'Send me offers and last-minute availability (optional · unsubscribe any time)')}</span></label>
     <input id="bkHp" class="bf-hp" tabindex="-1" autocomplete="off" aria-hidden="true"/>
     <button type="button" class="bp-btn bp-btn-p" id="bkSend" onclick="bpSend()"><i data-lucide="send"></i>${L('ส่งคำขอจอง', 'Send booking request')}</button>
@@ -1482,6 +1483,15 @@ function bkDraw(b) {
 }
 /* name · email · phone · WhatsApp (fixed fields); what was typed is kept while the visitor goes back to step 1 */
 function bkSave() { const g = id => $('#' + id)?.value; if (!$('#bkEmail')) return; BK.email = g('bkEmail'); BK.phone = g('bkPhone'); BK.wa = g('bkWa'); }
+/** the privacy box is required: a red hint under it until it is ticked */
+function bkPvHint(on) {
+  const box = $('#bkPv'), lab = box?.closest('label'); if (!lab) return;
+  box.setAttribute('aria-invalid', on ? 'true' : 'false'); lab.classList.toggle('bk-pv-bad', on);
+  let h = lab.nextElementSibling?.classList.contains('bk-hint') ? lab.nextElementSibling : null;
+  if (!on) { h?.remove(); return; }
+  if (!h) { h = document.createElement('p'); h.className = 'bk-hint'; lab.after(h); }
+  h.textContent = L('กรุณายอมรับนโยบายความเป็นส่วนตัวก่อนส่งคำขอ', 'Please accept the Privacy Policy to send your request');
+}
 function bkHint(el, msg) {
   if (!el) return; const f = el.closest('.bp-fld'); let h = f?.querySelector('.bk-hint');
   el.setAttribute('aria-invalid', msg ? 'true' : 'false');
@@ -1500,6 +1510,7 @@ async function bpSend() {
   if (!bfWaOk(phoneFull)) { bkHint(ph, ph.value.trim() ? L('เบอร์โทรไม่ถูกต้อง', 'Phone number looks wrong') : L('กรุณากรอกเบอร์โทร', 'Please enter your phone number')); bad.push(ph); }
   if (wa.value.trim() && !bfWaOk(waFull)) { bkHint(wa, L('เบอร์ WhatsApp ไม่ถูกต้อง', 'WhatsApp number looks wrong')); bad.push(wa); }
   [name, $('#bkNote')].forEach(el => { if (el && bfHasLink(el)) { bkHint(el, BF_MSG.link()); bad.push(el); } });
+  if (!$('#bkPv')?.checked) { bkPvHint(true); bad.push($('#bkPv')); }
   if (bad.length) { bad[0].focus(); return; }
   const note = ($('#bkNote')?.value || '').trim();
   const payload = { name: name.value.trim(), phone: phoneFull, email: em.value.trim(), whatsapp: waFull, item: 'boat:' + b.slug, program: T.p ? T.p.label : '', date: T.date, adults: T.pax, children: 0, slot: T.slot,
