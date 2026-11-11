@@ -2625,7 +2625,7 @@ const WP = window.WPDATA || { arts: [], redir: [] };
   WP.redir.forEach(r => REDIR.push({ ...r, from: decodeURI(r.from) }));
 })();
 /* remote WordPress images: fall back when offline */
-document.addEventListener('error', e => { const t = e.target; if (t.tagName === 'IMG' && /^https:\/\/boattripthailand\.com/.test(t.src) && !t.dataset.fb) { t.dataset.fb = 1; t.title = 'รูปจากเว็บเดิม (โหลดไม่ได้ขณะออฟไลน์)'; t.src = THUMBS['leopard-90-ft']; } }, true);
+document.addEventListener('error', e => { const t = e.target; if (t.tagName === 'IMG' && /^https:\/\/(www\.)?boattripthailand\.com\/wp-content\//.test(t.src) && !t.dataset.fb) { t.dataset.fb = 1; t.title = 'รูปจากเว็บเดิม (WordPress) โหลดไม่ได้'; t.style.background = '#efe7e4'; t.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACw='; } }, true);
 /* articles list: import banner + pagination */
 const AP = { page: 0, per: 25 };
 const _vArticles17 = vArticles;
@@ -6679,7 +6679,8 @@ function seoSpeed() {
    Saved with the rest of the hero (settings site.home → hero.slides); img '' = the boat's cover photo.
    ===================================================================== */
 if (WEB.hero && (!Array.isArray(WEB.hero.slides) || !WEB.hero.slides.length)) WEB.hero.slides = (CONTENT.heroSlides || []).map(b => ({ boat: b, img: '' }));
-const slThumb = (u, w = 480) => (/^\/(boats|img|uploads)\//.test(u || '') ? `/r/${w}${u}` : u || '');
+const slThumb = (u, w = 768) =>   // /r/ only makes 160 · 320 · 768 · 1280 · 1600 px (src/app/r/[w]/[...path]/route.ts)
+  (/^\/(boats|img|uploads)\//.test(u || '') ? `/r/${w}${u}` : u || '');
 const slImg = x => (x.img ? slThumb(x.img) : THUMBS[x.boat] || '');
 function heroSlidesBox() {
   const S = WEB.hero.slides, nav = (n, d, ic, lab, on) => `<button class="btn btn-g !px-1.5 !h-7" ${on ? '' : 'disabled style="opacity:.3"'} onclick="${d}" aria-label="${lab}" title="${lab}"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i></button>`;
