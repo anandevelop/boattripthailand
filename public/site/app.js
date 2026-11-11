@@ -1476,7 +1476,7 @@ function bkSave() { const m = $('#bkMain'), s = $('#bkSub'); if (!m) return; if 
 function bkPref(k) { bkSave(); BK.pref = k; $$('.bk-chips button').forEach(x => { const on = x.getAttribute('onclick').includes(`'${k}'`); x.classList.toggle('on', on); x.setAttribute('aria-checked', on); }); bkFields(); }
 function bkFields() {
   const m = $('#bkMain'), s = $('#bkSub'), req = ' <b class="bk-req">*</b>', opt = t => ` <small class="bk-opt">${t}</small>`;
-  const set = (el, type, auto, mode, ph, v) => { el.type = type; el.autocomplete = auto; el.inputMode = mode; el.placeholder = ph; el.value = v || ''; bkHint(el, ''); };
+  const set = (el, type, auto, mode, ph, v) => { el.type = type; el.autocomplete = auto; el.inputMode = mode; el.placeholder = ph; el.value = v || ''; el.maxLength = type === 'tel' ? 20 : 160; bkHint(el, ''); };
   if (BK.pref === 'email') {
     $('#bkMainL').innerHTML = L('อีเมล', 'Email') + req; set(m, 'email', 'email', 'email', 'name@email.com', BK.email);
     $('#bkSubL').innerHTML = L('เบอร์โทร', 'Phone') + opt(L('(ไม่บังคับ)', '(optional)')); set(s, 'tel', 'tel', 'tel', '+66 8x xxx xxxx', BK.ephone);
@@ -1663,14 +1663,21 @@ const BF_MSG = {
 const bfWaOk = v => /^\+?[\d\s().-]+$/.test(v.trim()) && v.replace(/\D/g, '').length >= 7;
 /** same rule as the phone field in src/app/api/leads/route.ts */
 // the booking form's phone field takes a number only (digits, spaces, - ( ) ); LINE IDs go in the boat page card or the note
-const bfPhoneOk = v => { const s = v.trim(), n = s.replace(/\D/g, '').length; return /^[\d\s().-]+$/.test(s) && n >= 6 && n <= 15; };
+const bfPhoneOk = v => { const s = v.trim(), n = s.replace(/\D/g, '').length; return /^\+?[\d\s().-]+$/.test(s) && n >= 6 && n <= 15; };
 /** message under a field ('' clears it); html may hold a "did you mean" button */
-/* booking form phone + WhatsApp: number characters only (Thai / letters typed by mistake are dropped as you type or paste) */
+/* phone / WhatsApp fields in every booking form (popup, contact page, boat page): numbers only — a "+" in front and
+   spaces are kept; letters, Thai and symbols are dropped as you type or paste, with a short hint */
 (() => {
   if (typeof document === 'undefined' || !document.addEventListener) return;
-  document.addEventListener('input', e => { const el = e.target; if (!el || !el.closest || !el.closest('#bookingModal, .bf, .bf-form, #inlineBook')) return;
-    if (el.name === 'phone') { const v = el.value.replace(/[^\d\s().-]/g, ''); if (v !== el.value) { el.value = v; if (typeof bfHint === 'function') bfHint(el, BF_MSG.phone()); } }
-    else if (el.name === 'whatsapp') { const v = el.value.replace(/[^\d\s().+-]/g, '').replace(/(?!^)\+/g, ''); if (v !== el.value) el.value = v; } }, true);
+  const isTel = el => !!el && !!el.closest && ((el.id === 'bkMain' || el.id === 'bkSub') ? el.type === 'tel'
+    : (el.name === 'phone' || el.name === 'whatsapp') && !!el.closest('#bookingModal, .bf, .bf-form, #inlineBook'));
+  const clean = v => v.replace(/[^\d+ ]/g, '').replace(/(?!^)\+/g, '').replace(/ {2,}/g, ' ').slice(0, 20);
+  document.addEventListener('input', e => { const el = e.target; if (!isTel(el)) return;
+    const v = clean(el.value); if (v === el.value) return;
+    el.value = v; const msg = L('ใส่ได้เฉพาะตัวเลข', 'Numbers only');
+    // after the field's own input handlers (they clear its hint)
+    setTimeout(() => { if (el.id && el.id.startsWith('bk') && typeof bkHint === 'function') bkHint(el, msg); else if (typeof bfHint === 'function') bfHint(el, msg); }, 0);
+    clearTimeout(el._telT); el._telT = setTimeout(() => { if (el.id && el.id.startsWith('bk')) bkHint(el, ''); else bfHint(el, ''); }, 2500); }, true);
 })();
 /* no links in the booking forms: a pasted or dropped link is refused right away with the field's red hint
    (the send check and the server check stay as the backstop) */
