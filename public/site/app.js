@@ -1460,33 +1460,19 @@ function bkTrip(b) {
 function bkDraw(b) {
   const T = bkTrip(b), img = gallery(b.slug)[0], P = BK_PREF();
   $('#bpS2').innerHTML = `<div class="bk-mini">${img ? `<img src="${rs(img, 160)}" alt=""/>` : ''}<div class="min-w-0"><b>${bkEsc(niceTitle(b.title))}${T.total ? ` · ${T.total}` : ''}</b><span>${[T.prog, dpText(T.date), T.slot, `${T.pax} ${L('คน', T.pax > 1 ? 'guests' : 'guest')}`].filter(Boolean).map(bkEsc).join(' · ')}</span></div><button type="button" onclick="bpStep(1)">${L('แก้ไข', 'Edit')}</button></div>
-    <label class="bp-fld"><span>${L('ชื่อ-นามสกุล', 'Your name')} <b class="bk-req">*</b></span><input id="bkName" class="bp-inp" autocomplete="name" maxlength="120" placeholder="${L('เช่น สมชาย ใจดี', 'e.g. Alex Smith')}" value="${bkEsc(BK.name || '')}" oninput="BK.name=this.value;bkHint(this,'')"/></label>
-    <div class="bp-fld"><span>${L('ให้ติดต่อกลับทาง', 'Contact me via')} <b class="bk-req">*</b></span><div class="bk-chips" role="radiogroup">${Object.entries(P).map(([k, l]) => `<button type="button" role="radio" aria-checked="${BK.pref === k}" class="${BK.pref === k ? 'on' : ''}" onclick="bkPref('${k}')">${l}</button>`).join('')}</div></div>
-    <label class="bp-fld"><span id="bkMainL"></span><input id="bkMain" class="bp-inp" oninput="bkHint(this,'')"/></label>
-    <label class="bp-fld"><span id="bkSubL"></span><input id="bkSub" class="bp-inp" oninput="bkHint(this,'')"/></label>
+    <label class="bp-fld"><span>${L('ชื่อ-นามสกุล', 'Your Name')} <b class="bk-req">*</b></span><input id="bkName" class="bp-inp" autocomplete="name" maxlength="120" placeholder="${L('เช่น สมชาย ใจดี', 'e.g. Alex Smith')}" value="${bkEsc(BK.name || '')}" oninput="BK.name=this.value;bkHint(this,'')"/></label>
+    <label class="bp-fld"><span>${L('อีเมล', 'Email Address')} <b class="bk-req">*</b></span><input id="bkEmail" class="bp-inp" type="email" inputmode="email" autocomplete="email" maxlength="160" placeholder="name@email.com" value="${bkEsc(BK.email || '')}" oninput="BK.email=this.value;bkHint(this,'')"/></label>
+    <label class="bp-fld"><span>${L('เบอร์โทร', 'Phone Number')} <b class="bk-req">*</b></span><input id="bkPhone" class="bp-inp" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+66 8x xxx xxxx" value="${bkEsc(BK.phone || '')}" oninput="BK.phone=this.value;bkHint(this,'')"/></label>
+    <label class="bp-fld"><span>WhatsApp <small class="bk-opt">${L('(ไม่บังคับ · ถ้าต่างจากเบอร์โทร)', '(optional · if different from your phone)')}</small></span><input id="bkWa" class="bp-inp" type="tel" inputmode="tel" autocomplete="off" maxlength="20" placeholder="+66 8x xxx xxxx" value="${bkEsc(BK.wa || '')}" oninput="BK.wa=this.value;bkHint(this,'')"/></label>
     <label class="bp-fld"><span>${L('หมายเหตุ', 'Notes')} <small class="bk-opt">${L('(ไม่บังคับ)', '(optional)')}</small></span><textarea id="bkNote" class="bp-inp bk-ta" rows="2" maxlength="2000" placeholder="${L('เช่น ฉลองวันเกิด, ต้องการรถรับส่ง', 'e.g. birthday, need a transfer')}" oninput="BK.note=this.value">${bkEsc(BK.note || '')}</textarea></label>
     <label class="bk-check"><input type="checkbox" id="bkMk" ${BK.mk ? 'checked' : ''} onchange="BK.mk=this.checked"/><span>${L('รับข่าวสาร โปรโมชัน และคิวเรือว่างช่วงพิเศษ (ไม่บังคับ · ยกเลิกได้ทุกเมื่อ)', 'Send me offers and last-minute availability (optional · unsubscribe any time)')}</span></label>
     <input id="bkHp" class="bf-hp" tabindex="-1" autocomplete="off" aria-hidden="true"/>
     <button type="button" class="bp-btn bp-btn-p" id="bkSend" onclick="bpSend()"><i data-lucide="send"></i>${L('ส่งคำขอจอง', 'Send booking request')}</button>
     <p class="bk-safe"><i data-lucide="shield-check"></i>${L('ข้อมูลใช้ติดต่อกลับเรื่องทริปนี้เท่านั้น', 'Used only to reply about this trip')} · <a href="#/privacy" target="_blank">${L('นโยบายความเป็นส่วนตัว', 'Privacy')}</a></p>`;
-  bkFields(); icons();
+  icons();
 }
-/* the two contact boxes follow the chosen channel; what was typed is kept per channel */
-function bkSave() { const m = $('#bkMain'), s = $('#bkSub'); if (!m) return; if (BK.pref === 'line') { BK.line = m.value; BK.email = s.value; } else if (BK.pref === 'email') { BK.email = m.value; BK.ephone = s.value; } else { BK.phone = m.value; BK.email = s.value; } }
-function bkPref(k) { bkSave(); BK.pref = k; $$('.bk-chips button').forEach(x => { const on = x.getAttribute('onclick').includes(`'${k}'`); x.classList.toggle('on', on); x.setAttribute('aria-checked', on); }); bkFields(); }
-function bkFields() {
-  const m = $('#bkMain'), s = $('#bkSub'), req = ' <b class="bk-req">*</b>', opt = t => ` <small class="bk-opt">${t}</small>`;
-  const set = (el, type, auto, mode, ph, v) => { el.type = type; el.autocomplete = auto; el.inputMode = mode; el.placeholder = ph; el.value = v || ''; el.maxLength = type === 'tel' ? 20 : 160; bkHint(el, ''); };
-  if (BK.pref === 'email') {
-    $('#bkMainL').innerHTML = L('อีเมล', 'Email') + req; set(m, 'email', 'email', 'email', 'name@email.com', BK.email);
-    $('#bkSubL').innerHTML = L('เบอร์โทร', 'Phone') + opt(L('(ไม่บังคับ)', '(optional)')); set(s, 'tel', 'tel', 'tel', '+66 8x xxx xxxx', BK.ephone);
-  } else {
-    const line = BK.pref === 'line';
-    $('#bkMainL').innerHTML = (line ? 'LINE ID' : L('เบอร์โทร', 'Phone') + (BK.pref === 'whatsapp' ? ' (WhatsApp)' : '')) + req;
-    set(m, line ? 'text' : 'tel', line ? 'off' : 'tel', line ? 'text' : 'tel', line ? L('LINE ID ของคุณ', 'Your LINE ID') : '+66 8x xxx xxxx', line ? BK.line : BK.phone);
-    $('#bkSubL').innerHTML = L('อีเมล', 'Email') + opt(L('(ไม่บังคับ · รับใบเสนอราคาทางอีเมล)', '(optional · get the quote by email)')); set(s, 'email', 'email', 'email', 'name@email.com', BK.email);
-  }
-}
+/* name · email · phone · WhatsApp (fixed fields); what was typed is kept while the visitor goes back to step 1 */
+function bkSave() { const g = id => $('#' + id)?.value; if (!$('#bkEmail')) return; BK.email = g('bkEmail'); BK.phone = g('bkPhone'); BK.wa = g('bkWa'); }
 function bkHint(el, msg) {
   if (!el) return; const f = el.closest('.bp-fld'); let h = f?.querySelector('.bk-hint');
   el.setAttribute('aria-invalid', msg ? 'true' : 'false');
@@ -1497,23 +1483,17 @@ const bkMailOk = v => /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v.trim());
 const bkLineOk = v => /^[a-z0-9._\-@]{3,40}$/i.test(v.trim().replace(/^@/, ''));
 async function bpSend() {
   if (BK.busy) return; bkSave();
-  const b = bySlug(currentSlug), T = bkTrip(b), name = $('#bkName'), m = $('#bkMain'), s = $('#bkSub');
+  const b = bySlug(currentSlug), T = bkTrip(b), name = $('#bkName'), em = $('#bkEmail'), ph = $('#bkPhone'), wa = $('#bkWa');
   const bad = [];
   if (!name.value.trim()) { bkHint(name, L('กรุณากรอกชื่อ', 'Please enter your name')); bad.push(name); }
-  if (BK.pref === 'email') {
-    if (!bkMailOk(m.value)) { bkHint(m, L('กรุณากรอกอีเมลให้ถูกต้อง', 'Please enter a valid email')); bad.push(m); }
-    if (s.value.trim() && !bfWaOk(s.value)) { bkHint(s, L('เบอร์โทรไม่ถูกต้อง', 'Phone number looks wrong')); bad.push(s); }
-  } else {
-    if (BK.pref === 'line' ? !bkLineOk(m.value) : !bfWaOk(m.value)) { bkHint(m, BK.pref === 'line' ? L('กรุณากรอก LINE ID', 'Please enter your LINE ID') : L('กรุณากรอกเบอร์โทรให้ถูกต้อง', 'Please enter a valid phone number')); bad.push(m); }
-    if (s.value.trim() && !bkMailOk(s.value)) { bkHint(s, L('อีเมลไม่ถูกต้อง', 'Email looks wrong')); bad.push(s); }
-  }
+  if (!bkMailOk(em.value)) { bkHint(em, em.value.trim() ? L('อีเมลไม่ถูกต้อง', 'This email does not look right') : L('กรุณากรอกอีเมล', 'Please enter your email')); bad.push(em); }
+  if (!bfWaOk(ph.value)) { bkHint(ph, ph.value.trim() ? L('เบอร์โทรไม่ถูกต้อง', 'Phone number looks wrong') : L('กรุณากรอกเบอร์โทร', 'Please enter your phone number')); bad.push(ph); }
+  if (wa.value.trim() && !bfWaOk(wa.value)) { bkHint(wa, L('เบอร์ WhatsApp ไม่ถูกต้อง', 'WhatsApp number looks wrong')); bad.push(wa); }
   [name, $('#bkNote')].forEach(el => { if (el && bfHasLink(el)) { bkHint(el, BF_MSG.link()); bad.push(el); } });
   if (bad.length) { bad[0].focus(); return; }
-  const email = (BK.pref === 'email' ? m.value : s.value).trim();
-  const phone = BK.pref === 'email' ? (s.value.trim() || email) : BK.pref === 'line' ? m.value.trim().replace(/^@/, '') : m.value.trim();
   const note = ($('#bkNote')?.value || '').trim();
-  const payload = { name: name.value.trim(), phone, email, whatsapp: BK.pref === 'whatsapp' ? m.value.trim() : '', item: 'boat:' + b.slug, program: T.p ? T.p.label : '', date: T.date, adults: T.pax, children: 0, slot: T.slot,
-    message: L('ติดต่อกลับทาง: ', 'Contact via: ') + BK_PREF()[BK.pref] + (note ? '\n' + note : ''), marketing_consent: !!BK.mk, context: leadContext(), lang: LANG, t: Date.now() - (BK.shownAt || 0), website: $('#bkHp')?.value || '' };
+  const payload = { name: name.value.trim(), phone: ph.value.trim(), email: em.value.trim(), whatsapp: wa.value.trim(), item: 'boat:' + b.slug, program: T.p ? T.p.label : '', date: T.date, adults: T.pax, children: 0, slot: T.slot,
+    message: note, marketing_consent: !!BK.mk, context: leadContext(), lang: LANG, t: Date.now() - (BK.shownAt || 0), website: $('#bkHp')?.value || '' };
   const btn = $('#bkSend'), label = btn.innerHTML; BK.busy = btn.disabled = true; btn.innerHTML = `<span class="spinner" aria-hidden="true"></span><span>${t('sending')}</span>`;
   const done = () => { BK.busy = btn.disabled = false; btn.innerHTML = label; icons(); };
   try {
@@ -1523,7 +1503,7 @@ async function bpSend() {
       done(); bkDone(b, T, j.ref || ''); return;
     }
     done();
-    const map = { name, phone: BK.pref === 'email' ? s : m, whatsapp: m, email: BK.pref === 'email' ? m : s, message: $('#bkNote') };
+    const map = { name, phone: ph, whatsapp: wa, email: em, message: $('#bkNote') };
     const els = Object.keys(j.fields || {}).map(k => { const el = map[k]; if (el) bkHint(el, k === 'email' ? L('อีเมลนี้ใช้ไม่ได้ ลองตรวจอีกครั้ง', 'This email does not look right') : L('กรุณาตรวจช่องนี้อีกครั้ง', 'Please check this field')); return el; }).filter(Boolean);
     if (els.length) { els[0].focus(); return; }
     if (j.error === 'captcha') return toast(L('กรุณายืนยันว่าไม่ใช่บอทเหนือปุ่มส่ง แล้วกดส่งอีกครั้ง', 'Please complete the check above the send button, then send again.'));
@@ -1531,9 +1511,9 @@ async function bpSend() {
   } catch (e) { done(); toast(L('ส่งไม่สำเร็จ กรุณาลองใหม่ หรือทักเราทาง WhatsApp / LINE', 'Could not send. Please try again or message us on WhatsApp / LINE.')); }
 }
 function bkDone(b, T, ref) {
-  const via = BK_PREF()[BK.pref], wa = `${WA_URL}?text=${encodeURIComponent(L(`สวัสดีค่ะ เพิ่งส่งคำขอจอง ${niceTitle(b.title)}${ref ? ` (${ref})` : ''} · ${T.prog} · ${dpText(T.date)} · ${T.pax} คน`, `Hi, I just sent a booking request for ${niceTitle(b.title)}${ref ? ` (${ref})` : ''} · ${T.prog} · ${dpText(T.date)} · ${T.pax} guests`))}`;
+  const via = BK.wa && BK.wa.trim() ? 'WhatsApp' : L('โทรศัพท์', 'phone'), wa = `${WA_URL}?text=${encodeURIComponent(L(`สวัสดีค่ะ เพิ่งส่งคำขอจอง ${niceTitle(b.title)}${ref ? ` (${ref})` : ''} · ${T.prog} · ${dpText(T.date)} · ${T.pax} คน`, `Hi, I just sent a booking request for ${niceTitle(b.title)}${ref ? ` (${ref})` : ''} · ${T.prog} · ${dpText(T.date)} · ${T.pax} guests`))}`;
   $('#bpS3').innerHTML = `<div class="bk-ok"><span class="c"><i data-lucide="check"></i></span><h3>${L('ส่งคำขอแล้ว', 'Request sent')}</h3>
-    <p>${L(`ทีมจะติดต่อกลับทาง ${via} ภายใน 30 นาที (09:00–21:00)`, `We'll reply by ${via} within 30 minutes (09:00–21:00)`)}${BK.pref === 'email' ? L(' · เช็กกล่องจดหมายขยะด้วยนะคะ', ' · please check your spam folder too') : ''}</p>
+    <p>${L(`ทีมจะติดต่อกลับทาง ${via} ภายใน 30 นาที (09:00–21:00)`, `We'll reply by ${via} within 30 minutes (09:00–21:00)`)}${L(' · ใบเสนอราคาส่งทางอีเมล เช็กกล่องจดหมายขยะด้วยนะคะ', ' · the quote comes by email, please check your spam folder too')}</p>
     ${ref ? `<span class="ref">${L('เลขที่คำขอ', 'Request no.')} ${bkEsc(ref)}</span>` : ''}
     <ol class="bk-tl"><li class="d"><b>✓</b><span><strong>${L('ส่งคำขอ', 'Request sent')}</strong> · ${[T.prog, dpText(T.date), `${T.pax} ${L('คน', 'guests')}`].filter(Boolean).map(bkEsc).join(' · ')}</span></li>
       <li><b>2</b><span>${L('ทีมเช็กเรือว่าง และส่งราคาจริงให้', 'We check the boat and send the final price')}</span></li>
@@ -1669,7 +1649,7 @@ const bfPhoneOk = v => { const s = v.trim(), n = s.replace(/\D/g, '').length; re
    spaces are kept; letters, Thai and symbols are dropped as you type or paste, with a short hint */
 (() => {
   if (typeof document === 'undefined' || !document.addEventListener) return;
-  const isTel = el => !!el && !!el.closest && ((el.id === 'bkMain' || el.id === 'bkSub') ? el.type === 'tel'
+  const isTel = el => !!el && !!el.closest && ((el.id === 'bkPhone' || el.id === 'bkWa' || el.id === 'bkMain' || el.id === 'bkSub') ? el.type === 'tel'
     : (el.name === 'phone' || el.name === 'whatsapp') && !!el.closest('#bookingModal, .bf, .bf-form, #inlineBook'));
   const clean = v => v.replace(/[^\d+ ]/g, '').replace(/(?!^)\+/g, '').replace(/ {2,}/g, ' ').slice(0, 20);
   document.addEventListener('input', e => { const el = e.target; if (!isTel(el)) return;
@@ -1684,13 +1664,13 @@ const bfPhoneOk = v => { const s = v.trim(), n = s.replace(/\D/g, '').length; re
 (() => {
   if (typeof document === 'undefined' || !document.addEventListener) return;
   const target = el => el && el.matches && el.matches('textarea, input:not([type]), input[type=text], input[type=tel]')
-    && el.type !== 'email' && el.name !== 'email' && (el.closest('#bookingModal, .bf, .bf-form, #inlineBook') || el.id === 'bkName' || el.id === 'bkNote' || el.id === 'bkMethod');
+    && el.type !== 'email' && el.name !== 'email' && (el.closest('#bookingModal, .bf, .bf-form, #inlineBook') || el.id === 'bkName' || el.id === 'bkNote' || el.id === 'bkMethod' || el.id === 'bkPhone' || el.id === 'bkWa');
   const warn = el => { if (el.id && el.id.startsWith('bk') && typeof bkHint === 'function') bkHint(el, BF_MSG.link()); else bfHint(el, BF_MSG.link()); };
-  const guard = (e, txt) => { const el = e.target; if (!target(el) || !txt) return; if (bfHasLink({ name: el.name || (el.id === 'bkMethod' ? 'phone' : ''), value: txt })) { e.preventDefault(); warn(el); } };
+  const guard = (e, txt) => { const el = e.target; if (!target(el) || !txt) return; if (bfHasLink({ name: el.name || (/^bk(Method|Phone|Wa)$/.test(el.id) ? 'phone' : ''), value: txt })) { e.preventDefault(); warn(el); } };
   document.addEventListener('paste', e => guard(e, (e.clipboardData || window.clipboardData)?.getData('text') || ''), true);
   document.addEventListener('drop', e => guard(e, e.dataTransfer?.getData('text') || ''), true);
   // typed in by hand: show the hint as soon as it becomes a link
-  document.addEventListener('input', e => { const el = e.target; if (target(el) && bfHasLink(el.name ? el : { name: el.id === 'bkMethod' ? 'phone' : '', value: el.value })) warn(el); }, true);
+  document.addEventListener('input', e => { const el = e.target; if (target(el) && bfHasLink(el.name ? el : { name: /^bk(Method|Phone|Wa)$/.test(el.id) ? 'phone' : '', value: el.value })) warn(el); }, true);
 })();
 function bfHint(el, html, onFix) {
   const fld = el.closest('.bf-fld'); if (!fld) return;

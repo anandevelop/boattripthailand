@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   if (linked.length) return NextResponse.json({ ok: false, error: 'invalid', fields: Object.fromEntries(linked.map(k => [k, ['link']])) }, { status: 422 });
   if (b.email) { const ec = await checkEmail(b.email); if (!ec.ok) return NextResponse.json({ ok: false, error: 'invalid', fields: { email: [ec.reason] } }, { status: 422 }); }
   // one person: 5 requests an hour; the same trip sent twice within 10 minutes is the same lead
-  const who = contactKey(b.email && !/\d{6,}/.test(b.phone) ? b.email : b.phone);
+  const who = contactKey(b.email && b.phone.replace(/\D/g, '').length < 6 ? b.email : b.phone);   // a LINE ID in phone → the email identifies the person
   const dup = `${who}|${b.item ?? ''}|${b.date ?? ''}|${b.program ?? ''}`, seen = recent.get(dup);
   if (seen && Date.now() - seen < 10 * 60_000) return NextResponse.json({ ok: true });
   if (!rateLimit('lead-who:' + who, 5, 60 * 60_000)) return NextResponse.json({ ok: false, error: 'too_many_requests' }, { status: 429 });
