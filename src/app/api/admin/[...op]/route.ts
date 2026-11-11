@@ -9,6 +9,7 @@ import { canSeeLead, createLead, LOST_REASONS, setLeadStatus } from '@/lib/leads
 import { can, ROLE_LABEL, ROLE_PERMS, type Perm } from '@/lib/perms';
 import { clientInfo } from '@/lib/request';
 import { clearSiteCache } from '@/lib/site-render';
+import { customerTrash, purgeCustomer, restoreCustomer, trashCustomer } from '@/lib/customer-trash';
 import { cleanHome, HOME_KEY } from '@/lib/home';
 import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
@@ -153,6 +154,13 @@ async function customerOp(u: User, id: string, op: string, method: string, b: Re
     const r = await run(() => customerMerge(c, from, u)); return json({ customer: customerToClient(r.customer), removed: from.id, moved: r.moved });
   }
   if (op === 'erase' && method === 'POST') { const r = await run(() => customerErase(c, u, b.mode === 'delete' ? 'delete' : 'anonymise')); return json({ ok: true, ...r }); }
+  // trash: move in (hidden with their leads) · restore (returns the customer and their leads) · delete for good
+  if (op === 'trash' && method === 'POST') { await run(() => trashCustomer(c, u)); return json({ ok: true, trash: await customerTrash(u) }); }
+  if (op === 'restore' && method === 'POST') {
+    const row = await run(() => restoreCustomer(c, u)), ids = (await db.select({ id: leads.id }).from(leads).where(eq(leads.customerId, c.id))).map(x => x.id);
+    return json({ customer: customerToClient(row), leads: await Promise.all(ids.map(leadClientById)), trash: await customerTrash(u) });
+  }
+  if (op === 'purge' && method === 'POST') { const r = await run(() => purgeCustomer(c, u)); return json({ ok: true, ...r, trash: await customerTrash(u) }); }
   throw new HttpError(404, 'unknown op');
 }
 

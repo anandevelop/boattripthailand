@@ -66,6 +66,8 @@ export const customers = pgTable('customers', {
   consentAt: timestamp('consent_at', { withTimezone: true }),
   consentSource: text('consent_source'),
   notes: text('notes'),
+  /** in the admin trash (lib/customer-trash.ts): when, by whom — null = not in the trash */
+  trash: jsonb('trash').$type<{ at: string; by: string | null; byName: string; leads: number }>(),
   createdAt: now('created_at'),
   updatedAt: now('updated_at'),
 });

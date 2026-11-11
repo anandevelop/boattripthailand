@@ -11,6 +11,7 @@ import { mediaToClient } from './media';
 import { homeContent } from './home';
 import { activitiesContent } from './activities';
 import { seoConfig } from './seo';
+import { customerTrash } from './customer-trash';
 import { DESTINATIONS } from './destinations';
 import { marketingConfig } from './marketing';
 import { surchargeWarning, surchargeWarnings } from './surcharge';
@@ -144,13 +145,16 @@ export async function leadsFor(me: User) {
     custIds.length ? db.select().from(customers).where(inArray(customers.id, custIds)) : [],
   ]);
   const byLead = new Map<string, Act[]>(); for (const a of acts) (byLead.get(a.leadId) ?? byLead.set(a.leadId, []).get(a.leadId)!).push(a);
-  const sur = await surchargeWarnings(L.map(l => ({ slug: l.boatSlug, date: l.tripDate })));
-  return { leads: L.map(l => leadToClient(l, byLead.get(l.id) ?? [], names, sur.get(`${l.boatSlug}|${l.tripDate}`) ?? null)), customers: custs.map(customerToClient) };
+  // customers in the trash (lib/customer-trash.ts) and their leads are not listed
+  const binned = new Set(custs.filter(c => c.trash).map(c => c.id)), LV = L.filter(l => !binned.has(l.customerId));
+  const sur = await surchargeWarnings(LV.map(l => ({ slug: l.boatSlug, date: l.tripDate })));
+  return { leads: LV.map(l => leadToClient(l, byLead.get(l.id) ?? [], names, sur.get(`${l.boatSlug}|${l.tripDate}`) ?? null)), customers: custs.filter(c => !c.trash).map(customerToClient),
+    custTrash: all ? await customerTrash(me) : [] };
 }
 
 export async function adminBoot(me: User) {
   const team = await db.select().from(users).orderBy(users.createdAt);
-  const { leads: LC, customers: CC } = await leadsFor(me);
+  const { leads: LC, customers: CC, custTrash } = await leadsFor(me);
   const site = await siteData();
   const canContent = can(me, 'content');
   const P0 = canContent ? await db.select().from(posts) : [], TR = canContent ? await trashedIds() : new Set<number>();
@@ -164,7 +168,7 @@ export async function adminBoot(me: User) {
     names: Object.fromEntries(team.map(u => [u.id, u.name])),
     leads: LC,
     deals: await dealsFor(LC.map(l => l.dbId)),
-    customers: CC,
+    customers: CC, custTrash,
     audit: can(me, 'audit') ? await auditList() : [],
     fleet, extra: site.EXTRA,
     seasons: { ...(site.SEASONS as object), boats: Object.fromEntries(fleetRows.map(b => [b.slug, b.calendarId ?? 'all'])), colmap: Object.fromEntries(fleetRows.filter(b => b.data.colmap).map(b => [b.slug, b.data.colmap])) },

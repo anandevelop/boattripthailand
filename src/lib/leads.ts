@@ -53,6 +53,8 @@ export async function createLead(input: LeadInput, actor?: User) {
     await tx.execute(sql`select pg_advisory_xact_lock(777001)`);
     // customer: merge by phone
     let [cust] = await tx.select().from(customers).where(eq(customers.phoneNorm, phoneNorm));
+    // a customer in the admin trash who sends a new request comes back (with their earlier leads)
+    if (cust?.trash) [cust] = await tx.update(customers).set({ trash: null, updatedAt: new Date() }).where(eq(customers.id, cust.id)).returning();
     const consent = !!input.marketingConsent;
     if (!cust) {
       [cust] = await tx.insert(customers).values({ name: input.name.trim(), phone: input.phone.trim(), phoneNorm, email: input.email || null, whatsapp: input.whatsapp || null, lang, marketingConsent: consent, consentAt: consent ? new Date() : null, consentSource: consent ? 'web_form' : null }).returning();

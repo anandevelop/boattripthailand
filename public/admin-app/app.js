@@ -3652,7 +3652,7 @@ async function pollLeads() {
   try {
     const r = await api('GET', 'leads'), known = new Set(BOOKINGS.map(l => l.dbId)), fresh = r.leads.filter(l => !known.has(l.dbId));
     const before = JSON.stringify(BOOKINGS);
-    BOOKINGS.length = 0; BOOKINGS.push(...r.leads); CUSTOMERS.length = 0; CUSTOMERS.push(...r.customers);
+    BOOKINGS.length = 0; BOOKINGS.push(...r.leads); CUSTOMERS.length = 0; CUSTOMERS.push(...r.customers); if (typeof custTrashSet === 'function') custTrashSet(r.custTrash);
     if (JSON.stringify(BOOKINGS) === before) return;
     const sc = $('#drawer .overflow-y-auto')?.scrollTop || 0, focused = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && $('#view').contains(document.activeElement);
     if (!focused && ['dashboard', 'bookings', 'calendar', 'customers'].includes(CUR)) rerender(); else paintBell();
@@ -6164,6 +6164,80 @@ function custEraseGo(id) {
   icons();
 }; }
 
+
+/* ---------- customers: trash — ลบ → ถังขยะ 30 วัน → ลบถาวร (server: src/lib/customer-trash.ts) ----------
+   A customer in the trash is hidden with their leads; restore brings both back. Customers with a WON lead
+   (a booking that happened) can't be binned — the PDPA erase handles those. */
+const CUST_TRASH = BOOT.custTrash || [];
+const custTrashSet = t => { if (Array.isArray(t)) { CUST_TRASH.length = 0; CUST_TRASH.push(...t); } };
+const custAdmin = () => can('bookings_all') && !isRO();
+function custTrash(id, ev) {
+  ev?.stopPropagation?.(); const c = custOf(id); if (!c || !custAdmin()) return;
+  const L = BOOKINGS.filter(l => l.cust === id), open = L.filter(l => !['won', 'lost', 'cancel'].includes(l.status)).length;
+  if (L.some(l => l.status === 'won')) return toast('ลูกค้ารายนี้มีการจองที่ปิดการขายแล้ว ลบไม่ได้ · ถ้าลูกค้าขอให้ลบข้อมูล ใช้ “ลบข้อมูลส่วนบุคคล (PDPA)” ในหน้าลูกค้า');
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ย้าย ${esc(c.name)} ไปถังขยะ?</p><p class="text-[12.5px] text-muted mt-1">${esc(c.phone)}${c.email ? ' · ' + esc(c.email) : ''}</p></div>
+    <div class="p-5 text-[12.5px] space-y-2"><p>ลีดของลูกค้ารายนี้ ${L.length} รายการ${open ? ` (ยังเปิดอยู่ ${open})` : ''} จะถูกซ่อนไปด้วย</p>
+      <p class="text-muted">กู้คืนได้จาก <b>ถังขยะ</b> ภายใน 30 วัน หลังจากนั้นระบบลบถาวรอัตโนมัติ · ถ้าลูกค้าส่งคำขอจองเข้ามาใหม่ จะกลับมาที่รายชื่อเอง</p></div>
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p !bg-[#b42318]" onclick="custTrashGo('${id}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ย้ายไปถังขยะ</button></div>`);
+  icons();
+}
+function custTrashGo(id) {
+  custApi(id, 'trash', 'POST', {}).then(r => {
+    const i = CUSTOMERS.findIndex(c => c.id === id); if (i >= 0) CUSTOMERS.splice(i, 1);
+    for (let j = BOOKINGS.length - 1; j >= 0; j--) if (BOOKINGS[j].cust === id) BOOKINGS.splice(j, 1);
+    custTrashSet(r.trash); AUDIT_DIRTY = true; closeModal(); closeDrawer(); rerender(); paintBell?.();
+    toast('ย้ายไปถังขยะแล้ว · กู้คืนได้ภายใน 30 วัน');
+  }).catch(fail);
+}
+function custBin() {
+  const T = CUST_TRASH, ago = iso => fmtD(iso.slice(0, 10));
+  openModal(`<div class="p-5 border-b border-line flex items-start justify-between gap-3"><div><p class="font-medium">ถังขยะลูกค้า (${T.length})</p><p class="text-[12px] text-muted mt-1">เก็บไว้ 30 วันก่อนลบถาวรอัตโนมัติ · กู้คืนแล้วลีดของลูกค้ากลับมาด้วย</p></div><button class="btn btn-g !px-2" onclick="closeModal()"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+    <div class="overflow-y-auto" style="max-height:60vh">${T.length ? T.map(c => `<div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-line">
+      <span class="w-8 h-8 rounded-full bg-sand grid place-items-center text-[12px] shrink-0">${esc(c.name.slice(0, 1))}</span>
+      <div class="flex-1 min-w-[180px]"><p class="text-[13px]">${esc(c.name)}</p><p class="text-[11px] text-muted tnum">${esc(c.phone)}${c.email ? ' · ' + esc(c.email) : ''} · ลีด ${c.leads}</p>
+        <p class="text-[11px] text-muted">ลบเมื่อ ${ago(c.at)} โดย ${esc(c.byName || '—')} · <span class="${c.days <= 3 ? 'text-[#b42318]' : ''}">ลบถาวรในอีก ${c.days} วัน</span></p></div>
+      <button class="btn btn-o !h-8" onclick="custRestore('${c.id}')"><i data-lucide="undo-2" class="w-3.5 h-3.5"></i>กู้คืน</button>
+      <button class="btn btn-o !h-8 !text-[#b42318]" onclick="custPurge('${c.id}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบถาวร</button></div>`).join('')
+      : '<p class="px-5 py-10 text-center text-[13px] text-muted">ถังขยะว่าง</p>'}</div>`);
+  icons();
+}
+function custRestore(id) {
+  custApi(id, 'restore', 'POST', {}).then(r => {
+    if (!CUSTOMERS.some(c => c.id === r.customer.id)) CUSTOMERS.push(r.customer);
+    (r.leads || []).forEach(l => { if (l && !BOOKINGS.some(x => x.dbId === l.dbId)) BOOKINGS.push(l); });
+    BOOKINGS.sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')));
+    custTrashSet(r.trash); AUDIT_DIRTY = true; rerender(); paintBell?.(); custBin(); toast(`กู้คืน ${r.customer.name} แล้ว · ลีด ${(r.leads || []).length} รายการกลับมาด้วย`);
+  }).catch(fail);
+}
+function custPurge(id) {
+  const c = CUST_TRASH.find(x => x.id === id); if (!c) return;
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ลบ ${esc(c.name)} ถาวร?</p><p class="text-[12.5px] text-muted mt-1">ลบลูกค้าและลีด ${c.leads} รายการออกจากระบบ · กู้คืนไม่ได้</p></div>
+    <div class="p-5"><label class="grid gap-1"><span class="lbl !mb-0">พิมพ์ ลบ เพื่อยืนยัน</span><input id="cpOk" class="inp" placeholder="ลบ"/></label></div>
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="custBin()">ย้อนกลับ</button><button class="btn btn-p !bg-[#b42318]" onclick="custPurgeGo('${id}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบถาวร</button></div>`);
+  icons(); setTimeout(() => $('#cpOk')?.focus(), 50);
+}
+function custPurgeGo(id) {
+  if ($('#cpOk')?.value.trim() !== 'ลบ') return toast('พิมพ์คำว่า ลบ เพื่อยืนยัน');
+  custApi(id, 'purge', 'POST', {}).then(r => { custTrashSet(r.trash); AUDIT_DIRTY = true; custBin(); toast('ลบถาวรแล้ว'); }).catch(fail);
+}
+/* list: a trash button per row + the trash in the header · drawer: a ลบ button */
+{ const _vc = vCustomers; vCustomers = function () {
+  _vc(); if (!custAdmin()) return; const v = $('#view');
+  const search = v.querySelector('input.inp');
+  search?.insertAdjacentHTML('beforebegin', `<button class="btn btn-o !h-10 shrink-0" onclick="custBin()" title="ลูกค้าที่ลบไว้ · กู้คืนได้ 30 วัน"><i data-lucide="trash-2" class="w-4 h-4"></i>ถังขยะ${CUST_TRASH.length ? ` <span class="tnum">(${CUST_TRASH.length})</span>` : ''}</button>`);
+  if (search?.parentElement) { search.parentElement.style.display = 'flex'; search.parentElement.style.gap = '8px'; search.parentElement.style.alignItems = 'center'; }
+  v.querySelector('thead tr')?.insertAdjacentHTML('beforeend', '<th class="w-12"></th>');
+  v.querySelectorAll('tbody tr.click').forEach(tr => { const id = (tr.getAttribute('onclick') || '').match(/custDetail\('([^']+)'\)/)?.[1]; if (!id) return;
+    tr.insertAdjacentHTML('beforeend', `<td class="text-right"><button class="btn btn-g !px-2 !h-8 text-muted hover:!text-[#b42318]" title="ย้ายไปถังขยะ" aria-label="ลบลูกค้า" onclick="custTrash('${id}', event)"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>`); });
+  icons();
+}; PAGES.find(p => p[0] === 'customers')[3] = vCustomers; }
+{ const _cd2 = custDetail; custDetail = function (id) {
+  _cd2(id); const d = $('#drawer'); if (!custAdmin() || !d.classList.contains('open') || !custOf(id)) return;
+  const row = d.querySelector('.overflow-y-auto .flex.flex-wrap.gap-2');
+  const btn = `<button class="btn btn-o !h-8 !text-[#b42318]" onclick="custTrash('${id}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบ (ย้ายไปถังขยะ)</button>`;
+  if (row) row.insertAdjacentHTML('beforeend', btn); else d.querySelector('.overflow-y-auto')?.insertAdjacentHTML('afterbegin', `<div class="flex flex-wrap gap-2">${btn}</div>`);
+  icons();
+}; }
 
 /* =====================================================================
    แปลอัตโนมัติ (Gemini API แบบฟรี) + ตัวนับโควตา — เซิร์ฟเวอร์: src/lib/translate.ts

@@ -133,7 +133,7 @@ export async function customerMerge(into: Customer, from: Customer, u: User) {
  * but removes everything that identifies the person; 'delete' removes the customer and all of their leads
  * (only when none was WON). The audit log keeps the event itself, as the record that the request was handled.
  */
-export async function customerErase(c: Customer, u: User, mode: 'anonymise' | 'delete') {
+export async function customerErase(c: Customer, u: User, mode: 'anonymise' | 'delete', label?: string) {
   const L = await db.select({ id: leads.id, ref: leads.ref, status: leads.status }).from(leads).where(eq(leads.customerId, c.id)), ids = L.map(l => l.id);
   if (mode === 'delete' && L.some(l => l.status === 'WON')) throw new Error('ลูกค้ารายนี้มีการจองที่ปิดการขายแล้ว · ใช้ “ลบข้อมูลส่วนบุคคล” (เก็บสถิติการจองไว้) แทน');
   await db.transaction(async tx => {
@@ -150,6 +150,6 @@ export async function customerErase(c: Customer, u: User, mode: 'anonymise' | 'd
       await tx.update(customers).set({ name: ANON, phone: '—', phoneNorm: 'erased-' + c.id, email: null, country: null, notes: null, marketingConsent: false, consentAt: null, consentSource: null, updatedAt: new Date() }).where(eq(customers.id, c.id));
     }
   });
-  await audit(actor(u), { action: 'delete', entity: 'customer', ref: c.id, label: mode === 'delete' ? 'ลบลูกค้าตามคำขอ (PDPA)' : 'ลบข้อมูลส่วนบุคคลตามคำขอ (PDPA)', changes: [{ f: 'ข้อมูลลูกค้า', from: `ลีด ${L.length} รายการ`, to: mode === 'delete' ? 'ลบทั้งหมด' : 'ลบชื่อ เบอร์ อีเมล ข้อความ · เก็บสถิติการจอง' }] });
+  await audit(actor(u), { action: 'delete', entity: 'customer', ref: c.id, label: label ?? (mode === 'delete' ? 'ลบลูกค้าตามคำขอ (PDPA)' : 'ลบข้อมูลส่วนบุคคลตามคำขอ (PDPA)'), changes: [{ f: 'ข้อมูลลูกค้า', from: `ลีด ${L.length} รายการ`, to: mode === 'delete' ? 'ลบทั้งหมด' : 'ลบชื่อ เบอร์ อีเมล ข้อความ · เก็บสถิติการจอง' }] });
   return { leads: L.map(l => l.ref), mode };
 }
