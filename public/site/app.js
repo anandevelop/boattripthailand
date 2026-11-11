@@ -2982,7 +2982,18 @@ const heroImg = (i, w) => { const u = HERO_SL[i] && HERO_SL[i].img; return u ? r
 let heroIdx = 0, heroTimer;
 function renderHero() {
   const el = $('#heroStage'); if (!el) return;
-  el.innerHTML = HERO.map((s, i) => { const b = bySlug(s); return `<img src="${heroImg(i,1600)}" srcset="${heroImg(i,768)} 768w, ${heroImg(i,1280)} 1280w, ${heroImg(i,1600)} 1600w" sizes="100vw" alt="${niceTitle(b.title)} – ${typeLabel(b.type)} charter in Phuket" ${i?'loading="lazy"':'fetchpriority="high"'} class="hero-slide absolute inset-0 w-full h-full object-cover" aria-hidden="${i!==0}"/>`; }).join('');
+  // the server already drew these slides: keep them (re-creating the <img> makes the browser paint the photo — the
+  // page's LCP — only after every script has run); just wire up the dots, swipe and timer
+  const sig = HERO.map((s, i) => s + '>' + heroImg(i, 1600)).join('|') + '|' + LANG;
+  if (el.getAttribute('data-sig') === sig && el.querySelector('.hero-slide')) {
+    $('#heroDots').innerHTML = HERO.map((s, i) => `<button onclick="heroGo(${i})" aria-label="${L('สไลด์','Slide')} ${i+1}: ${niceTitle(bySlug(s).title)}" class="w-7 h-1 rounded-full bg-white/35 relative overflow-hidden"><span class="hero-dot absolute inset-y-0 left-0 bg-white rounded-full"></span></button>`).join('');
+    bindHeroSwipe(); heroGo(heroIdx || 0); return;
+  }
+  el.setAttribute('data-sig', sig);
+  // only the first photo loads with the page (it is the LCP); the others are stacked on the same spot, so
+  // loading="lazy" would still fetch all of them at once — they get their src just before they are shown (heroLoad)
+  el.innerHTML = HERO.map((s, i) => { const b = bySlug(s), src = heroImg(i, 1600), set = `${heroImg(i,768)} 768w, ${heroImg(i,1280)} 1280w, ${heroImg(i,1600)} 1600w`;
+    return `<img ${i ? `data-src="${src}" data-srcset="${set}"` : `src="${src}" srcset="${set}" fetchpriority="high"`} sizes="100vw" alt="${niceTitle(b.title)} – ${typeLabel(b.type)} charter in Phuket" ${i ? 'decoding="async"' : ''} class="hero-slide absolute inset-0 w-full h-full object-cover" aria-hidden="${i!==0}"/>`; }).join('');
   $('#heroDots').innerHTML = HERO.map((s, i) => `<button onclick="heroGo(${i})" aria-label="${L('สไลด์','Slide')} ${i+1}: ${niceTitle(bySlug(s).title)}" class="w-7 h-1 rounded-full bg-white/35 relative overflow-hidden"><span class="hero-dot absolute inset-y-0 left-0 bg-white rounded-full"></span></button>`).join('');
   bindHeroSwipe();
   heroGo(heroIdx || 0);
@@ -3002,11 +3013,21 @@ function bindHeroSwipe() {
   box.addEventListener('touchend', e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) heroGo(heroIdx + (dx < 0 ? 1 : -1)); x0 = null; }, { passive: true });
   box.addEventListener('keydown', e => { if (e.key === 'ArrowRight') heroGo(heroIdx + 1); if (e.key === 'ArrowLeft') heroGo(heroIdx - 1); });
 }
+/** give a waiting slide its photo (see renderHero) */
+function heroLoad(k) { const im = $$('.hero-slide')[(k + HERO.length) % HERO.length]; if (im && im.dataset.src) { im.srcset = im.dataset.srcset || ''; im.src = im.dataset.src; delete im.dataset.src; delete im.dataset.srcset; } }
+/** the next slide's photo, once the page has finished loading (never competes with the first photo) */
+function heroPrefetch() {
+  if (navigator.userAgent === 'BTT-SSR' || typeof window.addEventListener !== 'function') return;
+  const go = () => setTimeout(() => heroLoad(heroIdx + 1), 1200);
+  if (document.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
+}
 function heroGo(i) {
   const changed = heroIdx !== ((i + HERO.length) % HERO.length);
   heroIdx = (i + HERO.length) % HERO.length;
   if (changed) heroRotate();
+  heroLoad(heroIdx);
   $$('.hero-slide').forEach((im, k) => { im.classList.toggle('is-on', k === heroIdx); im.setAttribute('aria-hidden', k !== heroIdx); });
+  heroPrefetch();
   $$('.hero-dot').forEach((d, k) => { d.classList.remove('is-on'); d.style.width = k < heroIdx ? '100%' : '0'; if (k === heroIdx) { d.style.width = ''; heroDotOn(d); } });
   const b = bySlug(HERO[heroIdx]);
   $('#heroCap').innerHTML = `<a href="#/boat/${b.slug}" class="group inline-flex flex-col"><span class="text-[11px] uppercase tracking-[.18em] text-white/80">${typeLabel(b.type)} · ${String(heroIdx+1).padStart(2,'0')}/${String(HERO.length).padStart(2,'0')}</span><span class="font-display text-base sm:text-xl mt-1 group-hover:underline underline-offset-4">${niceTitle(b.title)}</span><span class="text-xs sm:text-sm text-white/85 mt-0.5">${t('price.from','เริ่มต้น')} ${baht(b.from_)}</span></a>`;

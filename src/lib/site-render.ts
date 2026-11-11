@@ -300,19 +300,19 @@ function run(a: Assets, url: URL, data: SiteData, page: Record<string, unknown>,
   const appTag0 = [...document.querySelectorAll('script[src]')].find(x => (x.getAttribute('src') || '').startsWith('/site/app.js'));
   if (sandbox.__SKIP_HOME__ && vh && vh.classList.contains('hidden') && appTag0) {
     vh.innerHTML = ''; vh.setAttribute('data-deferred', '1');
-    const sc = document.createElement('script'); sc.setAttribute('src', `/site-home.js?l=${lang}&h=${knownHome}`); appTag0.parentNode!.insertBefore(sc, appTag0);
+    const sc = document.createElement('script'); sc.setAttribute('defer', ''); sc.setAttribute('src', `/site-home.js?l=${lang}&h=${knownHome}`); appTag0.parentNode!.insertBefore(sc, appTag0);
   } else if (vh && vh.classList.contains('hidden') && vh.innerHTML.trim()) {
     // per-visitor parts filled during this render ("recently viewed" = the boat being rendered) — the browser fills its own
     const rw = vh.querySelector('#recentWrap'); if (rw) { rw.innerHTML = ''; rw.classList.add('hidden'); }
     const js = `window.__HOME_HTML__=${JSON.stringify(vh.innerHTML).replace(/</g, '\\u003c')};`;
     vh.innerHTML = ''; vh.setAttribute('data-deferred', '1');
-    // loaded (not deferred) right before app.js, which puts it back first thing; the admin preview keeps it inline
+    // loaded right before app.js (deferred like it, so in order), which puts it back first thing; the admin preview keeps it inline
     const appTag = inlineHome ? null : [...document.querySelectorAll('script[src]')].find(x => (x.getAttribute('src') || '').startsWith('/site/app.js'));
     if (appTag) {
       const h = createHash('sha1').update(js).digest('hex').slice(0, 12);
       if (!HOME.has(h)) { HOME.set(h, js); if (HOME.size > 40) HOME.delete(HOME.keys().next().value!); }
       HOME_LATEST[lang] = h; if (homeKey) S.homeByKey[homeKey] = h;
-      const sc = document.createElement('script'); sc.setAttribute('src', `/site-home.js?l=${lang}&h=${h}`); appTag.parentNode!.insertBefore(sc, appTag);
+      const sc = document.createElement('script'); sc.setAttribute('defer', ''); sc.setAttribute('src', `/site-home.js?l=${lang}&h=${h}`); appTag.parentNode!.insertBefore(sc, appTag);
     } else homeJs = js;
   }
   const dataTag = document.getElementById('btt-data');

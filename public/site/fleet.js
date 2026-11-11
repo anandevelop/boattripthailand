@@ -832,7 +832,8 @@ function fxPark() {
   });
 }
 function fxWake(root) {
-  (root || document).querySelectorAll('img[data-src]').forEach(im => { if (im.closest(FX_VIEWS + '.hidden')) return; im.src = im.dataset.src; im.removeAttribute('data-src'); if (im.dataset.srcset) { im.srcset = im.dataset.srcset; im.removeAttribute('data-srcset'); } });
+  (root || document).querySelectorAll('img[data-src]').forEach(im => { if (im.closest(FX_VIEWS + '.hidden')) return;
+    if (im.classList.contains('hero-slide') && !im.classList.contains('is-on')) return;   /* hero slides load one by one (app.js heroLoad) */ im.src = im.dataset.src; im.removeAttribute('data-src'); if (im.dataset.srcset) { im.srcset = im.dataset.srcset; im.removeAttribute('data-srcset'); } });
 }
 if (!FX_SSR) {
   { const _sv = showView; showView = function (name) { _sv(name); try { fxWake($('#view-' + name)); } catch (e) { } }; }
