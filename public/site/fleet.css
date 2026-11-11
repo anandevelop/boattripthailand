@@ -1212,3 +1212,14 @@ html[lang="th"] .ab-hc .ab-eye { letter-spacing: .08em; }
   .ab-hero2 .ab-htm { margin-top: -26px; padding: 8px 14px 8px 8px; gap: 10px; }
   .ab-hero2 .ab-htm .ab-ava img { width: 32px; height: 32px; } .ab-hero2 .ab-htm small { font-size: 12px; }
 }
+
+/* ---------- header wordmark: crisp — real Jost 500 (not the lightened "BTT Lite" face), darker, a touch larger ---------- */
+@font-face { font-family: 'BTT Logo'; font-style: normal; font-display: swap; font-weight: 500; src: url(/site/fonts/jost-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family: 'BTT Logo'; font-style: normal; font-display: swap; font-weight: 600; src: url(/site/fonts/jost-latin-600-normal.woff2) format('woff2'); }
+html body #navRow > a:first-child .font-display, html body #navRow > a:first-child .font-display + span { font-family: 'BTT Logo', Jost, system-ui, sans-serif !important; font-size-adjust: none !important; -webkit-font-smoothing: antialiased; color: #231416; text-transform: uppercase; }
+html body #navRow > a:first-child .font-display { font-weight: 500 !important; font-size: 15.5px !important; line-height: 18px !important; letter-spacing: .06em !important; }
+html body #navRow > a:first-child .font-display + span { font-weight: 600 !important; font-size: 9px !important; line-height: 13px !important; letter-spacing: .34em !important; color: #4a3d3f; margin-top: 1px; }
+@media (max-width: 639px) {
+  html body #navRow > a:first-child .font-display { font-size: 13.5px !important; line-height: 16px !important; }
+  html body #navRow > a:first-child .font-display + span { font-size: 8px !important; line-height: 11px !important; letter-spacing: .3em !important; }
+}
