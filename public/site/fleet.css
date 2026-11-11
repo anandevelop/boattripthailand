@@ -1227,3 +1227,12 @@ html body #navRow > a:first-child .font-display + span { font-weight: 600 !impor
 html body footer .font-display.text-xl, html body footer .font-display.text-xl + p { font-family: 'BTT Logo', Jost, system-ui, sans-serif !important; font-size-adjust: none !important; -webkit-font-smoothing: antialiased; text-transform: uppercase; }
 html body footer .font-display.text-xl { font-weight: 500 !important; font-size: 21px !important; line-height: 24px !important; letter-spacing: .06em !important; }
 html body footer .font-display.text-xl + p { font-weight: 600 !important; font-size: 10.5px !important; line-height: 15px !important; letter-spacing: .34em !important; margin-top: 2px; }
+/* ---------- footer: clearer text — real Plex Thai 400 / Poppins 400, darker colours ---------- */
+@font-face { font-family: 'BTT Foot TH'; font-style: normal; font-display: swap; font-weight: 400; size-adjust: 97%; src: url(/site/fonts/ibm-plex-sans-thai-thai-400-normal.woff2) format('woff2'); unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC; }
+@font-face { font-family: 'BTT Foot TH'; font-style: normal; font-display: swap; font-weight: 600; size-adjust: 97%; src: url(/site/fonts/ibm-plex-sans-thai-thai-500-normal.woff2) format('woff2'); unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC; }
+html[lang] body footer :is(p, a, span, li, div):not(.font-display):not(.font-display + p) { font-family: 'BTT Body', 'BTT Foot TH', 'IBM Plex Sans Thai', system-ui, sans-serif !important; font-weight: 400 !important; color: #3d2f31 !important; -webkit-font-smoothing: antialiased; }
+html[lang] body footer :is(p, a, span, li, div):not(.font-display):not(.font-display + p):hover:is(a) { color: #8a1c24 !important; }
+html[lang] body footer p.font-medium.mb-4:not(.font-display):not(.font-display + p) { font-weight: 600 !important; color: #8a1c24 !important; letter-spacing: .14em !important; }
+html[lang] body footer p.uppercase.text-xs:not(.font-display):not(.font-display + p) { font-weight: 500 !important; color: #8a1c24 !important; }
+html[lang] body footer .border-t :is(p, a, span, div):not(.font-display):not(.font-display + p) { color: #5a4b4d !important; }
+html body footer .font-display.text-xl + p { color: #231416 !important; }
