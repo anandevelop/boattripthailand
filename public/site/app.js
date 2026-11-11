@@ -1457,13 +1457,22 @@ function bkTrip(b) {
   const p = allPrograms(b)[detailProgram], date = $('#dDate').value, pax = +($('#dPax')?.value || 2), slot = $('#dSlot')?.value || '';
   return { p, date, pax, slot, prog: $('#bpPtitle')?.textContent.trim() || (p ? p.label : ''), total: $('#bpMbarP')?.textContent.trim() || '' };
 }
+/* country code + number, like the contact page form (fleet.js FX_CC); Thai site starts on +66 */
+function bkCc(id, key) {
+  if (BK[key] === undefined) BK[key] = LANG === 'th' ? '+66' : '';
+  const list = typeof FX_CC !== 'undefined' ? FX_CC : [['+66', '🇹🇭 +66']];
+  return `<select id="${id}" class="bp-inp" aria-label="${L('รหัสประเทศ', 'Country code')}" onchange="BK['${key}']=this.value;const i=this.nextElementSibling;i.placeholder=bkTelPh(this.value);i.focus()"><option value="">🌐</option>${list.map(([v, l]) => `<option value="${v}" ${BK[key] === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+}
+const bkTelPh = cc => cc === '+66' ? '08x xxx xxxx' : cc ? 'xxx xxx xxxx' : '+xx xxx xxx xxxx';
+/** "+66" + "081 234 5678" → "+66 81 234 5678"; a number typed with its own + is kept as typed */
+const bkTelFull = (cc, v) => { v = (v || '').trim(); return !v || v.startsWith('+') || !cc ? v : cc + ' ' + v.replace(/^0+/, ''); };
 function bkDraw(b) {
   const T = bkTrip(b), img = gallery(b.slug)[0], P = BK_PREF();
   $('#bpS2').innerHTML = `<div class="bk-mini">${img ? `<img src="${rs(img, 160)}" alt=""/>` : ''}<div class="min-w-0"><b>${bkEsc(niceTitle(b.title))}${T.total ? ` · ${T.total}` : ''}</b><span>${[T.prog, dpText(T.date), T.slot, `${T.pax} ${L('คน', T.pax > 1 ? 'guests' : 'guest')}`].filter(Boolean).map(bkEsc).join(' · ')}</span></div><button type="button" onclick="bpStep(1)">${L('แก้ไข', 'Edit')}</button></div>
     <label class="bp-fld"><span>${L('ชื่อ-นามสกุล', 'Your Name')} <b class="bk-req">*</b></span><input id="bkName" class="bp-inp" autocomplete="name" maxlength="120" placeholder="${L('เช่น สมชาย ใจดี', 'e.g. Alex Smith')}" value="${bkEsc(BK.name || '')}" oninput="BK.name=this.value;bkHint(this,'')"/></label>
     <label class="bp-fld"><span>${L('อีเมล', 'Email Address')} <b class="bk-req">*</b></span><input id="bkEmail" class="bp-inp" type="email" inputmode="email" autocomplete="email" maxlength="160" placeholder="name@email.com" value="${bkEsc(BK.email || '')}" oninput="BK.email=this.value;bkHint(this,'')"/></label>
-    <label class="bp-fld"><span>${L('เบอร์โทร', 'Phone Number')} <b class="bk-req">*</b></span><input id="bkPhone" class="bp-inp" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+66 8x xxx xxxx" value="${bkEsc(BK.phone || '')}" oninput="BK.phone=this.value;bkHint(this,'')"/></label>
-    <label class="bp-fld"><span>WhatsApp <small class="bk-opt">${L('(ไม่บังคับ · ถ้าต่างจากเบอร์โทร)', '(optional · if different from your phone)')}</small></span><input id="bkWa" class="bp-inp" type="tel" inputmode="tel" autocomplete="off" maxlength="20" placeholder="+66 8x xxx xxxx" value="${bkEsc(BK.wa || '')}" oninput="BK.wa=this.value;bkHint(this,'')"/></label>
+    <label class="bp-fld"><span>${L('เบอร์โทร', 'Phone Number')} <b class="bk-req">*</b></span><div class="bf-tel">${bkCc('bkPhoneCc', 'cc')}<input id="bkPhone" class="bp-inp" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="20" aria-label="${L('เบอร์โทร', 'Phone Number')}" placeholder="${bkTelPh(BK.cc)}" value="${bkEsc(BK.phone || '')}" oninput="BK.phone=this.value;bkHint(this,'')"/></div></label>
+    <label class="bp-fld"><span>WhatsApp <small class="bk-opt">${L('(ไม่บังคับ · ถ้าต่างจากเบอร์โทร)', '(optional · if different from your phone)')}</small></span><div class="bf-tel">${bkCc('bkWaCc', 'wacc')}<input id="bkWa" class="bp-inp" type="tel" inputmode="tel" autocomplete="off" maxlength="20" aria-label="WhatsApp" placeholder="${bkTelPh(BK.wacc)}" value="${bkEsc(BK.wa || '')}" oninput="BK.wa=this.value;bkHint(this,'')"/></div></label>
     <label class="bp-fld"><span>${L('หมายเหตุ', 'Notes')} <small class="bk-opt">${L('(ไม่บังคับ)', '(optional)')}</small></span><textarea id="bkNote" class="bp-inp bk-ta" rows="2" maxlength="2000" placeholder="${L('เช่น ฉลองวันเกิด, ต้องการรถรับส่ง', 'e.g. birthday, need a transfer')}" oninput="BK.note=this.value">${bkEsc(BK.note || '')}</textarea></label>
     <label class="bk-check"><input type="checkbox" id="bkMk" ${BK.mk ? 'checked' : ''} onchange="BK.mk=this.checked"/><span>${L('รับข่าวสาร โปรโมชัน และคิวเรือว่างช่วงพิเศษ (ไม่บังคับ · ยกเลิกได้ทุกเมื่อ)', 'Send me offers and last-minute availability (optional · unsubscribe any time)')}</span></label>
     <input id="bkHp" class="bf-hp" tabindex="-1" autocomplete="off" aria-hidden="true"/>
@@ -1487,12 +1496,13 @@ async function bpSend() {
   const bad = [];
   if (!name.value.trim()) { bkHint(name, L('กรุณากรอกชื่อ', 'Please enter your name')); bad.push(name); }
   if (!bkMailOk(em.value)) { bkHint(em, em.value.trim() ? L('อีเมลไม่ถูกต้อง', 'This email does not look right') : L('กรุณากรอกอีเมล', 'Please enter your email')); bad.push(em); }
-  if (!bfWaOk(ph.value)) { bkHint(ph, ph.value.trim() ? L('เบอร์โทรไม่ถูกต้อง', 'Phone number looks wrong') : L('กรุณากรอกเบอร์โทร', 'Please enter your phone number')); bad.push(ph); }
-  if (wa.value.trim() && !bfWaOk(wa.value)) { bkHint(wa, L('เบอร์ WhatsApp ไม่ถูกต้อง', 'WhatsApp number looks wrong')); bad.push(wa); }
+  const phoneFull = bkTelFull(BK.cc, ph.value), waFull = bkTelFull(BK.wacc, wa.value);
+  if (!bfWaOk(phoneFull)) { bkHint(ph, ph.value.trim() ? L('เบอร์โทรไม่ถูกต้อง', 'Phone number looks wrong') : L('กรุณากรอกเบอร์โทร', 'Please enter your phone number')); bad.push(ph); }
+  if (wa.value.trim() && !bfWaOk(waFull)) { bkHint(wa, L('เบอร์ WhatsApp ไม่ถูกต้อง', 'WhatsApp number looks wrong')); bad.push(wa); }
   [name, $('#bkNote')].forEach(el => { if (el && bfHasLink(el)) { bkHint(el, BF_MSG.link()); bad.push(el); } });
   if (bad.length) { bad[0].focus(); return; }
   const note = ($('#bkNote')?.value || '').trim();
-  const payload = { name: name.value.trim(), phone: ph.value.trim(), email: em.value.trim(), whatsapp: wa.value.trim(), item: 'boat:' + b.slug, program: T.p ? T.p.label : '', date: T.date, adults: T.pax, children: 0, slot: T.slot,
+  const payload = { name: name.value.trim(), phone: phoneFull, email: em.value.trim(), whatsapp: waFull, item: 'boat:' + b.slug, program: T.p ? T.p.label : '', date: T.date, adults: T.pax, children: 0, slot: T.slot,
     message: note, marketing_consent: !!BK.mk, context: leadContext(), lang: LANG, t: Date.now() - (BK.shownAt || 0), website: $('#bkHp')?.value || '' };
   const btn = $('#bkSend'), label = btn.innerHTML; BK.busy = btn.disabled = true; btn.innerHTML = `<span class="spinner" aria-hidden="true"></span><span>${t('sending')}</span>`;
   const done = () => { BK.busy = btn.disabled = false; btn.innerHTML = label; icons(); };
