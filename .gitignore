@@ -28,3 +28,8 @@ data/posts.wp-urls.backup.json
 # local-only: Claude working files and large mockup exports
 Claude outputs/
 mockup/moonglider-web/
+
+# made by npm run build (scripts/build-assets.mjs)
+public/site/site.min.css
+public/site/app.min.js
+public/site/fleet.min.js

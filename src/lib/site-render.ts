@@ -36,13 +36,25 @@ type Job = { key: string; run: () => void };
 S.homeByKey ??= {}; S.hi ??= []; S.lo ??= [];
 const ROOT = process.cwd();
 const read = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
+/** the browser gets the build's minified copies (scripts/build-assets.mjs) when they are there and not older than the
+ *  source: one CSS file instead of four, small app/fleet scripts; the server render keeps running the readable ones */
+function minified(shell: string) {
+  const fresh = (min: string, ...src: string[]) => { try { const m = statSync(path.join(ROOT, 'public/site', min)).mtimeMs; return src.every(f => statSync(path.join(ROOT, 'public/site', f)).mtimeMs <= m + 1000); } catch { return false; } };
+  const CSS = ['mockup', 'tw', 'glass', 'fleet'];
+  if (fresh('site.min.css', ...CSS.map(f => f + '.css'))) {
+    let first = true;
+    shell = shell.replace(new RegExp(`<link rel="stylesheet" href="/site/(${CSS.join('|')})\\.css\\?v=__V__" />\\n?`, 'g'), () => { const r = first ? '<link rel="stylesheet" href="/site/site.min.css?v=__V__" />\n' : ''; first = false; return r; });
+  }
+  for (const f of ['app', 'fleet']) if (fresh(f + '.min.js', f + '.js')) shell = shell.replace(`/site/${f}.js?v=`, `/site/${f}.min.js?v=`);
+  return shell;
+}
 function loadAssets() {
   if (S.assets && process.env.NODE_ENV === 'production') return S.assets;
   const appPath = path.join(ROOT, 'public/site/app.js');
   // fleet.js (หน้าเรือทั้งหมด) runs right after app.js, in the browser and here
   const version = String(Math.floor(Math.max(statSync(appPath).mtimeMs, statSync(path.join(ROOT, 'public/site/fleet.js')).mtimeMs)));
   if (S.assets && S.assets.version === version) return S.assets;
-  S.assets = { shell: read('site/shell.html').replaceAll('__V__', version).replaceAll('https://boattripthailand.com', SITE), app: new vm.Script(read('public/site/app.js'), { filename: 'app.js' }), fleet: new vm.Script(read('public/site/fleet.js'), { filename: 'fleet.js' }), lucide: new vm.Script(read('public/site/lucide.full.min.js'), { filename: 'lucide.js' }), version };
+  S.assets = { shell: minified(read('site/shell.html')).replaceAll('__V__', version).replaceAll('https://boattripthailand.com', SITE), app: new vm.Script(read('public/site/app.js'), { filename: 'app.js' }), fleet: new vm.Script(read('public/site/fleet.js'), { filename: 'fleet.js' }), lucide: new vm.Script(read('public/site/lucide.full.min.js'), { filename: 'lucide.js' }), version };
   return S.assets;
 }
 
@@ -297,7 +309,7 @@ function run(a: Assets, url: URL, data: SiteData, page: Record<string, unknown>,
   // (app.js, first lines) because the app still uses the home view's elements on every page.
   let homeJs = '';
   const vh = document.getElementById('view-home');
-  const appTag0 = [...document.querySelectorAll('script[src]')].find(x => (x.getAttribute('src') || '').startsWith('/site/app.js'));
+  const appTag0 = [...document.querySelectorAll('script[src]')].find(x => /^\/site\/app(\.min)?\.js/.test(x.getAttribute('src') || ''));
   if (sandbox.__SKIP_HOME__ && vh && vh.classList.contains('hidden') && appTag0) {
     vh.innerHTML = ''; vh.setAttribute('data-deferred', '1');
     const sc = document.createElement('script'); sc.setAttribute('defer', ''); sc.setAttribute('src', `/site-home.js?l=${lang}&h=${knownHome}`); appTag0.parentNode!.insertBefore(sc, appTag0);
@@ -307,7 +319,7 @@ function run(a: Assets, url: URL, data: SiteData, page: Record<string, unknown>,
     const js = `window.__HOME_HTML__=${JSON.stringify(vh.innerHTML).replace(/</g, '\\u003c')};`;
     vh.innerHTML = ''; vh.setAttribute('data-deferred', '1');
     // loaded right before app.js (deferred like it, so in order), which puts it back first thing; the admin preview keeps it inline
-    const appTag = inlineHome ? null : [...document.querySelectorAll('script[src]')].find(x => (x.getAttribute('src') || '').startsWith('/site/app.js'));
+    const appTag = inlineHome ? null : [...document.querySelectorAll('script[src]')].find(x => /^\/site\/app(\.min)?\.js/.test(x.getAttribute('src') || ''));
     if (appTag) {
       const h = createHash('sha1').update(js).digest('hex').slice(0, 12);
       if (!HOME.has(h)) { HOME.set(h, js); if (HOME.size > 40) HOME.delete(HOME.keys().next().value!); }

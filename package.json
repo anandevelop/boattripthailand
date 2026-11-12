@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3009",
-    "build": "npm run build:site && npm run build:admin && next build",
+    "build": "npm run build:site && npm run build:admin && npm run build:assets && next build",
     "start": "next start -p 3009",
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx scripts/migrate.ts",
@@ -12,7 +12,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "user:create": "tsx scripts/create-user.ts",
     "build:site": "tailwindcss -c tailwind.site.config.js -i site/tw-input.css -o public/site/tw.css --minify",
-    "build:admin": "tailwindcss -c tailwind.admin.config.js -i site/tw-input.css -o public/admin-app/tw.css --minify"
+    "build:admin": "tailwindcss -c tailwind.admin.config.js -i site/tw-input.css -o public/admin-app/tw.css --minify",
+    "build:assets": "node scripts/build-assets.mjs"
   },
   "dependencies": {
     "bcryptjs": "2.4.3",
