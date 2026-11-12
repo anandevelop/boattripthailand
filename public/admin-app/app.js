@@ -6551,6 +6551,97 @@ function lvBody() {
   icons();
 }; PAGES.find(p => p[0] === 'analytics')[3] = vAnalytics; }
 
+/* ---------- วิเคราะห์เว็บไซต์ → แหล่งที่มา & คลิก: channel / source of each visit, contact-button clicks, AI visitors and AI agents
+   (src/lib/traffic-src.ts · /api/admin/analytics/sources · ช่วงเวลาเดียวกับปุ่ม 24 ชม. / 7 / 28 / 90 วัน ด้านบน) ---------- */
+const SRCV = { d: null, days: 0, at: 0, loading: false };
+const SRC_CH = { ai: 'AI', search: 'ค้นหา', social: 'โซเชียล', ads: 'โฆษณา & แคมเปญ', web: 'เว็บไซต์อื่น', direct: 'เข้าตรง' };
+const SRC_BTN = { phone: 'โทร', whatsapp: 'WhatsApp', line: 'LINE', email: 'อีเมล', messenger: 'Messenger' };
+function srcLoad() {
+  if (SRCV.loading) return; SRCV.loading = true;
+  const days = GA.days;
+  api('GET', 'analytics/sources?days=' + days).then(d => { SRCV.d = d; SRCV.days = days; SRCV.at = Date.now(); }).catch(fail)
+    .finally(() => { SRCV.loading = false; if (CUR === 'analytics' && GA.tab === 'src') vAnalytics(); });
+}
+function srcBody() {
+  if (!SRCV.d || SRCV.days !== GA.days || Date.now() - SRCV.at > 60_000) srcLoad();
+  const D = SRCV.d;
+  if (!D || D.days !== GA.days) return '<div class="card p-10 text-center text-muted">กำลังโหลดข้อมูล…</div>';
+  const S = D.series.reduce((a, x) => a + x.visits, 0), AI = D.series.reduce((a, x) => a + x.ai, 0);
+  const CL = D.buttons.reduce((a, x) => a + x.n, 0), CLAI = D.buttons.reduce((a, x) => a + x.ai, 0);
+  const rate = (c, v) => v ? (c / v * 100).toFixed(1).replace(/\.0$/, '') + '%' : '–';
+  const dl = (c, p) => p ? delta(c, p) : (GA.cmp ? '<span class="text-[11.5px] text-muted">ยังไม่มีข้อมูลช่วงก่อน</span>' : '');
+  const span = D.hourly ? '24 ชม.' : D.days + ' วัน';
+  // chart: one bar per hour / day, AI part darker at the bottom
+  const max = Math.max(1, ...D.series.map(x => x.visits));
+  const lbl = t => D.hourly ? t.slice(11, 13) + ':00' : fmtD(t);
+  const chart = `<div style="display:flex;align-items:flex-end;gap:3px;height:160px">${D.series.map(x => `<div style="flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end" title="${lbl(x.t)} · ${nf(x.visits)} เข้าชม${x.ai ? ` · AI ${nf(x.ai)}` : ''}">
+      <div style="border-radius:6px 6px 0 0;height:${x.visits ? Math.max(3, x.visits / max * 100) : 1.5}%;background:${x.visits ? '#ecd5b5' : '#f1e6d6'};display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden">${x.ai ? `<div style="height:${x.ai / x.visits * 100}%;background:#1c2a3a"></div>` : ''}</div></div>`).join('')}</div>
+    <div class="flex justify-between text-[11px] text-muted mt-2 tnum"><span>${lbl(D.series[0].t)}</span>${D.series.length > 2 ? `<span>${lbl(D.series[Math.floor(D.series.length / 2)].t)}</span>` : ''}<span>${D.hourly ? 'ตอนนี้' : lbl(D.series[D.series.length - 1].t)}</span></div>`;
+  const legend = `<div class="flex items-center gap-3 text-[11.5px] text-muted"><span class="flex items-center gap-1.5"><i style="width:9px;height:9px;border-radius:50%;background:#ecd5b5"></i>ทั้งหมด</span><span class="flex items-center gap-1.5"><i style="width:9px;height:9px;border-radius:50%;background:#1c2a3a"></i>จาก AI</span></div>`;
+  const chMax = Math.max(1, ...D.channels.map(c => c.visits));
+  const bar = (n, t) => `<span class="block rounded-full bg-sand overflow-hidden" style="max-width:260px;height:6px;margin-top:6px"><span class="block h-full rounded-full" style="width:${n ? Math.max(3, n / t * 100) : 0}%;background:#4b5563"></span></span>`;
+  const pill = c => `<span class="pill" style="background:${c === 'ai' ? '#1c2a3a' : '#ecd5b5'};color:${c === 'ai' ? '#fff' : '#5a3a12'}">${SRC_CH[c] || c}</span>`;
+  const page = p => esc(typeof anPageName === 'function' ? anPageName(p) : p) + (typeof anPageName === 'function' && anPageName(p) !== p ? ` <span class="text-muted text-[11px]">${esc(p)}</span>` : '');
+  const aiSrc = D.sources.filter(r => r.channel === 'ai');
+  const users = D.bots.filter(b => b.kind === 'user'), crawlers = D.bots.filter(b => b.kind !== 'user');
+  const th = (cols) => `<thead><tr>${cols.map(([l, r]) => `<th class="${r ? 'text-right' : ''}">${l}</th>`).join('')}</tr></thead>`;
+  const empty = (t) => `<p class="px-5 py-6 text-[12.5px] text-muted">${t}</p>`;
+  return `
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      ${kpi('การเข้าชม', nf(S), dl(S, D.prev.visits), '')}
+      ${kpi('มาจาก AI', nf(AI), dl(AI, D.prev.ai), S ? rate(AI, S) + ' ของการเข้าชม' : '')}
+      ${kpi('คลิกปุ่มติดต่อ', nf(CL), '', S ? rate(CL, S) + ' ของการเข้าชม' : '')}
+      ${kpi('คลิกจากคนที่มาจาก AI', nf(CLAI), '', AI ? rate(CLAI, AI) + ' ของคนที่มาจาก AI' : '– ของคนที่มาจาก AI')}
+    </div>
+    <div class="card p-5 mt-4"><div class="flex flex-wrap items-center justify-between gap-2 mb-4"><p class="font-medium">การเข้าชม${D.hourly ? 'รายชั่วโมง · 24 ชม.' : 'รายวัน · ' + span}</p>${legend}</div>${chart}</div>
+    <div class="grid xl:grid-cols-2 gap-4 mt-4 items-start">
+      <div class="card overflow-hidden"><p class="font-medium px-5 pt-4 pb-3">แยกตามช่องทาง</p><div class="overflow-x-auto"><table class="tbl">${th([['ช่องทาง'], ['เข้าชม', 1], ['คลิก', 1], ['อัตราคลิก', 1]])}<tbody>
+        ${D.channels.map(c => `<tr><td><span class="block">${SRC_CH[c.channel]}</span>${bar(c.visits, chMax)}</td><td class="text-right tnum">${nf(c.visits)}</td><td class="text-right tnum">${nf(c.clicks)}</td><td class="text-right tnum">${rate(c.clicks, c.visits)}</td></tr>`).join('')}
+      </tbody></table></div></div>
+      <div class="card overflow-hidden"><p class="font-medium px-5 pt-4 pb-3">คลิกปุ่มติดต่อ</p>
+        ${D.buttons.length ? `<div class="overflow-x-auto"><table class="tbl">${th([['ปุ่ม'], ['คลิก', 1], ['จาก AI', 1]])}<tbody>${D.buttons.map(b => `<tr><td>${SRC_BTN[b.button] || esc(b.button)}</td><td class="text-right tnum">${nf(b.n)}</td><td class="text-right tnum">${nf(b.ai)}</td></tr>`).join('')}</tbody></table></div>
+        <div class="px-5 pt-4 pb-4 border-t border-line"><p class="text-[12px] text-muted mb-2">หน้าที่มีคนกดติดต่อมากที่สุด</p>${D.clickPages.map(r => `<div class="flex justify-between gap-3 text-[12.5px] py-1"><span class="truncate">${page(r.path)}</span><span class="tnum">${nf(r.n)}</span></div>`).join('')}</div>`
+        : empty('ยังไม่มีคนกดปุ่ม โทร / WhatsApp / LINE / อีเมล ในช่วงนี้')}</div>
+    </div>
+    <div class="card overflow-hidden mt-4"><p class="font-medium px-5 pt-4 pb-3">แหล่งที่มาสูงสุด</p>
+      ${D.sources.length ? `<div class="overflow-x-auto"><table class="tbl min-w-[560px]">${th([['แหล่งที่มา'], ['ช่องทาง'], ['เข้าชม', 1], ['คลิก', 1], ['อัตราคลิก', 1]])}<tbody>${D.sources.slice(0, 20).map(r => `<tr><td>${esc(r.source)}</td><td>${pill(r.channel)}</td><td class="text-right tnum">${nf(r.visits)}</td><td class="text-right tnum">${nf(r.clicks)}</td><td class="text-right tnum">${rate(r.clicks, r.visits)}</td></tr>`).join('')}</tbody></table></div>` : empty('ยังไม่มีข้อมูลในช่วงนี้ · เริ่มนับตั้งแต่อัปเดตระบบนี้')}</div>
+    <p class="font-medium mt-6 mb-3 flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4 text-maroon"></i>AI</p>
+    <div class="grid xl:grid-cols-2 gap-4 items-start">
+      <div class="card p-5"><p class="font-medium">คนที่มาจาก AI</p><p class="text-[11.5px] text-muted mt-0.5">คนที่กดลิงก์มาจาก ChatGPT, Gemini, Perplexity, Claude, Copilot และอื่น ๆ</p>
+        ${aiSrc.length ? `<table class="tbl mt-3">${th([['AI'], ['เข้าชม', 1], ['คลิก', 1], ['อัตราคลิก', 1]])}<tbody>${aiSrc.map(r => `<tr><td>${esc(r.source)}</td><td class="text-right tnum">${nf(r.visits)}</td><td class="text-right tnum">${nf(r.clicks)}</td><td class="text-right tnum">${rate(r.clicks, r.visits)}</td></tr>`).join('')}</tbody></table>` : '<p class="text-[12.5px] text-muted mt-4">ยังไม่มีคนมาจาก AI ในช่วงนี้</p>'}</div>
+      <div class="card p-5"><p class="font-medium">AI ที่เข้ามาอ่านเว็บเอง</p><p class="text-[11.5px] text-muted mt-0.5">“เปิดแทนผู้ใช้” คือ AI ที่เปิดหน้าเว็บให้คนที่กำลังถามอยู่ (เช่น ChatGPT-User) ส่วน Crawler คือบอทที่เก็บข้อมูลไปทำดัชนีหรือฝึก AI · นับจาก user agent เพราะไม่ได้เปิดผ่านเบราว์เซอร์</p>
+        ${D.bots.length ? `<table class="tbl mt-3">${th([['Agent'], ['ประเภท'], ['ครั้งที่ดึง', 1], ['หน้า', 1]])}<tbody>${[...users, ...crawlers].map(b => `<tr><td class="font-medium">${esc(b.agent)}</td><td class="text-[12px] ${b.kind === 'user' ? '' : 'text-muted'}">${b.kind === 'user' ? 'เปิดแทนผู้ใช้' : 'Crawler'}</td><td class="text-right tnum">${nf(b.n)}</td><td class="text-right tnum">${nf(b.pages)}</td></tr>`).join('')}</tbody></table>
+        ${D.botPages.length ? `<div class="border-t border-line mt-3 pt-3"><p class="text-[12px] text-muted mb-2">หน้าที่ AI เปิดอ่านแทนผู้ใช้</p>${D.botPages.map(r => `<div class="flex justify-between gap-3 text-[12.5px] py-1"><span class="truncate">${page(r.path)}</span><span class="tnum">${nf(r.n)}</span></div>`).join('')}</div>` : ''}`
+        : '<p class="text-[12.5px] text-muted mt-4">ยังไม่มี AI เข้ามาอ่านในช่วงนี้</p>'}</div>
+    </div>
+    <p class="text-[11px] text-muted mt-4 leading-relaxed">วิธีนับ: ไม่ใช้คุกกี้และไม่เก็บอะไรที่ระบุตัวคนได้ เก็บแค่ชั่วโมง หน้า แหล่งที่มา และจำนวน · การเข้าชม = หน้าแรกที่เปิดในแต่ละครั้ง · แหล่งที่มาดูจากเว็บที่ลิงก์มาหรือ utm_source (ChatGPT ใส่ utm_source=chatgpt.com ให้เอง) · แอปบางตัว เช่น LINE, Messenger และแอป AI บางแอป ไม่บอกว่ามาจากไหน จึงไปอยู่ในกลุ่ม “เข้าตรง” · บอท AI นับเฉพาะที่มาถึงเซิร์ฟเวอร์ (ถ้า Cloudflare ส่งหน้าจากแคชให้ จะไม่ถูกนับ) · เวลาไทย</p>`;
+}
+{ const _va = vAnalytics; vAnalytics = function () {
+  const on = GA.tab === 'src'; if (on) GA.tab = 'site';
+  try { _va(); } finally { if (on) GA.tab = 'src'; }
+  const bar = $('#view .flex.gap-1.overflow-x-auto');
+  if (bar && !bar.querySelector('[data-src]')) {
+    if (on) bar.querySelectorAll('.tab.on').forEach(t => t.classList.remove('on'));
+    const site = bar.querySelector(`[onclick="GA.tab='site';vAnalytics()"]`);
+    const btn = `<button data-src class="tab inline-flex items-center gap-1.5 ${on ? 'on' : ''}" onclick="GA.tab='src';vAnalytics()"><i data-lucide="split" class="w-3.5 h-3.5"></i>แหล่งที่มา & คลิก</button>`;
+    site ? site.insertAdjacentHTML('afterend', btn) : bar.insertAdjacentHTML('beforeend', btn);
+  }
+  if (on) {
+    [...$$('#view .rounded-xl')].find(x => x.className.includes('fff8e6'))?.remove();
+    const exp = [...$$('#view button')].find(b => b.textContent.trim() === 'ส่งออก'); if (exp) exp.setAttribute('onclick', 'srcCsv()');
+    const f = $('#view .fade'); if (f) f.innerHTML = srcBody();
+  }
+  icons();
+}; PAGES.find(p => p[0] === 'analytics')[3] = vAnalytics; }
+function srcCsv() {
+  const D = SRCV.d; if (!D) return;
+  const rows = [['แหล่งที่มา', 'ช่องทาง', 'เข้าชม', 'เพจวิว', 'คลิกปุ่มติดต่อ'], ...D.sources.map(r => [r.source, SRC_CH[r.channel] || r.channel, r.visits, r.views, r.clicks]), [],
+    ['ปุ่ม', 'คลิก', 'จาก AI'], ...D.buttons.map(b => [SRC_BTN[b.button] || b.button, b.n, b.ai]), [], ['AI agent', 'ประเภท', 'ครั้งที่ดึง', 'หน้า'], ...D.bots.map(b => [b.agent, b.kind === 'user' ? 'เปิดแทนผู้ใช้' : 'Crawler', b.n, b.pages])];
+  const csv = '﻿' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `sources-${GA.days === 1 ? '24h' : GA.days + 'd'}-${iso(TODAY)}.csv`; a.click();
+  audit('export', 'auth', 'analytics', `ส่งออกแหล่งที่มา & คลิก ${GA.days === 1 ? '24 ชม.' : GA.days + ' วัน'}`);
+}
+
 /* ---------- start: the server already checked the session ---------- */
 /* =====================================================================
    SEO → PageSpeed Insights (ทุกหน้า · มือถือ/คอม · 4 หมวด · กราฟ 30 วัน · ควรแก้อะไรก่อน · แจ้งเตือน LINE)

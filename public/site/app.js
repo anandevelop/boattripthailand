@@ -2281,7 +2281,16 @@ function track(ev, p = {}, custom = false) {
   return event_id;
 }
 document.addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; const h = a.getAttribute('href');
-  if (/^tel:/.test(h)) track('Contact', { method: 'phone' }); else if (/wa\.me|whatsapp/i.test(h)) track('Contact', { method: 'whatsapp' }); else if (/line\.me|lin\.ee/i.test(h)) track('Contact', { method: 'line' }); });
+  const m = /^tel:/.test(h) ? 'phone' : /wa\.me|whatsapp/i.test(h) ? 'whatsapp' : /line\.me|lin\.ee/i.test(h) ? 'line' : /^mailto:/i.test(h) ? 'email' : /m\.me\/|messenger\.com/i.test(h) ? 'messenger' : '';
+  if (!m) return;
+  if (m !== 'email' && m !== 'messenger') track('Contact', { method: m });
+  clickBeacon(m); });
+/* contact clicks for /admin → วิเคราะห์เว็บไซต์ → แหล่งที่มา & คลิก: button, page and this session's source — nothing about the person */
+function clickBeacon(c) {
+  if (navigator.userAgent === 'BTT-SSR' || typeof navigator.sendBeacon !== 'function') return;
+  let s = 'direct', r = ''; try { s = sessionStorage.getItem('btt_src') || 'direct'; r = sessionStorage.getItem('btt_ref') || ''; } catch { /* private mode */ }
+  try { navigator.sendBeacon('/api/t', JSON.stringify({ c, p: location.pathname, s, r })); } catch { /* never block the page */ }
+}
 function saveCookies(p, msg) { store.set('cookies', { ...p, necessary: true, ts: Date.now() }); loadPixel(); $('#cookieBar')?.classList.add('hidden'); toast(msg || L('บันทึกการตั้งค่าคุกกี้แล้ว','Cookie preferences saved')); if (currentView === 'legal' && VH.hash === '#/cookies') renderLegal('cookies'); }
 function acceptAllCookies() { saveCookies({ functional: true, analytics: true, marketing: true }); }
 function rejectCookies() { saveCookies({ functional: false, analytics: false, marketing: false }); }
@@ -3735,7 +3744,7 @@ function pvSource() {
   const by = x => /google/.test(x) ? 'google' : /bing/.test(x) ? 'bing' : /facebook|fb\.|^fb$|meta/.test(x) ? 'facebook' : /instagram|^ig$/.test(x) ? 'instagram' : /line\.me|lin\.ee|^line$/.test(x) ? 'line'
     : /tiktok/.test(x) ? 'tiktok' : /youtube|youtu\.be/.test(x) ? 'youtube' : /chatgpt|openai|perplexity|claude|gemini|copilot/.test(x) ? 'ai' : /mail|newsletter/.test(x) ? 'email' : '';
   let s = q.get('gclid') || (paid && /google/.test(u)) ? 'google-ads' : (paid && /facebook|fb|meta|instagram|ig/.test(u)) ? 'facebook-ads' : u ? (by(u) || 'other') : q.get('fbclid') ? 'facebook-ads' : r ? (by(r) || 'referral') : 'direct';
-  try { sessionStorage.setItem('btt_src', s); } catch { /* private mode */ }
+  try { sessionStorage.setItem('btt_src', s); sessionStorage.setItem('btt_ref', (u || r).slice(0, 80)); } catch { /* private mode */ }
   return [s, true];
 }
 function pageView() {
@@ -3743,7 +3752,8 @@ function pageView() {
   const p = (VHASH === '#/404' ? '404:' : '') + location.pathname;
   if (p === PV_LAST) return; PV_LAST = p;
   const [s, f] = pvSource(), w = innerWidth, touch = matchMedia('(pointer: coarse)').matches;
-  try { navigator.sendBeacon('/api/t', JSON.stringify({ p, s, f, d: w < 768 ? 'mobile' : touch && w < 1200 ? 'tablet' : 'desktop', l: LANG === 'en' ? 'en' : 'th' })); } catch { /* never block the page */ }
+  let r = ''; try { r = sessionStorage.getItem('btt_ref') || ''; } catch { /* private mode */ }
+  try { navigator.sendBeacon('/api/t', JSON.stringify({ p, s, f, r, d: w < 768 ? 'mobile' : touch && w < 1200 ? 'tablet' : 'desktop', l: LANG === 'en' ? 'en' : 'th' })); } catch { /* never block the page */ }
 }
 /* "ออนไลน์ตอนนี้" (/api/live → /admin): a heartbeat every 30 s while this tab is visible. The id is random and lives
    only in this tab (sessionStorage) — no cookie, nothing that identifies a person. A tab silent for 5 min stops counting. */

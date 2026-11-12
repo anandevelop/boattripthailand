@@ -59,7 +59,17 @@ function lighterImage(req: NextRequest, path: string) {
   return res;
 }
 
+/** AI agents / crawlers never run the page script, so they are counted here from the user agent (วิเคราะห์เว็บไซต์ → แหล่งที่มา & คลิก) */
+const AI_UA = /GPTBot|ChatGPT-User|OAI-SearchBot|Claude|anthropic-ai|Perplexity|Bytespider|GoogleOther|Google-Extended|Google-Agent|Gemini-Deep-Research|Meta-External|Amazonbot|Applebot-Extended|CCBot|cohere-ai|Diffbot|YouBot|PetalBot|TikTokSpider|MistralAI-User|DuckAssistBot/i;
+function countBot(req: NextRequest) {
+  const ua = req.headers.get('user-agent') || '';
+  if (!AI_UA.test(ua) || req.method !== 'GET') return;
+  let p = req.nextUrl.pathname; try { p = decodeURIComponent(p); } catch { /* keep */ }
+  if (/^\/(boats|img)\//.test(p) || /[<>"'`\\\u0000-\u001f]/.test(p)) return;
+  void import('@/lib/traffic-src').then(m => m.botHit(ua, p.length > 1 ? p.replace(/\/+$/, '') : p)).catch(e => console.error('[bot count]', e));
+}
 export async function middleware(req: NextRequest) {
+  countBot(req);
   const res = await route(req);
   if (noindexSite(reqHost(req.headers))) res.headers.set('X-Robots-Tag', 'noindex, nofollow');
   return res;

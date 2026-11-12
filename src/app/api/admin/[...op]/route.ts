@@ -14,6 +14,7 @@ import { cleanHome, HOME_KEY } from '@/lib/home';
 import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
 import { analyticsData } from '@/lib/analytics';
+import { sourcesData } from '@/lib/traffic-src';
 import { GoogleError, googleData, googleStatus, loadGoogleCfg, saveGoogleCfg, testGoogle } from '@/lib/google';
 import { pageSpeed, PsiBusyError, psiCooldown, psiPath, PsiKeyError, psiUsage, psiRun, psiRunAll, psiState, savePsiCfg, savePsiKey } from '@/lib/pagespeed';
 import { BookingConflict, customerEdit, customerErase, customerMerge, dealOp, dealsFor, wonGuard } from '@/lib/lead-guard';
@@ -571,6 +572,7 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
     if (a === 'analytics' && b0 === 'google' && c0 === 'test' && method === 'POST') { await need(me, 'seo'); const steps = await testGoogle(); return json({ steps, status: googleStatus() }); }
     if (a === 'analytics' && b0 === 'google' && c0 === 'status' && method === 'GET') { await need(me, 'seo'); await loadGoogleCfg(true); return json({ status: googleStatus() }); }
     if (a === 'analytics' && b0 === 'google' && method === 'GET') { await need(me, 'seo'); const q = new URL(req.url).searchParams, d = Number(q.get('days')); return json(await googleData([1, 7, 28, 90].includes(d) ? d : 1, q.get('refresh') === '1')); }
+    if (a === 'analytics' && b0 === 'sources' && method === 'GET') { await need(me, 'seo'); const d = Number(new URL(req.url).searchParams.get('days')); return json(await sourcesData([1, 7, 28, 90].includes(d) ? d : 1)); }
     if (a === 'analytics' && method === 'GET') { await need(me, 'seo'); const d = Number(new URL(req.url).searchParams.get('days')); return json(await analyticsData([1, 7, 28, 90].includes(d) ? d : 1)); }
     if (a === 'leads' && !b0 && method === 'GET') { await need(me, 'leads'); return json(await leadsFor(me)); }
     if (a === 'audit' && !b0 && method === 'GET') { await need(me, 'audit'); return json({ audit: await auditList() }); }

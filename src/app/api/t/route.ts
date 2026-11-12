@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { trafficDaily } from '@/db/schema';
 import { rateLimit } from '@/lib/ratelimit';
 import { hourlyHit } from '@/lib/traffic-hourly';
+import { clickHit, srcHit } from '@/lib/traffic-src';
 
 export const runtime = 'nodejs';
 
@@ -27,6 +28,11 @@ export async function POST(req: Request) {
   if (/[<>"'`\\\u0000-\u001f]/.test(path)) return ok;   // security: no markup / quote characters from the beacon (the admin shows these paths)
   if (nf) path = '404:' + path;
   const source = SOURCES.includes(String(b.s)) ? String(b.s) : 'other';
+  const ref = typeof b.r === 'string' ? b.r.toLowerCase().slice(0, 80) : '';   // utm_source or referrer host → แหล่งที่มา & คลิก
+  if (typeof b.c === 'string') {   // a contact button click, not a page view
+    try { await clickHit(b.c, path, source, ref); } catch (e) { console.error('[track click]', e); }
+    return ok;
+  }
   const device = ['mobile', 'tablet', 'desktop'].includes(String(b.d)) ? String(b.d) : 'desktop';
   const lang = b.l === 'en' ? 'en' : 'th';
   const first = b.f === true ? 1 : 0;
@@ -35,6 +41,7 @@ export async function POST(req: Request) {
     await db.insert(trafficDaily).values({ day, path, source, device, lang, views: 1, sessions: first })
       .onConflictDoUpdate({ target: [trafficDaily.day, trafficDaily.path, trafficDaily.source, trafficDaily.device, trafficDaily.lang], set: { views: sql`${trafficDaily.views} + 1`, sessions: sql`${trafficDaily.sessions} + ${first}` } });
   } catch (e) { console.error('[track]', e); }
+  if (!nf) try { await srcHit(source, ref, !!first); } catch (e) { console.error('[track src]', e); }
   try { await hourlyHit(!!first); } catch (e) { console.error('[track hourly]', e); }   // the 24-hour view
   return ok;
 }
