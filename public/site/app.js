@@ -125,7 +125,7 @@ function afterRoute() {
 function syncLangChip() {
   const c = document.getElementById('langChip'); if (!c) return;
   const to = LANG === 'th' ? 'en' : 'th';
-  c.dataset.lang = to; c.setAttribute('lang', to); c.setAttribute('aria-label', to === 'en' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย');
+  c.dataset.lang = to; c.setAttribute('lang', to); c.setAttribute('aria-label', to === 'en' ? 'EN – Switch to English' : 'TH – เปลี่ยนเป็นภาษาไทย');   // starts with the visible text (EN / TH) for voice control
   const s = c.querySelector('span'); if (s) s.textContent = to.toUpperCase();
 }
 
@@ -2640,7 +2640,8 @@ function datePick(inp) {
   if (!inp || inp._dpVis || navigator.userAgent === 'BTT-SSR') return;
   const vis = document.createElement('input');
   vis.type = 'text'; vis.className = inp.className + ' dp-vis'; vis.autocomplete = 'off'; vis.setAttribute('inputmode', 'none');
-  vis.setAttribute('aria-haspopup', 'dialog'); vis.setAttribute('aria-expanded', 'false');
+  // role=combobox: a text box that opens a picker — the only text-input role that allows aria-haspopup / aria-expanded
+  vis.setAttribute('role', 'combobox'); vis.setAttribute('aria-haspopup', 'dialog'); vis.setAttribute('aria-expanded', 'false');
   vis.required = inp.required; inp.required = false; // hidden inputs are never validated
   inp.type = 'hidden'; inp.after(vis); inp._dpVis = vis;
   const nat = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
@@ -2663,18 +2664,18 @@ function dpOpen(inp) {
   dpClose();
   const t0 = todayISO(), start = inp.value || (inp.min > t0 ? inp.min : t0), d = new Date(start + 'T00:00:00');
   const pop = document.createElement('div');
-  pop.className = 'dp-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', L('เลือกวันที่', 'Choose a date'));
+  pop.className = 'dp-pop'; pop.id = pop.id || 'dpPop' + Math.random().toString(36).slice(2, 7); pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', L('เลือกวันที่', 'Choose a date'));
   document.body.appendChild(pop);
   DP = { inp, pop, y: d.getFullYear(), m: d.getMonth(), f: start };
   pop.addEventListener('click', dpClick); pop.addEventListener('keydown', dpKey);
   pop.addEventListener('focusout', e => { const to = e.relatedTarget; if (DP && to && !pop.contains(to) && to !== inp._dpVis) dpClose(); });
-  inp._dpVis.setAttribute('aria-expanded', 'true');
+  inp._dpVis.setAttribute('aria-expanded', 'true'); inp._dpVis.setAttribute('aria-controls', pop.id);
   dpDraw(); dpPlace(); dpFocus();
   document.addEventListener('pointerdown', dpOutside, true); addEventListener('scroll', dpPlace, true); addEventListener('resize', dpPlace);
 }
 function dpClose(refocus) {
   if (!DP) return; const { inp, pop } = DP; DP = null;
-  pop.remove(); inp._dpVis?.setAttribute('aria-expanded', 'false');
+  pop.remove(); inp._dpVis?.setAttribute('aria-expanded', 'false'); inp._dpVis?.removeAttribute('aria-controls');
   document.removeEventListener('pointerdown', dpOutside, true); removeEventListener('scroll', dpPlace, true); removeEventListener('resize', dpPlace);
   if (refocus) inp._dpVis?.focus({ preventScroll: true });
 }
