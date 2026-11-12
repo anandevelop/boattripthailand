@@ -64,6 +64,9 @@ function actText(a: Act, names: Map<string, string>) {
     case 'resubmit': return 'ลูกค้าส่งคำขอซ้ำ';
     case 'outreach': return `ส่งข้อความการตลาด${d.seg ? ` “${d.seg}”` : ''} ทาง ${({ whatsapp: 'WhatsApp', email: 'อีเมล', copy: 'คัดลอกไปส่งเอง' } as Record<string, string>)[d.via] ?? d.via}`;
     case 'sla_alert': return `แจ้งเตือนเลยเวลาตอบ ${d.minutes ?? ''} นาที`;
+    case 'doc': return `ออก${d.kind === 'confirm' ? 'ใบยืนยันการจอง' : 'ใบเสนอราคา'} ${d.no ?? ''} · ${Number(d.total ?? 0).toLocaleString('en-US')} บาท`;
+    case 'email': { const what = d.kind === 'ack' ? 'อีเมลยืนยันว่าได้รับคำขอ' : d.kind === 'confirm' ? `ใบยืนยันการจอง ${d.no ?? ''}` : `ใบเสนอราคา ${d.no ?? ''}`;
+      return (a.data as Record<string, unknown>)?.ok === false ? `ส่ง${what}ไม่สำเร็จ: ${d.error ?? ''}` : `ส่ง${what} → ${d.to ?? ''}`; }
     default: return a.type;
   }
 }

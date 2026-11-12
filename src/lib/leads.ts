@@ -87,6 +87,7 @@ export async function createLead(input: LeadInput, actor?: User) {
 
   // side effects outside the transaction
   void notifyNewLead(result.lead, result.customer, result.assignee, result.duplicate).catch(e => console.error('[notify]', e));
+  if (!result.duplicate && !actor) void import('./lead-mail').then(m => m.sendLeadAck(result.lead.id)).catch(e => console.error('[ack mail]', e));   // "we got your request" email (ตั้งค่า › อีเมล & เอกสาร)
   if (!result.duplicate && !actor && (await marketingConfig()).conv.lead) void sendMetaEvent({ name: 'Lead', leadId: result.lead.id, eventId: c.event_id, email: input.email, phone: input.phone, fbclid: c.fbclid, ip: input.ip, userAgent: input.userAgent, url: c.current_page ? appUrl() + c.current_page : undefined, custom: { content_name: input.item ?? undefined, lead_source: c.source } });
   return result;
 }

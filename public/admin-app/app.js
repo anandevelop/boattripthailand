@@ -7033,6 +7033,170 @@ function lpReset() {
   icons();
 }; PAGES.find(p => p[0] === 'content')[3] = vContent; }
 
+/* ---------- ตั้งค่า → อีเมล & เอกสาร: Resend key (encrypted on the server), sender, auto "we got your request" email, document defaults
+   (server: src/lib/mail.ts · src/lib/lead-docs.ts · /api/admin/settings/mail) ---------- */
+{ const _om = openModal; openModal = function (h) { const b = $('#modalBox'); if (b) b.style.maxWidth = ''; _om(h); }; }
+const MLS = { st: null, docs: null, loading: false, busy: {}, err: '' };
+const mlOn = () => CUR === 'settings' && SITECFG.tab === 'mail' && !!$('#mlHost');
+function mlLoad(refresh) {
+  if (MLS.loading) return; MLS.loading = true;
+  api('GET', 'settings/mail' + (refresh ? '?refresh=1' : '')).then(r => { MLS.st = r.mail; MLS.docs = r.docs; MLS.err = ''; }).catch(e => { MLS.err = e.message; fail(e); })
+    .finally(() => { MLS.loading = false; if (mlOn()) mlRender(); });
+}
+function mlBusy(k, p) { MLS.busy[k] = true; mlRender(); return p.finally(() => { MLS.busy[k] = false; if (mlOn()) mlRender(); }); }
+function mlRender() {
+  const host = $('#mlHost'); if (!host) return;
+  const S = MLS.st, D = MLS.docs;
+  if (!S || !D) { host.innerHTML = `<div class="card p-10 text-center text-muted">${MLS.err ? esc(MLS.err) : 'กำลังโหลด…'}</div>`; if (!MLS.err) mlLoad(true); return; }
+  const ro = isRO(), pill = (ok, y, n) => `<span class="pill" style="background:${ok ? '#eaf6ef' : '#fff6e5'};color:${ok ? '#1e7a46' : '#9a5b00'}">${ok ? y : n}</span>`;
+  const dom = S.domain, domOk = dom && dom.status === 'verified';
+  const inp = (id, label, val, ph = '', type = 'text', dis = false) => `<label class="grid gap-1.5"><span class="lbl !mb-0">${label}</span><input id="${id}" type="${type}" class="inp" value="${esc(val || '')}" placeholder="${esc(ph)}" ${dis || ro ? 'disabled' : ''} autocomplete="off" spellcheck="false"/></label>`;
+  const recs = dom && dom.records && dom.records.length ? `<div class="overflow-x-auto mt-3"><table class="tbl min-w-[560px] text-[12px]"><thead><tr><th>Type</th><th>Name</th><th>Value</th><th>สถานะ</th></tr></thead><tbody>${dom.records.map(x => `<tr><td>${esc(x.type)}</td><td class="font-mono break-all">${esc(x.name)}</td><td class="font-mono break-all" style="max-width:280px">${esc(x.value)}</td><td class="whitespace-nowrap">${pill(x.status === 'verified', 'ผ่าน', x.status === 'failed' ? 'ไม่ผ่าน' : 'รอตรวจ')}</td></tr>`).join('')}</tbody></table></div><p class="text-[11px] text-muted mt-2">ใส่ใน Cloudflare › DNS › Records ทีละรายการ · ตั้ง Proxy status เป็น <b>DNS only</b> (เมฆสีเทา) · เสร็จแล้วกด Verify ใน Resend แล้วกด ตรวจสถานะ ที่นี่</p>` : '';
+  const domLine = !S.ready ? '' : !dom ? '<p class="text-[12px] text-muted">กด ตรวจสถานะ เพื่อดูการยืนยันโดเมน</p>' : dom.error ? `<p class="text-[12px]" style="color:#a3222c">${esc(dom.error)}</p>`
+    : dom.status === 'missing' ? `<p class="text-[12px]" style="color:#9a5b00">ยังไม่ได้เพิ่มโดเมน ${esc(dom.name)} ใน Resend · ไปที่ resend.com › Domains › Add domain</p>`
+    : `<div class="flex items-center gap-2 text-[12.5px]">โดเมน <b class="font-medium">${esc(dom.name)}</b> ${pill(domOk, 'ยืนยันแล้ว ส่งได้', 'ยังไม่ผ่าน · ' + esc(dom.status))}</div>${domOk ? '' : recs}`;
+  const left = `<div class="card p-5 min-w-0 grid gap-4">
+    <div class="flex items-start gap-3"><span class="w-9 h-9 rounded-xl grid place-items-center shrink-0" style="background:rgb(112 0 14 / .08);color:#70000e"><i data-lucide="mail" class="w-4 h-4"></i></span>
+      <div class="flex-1 min-w-0"><p class="font-medium">ระบบส่งอีเมล (Resend)</p><p class="text-[11.5px] text-muted">อีเมลยืนยันอัตโนมัติ และส่งใบเสนอราคา / ใบยืนยันการจองจากหน้าลีด</p></div>
+      ${pill(S.ready, 'เชื่อมแล้ว', 'ยังไม่เชื่อม')}<button class="btn btn-g !h-8 !px-2" title="ตรวจสถานะ" aria-label="ตรวจสถานะ" onclick="mlLoad(true)" ${MLS.loading ? 'disabled' : ''}><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div>
+    ${inp('mlKey', 'API key <span class="text-muted font-normal">(resend.com › API Keys · ขึ้นต้นด้วย re_)</span>', '', S.src === 'env' ? 'ตั้งใน .env (RESEND_API_KEY) · ใช้ค่านั้นก่อน' : S.src ? `บันทึกแล้ว ••••${S.tail} · วางค่าใหม่เพื่อเปลี่ยน` : 're_xxxxxxxx', 'password', S.src === 'env')}
+    <div class="grid sm:grid-cols-2 gap-3">${inp('mlFrom', 'อีเมลผู้ส่ง', S.from)}${inp('mlName', 'ชื่อผู้ส่ง', S.fromName)}</div>
+    ${inp('mlReply', 'ลูกค้ากดตอบกลับ → ส่งไปที่', S.replyTo)}
+    <label class="flex items-start justify-between gap-3 cursor-pointer"><span><span class="block">ส่งอีเมล “ได้รับคำขอแล้ว” อัตโนมัติ</span><span class="block text-[11.5px] text-muted">ทันทีที่ลูกค้าส่งฟอร์มจองบนเว็บและใส่อีเมลไว้ · ตามภาษาที่ลูกค้าใช้</span></span><span class="tgl shrink-0"><input id="mlAck" type="checkbox" ${S.ack ? 'checked' : ''} ${ro ? 'disabled' : ''}/><span></span></span></label>
+    ${domLine}
+    <div class="flex flex-wrap items-center gap-2">${S.src === 'saved' && !ro ? '<button class="btn btn-g !h-9 text-muted" onclick="mlRemoveKey()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบ key</button>' : ''}<span class="ml-auto"></span>
+      <button class="btn btn-o !h-9" ${!S.ready || MLS.busy.test ? 'disabled' : ''} onclick="mlTest()"><i data-lucide="send" class="w-3.5 h-3.5"></i>${MLS.busy.test ? 'กำลังส่ง…' : 'ส่งอีเมลทดสอบถึงฉัน'}</button>
+      <button class="btn btn-p !h-9" ${MLS.busy.save || ro ? 'disabled' : ''} onclick="mlSave()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${MLS.busy.save ? 'กำลังบันทึก…' : 'บันทึก'}</button></div>
+    <div class="rounded-xl bg-sand p-3 text-[12px]"><p class="font-medium mb-1">ตั้งค่าครั้งแรก (ฟรี)</p><ol class="list-decimal pl-5 grid gap-1 text-muted">
+      <li>สมัครที่ <a class="text-maroon" href="https://resend.com" target="_blank" rel="noopener">resend.com</a></li>
+      <li>Domains › Add domain › <b>boattripthailand.com</b></li><li>นำ DNS ที่ Resend ให้ ไปใส่ใน Cloudflare (DNS only) แล้วกด Verify</li>
+      <li>API Keys › Create (Sending access) › คัดลอกมาวางด้านบน › บันทึก › ส่งอีเมลทดสอบ</li></ol></div>
+    ${S.at ? `<p class="text-[11px] text-muted">แก้ล่าสุด ${new Date(S.at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })} โดย ${esc(S.by || '')}</p>` : ''}</div>`;
+  const ta = (id, label, val, rows = 3) => `<label class="grid gap-1.5"><span class="lbl !mb-0">${label}</span><textarea id="${id}" rows="${rows}" class="inp" ${ro ? 'disabled' : ''}>${esc(val || '')}</textarea></label>`;
+  const right = `<div class="card p-5 min-w-0 grid gap-4">
+    <div class="flex items-start gap-3"><span class="w-9 h-9 rounded-xl grid place-items-center shrink-0" style="background:rgb(112 0 14 / .08);color:#70000e"><i data-lucide="file-text" class="w-4 h-4"></i></span>
+      <div class="flex-1 min-w-0"><p class="font-medium">ใบเสนอราคา & ใบยืนยันการจอง</p><p class="text-[11.5px] text-muted">ค่าเริ่มต้นของเอกสาร · ชื่อบริษัท เลขผู้เสียภาษี ที่อยู่ ใช้จากแท็บ <a class="text-maroon" href="#" onclick="event.preventDefault();SITECFG.tab='company';vSettings()">บริษัท & ใบอนุญาต</a></p></div></div>
+    <label class="grid gap-1.5"><span class="lbl !mb-0">ภาษีมูลค่าเพิ่ม (VAT)</span><select id="dcVat" class="inp" ${ro ? 'disabled' : ''}>${[['none', 'ไม่แสดง VAT (ยังไม่ได้จด VAT)'], ['included', 'ราคารวม VAT 7% แล้ว (แสดงยอด VAT ในเอกสาร)'], ['excluded', 'ราคายังไม่รวม VAT (บวกเพิ่ม 7%)']].map(([v, l]) => `<option value="${v}" ${D.vat === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+    <div class="grid grid-cols-2 gap-3">${inp('dcDep', 'มัดจำเริ่มต้น (%)', D.depositPct, '', 'number')}${inp('dcDays', 'ใบเสนอราคามีอายุ (วัน)', D.quoteDays, '', 'number')}</div>
+    <div class="grid sm:grid-cols-2 gap-3">${ta('dcBankTh', 'บัญชีธนาคาร (ไทย)', D.bankTh, 4)}${ta('dcBankEn', 'บัญชีธนาคาร (อังกฤษ)', D.bankEn, 4)}</div>
+    <div class="grid sm:grid-cols-2 gap-3">${ta('dcTermsTh', 'เงื่อนไขท้ายเอกสาร (ไทย · บรรทัดละข้อ)', D.termsTh, 5)}${ta('dcTermsEn', 'เงื่อนไขท้ายเอกสาร (อังกฤษ)', D.termsEn, 5)}</div>
+    <div class="flex justify-end"><button class="btn btn-p !h-9" ${MLS.busy.docs || ro ? 'disabled' : ''} onclick="mlSaveDocs()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${MLS.busy.docs ? 'กำลังบันทึก…' : 'บันทึก'}</button></div></div>`;
+  host.innerHTML = `<div class="gap-4 items-start" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr))">${left}${right}</div>`;
+  icons();
+}
+function mlSave() {
+  const m = { from: $('#mlFrom').value, fromName: $('#mlName').value, replyTo: $('#mlReply').value, ack: $('#mlAck').checked }, k = $('#mlKey');
+  if (k && !k.disabled && k.value.trim()) m.key = k.value.trim();
+  mlBusy('save', api('PUT', 'settings/mail', { mail: m }).then(r => { MLS.st = r.mail; MLS.docs = r.docs; AUDIT_DIRTY = true; toast('บันทึกแล้ว'); }).catch(fail));
+}
+function mlRemoveKey() { if (!confirm('ลบ API key ของ Resend? ระบบจะหยุดส่งอีเมลจนกว่าจะใส่ใหม่')) return; mlBusy('save', api('PUT', 'settings/mail', { mail: { key: null } }).then(r => { MLS.st = r.mail; AUDIT_DIRTY = true; toast('ลบ key แล้ว'); }).catch(fail)); }
+function mlTest() { mlBusy('test', api('POST', 'settings/mail/test', {}).then(r => toast('ส่งอีเมลทดสอบไปที่ ' + r.to + ' แล้ว · เช็กกล่องจดหมาย (และสแปม)')).catch(fail)); }
+function mlSaveDocs() {
+  const d = { vat: $('#dcVat').value, depositPct: +$('#dcDep').value, quoteDays: +$('#dcDays').value, bankTh: $('#dcBankTh').value, bankEn: $('#dcBankEn').value, termsTh: $('#dcTermsTh').value, termsEn: $('#dcTermsEn').value };
+  mlBusy('docs', api('PUT', 'settings/mail', { docs: d }).then(r => { MLS.st = r.mail; MLS.docs = r.docs; AUDIT_DIRTY = true; toast('บันทึกค่าเริ่มต้นเอกสารแล้ว'); }).catch(fail));
+}
+if (!CFG_TABS.some(t => t[0] === 'mail')) CFG_TABS.splice(Math.max(0, CFG_TABS.findIndex(t => t[0] === 'notify') + 1), 0, ['mail', 'อีเมล & เอกสาร', 'mail']);
+{ const _vs = vSettings; vSettings = function () {
+  _vs(); if (SITECFG.tab !== 'mail') return;
+  const f = $('#view .fade'); if (!f) return;
+  f.innerHTML = '<div id="mlHost"></div>'; mlRender();
+  $('#view button[onclick="cfgSave()"]')?.classList.add('hidden');
+}; PAGES.find(p => p[0] === 'settings')[3] = vSettings; }
+
+/* ---------- ลีด → เอกสาร: ใบเสนอราคา / ใบยืนยันการจอง (PDF) · open, download, email ---------- */
+const DOCS = {}, DOCK = { quote: 'ใบเสนอราคา', confirm: 'ใบยืนยันการจอง' };
+let DE = null;   // the document being edited: { ref, kind, d }
+const thb = n => (Math.round(+n || 0)).toLocaleString('en-US');
+function docsLoad(ref) {
+  api('GET', `leads/${encodeURIComponent(ref)}/docs`).then(r => { DOCS[ref] = r.docs; docBoxDraw(ref); }).catch(() => { DOCS[ref] = []; docBoxDraw(ref); });
+}
+function docBoxHTML(l) {
+  const L = DOCS[l.id];
+  const rows = !L ? '<p class="text-[12px] text-muted py-2">กำลังโหลด…</p>' : !L.length ? '<p class="text-[12px] text-muted py-2">ยังไม่มีเอกสาร</p>' : `<ul class="grid gap-2">${L.map(x => `<li class="rounded-xl ring-1 ring-line p-3 flex flex-wrap items-center gap-2">
+      <div class="flex-1 min-w-[160px]"><p class="text-[13px] font-medium">${DOCK[x.kind] || x.kind} <span class="font-mono text-[12px] text-muted">${esc(x.no)}</span></p>
+        <p class="text-[11.5px] text-muted">${thb(x.total)} บาท · ${x.lang === 'en' ? 'อังกฤษ' : 'ไทย'} · ${new Date(x.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(x.by || '')}${x.sentAt ? ` · <span style="color:#1e7a46">ส่งแล้ว → ${esc(x.sentTo || '')}</span>` : ''}</p></div>
+      <a class="btn btn-g !h-8 !px-2" href="/api/admin/docs/${x.id}" target="_blank" rel="noopener" title="เปิด PDF" aria-label="เปิด PDF ${esc(x.no)}"><i data-lucide="file-text" class="w-4 h-4"></i></a>
+      <a class="btn btn-g !h-8 !px-2" href="/api/admin/docs/${x.id}?dl=1" title="ดาวน์โหลด" aria-label="ดาวน์โหลด ${esc(x.no)}"><i data-lucide="download" class="w-4 h-4"></i></a>
+      <button class="btn btn-o !h-8 !text-[12px]" onclick="docSend('${l.id}',${x.id})"><i data-lucide="send" class="w-3.5 h-3.5"></i>ส่งอีเมล</button></li>`).join('')}</ul>`;
+  return `<div id="docBox" class="rounded-2xl ring-1 ring-line p-4 mt-4"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><p class="lbl !mb-0">เอกสาร</p>
+    <div class="flex gap-2"><button class="btn btn-o !h-8 !text-[12px]" onclick="docNew('${l.id}','quote')"><i data-lucide="file-plus" class="w-3.5 h-3.5"></i>ใบเสนอราคา</button><button class="btn btn-o !h-8 !text-[12px]" onclick="docNew('${l.id}','confirm')"><i data-lucide="badge-check" class="w-3.5 h-3.5"></i>ใบยืนยันการจอง</button></div></div>${rows}</div>`;
+}
+function docBoxDraw(ref) { const box = $('#docBox'), l = BOOKINGS.find(x => x.id === ref); if (box && l && DRAWER_LEAD === ref) { box.outerHTML = docBoxHTML(l); icons(); } }
+{ const _bd = bookingDetail; bookingDetail = function (id) {
+  _bd(id); const l = BOOKINGS.find(x => x.id === id), d = $('#drawer');
+  if (!l || !d.classList.contains('open') || $('#docBox')) return;
+  const anchor = $('#dealBox') || [...d.querySelectorAll('p.lbl')].find(x => x.textContent === 'สิ่งที่สนใจ')?.parentElement;
+  if (anchor) anchor.insertAdjacentHTML('afterend', docBoxHTML(l)); else d.querySelector('.overflow-y-auto')?.insertAdjacentHTML('afterbegin', docBoxHTML(l));
+  icons(); docsLoad(id);
+}; }
+function docNew(ref, kind) {
+  api('POST', `leads/${encodeURIComponent(ref)}/docdraft`, { kind }).then(r => { DE = { ref, kind, d: r.draft }; docEditor(); }).catch(fail);
+}
+function deSet(path, v) { const ks = path.split('.'); let o = DE.d; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = v; deTot(); }
+function deItem(i, k, v) { DE.d.items[i][k] = k === 'desc' ? v : (+String(v).replace(/[^\d]/g, '') || 0); deTot(); }
+function deItemAdd() { DE.d.items.push({ desc: '', qty: 1, price: 0 }); docEditor(); }
+function deItemDel(i) { DE.d.items.splice(i, 1); if (!DE.d.items.length) DE.d.items.push({ desc: '', qty: 1, price: 0 }); docEditor(); }
+function deCalc(d) {
+  const sub = d.items.reduce((n, i) => n + (+i.qty || 0) * (+i.price || 0), 0), after = Math.max(0, sub - (+d.discount || 0));
+  const vat = d.vat === 'excluded' ? Math.round(after * .07) : d.vat === 'included' ? Math.round(after * 7 / 107) : 0, total = d.vat === 'excluded' ? after + vat : after;
+  return { sub, vat, total, deposit: Math.round(total * (+d.depositPct || 0) / 100), balance: Math.max(0, total - (+d.paid || 0)) };
+}
+function deTot() {
+  const el = $('#deTot'); if (!el) return; const d = DE.d, t = deCalc(d);
+  el.innerHTML = `<div class="flex justify-between"><span class="text-muted">รวม</span><span class="tnum">${thb(t.sub)}</span></div>${d.discount ? `<div class="flex justify-between"><span class="text-muted">ส่วนลด</span><span class="tnum">-${thb(d.discount)}</span></div>` : ''}
+    ${d.vat === 'excluded' ? `<div class="flex justify-between"><span class="text-muted">VAT 7%</span><span class="tnum">${thb(t.vat)}</span></div>` : ''}
+    <div class="flex justify-between font-medium text-[15px] mt-1"><span>ยอดรวมทั้งสิ้น</span><span class="tnum" style="color:#70000e">${thb(t.total)} บาท</span></div>
+    ${d.vat === 'included' ? `<p class="text-[11px] text-muted text-right">รวม VAT ${thb(t.vat)} บาท</p>` : ''}
+    ${DE.kind === 'quote' ? `<div class="flex justify-between text-[12.5px] mt-1"><span class="text-muted">มัดจำ ${+d.depositPct || 0}%</span><span class="tnum">${thb(t.deposit)}</span></div>` : `<div class="flex justify-between text-[12.5px] mt-1"><span class="text-muted">คงเหลือ</span><span class="tnum">${thb(t.balance)}</span></div>`}`;
+}
+function docEditor() {
+  const d = DE.d, q = DE.kind === 'quote', I = (path, label, val, type = 'text', extra = '') => `<label class="grid gap-1"><span class="lbl !mb-0">${label}</span><input class="inp" type="${type}" value="${esc(val ?? '')}" oninput="deSet('${path}', this.value)" ${extra}/></label>`;
+  openModal(`<div class="p-5 border-b border-line flex items-start justify-between gap-3"><div><p class="font-medium">${q ? 'ออกใบเสนอราคา' : 'ออกใบยืนยันการจอง'} · ${esc(DE.ref)}</p><p class="text-[12px] text-muted mt-0.5">ข้อมูลดึงจากลีดและราคาที่ตกลง · แก้ได้ก่อนออกเอกสาร · ออกแล้วแก้ไม่ได้ (ออกใบใหม่แทน)</p></div><button class="btn btn-g !px-2 !h-8" onclick="closeModal()" aria-label="ปิด"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+  <div class="p-5 grid gap-4">
+    <div class="flex items-center gap-2 text-[13px]"><span class="text-muted">ภาษาเอกสาร</span>${['th', 'en'].map(x => `<button class="btn ${d.lang === x ? 'btn-p' : 'btn-o'} !h-8 !text-[12px]" onclick="DE.d.lang='${x}';docEditor()">${x === 'th' ? 'ไทย' : 'English'}</button>`).join('')}</div>
+    <div class="grid sm:grid-cols-3 gap-3">${I('customer.name', 'ชื่อลูกค้า', d.customer.name)}${I('customer.phone', 'โทร', d.customer.phone)}${I('customer.email', 'อีเมล', d.customer.email, 'email')}</div>
+    <div class="grid sm:grid-cols-3 gap-3">${I('trip.boat', 'เรือ', d.trip.boat)}${I('trip.program', 'โปรแกรม', d.trip.program)}${I('trip.date', 'วันที่', d.trip.date, 'date')}${I('trip.time', 'เวลา', d.trip.time)}${I('trip.guests', 'จำนวนคน', d.trip.guests)}${I('trip.pier', 'ท่าเรือ', d.trip.pier)}</div>
+    <div><p class="lbl">รายการ</p><div class="grid gap-2">${d.items.map((it, i) => `<div class="grid gap-2 items-end" style="grid-template-columns:1fr 70px 120px 36px">
+      <input class="inp" value="${esc(it.desc)}" placeholder="รายการ เช่น เช่าเรือ / ค่าคนเกิน / อาหาร" aria-label="รายการที่ ${i + 1}" oninput="deItem(${i},'desc',this.value)"/>
+      <input class="inp tnum" inputmode="numeric" value="${it.qty}" aria-label="จำนวน" oninput="deItem(${i},'qty',this.value)"/>
+      <input class="inp tnum" inputmode="numeric" value="${it.price || ''}" placeholder="ราคา/หน่วย" aria-label="ราคาต่อหน่วย" oninput="deItem(${i},'price',this.value)"/>
+      <button class="btn btn-g !px-2 !h-10 text-muted" aria-label="ลบรายการ" onclick="deItemDel(${i})"><i data-lucide="x" class="w-4 h-4"></i></button></div>`).join('')}</div>
+      <button class="btn btn-g !h-8 !text-[12px] mt-2" onclick="deItemAdd()"><i data-lucide="plus" class="w-3.5 h-3.5"></i>เพิ่มรายการ</button></div>
+    <div class="grid sm:grid-cols-2 gap-4 items-start">
+      <div class="grid gap-3">
+        <div class="grid grid-cols-2 gap-3">${I('discount', 'ส่วนลด (บาท)', d.discount || '', 'text', 'inputmode="numeric"')}<label class="grid gap-1"><span class="lbl !mb-0">VAT</span><select class="inp" onchange="deSet('vat', this.value)">${[['none', 'ไม่มี VAT'], ['included', 'รวม VAT แล้ว'], ['excluded', 'บวก VAT 7%']].map(([v, l]) => `<option value="${v}" ${d.vat === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
+        ${q ? `<div class="grid grid-cols-2 gap-3">${I('depositPct', 'มัดจำ (%)', d.depositPct, 'text', 'inputmode="numeric"')}${I('depositDue', 'ชำระมัดจำภายใน', d.depositDue, 'date')}${I('balanceDue', 'ส่วนที่เหลือภายใน', d.balanceDue, 'date')}${I('validUntil', 'ใบเสนอราคาใช้ได้ถึง', d.validUntil, 'date')}</div>`
+          : `<div class="grid grid-cols-2 gap-3">${I('paid', 'ได้รับชำระแล้ว (บาท)', d.paid || '', 'text', 'inputmode="numeric"')}${I('balanceDue', 'ส่วนที่เหลือชำระภายใน', d.balanceDue, 'date')}</div>`}
+        <label class="grid gap-1"><span class="lbl !mb-0">หมายเหตุในเอกสาร (บรรทัดละข้อ)</span><textarea class="inp" rows="3" oninput="deSet('note', this.value)">${esc(d.note)}</textarea></label></div>
+      <div id="deTot" class="rounded-xl bg-sand p-4 grid gap-1 text-[13px]"></div></div>
+  </div>
+  <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" id="deGo" onclick="docSave()"><i data-lucide="file-check" class="w-3.5 h-3.5"></i>ออกเอกสาร</button></div>`);
+  $('#modalBox').style.maxWidth = '820px';
+  deTot(); icons();
+}
+function docSave() {
+  const d = DE.d; d.discount = +String(d.discount).replace(/[^\d]/g, '') || 0; d.depositPct = Math.min(100, +String(d.depositPct).replace(/[^\d]/g, '') || 0); d.paid = +String(d.paid).replace(/[^\d]/g, '') || 0;
+  if (!d.items.some(i => i.desc.trim())) return toast('ใส่รายการอย่างน้อย 1 รายการ');
+  if (!deCalc(d).total && !confirm('ยอดรวมเป็น 0 บาท · ออกเอกสารต่อ?')) return;
+  const b = $('#deGo'); if (b) { b.disabled = true; b.textContent = 'กำลังออกเอกสาร…'; }
+  api('POST', `leads/${encodeURIComponent(DE.ref)}/doc`, { kind: DE.kind, data: d }).then(r => {
+    DOCS[DE.ref] = r.docs; docBoxDraw(DE.ref); AUDIT_DIRTY = true;
+    const x = r.doc, em = d.customer.email;
+    openModal(`<div class="p-6 text-center grid gap-3"><span class="w-12 h-12 rounded-full mx-auto grid place-items-center" style="background:#eaf6ef;color:#1e7a46"><i data-lucide="check" class="w-6 h-6"></i></span>
+      <p class="font-medium">ออก${DOCK[DE.kind]} ${esc(x.no)} แล้ว</p>
+      <div class="flex flex-wrap justify-center gap-2"><a class="btn btn-o" href="/api/admin/docs/${x.id}" target="_blank" rel="noopener"><i data-lucide="file-text" class="w-3.5 h-3.5"></i>เปิด PDF</a><a class="btn btn-o" href="/api/admin/docs/${x.id}?dl=1"><i data-lucide="download" class="w-3.5 h-3.5"></i>ดาวน์โหลด</a>
+        <button class="btn btn-p" onclick="docSend('${DE.ref}',${x.id})"><i data-lucide="send" class="w-3.5 h-3.5"></i>ส่งอีเมล${em ? ' ถึง ' + esc(em) : ''}</button></div>
+      <p class="text-[11.5px] text-muted">ส่งทาง WhatsApp / LINE: ดาวน์โหลด PDF แล้วแนบในแชต</p></div>`);
+    icons();
+  }).catch(e => { fail(e); if (b) { b.disabled = false; b.textContent = 'ออกเอกสาร'; } });
+}
+function docSend(ref, id) {
+  const L = DOCS[ref] || [], x = L.find(d => d.id === id), def = (x && x.email) || (custOf((BOOKINGS.find(b => b.id === ref) || {}).cust) || {}).email || '';
+  const to = prompt('ส่งอีเมลถึง', def); if (!to) return;
+  toast('กำลังส่ง…');
+  api('POST', `leads/${encodeURIComponent(ref)}/docsend`, { id, to: to.trim() }).then(r => { DOCS[ref] = r.docs; docBoxDraw(ref); closeModal(); AUDIT_DIRTY = true; toast('ส่งอีเมลแล้ว → ' + to.trim()); }).catch(fail);
+}
+
 (function start() {
   const me = Object.assign({}, TEAM.find(t => t.id === BOOT.me.id) || BOOT.me, { perms: BOOT.me.perms });
   finishLogin(me, '', { t: Date.now() });

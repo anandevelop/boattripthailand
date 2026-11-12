@@ -31,6 +31,7 @@ COPY site ./site
 COPY drizzle ./drizzle
 COPY scripts ./scripts
 COPY data ./data
+COPY assets ./assets
 COPY src/db ./src/db
 COPY src/lib/crypto.ts ./src/lib/crypto.ts
 # images uploaded from /admin (a volume in docker-compose.yml, so they survive rebuilds)

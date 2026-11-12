@@ -12,6 +12,8 @@ import { clearSiteCache } from '@/lib/site-render';
 import { customerTrash, purgeCustomer, restoreCustomer, trashCustomer } from '@/lib/customer-trash';
 import { leadTrash, purgeLead, restoreLead, trashLead } from '@/lib/lead-trash';
 import { legalContent, saveLegal } from '@/lib/legal-pages';
+import { MailError, mailStatus, saveMailCfg, sendMail, mailLayout } from '@/lib/mail';
+import { createDoc, docById, docDraft, DocError, docsCfg, listDocs, saveDocsCfg, sendDoc, type Kind } from '@/lib/lead-docs';
 import { cleanHome, HOME_KEY } from '@/lib/home';
 import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
@@ -55,6 +57,16 @@ const leadOut = async (id: string) => json(await leadClientById(id));
 async function leadOp(u: User, ref: string, op: string, b: Record<string, unknown>) {
   await need(u, 'leads');
   const l = await leadByRef(u, ref);
+  // documents: ใบเสนอราคา / ใบยืนยันการจอง (lib/lead-docs.ts) — anyone who can see the lead
+  if (op === 'docdraft' || op === 'doc' || op === 'docsend') {
+    const kind: Kind = b.kind === 'confirm' ? 'confirm' : 'quote';
+    try {
+      if (op === 'docdraft') return json({ draft: await docDraft(l, kind, u) });
+      if (op === 'doc') { const row = await createDoc(l, kind, (b.data ?? {}) as Record<string, unknown>, u); return json({ doc: { id: row.id, no: row.no }, docs: await listDocs(l.id) }); }
+      const row = await docById(Number(b.id)); if (!row || row.leadId !== l.id) throw new HttpError(404, 'ไม่พบเอกสาร');
+      await sendDoc(row, l, str(b.to, 120), u); return json({ docs: await listDocs(l.id) });
+    } catch (e) { if (e instanceof HttpError) throw e; if (e instanceof DocError || e instanceof MailError) throw new HttpError(400, e.message); throw e; }
+  }
   // trash: move in (hidden everywhere) · restore · delete for good — admins only (lib/lead-trash.ts)
   if (op === 'trash' || op === 'restore' || op === 'purge') {
     await need(u, 'leads_all');
@@ -597,6 +609,7 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
     }
     if (a === 'logout' && method === 'POST') { await logout(str(body.reason) === 'timeout' ? 'ไม่มีการใช้งาน 30 นาที · ออกจากระบบอัตโนมัติ' : 'ออกจากระบบ'); return json({ ok: true }); }
     if (a === 'leads' && !b0 && method === 'POST') return await newLead(me, body);
+    if (a === 'leads' && b0 && c0 === 'docs' && method === 'GET') { await need(me, 'leads'); const l = await leadByRef(me, decodeURIComponent(b0)); return json({ docs: await listDocs(l.id) }); }
     if (a === 'leads' && b0 && c0 && method === 'POST') return await leadOp(me, decodeURIComponent(b0), c0, body);
     if (a === 'customers' && b0) return await customerOp(me, decodeURIComponent(b0), c0 ?? 'edit', method, body);
     if (a === 'users') {
@@ -691,6 +704,35 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       const changes = arr(body.changes).slice(0, 30).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { f: str(o.f, 120), from: str(o.from, 300), to: str(o.to, 300) }; });
       if (changes.length) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'activities', label: str(body.label, 200) || 'แก้ไขกิจกรรม & ทัวร์', changes });
       return json({ acts: v });
+    }
+    if (a === 'settings' && b0 === 'mail') {
+      // ตั้งค่า → อีเมล & เอกสาร (lib/mail.ts + lib/lead-docs.ts); keys are write-only
+      await need(me, 'settings');
+      if (!c0 && method === 'GET') return json({ mail: await mailStatus(new URL(req.url).searchParams.get('refresh') === '1'), docs: await docsCfg() });
+      if (!c0 && method === 'PUT') {
+        const changes: { f: string; from: unknown; to: unknown }[] = [];
+        try {
+          if (body.mail && typeof body.mail === 'object') {
+            const m = body.mail as Record<string, unknown>, r = await saveMailCfg(m, me.name);
+            if (m.key !== undefined) changes.push({ f: 'Resend API key', from: r.before.key ? '••••' + r.before.key.tail : null, to: r.after.key ? '••••' + r.after.key.tail + ' (ใหม่)' : null });
+            for (const k of ['from', 'fromName', 'replyTo', 'ack'] as const) if (r.before[k] !== r.after[k]) changes.push({ f: { from: 'อีเมลผู้ส่ง', fromName: 'ชื่อผู้ส่ง', replyTo: 'อีเมลตอบกลับ', ack: 'อีเมลยืนยันอัตโนมัติ' }[k], from: r.before[k], to: r.after[k] });
+          }
+          if (body.docs && typeof body.docs === 'object') {
+            const r = await saveDocsCfg(body.docs as Record<string, unknown>, me.name);
+            for (const k of ['vat', 'depositPct', 'quoteDays', 'bankTh', 'bankEn', 'termsTh', 'termsEn'] as const) if (r.before[k] !== r.after[k]) changes.push({ f: 'เอกสาร · ' + k, from: String(r.before[k]).slice(0, 120), to: String(r.after[k]).slice(0, 120) });
+          }
+        } catch (e) { if (e instanceof MailError) throw new HttpError(400, e.message); throw e; }
+        if (changes.length) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'mail', label: 'อีเมล & เอกสาร', changes, ...(await clientInfo()) });
+        return json({ mail: await mailStatus(true), docs: await docsCfg() });
+      }
+      if (c0 === 'test' && method === 'POST') {
+        const to = str(body.to, 120) || me.email;
+        try {
+          await sendMail({ to, subject: 'ทดสอบอีเมล · Boat Trip Thailand', text: 'ระบบส่งอีเมลของ Boat Trip Thailand ใช้งานได้แล้ว',
+            html: mailLayout({ lang: 'th', preheader: 'ทดสอบอีเมล', title: 'ระบบส่งอีเมลใช้งานได้แล้ว', intro: `ส่งจากหลังบ้านโดย ${me.name.replace(/[<>&]/g, '')} · ถ้าอีเมลนี้อยู่ในกล่องจดหมายหลัก (ไม่ใช่สแปม) แปลว่าตั้งค่าโดเมนถูกต้องแล้ว`, footer: 'Boat Trip Thailand' }) });
+        } catch (e) { if (e instanceof MailError) throw new HttpError(400, e.message); throw e; }
+        return json({ ok: true, to });
+      }
     }
     if (a === 'settings' && b0 === 'legal') {
       // เนื้อหาเว็บไซต์ → หน้าเพจ: privacy policy / terms (lib/legal-pages.ts) — live on the site right after saving

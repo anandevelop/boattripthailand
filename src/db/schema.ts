@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm';
-import { bigserial, boolean, date, doublePrecision, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import { bigserial, boolean, date, doublePrecision, index, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
 const id = () => text('id').primaryKey().$defaultFn(() => crypto.randomUUID());
 const now = (name: string) => timestamp(name, { withTimezone: true }).notNull().defaultNow();
@@ -276,6 +276,21 @@ export const conversionEvents = pgTable('conversion_events', {
   detail: text('detail'),
   createdAt: now('created_at'),
 }, t => [index('conversion_events_created').on(t.createdAt)]);
+
+/** ใบเสนอราคา / ใบยืนยันการจอง made from a lead (lib/lead-docs.ts); `data` holds the whole document as issued */
+export const leadDocs = pgTable('lead_docs', {
+  id: serial('id').primaryKey(),
+  no: text('no').notNull().unique(),
+  leadId: text('lead_id').notNull().references(() => leads.id, { onDelete: 'cascade' }),
+  kind: text('kind').notNull(),
+  lang: text('lang').notNull().default('th'),
+  data: jsonb('data').notNull(),
+  total: integer('total').notNull().default(0),
+  createdBy: text('created_by'),
+  createdAt: now('created_at'),
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  sentTo: text('sent_to'),
+}, t => [index('lead_docs_lead').on(t.leadId)]);
 
 export type User = typeof users.$inferSelect;
 export type Lead = typeof leads.$inferSelect;
