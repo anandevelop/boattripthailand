@@ -6927,6 +6927,111 @@ function heroSlSet(n, u) { WEB.hero.slides[n].img = u || ''; closeModal(); heroS
   g.remove(); h.outerHTML = `<div id="heroSlWrap">${heroSlidesBox()}</div>`; icons();
 }; PAGES.find(p => p[0] === 'content')[3] = vContent; }
 
+/* ---------- เนื้อหาเว็บไซต์ → หน้าเพจ: the real state of each page; นโยบายความเป็นส่วนตัว and ข้อกำหนดและเงื่อนไข are
+   edited here (server: src/lib/legal-pages.ts · settings 'site.legal' · the site reads window.__LEGAL__) ---------- */
+const LPG = { d: null, loading: false, edit: null, lang: 'th', draft: null, touched: {}, busy: false };
+const LP_DOC = { privacy: ['นโยบายความเป็นส่วนตัว', '/privacy-policy'], terms: ['ข้อกำหนดและเงื่อนไข', '/terms-and-conditions'] };
+const lpOn = () => CUR === 'content' && WEB.tab === 'pages';
+function lpLoad() {
+  if (LPG.loading) return; LPG.loading = true;
+  api('GET', 'settings/legal').then(r => { LPG.d = r.legal || {}; }).catch(fail).finally(() => { LPG.loading = false; if (lpOn()) vContent(); });
+}
+const lpDate = iso => iso ? fmtD(iso.slice(0, 10)) : '';
+function lpList() {
+  if (!LPG.d) { lpLoad(); return '<div class="p-10 text-center text-muted">กำลังโหลด…</div>'; }
+  const view = u => `<a class="btn btn-g !h-8 !text-[12px]" href="${u}" target="_blank" rel="noopener"><i data-lucide="external-link" class="w-3.5 h-3.5"></i>TH</a><a class="btn btn-g !h-8 !text-[12px]" href="/en${u === '/' ? '' : u}" target="_blank" rel="noopener"><i data-lucide="external-link" class="w-3.5 h-3.5"></i>EN</a>`;
+  const st = (t, tone) => `<span class="pill" style="background:${tone === 'ok' ? '#eaf6ef' : tone === 'edit' ? '#eef2ff' : '#f3efe9'};color:${tone === 'ok' ? '#1e7a46' : tone === 'edit' ? '#3b4bb5' : '#6b5e57'}">${t}</span>`;
+  const legal = k => { const d = LPG.d[k]; return d ? `${st('แก้จากหลังบ้านแล้ว', 'edit')}<p class="text-[11px] text-muted mt-1">ปรับปรุง ${lpDate(d.updated)} · ${[d.th ? 'ไทย' : '', d.en ? 'อังกฤษ' : ''].filter(Boolean).join(' + ')} · โดย ${esc(d.by || '')}</p>` : `${st('ข้อความเริ่มต้น', '')}<p class="text-[11px] text-muted mt-1">ยังไม่เคยแก้ · ไทยและอังกฤษครบ</p>`; };
+  const rows = [
+    ['เกี่ยวกับเรา', '/about-us', `${st('สร้างอัตโนมัติ', 'ok')}<p class="text-[11px] text-muted mt-1">จำนวนเรือ ราคาเริ่มต้น ท่าเรือ ประเภทเรือ จุดหมาย ดึงจากข้อมูลจริงเอง · ข้อความแนะนำบริษัทแก้ผ่านทีมพัฒนา</p>`, ''],
+    ['นโยบายความเป็นส่วนตัว', '/privacy-policy', legal('privacy'), 'privacy'],
+    ['ข้อกำหนดและเงื่อนไข', '/terms-and-conditions', legal('terms'), 'terms'],
+    ['การตั้งค่าคุกกี้', '/cookie-preferences', `${st('ผูกกับระบบ', '')}<p class="text-[11px] text-muted mt-1">ลูกค้าเปิด/ปิดคุกกี้ที่หน้านี้ · รายการคุกกี้ต้องตรงกับที่เว็บใช้จริง จึงแก้ผ่านทีมพัฒนา</p>`, ''],
+    ['คู่มือเช่าเรือ (ท้ายหน้าแรก)', '/', `${st('สร้างอัตโนมัติ', 'ok')}<p class="text-[11px] text-muted mt-1">บทความ SEO ท้ายหน้าแรก · จำนวนเรือ ราคา และเส้นทางอัปเดตจากข้อมูลจริงเอง · ข้อความแก้ผ่านทีมพัฒนา</p>`, ''],
+  ];
+  return `<p class="text-[12px] text-muted mb-3">ข้อมูลบริษัทในทุกหน้า (ชื่อบริษัท เลข ททท. ที่อยู่ เบอร์ อีเมล) มาจาก <b class="font-medium">ตั้งค่า</b> · แก้ที่นั่นแล้วทุกหน้าเปลี่ยนตาม</p>
+    <div class="overflow-x-auto"><table class="tbl min-w-[720px]"><thead><tr><th>หน้า</th><th>URL</th><th>สถานะ</th><th></th></tr></thead><tbody>${rows.map(([n, u, s, k]) => `<tr>
+      <td class="font-medium">${n}</td><td class="text-muted text-[12px] whitespace-nowrap">${u === '/' ? '/ · /en' : `${u} · /en${u}`}</td><td style="max-width:360px">${s}</td>
+      <td class="text-right whitespace-nowrap"><div class="inline-flex gap-1">${view(u)}${k && can('content') && !isRO() ? `<button class="btn btn-o !h-8 !text-[12px]" onclick="lpEdit('${k}')"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>แก้ไข</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>`;
+}
+/* the built-in text, read from the page the site serves (server-rendered) — used for a language that was never edited */
+async function lpFromSite(k, lang) {
+  const html = await (await fetch((lang === 'en' ? '/en' : '') + LP_DOC[k][1] + '?lgsrc=' + Date.now(), { credentials: 'omit' })).text();
+  const doc = new DOMParser().parseFromString(html, 'text/html'), v = doc.querySelector('#view-legal');
+  const secs = [...(v ? v.querySelectorAll('.legal section[id^="lg-"]') : [])].map(sec => {
+    const h2 = sec.querySelector('h2'); const h = h2 ? [...h2.childNodes].filter(n => !(n.nodeType === 1 && n.tagName === 'SPAN')).map(n => n.textContent).join('').trim() : '';
+    h2?.remove(); return { id: sec.id.slice(3), h, html: sec.innerHTML.trim() };
+  });
+  if (!secs.length) throw new Error('อ่านเนื้อหาจากหน้าเว็บไม่ได้');
+  return { intro: (v.querySelector('h1 + p')?.textContent || '').trim(), secs };
+}
+async function lpEdit(k) {
+  LPG.edit = k; LPG.lang = 'th'; LPG.touched = {}; LPG.draft = null; vContent();
+  try {
+    const saved = LPG.d[k] || {}, d = { updated: iso(new Date()) };
+    for (const lang of ['th', 'en']) d[lang] = saved[lang] ? clone(saved[lang]) : await lpFromSite(k, lang);
+    LPG.draft = d; LPG.touched = { th: !!saved.th, en: !!saved.en };
+  } catch (e) { LPG.edit = null; fail(e); }
+  if (lpOn()) vContent();
+}
+const LP_TB = [['bold', 'bold', 'ตัวหนา'], ['insertUnorderedList', 'list', 'รายการแบบจุด'], ['insertOrderedList', 'list-ordered', 'รายการแบบตัวเลข'], ['link', 'link', 'ใส่ลิงก์'], ['removeFormat', 'remove-formatting', 'ล้างรูปแบบ']];
+function lpEditor() {
+  const k = LPG.edit, D = LPG.draft;
+  if (!D) return '<div class="p-10 text-center text-muted">กำลังโหลดเนื้อหาปัจจุบัน…</div>';
+  const L = D[LPG.lang], other = LPG.lang === 'th' ? 'en' : 'th';
+  const sec = (x, i) => `<div class="rounded-2xl ring-1 ring-line bg-white p-4" data-i="${i}">
+      <div class="flex items-center gap-2"><span class="text-maroon tnum text-[13px] w-6">${String(i + 1).padStart(2, '0')}</span>
+        <input class="inp flex-1 font-medium" value="${esc(x.h)}" placeholder="หัวข้อ" oninput="lpSet(${i},'h',this.value)"/>
+        <button class="btn btn-g !px-2 !h-8" title="เลื่อนขึ้น" ${i ? '' : 'disabled'} onclick="lpMove(${i},-1)"><i data-lucide="arrow-up" class="w-4 h-4"></i></button>
+        <button class="btn btn-g !px-2 !h-8" title="เลื่อนลง" ${i < L.secs.length - 1 ? '' : 'disabled'} onclick="lpMove(${i},1)"><i data-lucide="arrow-down" class="w-4 h-4"></i></button>
+        <button class="btn btn-g !px-2 !h-8 text-muted hover:!text-[#b42318]" title="ลบหัวข้อนี้" onclick="lpDel(${i})"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+      <div class="flex gap-1 mt-3">${LP_TB.map(([c, ic, t]) => `<button type="button" class="btn btn-g !px-2 !h-7" title="${t}" onmousedown="event.preventDefault()" onclick="lpCmd('${c}')"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i></button>`).join('')}</div>
+      <div class="lg-ed mt-2 rounded-xl ring-1 ring-line px-3 py-2 min-h-[80px] text-[13.5px] leading-relaxed" contenteditable="true" oninput="lpSet(${i},'html',this.innerHTML)">${x.html}</div></div>`;
+  return `<style>.lg-ed:focus{outline:2px solid rgb(112 0 14 / .25)}.lg-ed p{margin:.45rem 0}.lg-ed ul{list-style:disc;padding-left:1.3rem;margin:.45rem 0}.lg-ed ol{list-style:decimal;padding-left:1.3rem;margin:.45rem 0}.lg-ed li{margin:.2rem 0}.lg-ed a{color:#70000e;text-decoration:underline}.lg-ed table{width:100%;border-collapse:collapse;margin:.5rem 0}.lg-ed th,.lg-ed td{border:1px solid #eadfd6;padding:.35rem .6rem;text-align:left}.lg-ed dl{display:grid;grid-template-columns:auto 1fr;gap:.2rem 1rem}.lg-ed dt{color:#6b5e57}</style>
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div class="flex items-center gap-2"><button class="btn btn-g !px-2" onclick="lpClose()" aria-label="กลับ"><i data-lucide="arrow-left" class="w-4 h-4"></i></button><div><p class="font-medium">${LP_DOC[k][0]}</p><p class="text-[11.5px] text-muted">${LP_DOC[k][1]} · บันทึกแล้วขึ้นเว็บทันที</p></div></div>
+      <div class="flex p-0.5 rounded-full bg-sand">${['th', 'en'].map(l => `<button class="h-8 px-4 rounded-full text-[12.5px] ${LPG.lang === l ? 'bg-white shadow-sm font-medium' : 'text-muted'}" onclick="LPG.lang='${l}';vContent()">${l === 'th' ? 'ไทย' : 'English'}${LPG.touched[l] ? '' : ' <span class="text-[10.5px] text-muted">(เริ่มต้น)</span>'}</button>`).join('')}</div></div>
+    <div class="grid md:grid-cols-[1fr_200px] gap-3 mb-4"><label><span class="lbl">ข้อความนำ (ใต้หัวเรื่อง)</span><textarea class="inp" rows="3" oninput="LPG.draft[LPG.lang].intro=this.value;LPG.touched[LPG.lang]=true">${esc(L.intro)}</textarea></label>
+      <label><span class="lbl">ปรับปรุงล่าสุด</span><input type="date" class="inp" value="${D.updated}" onchange="LPG.draft.updated=this.value"/><span class="block text-[11px] text-muted mt-1">แสดงบนหน้าเว็บทั้ง 2 ภาษา</span></label></div>
+    <div class="grid gap-3">${L.secs.map(sec).join('')}</div>
+    <button class="btn btn-o mt-3" onclick="lpAdd()"><i data-lucide="plus" class="w-3.5 h-3.5"></i>เพิ่มหัวข้อ</button>
+    <div class="rounded-xl bg-[#fff8e6] text-[#7a4a00] text-[12px] px-4 py-2.5 mt-4">แก้ภาษา${LPG.lang === 'th' ? 'ไทย' : 'อังกฤษ'}แล้ว อย่าลืมแก้ภาษา${other === 'th' ? 'ไทย' : 'อังกฤษ'}ให้ตรงกัน · เลขบัญชี ค่ายกเลิก และมัดจำ ควรตรวจกับทีมบัญชีก่อนบันทึก</div>
+    <div class="flex flex-wrap items-center gap-2 mt-4">${LPG.d[k] ? `<button class="btn btn-g text-muted" onclick="lpReset()"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>คืนค่าข้อความเริ่มต้น</button>` : ''}
+      <span class="ml-auto"></span><a class="btn btn-o" href="${(LPG.lang === 'en' ? '/en' : '') + LP_DOC[k][1]}" target="_blank" rel="noopener"><i data-lucide="external-link" class="w-3.5 h-3.5"></i>ดูหน้าเว็บ</a>
+      <button class="btn btn-o" onclick="lpClose()">ยกเลิก</button><button class="btn btn-p" ${LPG.busy ? 'disabled' : ''} onclick="lpSave()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${LPG.busy ? 'กำลังบันทึก…' : 'บันทึกและเผยแพร่'}</button></div>`;
+}
+function lpSet(i, f, v) { LPG.draft[LPG.lang].secs[i][f] = v; LPG.touched[LPG.lang] = true; }
+function lpMove(i, d) { const S = LPG.draft[LPG.lang].secs, j = i + d; if (j < 0 || j >= S.length) return; [S[i], S[j]] = [S[j], S[i]]; LPG.touched[LPG.lang] = true; vContent(); }
+function lpDel(i) { const S = LPG.draft[LPG.lang].secs; if (S.length < 2) return toast('ต้องมีอย่างน้อย 1 หัวข้อ'); if (!confirm(`ลบหัวข้อ “${S[i].h || 'ไม่มีชื่อ'}”?`)) return; S.splice(i, 1); LPG.touched[LPG.lang] = true; vContent(); }
+function lpAdd() { LPG.draft[LPG.lang].secs.push({ id: 's' + Date.now().toString(36), h: '', html: '<p></p>' }); LPG.touched[LPG.lang] = true; vContent(); }
+function lpCmd(c) {
+  if (c === 'link') { const u = prompt('ลิงก์ (https://… หรือ mailto:…)'); if (!u) return; if (!/^(https?:|mailto:|tel:|\/)/i.test(u.trim())) return toast('ลิงก์ต้องขึ้นต้นด้วย https:// mailto: tel: หรือ /'); document.execCommand('createLink', false, u.trim()); }
+  else document.execCommand(c, false, null);
+  const ed = document.activeElement?.closest?.('.lg-ed'); if (ed) ed.dispatchEvent(new Event('input'));
+}
+function lpClose() { if (LPG.draft && Object.values(LPG.touched).some(Boolean) && !confirm('ออกโดยไม่บันทึก?')) return; LPG.edit = null; LPG.draft = null; vContent(); }
+function lpSave() {
+  const k = LPG.edit, D = LPG.draft, value = { updated: D.updated };
+  for (const l of ['th', 'en']) if (LPG.touched[l]) value[l] = D[l];   // a language never edited keeps following the built-in text
+  if (!value.th && !value.en) return toast('ยังไม่ได้แก้อะไร');
+  if (Object.values(value).some(v => v && v.secs && v.secs.some(s => !s.h.trim()))) return toast('ทุกหัวข้อต้องมีชื่อหัวข้อ');
+  LPG.busy = true; vContent();
+  api('PUT', 'settings/legal/' + k, { value }).then(r => { LPG.d = r.legal; LPG.edit = null; LPG.draft = null; AUDIT_DIRTY = true; toast('บันทึกแล้ว · ขึ้นหน้าเว็บแล้ว'); })
+    .catch(fail).finally(() => { LPG.busy = false; if (lpOn()) vContent(); });
+}
+function lpReset() {
+  if (!confirm(`คืนค่า${LP_DOC[LPG.edit][0]}เป็นข้อความเริ่มต้นทั้ง 2 ภาษา? ข้อความที่แก้ไว้จะหายไป`)) return;
+  LPG.busy = true;
+  api('PUT', 'settings/legal/' + LPG.edit, { reset: true }).then(r => { LPG.d = r.legal; LPG.edit = null; LPG.draft = null; AUDIT_DIRTY = true; toast('คืนค่าข้อความเริ่มต้นแล้ว'); })
+    .catch(fail).finally(() => { LPG.busy = false; if (lpOn()) vContent(); });
+}
+{ const _vc = vContent; vContent = function () {
+  _vc(); if (WEB.tab !== 'pages') return;
+  const box = $('#view .fade'); if (!box) return;
+  box.innerHTML = LPG.edit ? lpEditor() : lpList();
+  icons();
+}; PAGES.find(p => p[0] === 'content')[3] = vContent; }
+
 (function start() {
   const me = Object.assign({}, TEAM.find(t => t.id === BOOT.me.id) || BOOT.me, { perms: BOOT.me.perms });
   finishLogin(me, '', { t: Date.now() });

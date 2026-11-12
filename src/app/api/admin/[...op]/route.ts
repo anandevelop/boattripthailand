@@ -11,6 +11,7 @@ import { clientInfo } from '@/lib/request';
 import { clearSiteCache } from '@/lib/site-render';
 import { customerTrash, purgeCustomer, restoreCustomer, trashCustomer } from '@/lib/customer-trash';
 import { leadTrash, purgeLead, restoreLead, trashLead } from '@/lib/lead-trash';
+import { legalContent, saveLegal } from '@/lib/legal-pages';
 import { cleanHome, HOME_KEY } from '@/lib/home';
 import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
@@ -690,6 +691,18 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       const changes = arr(body.changes).slice(0, 30).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { f: str(o.f, 120), from: str(o.from, 300), to: str(o.to, 300) }; });
       if (changes.length) await audit(actor(me), { action: 'update', entity: 'settings', ref: 'activities', label: str(body.label, 200) || 'แก้ไขกิจกรรม & ทัวร์', changes });
       return json({ acts: v });
+    }
+    if (a === 'settings' && b0 === 'legal') {
+      // เนื้อหาเว็บไซต์ → หน้าเพจ: privacy policy / terms (lib/legal-pages.ts) — live on the site right after saving
+      await need(me, 'content');
+      if (method === 'GET') return json({ legal: await legalContent() });
+      if (method === 'PUT' && c0) {
+        let r; try { r = await saveLegal(c0, body.reset === true ? null : body.value, me.name); } catch (e) { throw new HttpError(400, e instanceof Error ? e.message : 'บันทึกไม่สำเร็จ'); }
+        clearSiteCache();
+        const name = c0 === 'privacy' ? 'นโยบายความเป็นส่วนตัว' : 'ข้อกำหนดและเงื่อนไข';
+        await audit(actor(me), { action: 'update', entity: 'settings', ref: 'legal.' + c0, label: name, changes: [{ f: name, from: r.before ? 'แก้ไขแล้ว (' + r.before.updated + ')' : 'ข้อความเริ่มต้น', to: r.after ? 'แก้ไขแล้ว (' + r.after.updated + ')' : 'คืนค่าข้อความเริ่มต้น' }] });
+        return json({ legal: r.all });
+      }
     }
     if (a === 'settings' && b0 === 'home' && method === 'PUT') {
       // homepage content (เนื้อหาเว็บไซต์) — goes live on the public site immediately

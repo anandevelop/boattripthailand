@@ -2188,6 +2188,13 @@ function abMap() {
    LEGAL  (#/privacy · #/terms · #/cookies)
    ========================================================= */
 const LEGAL_UPDATED = ['19 ตุลาคม 2569', '19 October 2026'];
+/* text edited in /admin → เนื้อหาเว็บไซต์ → หน้าเพจ (settings 'site.legal', src/lib/legal-pages.ts); a language never edited keeps the text below */
+const LEGAL_EDIT = window.__LEGAL__ || {};
+function legalEdited(kind) { const d = LEGAL_EDIT[kind]; const o = d && d[LANG === 'en' ? 'en' : 'th']; return o && o.secs && o.secs.length ? { ...o, updated: d.updated } : null; }
+function legalUpdated(kind) {
+  const d = LEGAL_EDIT[kind]; if (!d || !d.updated) return LEGAL_UPDATED[LANG === 'en' ? 1 : 0];
+  try { return new Date(d.updated + 'T00:00:00').toLocaleDateString(LANG === 'en' ? 'en-GB' : 'th-TH', { day: 'numeric', month: 'long', year: 'numeric' }); } catch { return d.updated; }
+}
 const COMPANY = SET.company;
 const CONTACT_EMAIL = SET.email;
 const ADDRESS_TH = SET.address.th;
@@ -2337,8 +2344,8 @@ function renderLegal(kind) {
       </tbody></table></div>
       <p>${L('คุณยังลบหรือบล็อกคุกกี้ได้จากการตั้งค่าเบราว์เซอร์ ดูวิธีการใช้ข้อมูลของเราได้ใน <a href="#/privacy">นโยบายความเป็นส่วนตัว</a>','You can also delete or block cookies in your browser settings. See how we use data in our <a href="#/privacy">Privacy Policy</a>.')}</p></div>`;
   } else {
-    const d = legalDocs()[kind]; title = d.title; intro = d.intro; toc = d.secs.map(([id,h])=>[id,h]);
-    body = `<div class="legal">${d.secs.map(([id,h,html],i)=>`<section id="lg-${id}" class="scroll-mt-28"><h2><span class="text-maroon tabular-nums mr-2">${String(i+1).padStart(2,'0')}</span>${h}</h2>${html}</section>`).join('')}</div>`;
+    const d = legalDocs()[kind], o = legalEdited(kind), secs = o ? o.secs.map(s => [s.id, s.h, s.html]) : d.secs; title = d.title; intro = o && o.intro ? o.intro : d.intro; toc = secs.map(([id,h])=>[id,h]);
+    body = `<div class="legal">${secs.map(([id,h,html],i)=>`<section id="lg-${id}" class="scroll-mt-28"><h2><span class="text-maroon tabular-nums mr-2">${String(i+1).padStart(2,'0')}</span>${h}</h2>${html}</section>`).join('')}</div>`;
   }
   v.innerHTML = `
   <section class="bg-sand border-b border-sand-200">
@@ -2346,7 +2353,7 @@ function renderLegal(kind) {
       <nav aria-label="Breadcrumb" class="text-xs text-muted flex items-center gap-2"><a href="#/" class="hover:text-maroon">${t('home')}</a><i data-lucide="chevron-right" class="w-3 h-3"></i><span aria-current="page" class="text-ink">${title}</span></nav>
       <h1 class="font-display font-medium text-3xl sm:text-4xl mt-5">${title}</h1>
       <p class="text-muted mt-3 max-w-3xl leading-relaxed">${intro}</p>
-      <p class="text-xs text-muted mt-4">${L('ปรับปรุงล่าสุด','Last updated')}: ${LEGAL_UPDATED[LANG==='en'?1:0]}</p>
+      <p class="text-xs text-muted mt-4">${L('ปรับปรุงล่าสุด','Last updated')}: ${kind === 'cookies' ? LEGAL_UPDATED[LANG==='en'?1:0] : legalUpdated(kind)}</p>
       <div class="mt-6 flex gap-2 overflow-x-auto no-scrollbar py-1 px-1 -mx-1" role="tablist" aria-label="${L('เอกสาร','Documents')}">${tabs.map(([k,l])=>`<a href="#/${k}" role="tab" aria-selected="${k===kind}" class="shrink-0 h-10 px-4 inline-flex items-center text-sm transition ${k===kind?'bg-ink text-white':'bg-white ring-1 ring-sand-200 hover:ring-line-strong'}">${l}</a>`).join('')}</div>
     </div>
   </section>

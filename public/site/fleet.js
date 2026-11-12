@@ -1273,6 +1273,9 @@ function fxTerms() {
 { const _ld2 = legalDocs; legalDocs = function () { const d = _ld2(); try { d.terms = fxTerms(); } catch (e) { console.warn('[terms]', e); } return d; }; }
 { const _lf = fxLegalFix; fxLegalFix = function (kind) { _lf(kind); if (kind !== 'terms') return; const v = $('#view-legal'); v && v.querySelectorAll('section p.text-xs').forEach(p => { if (/ปรับปรุงล่าสุด|Last updated/.test(p.textContent)) p.textContent = `${L('ปรับปรุงล่าสุด', 'Last updated')}: ${TM_UPDATED[LANG === 'en' ? 1 : 0]}`; }); }; }
 { const h = VH.hash || ''; if (h === '#/terms') { try { renderLegal('terms'); } catch (e) { } } }
+/* a document edited in /admin → เนื้อหาเว็บไซต์ → หน้าเพจ shows the date set there (app.js legalUpdated), not the built-in one */
+{ const _lf3 = fxLegalFix; fxLegalFix = function (kind) { _lf3(kind); if (kind === 'cookies' || typeof legalEdited !== 'function' || !legalEdited(kind)) return; const v = $('#view-legal'); v && v.querySelectorAll('section p.text-xs').forEach(p => { if (/ปรับปรุงล่าสุด|Last updated/.test(p.textContent)) p.textContent = `${L('ปรับปรุงล่าสุด', 'Last updated')}: ${legalUpdated(kind)}`; }); }; }
+{ const h = VH.hash || ''; const m = h.match(/^#\/(privacy|terms)$/); if (m && typeof legalEdited === 'function' && legalEdited(m[1])) { try { renderLegal(m[1]); } catch (e) { } } }
 
 /* =====================================================================
    Contact page  /contact  (#/contact) — channels, quote form, office, piers. The sales team band follows
