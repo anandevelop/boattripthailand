@@ -309,7 +309,7 @@ function fxCard(b, mode, i, list) {
     : !fxActive() && b.fxRank >= 0 && b.fxRank < 3 ? `<span class="fx-badge fx-gd">${FXI('star')}${t('hot')}</span>` : '';
   const alts = pick ? list.filter(x => x !== b).slice(0, 2) : [];
   return `<article class="fx-card ${pick ? 'fx-pick' : ''}">
-    <div class="fx-ph"><a class="fx-ph-link img-fallback" href="#/boat/${b.slug}" aria-label="${L('ดูรายละเอียด', 'View')} ${name}"><img loading="${i < 3 && (VH.hash || '').startsWith('#/fleet') ? 'eager' : 'lazy'}" decoding="async" width="796" height="597" src="${bimg(b.slug, 'hero')}" alt="${name} – ${typeLabel(b.type)} ${L('เช่าเหมาลำ ภูเก็ต', 'private charter, Phuket')}"><span class="fx-more fx-gd">${L('ดูรายละเอียด', 'Details')} ${FXI('arrow-right')}</span></a>
+    <div class="fx-ph"><a class="fx-ph-link img-fallback" href="#/boat/${b.slug}" aria-label="${L('ดูรายละเอียด', 'View')} ${name}"><img loading="${i < 3 && (VH.hash || '').startsWith('#/fleet') ? 'eager' : 'lazy'}" decoding="async" width="796" height="597" src="${bimg(b.slug, 'hero')}" ${/^\/r\/\d+\//.test(bimg(b.slug, 'hero')) ? `srcset="${[320, 480, 768].map(w => bimg(b.slug, 'hero', w).replace(/^\/r\/\d+/, '/r/' + w) + ' ' + w + 'w').join(', ')}" sizes="(max-width: 640px) 46vw, (max-width: 1024px) 31vw, 300px"` : ''} alt="${name} – ${typeLabel(b.type)} ${L('เช่าเหมาลำ ภูเก็ต', 'private charter, Phuket')}"><span class="fx-more fx-gd">${L('ดูรายละเอียด', 'Details')} ${FXI('arrow-right')}</span></a>
       <div class="fx-tl">${badge}</div>
       <div class="fx-tr"><button class="fx-fav fx-gd" data-fav="${b.slug}" aria-pressed="${FAV.includes(b.slug)}" onclick="toggleFav('${b.slug}')" aria-label="${L('บันทึก', 'Save')} ${name}">${FXI('heart')}</button></div>
       <a class="fx-nm" href="#/boat/${b.slug}"><small>${typeLabel(b.type)}</small><b>${name}</b></a></div>
@@ -821,7 +821,24 @@ if ((VH.hash || '').startsWith('#/boat/')) { try { const b = bySlug(decodeURICom
    the server render parks their <img> sources in data-src, the browser puts them back when the view opens
    ===================================================================== */
 const FX_VIEWS = '[id^="view-"]';
-function fxSsrDone() { fxFixImgs(); try { fxBrandIcons(); } catch (e) { } fxPark(); }
+function fxSsrDone() { fxFixImgs(); fxSrcset(document, true); try { fxBrandIcons(); } catch (e) { } fxPark(); }
+/* Images · lazy pictures from /r/<w>/… get a srcset (320 · 480 · 768 · 1280, up to the size asked for) and sizes="auto":
+   the browser picks the file for the width the picture really has on screen (a 190 px card no longer pulls a 768 px file).
+   Browsers without sizes=auto use the fallback list. Eager / above-the-fold pictures keep what they have. */
+const FX_RW = [320, 480, 768, 1280];
+function fxSrcsetOne(im, eager) {
+  if (!im || im.getAttribute('srcset') || im.getAttribute('data-srcset') || im.getAttribute('fetchpriority') === 'high' || im.classList.contains('hero-slide')) return;
+  const lazy = im.getAttribute('loading') === 'lazy'; if (!lazy && !eager) return;   // eager ones only in the server render (before any download starts)
+  const src = im.getAttribute('src') || im.getAttribute('data-src') || '';
+  // /r/<w>/<file> or the original file itself (blog covers, uploads …)
+  const m = src.match(/^\/r\/(\d+)(\/(?:boats|img|uploads)\/.+)$/) || (src.match(/^\/(?:boats|img|uploads)\/.+\.(?:webp|jpe?g|png)(?:\?.*)?$/i) ? [src, '1280', src] : null); if (!m) return;
+  // never bigger than the size the page asked for (a 320 px thumbnail stays ≤ 320); one size only → nothing to choose from
+  const max = +m[1], ws = FX_RW.filter(w => w <= max); if (ws.length < 2) return;
+  const set = ws.map(w => `/r/${w}${m[2]} ${w}w`).join(', ');
+  im.setAttribute(im.hasAttribute('data-src') && !im.hasAttribute('src') ? 'data-srcset' : 'srcset', set);
+  if (!im.getAttribute('sizes')) im.setAttribute('sizes', (lazy ? 'auto, ' : '') + (im.closest('.fx-card, .tr-card, .grid-cols-2') ? '(max-width: 640px) 46vw, (max-width: 1024px) 31vw, 300px' : '(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 400px'));
+}
+function fxSrcset(root, eager) { (root || document).querySelectorAll(eager ? 'img' : 'img[loading="lazy"]').forEach(im => fxSrcsetOne(im, eager)); }
 /* the author logo on articles was a placeholder (data:…LOGON_B64) that never got filled in */
 function fxFixImgs(root) { (root || document).querySelectorAll('img[src*="LOGON_B64"]').forEach(im => im.setAttribute('src', (typeof SET !== 'undefined' && SET.logo) || '/brand/logo.png')); }   // called by site-render.ts after the server render
 /* run right after anything draws into a hidden view: the browser only starts the download after the current task, so it never starts */
@@ -837,7 +854,9 @@ function fxWake(root) {
 }
 if (!FX_SSR) {
   { const _sv = showView; showView = function (name) { _sv(name); try { fxWake($('#view-' + name)); } catch (e) { } }; }
-  fxFixImgs(); fxPark(); fxWake();
+  fxFixImgs(); fxSrcset(); fxPark(); fxWake();
+  // pictures drawn later (renderers, opening a page): before the browser lays them out
+  if (typeof MutationObserver === 'function') new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) { if (n.nodeType !== 1) continue; if (n.tagName === 'IMG') fxSrcsetOne(n); else if (n.querySelector) n.querySelectorAll('img[loading="lazy"]').forEach(fxSrcsetOne); } }).observe(document.documentElement, { childList: true, subtree: true });
   { const _rp = typeof renderPost === 'function' ? renderPost : null; if (_rp) renderPost = function () { const r = _rp.apply(this, arguments); fxFixImgs(); return r; }; }
   // every renderer that can draw into a view that is not on screen
   ['renderAll', 'renderBoats', 'renderHero', 'renderCats', 'renderActs', 'renderRoutes', 'renderRecent', 'renderHomeBlog', 'renderTeam', 'renderTypeBand', 'renderSmartTeaser'].forEach(n => {

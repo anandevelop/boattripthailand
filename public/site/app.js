@@ -3393,7 +3393,9 @@ const pDate = s => { const d = new Date(s + 'T00:00:00'); return LANG === 'en' ?
 const pUrl = p => '#/blog/' + encodeURIComponent(p.slug[plang()] || p.slug.th || p.slug.en);
 const pBySlug = s => POSTS.find(p => p.slug.th === s || p.slug.en === s);
 window.pFallbackImg = i => { const L = FLEET.filter(b => bimg(b.slug, 'a')); return bimg(L[(i * 7) % L.length].slug, i % 2 ? 'b' : 'a'); };
-const pImg = (p, cls = '', eager) => `<img src="${p.cover || pFallbackImg(p.id)}" alt="${esc(pT(p, 'title'))}" ${eager ? '' : 'loading="lazy"'} class="${cls}" data-pid="${p.id}" onerror="if(!this.dataset.fb){this.dataset.fb=1;if(window.pFallbackImg)this.src=pFallbackImg(${p.id})}"/>`;
+/** article cover: a srcset of resized copies (/r/) so a 400 px card does not pull the 1400 px original; sizes = how wide it is shown */
+const pImg = (p, cls = '', eager, sizes = '(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 400px') => { const u = p.cover || pFallbackImg(p.id), local = /^\/(img|uploads|boats)\//.test(u || '');
+  return `<img src="${local ? rs(u, 768) : u}" ${local ? `srcset="${[480, 768, 1280].map(w => '/r/' + w + u + ' ' + w + 'w').join(', ')}" sizes="${sizes}"` : ''} alt="${esc(pT(p, 'title'))}" ${eager ? '' : 'loading="lazy"'} class="${cls}" data-pid="${p.id}" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.removeAttribute('srcset');if(window.pFallbackImg)this.src=pFallbackImg(${p.id})}"/>`; };
 /* related articles: the closest topics (shared words in the English title / keyword / slug, same category a bit higher,
    close publish dates as the tie-break) — not the same newest three under every article, so every article gets links in */
 const REL_STOP = new Set('the and for with your you are how what why when where which best top phuket boat boats yacht yachts charter charters guide private trip trips from tour tours thailand island islands near day vs'.split(' '));
@@ -3413,7 +3415,7 @@ function postsVisible() { return POSTS.filter(p => pHas(p) || pHas(p, plang() ==
 function postCard(p, big) {
   const c = BCAT[p.cat] || BCAT.guide;
   return big ? `<a href="${pUrl(p)}" class="group grid lg:grid-cols-[1.25fr_1fr] gap-6 lg:gap-10 items-center">
-      <div class="relative aspect-[16/10] overflow-hidden rounded-[22px] bg-sand">${pImg(p, 'absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition duration-700', true)}</div>
+      <div class="relative aspect-[16/10] overflow-hidden rounded-[22px] bg-sand">${pImg(p, 'absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition duration-700', true, '(max-width: 1024px) 92vw, 700px')}</div>
       <div><p class="text-[11px] uppercase tracking-[.18em] text-maroon">${L('บทความล่าสุด', 'Latest')} · ${c[plang()]}</p><h2 class="font-display text-2xl sm:text-[32px] leading-tight text-ink mt-3 group-hover:text-maroon transition">${esc(pT(p, 'title'))}</h2>
         <p class="text-muted mt-4 leading-relaxed line-clamp-3">${esc(pT(p, 'excerpt'))}</p><p class="text-xs text-muted mt-5 flex items-center gap-3"><span>${pDate(p.date)}</span><span class="w-1 h-1 rounded-full bg-sand-200"></span><span>${L(`อ่าน ${pRead(p)} นาที`, `${pRead(p)} min read`)}</span></p>
         <span class="inline-flex items-center gap-1.5 mt-6 text-sm text-maroon">${L('อ่านต่อ', 'Read article')} <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition"></i></span></div></a>`
@@ -3496,7 +3498,7 @@ function renderPost(slug) {
       <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted"><span class="flex items-center gap-2"><img src="${SET.logo || '/brand/logo.png'}" alt="" class="w-6 h-6 object-contain"/>${L('ทีมงาน Boat Trip Thailand', 'Boat Trip Thailand team')}</span><time datetime="${p.date}" itemprop="datePublished">${pDate(p.date)}</time><span>${L(`อ่าน ${pRead(p)} นาที`, `${pRead(p)} min read`)}</span></div>
       ${miss ? `<p class="mt-5 rounded-xl bg-sand px-4 py-3 text-sm text-muted">${L('บทความนี้มีเฉพาะภาษาอังกฤษ', 'This article is available in Thai only')}</p>` : ''}
     </section>
-    <figure class="max-w-6xl mx-auto px-4 sm:px-6 mt-8"><div class="relative aspect-[16/9] lg:aspect-[21/9] overflow-hidden rounded-[22px] bg-sand">${pImg(p, 'absolute inset-0 w-full h-full object-cover', true)}</div></figure>
+    <figure class="max-w-6xl mx-auto px-4 sm:px-6 mt-8"><div class="relative aspect-[16/9] lg:aspect-[21/9] overflow-hidden rounded-[22px] bg-sand">${pImg(p, 'absolute inset-0 w-full h-full object-cover', true, '(max-width: 1152px) 100vw, 1152px')}</div></figure>
     <section class="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-16 grid lg:grid-cols-[minmax(0,1fr)_300px] gap-10 lg:gap-14 items-start">
       <div class="min-w-0">
         ${toc.length > 2 ? `<details class="lg:hidden mb-8 rounded-[16px] ring-1 ring-sand-200 px-4 py-3"><summary class="text-sm font-medium cursor-pointer">${L('สารบัญ', 'Contents')}</summary><ol class="post-toc mt-3">${toc.map(([i, l]) => `<li><a href="javascript:void 0" onclick="document.getElementById('s-${i}').scrollIntoView({behavior:'smooth',block:'start'})">${esc(l)}</a></li>`).join('')}</ol></details>` : ''}
