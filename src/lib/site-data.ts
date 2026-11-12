@@ -29,7 +29,7 @@ export const allPrograms = (b: Boat) => [...new Set(b.data.tables.flatMap(t => t
 export const postSlug = (p: Pick<Post, 'slugTh' | 'slugEn'>, lang: Lang) => (lang === 'en' ? p.slugEn : p.slugTh);
 export const hasLang = (p: Post, lang: Lang) => !!(p.title[lang] && p.blocks[lang]?.length && postSlug(p, lang));
 
-export const getPostIndex = unstable_cache(async () => db.select({ id: posts.id, slugTh: posts.slugTh, slugEn: posts.slugEn, category: posts.category, date: posts.date, cover: posts.cover, title: posts.title, excerpt: posts.excerpt, hasTh: sql<boolean>`jsonb_array_length(${posts.blocks}->'th') > 0`, hasEn: sql<boolean>`jsonb_array_length(${posts.blocks}->'en') > 0` }).from(posts).where(eq(posts.published, true)).orderBy(desc(posts.date)), ['posts-index'], { revalidate: 300, tags: ['posts'] });
+export const getPostIndex = unstable_cache(async () => db.select({ id: posts.id, slugTh: posts.slugTh, slugEn: posts.slugEn, category: posts.category, date: posts.date, updatedAt: posts.updatedAt, cover: posts.cover, title: posts.title, excerpt: posts.excerpt, hasTh: sql<boolean>`jsonb_array_length(${posts.blocks}->'th') > 0`, hasEn: sql<boolean>`jsonb_array_length(${posts.blocks}->'en') > 0` }).from(posts).where(eq(posts.published, true)).orderBy(desc(posts.date)), ['posts-index'], { revalidate: 300, tags: ['posts'] });
 export type PostCard = Awaited<ReturnType<typeof getPostIndex>>[number];
 
 export async function getPost(lang: Lang, slug: string) {

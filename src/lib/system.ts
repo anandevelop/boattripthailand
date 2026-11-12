@@ -260,6 +260,7 @@ export const JOBS: Job[] = [
   { id: 'publish', name: 'เผยแพร่บทความที่ตั้งเวลาไว้', every: 'ทุก 1 นาที', due: every(60_000), run: publishDue, quiet: true },
   { id: 'sla', name: 'เตือนลีดที่ยังไม่ตอบ (SLA)', every: 'ทุก 1 นาที', due: every(60_000), run: async () => { await checkSla(); return 'เรียบร้อย'; }, quiet: true },
   { id: 'psi', name: 'ตรวจ PageSpeed หน้าสำคัญ', every: 'ทุกวัน 06:00', due: daily(6), run: psiDaily },
+  { id: 'indexnow', name: 'แจ้ง Bing (IndexNow) เมื่อหน้าเว็บเปลี่ยน', every: 'ทุก 5 นาที', due: every(300_000), run: async () => (await import('./sitemap-tools')).indexNowAuto(), quiet: true },
   { id: 'web', name: 'วัดเว็บ (ออนไลน์ + เวลาโหลด)', every: 'ทุก 1 นาที', due: every(60_000), run: webCheck, quiet: true },
 ];
 

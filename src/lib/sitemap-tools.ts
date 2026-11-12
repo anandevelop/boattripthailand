@@ -12,7 +12,7 @@ import { NOINDEX_MSG, noindexSite } from './indexing';
  * /admin → ศูนย์ SEO → Sitemap & Index: what /sitemap.xml lists right now, and sending it to search engines —
  * Google through the Search Console API, Bing (and the other IndexNow engines) through IndexNow.
  */
-const SUBMIT_KEY = 'seo.submit', INDEXNOW_KEY = 'seo.indexnow';
+const SUBMIT_KEY = 'seo.submit', INDEXNOW_KEY = 'seo.indexnow', SENT_KEY = 'seo.indexnow.sent';
 type Sent = { at: string; ok: boolean; msg: string; n?: number };
 export type SubmitLog = { google?: Sent; bing?: Sent };
 
@@ -46,11 +46,52 @@ export async function submitSitemap(to: 'google' | 'bing'): Promise<{ ok: boolea
     const urls = (await sitemap()).map(e => e.url).slice(0, 10_000), key = await indexNowKey();
     const r = await fetch('https://api.indexnow.org/indexnow', { method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8' }, signal: AbortSignal.timeout(20_000),
       body: JSON.stringify({ host: new URL(SITE).host, key, keyLocation: SITE + '/indexnow.txt', urlList: urls }) });
-    if (r.ok) { const msg = `ส่ง ${urls.length} URL ให้ Bing / IndexNow แล้ว`; return { ok: true, msg, log: await log('bing', { at, ok: true, msg, n: urls.length }) }; }
+    if (r.ok) { await setSetting(SENT_KEY, await sitemapState()); const msg = `ส่ง ${urls.length} URL ให้ Bing / IndexNow แล้ว`; return { ok: true, msg, log: await log('bing', { at, ok: true, msg, n: urls.length }) }; }
     const msg = r.status === 403 ? 'IndexNow ยังอ่านไฟล์กุญแจ /indexnow.txt ไม่ได้ · ต้องเปิดเว็บด้วยโดเมนจริงก่อน' : r.status === 422 ? 'URL ใน sitemap ไม่ตรงกับโดเมนของเว็บ (APP_URL)' : r.status === 429 ? 'ส่งถี่เกินไป · ลองใหม่ภายหลัง' : `ส่งไม่สำเร็จ (HTTP ${r.status})`;
     return { ok: false, msg, log: await log('bing', { at, ok: false, msg }) };
   } catch (e) {
     const raw = e instanceof Error ? e.message : '', msg = /fetch failed|timeout|aborted/i.test(raw) ? `เชื่อมต่อ ${to === 'google' ? 'Google' : 'api.indexnow.org'} ไม่ได้ · ตรวจอินเทอร์เน็ตของเซิร์ฟเวอร์แล้วลองใหม่` : raw || 'ส่งไม่สำเร็จ';
     return { ok: false, msg, log: await log(to, { at, ok: false, msg }) };
   }
+}
+
+/* ---------- automatic IndexNow (job "indexnow" in lib/system.ts, every 5 minutes) ----------
+   Compares the sitemap with what was last sent: a new page, a page whose lastmod changed (boat / article saved) and a page
+   that left the sitemap (hidden, deleted, noindex) go to IndexNow — Bing, Yandex, Naver, Seznam… Nothing is sent on the dev copy
+   (noindex) or with INDEXNOW_AUTO=false. The first run only records the current state (the manual button sends everything). */
+type SentState = Record<string, string>;
+async function sitemapState(): Promise<SentState> {
+  const st: SentState = {};
+  for (const e of await sitemap()) {
+    const lm = e.lastModified ? new Date(e.lastModified).toISOString() : '';
+    st[e.url] = lm;
+    for (const u of Object.values(e.alternates?.languages ?? {})) if (typeof u === 'string') st[u] = lm;
+  }
+  return st;
+}
+async function postIndexNow(urls: string[]) {
+  const key = await indexNowKey();
+  const r = await fetch('https://api.indexnow.org/indexnow', { method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8' }, signal: AbortSignal.timeout(20_000),
+    body: JSON.stringify({ host: new URL(SITE).host, key, keyLocation: SITE + '/indexnow.txt', urlList: urls }) });
+  return r;
+}
+export async function indexNowAuto(): Promise<string> {
+  if (noindexSite()) return 'ข้าม · เว็บนี้ตั้งเป็น noindex';
+  if (/^(0|false|no|off)$/i.test(process.env.INDEXNOW_AUTO || '')) return 'ปิดอยู่ (INDEXNOW_AUTO=false)';
+  const now = await sitemapState(), before = await getSetting<SentState>(SENT_KEY);
+  if (!before) { await setSetting(SENT_KEY, now); return `บันทึกสถานะเริ่มต้น ${Object.keys(now).length} URL`; }
+  const changed = Object.keys(now).filter(u => before[u] === undefined || before[u] !== now[u]);
+  const gone = Object.keys(before).filter(u => now[u] === undefined);
+  const urls = [...changed, ...gone].filter(u => u.startsWith(SITE)).slice(0, 10_000);
+  if (!urls.length) return 'ไม่มีหน้าเปลี่ยน';
+  const r = await postIndexNow(urls), at = new Date().toISOString();
+  if (!r.ok) {
+    const msg = r.status === 403 ? 'IndexNow อ่านไฟล์กุญแจ /indexnow.txt ไม่ได้' : r.status === 429 ? 'IndexNow ขอให้ส่งช้าลง (429) · จะลองใหม่รอบหน้า' : `IndexNow ตอบ ${r.status}`;
+    await log('bing', { at, ok: false, msg: 'อัตโนมัติ · ' + msg });
+    throw new Error(msg);   // state not saved: the same URLs go again next run
+  }
+  await setSetting(SENT_KEY, now);
+  const msg = `อัตโนมัติ · ส่ง ${urls.length} URL ที่เปลี่ยน (ใหม่/แก้ ${changed.length} · เอาออก ${gone.length})`;
+  await log('bing', { at, ok: true, msg, n: urls.length });
+  return msg;
 }
