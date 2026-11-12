@@ -19,6 +19,9 @@ const config = {
     return [
       { source: '/:file(robots\\.txt|sitemap\\.xml|llms\\.txt|favicon\\.ico|icon\\.png|site-data\\.js|site-home\\.js)', has: www, destination: 'https://:domain/:file', statusCode: 301 },
       { source: '/:dir(boats|img|r|site|uploads|brand|feeds|api)/:path*', has: www, destination: 'https://:domain/:dir/:path*', statusCode: 301 },
+      // old WordPress / Yoast sitemaps (sitemap_index.xml, post-sitemap.xml, wp-sitemap-*.xml …) still listed in Google / Bing → the one sitemap, one hop
+      { source: '/:old(sitemap_index\\.xml|wp-sitemap[a-z0-9-]*\\.xml|[a-z0-9_-]+-sitemap[0-9]*\\.xml)', has: www, destination: 'https://:domain/sitemap.xml', statusCode: 301 },
+      { source: '/:old(sitemap_index\\.xml|wp-sitemap[a-z0-9-]*\\.xml|[a-z0-9_-]+-sitemap[0-9]*\\.xml)', destination: '/sitemap.xml', statusCode: 301 },
     ];
   },
   async headers() {
