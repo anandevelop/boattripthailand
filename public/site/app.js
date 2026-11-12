@@ -3218,6 +3218,8 @@ function seoFinal(id) {
   if (x.canon) $('#canonical').href = x.canon;
   const og = pick(x.ogT); if (og) { setMeta('og:title', og, 'property'); setMeta('twitter:title', og); }
 }
+/* every price in a boat's price tables (THB, 1,000 and up) — structured data lowPrice / highPrice */
+function boatPrices(b) { return (b.tables || []).flatMap(tb => (tb.rows || []).flatMap(r => r.slice(1).map(v => +String(v).replace(/[^\d]/g, '')).filter(v => v >= 1000))); }
 function applySeo(view, boat) {
   const k = LANG === 'en' ? 'en' : 'th';
   let title = SEO_META[k].title, desc = SEO_META[k].desc, path = '/';
@@ -3252,15 +3254,15 @@ function applySeo(view, boat) {
     ...(view === 'home' ? [{ '@type':'FAQPage', '@id':SITE+'/#faq', mainEntity: FAQ.map(f => ({ '@type':'Question', name:f.q[k==='en'?1:0], acceptedAnswer:{ '@type':'Answer', text:f.a[k==='en'?1:0]() } })) }] : []),
     ...(view === 'home' ? [{ '@type':'ItemList', '@id':SITE+'/#featured', name:L('เรือแนะนำสำหรับ yacht charter','Featured yacht charters'), itemListElement: FEATURED.map(bySlug).filter(Boolean).map((b,i) => ({ '@type':'ListItem', position:i+1, url:SITE+'/yacht-charter/'+b.slug,
       item:{ '@type':'Product', name:niceTitle(b.title)+' – '+typeLabel(b.type)+' charter', image:SITE+'/boats/'+b.slug+'-hero.webp', brand:{ '@id':SITE+'/#org' },
-        offers:{ '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:b.from_, offerCount:b.tables.reduce((n,t)=>n+t.rows.length,0), availability:'https://schema.org/InStock' } } })) }] : []),
+        offers:(() => { const pr = boatPrices(b), lo = b.from_ || (pr.length ? Math.min(...pr) : undefined); return { '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:lo, highPrice:pr.length ? Math.max(...pr) : lo, offerCount:Math.max(1, pr.length), availability:'https://schema.org/InStock', url:SITE+'/yacht-charter/'+b.slug }; })() } })) }] : []),
   ]};
   if (view === 'boat' && boat) {
     // the boat itself: Product with its price range, and the FAQ that is on the page
     const plain = h => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    const prices = boat.tables.flatMap(tb => tb.rows.flatMap(r => r.slice(1).map(v => +String(v).replace(/[^\d]/g, '')).filter(v => v >= 1000)));
+    const prices = boatPrices(boat);
     const imgs = (typeof gallery === 'function' ? gallery(boat.slug) : []).slice(0, 6).map(u => /^https?:/.test(u) ? u : SITE + u);
     ld['@graph'].push({ '@type':'Product', '@id':SITE+path+'#boat', name:niceTitle(boat.title)+' – '+typeLabel(boat.type)+' charter', description:desc, ...(imgs.length ? { image:imgs } : {}), brand:{ '@id':SITE+'/#org' }, category:typeLabel(boat.type),
-      offers:{ '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:boat.from_ || (prices.length ? Math.min(...prices) : undefined), ...(prices.length ? { highPrice:Math.max(...prices) } : {}), offerCount:Math.max(1, prices.length), availability:'https://schema.org/InStock', url:SITE+path } });
+      offers:{ '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:boat.from_ || (prices.length ? Math.min(...prices) : undefined), highPrice:prices.length ? Math.max(...prices) : boat.from_, offerCount:Math.max(1, prices.length), availability:'https://schema.org/InStock', url:SITE+path } });
     try { const qa = bpFaq(boat); if (qa.length) ld['@graph'].push({ '@type':'FAQPage', '@id':SITE+path+'#faq', mainEntity: qa.map(([q, a]) => ({ '@type':'Question', name:plain(q), acceptedAnswer:{ '@type':'Answer', text:plain(a) } })) }); } catch (e) { }
   }
   if (view === 'about') {
