@@ -1,4 +1,4 @@
-import { and, eq, inArray, ne } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { db } from '@/db';
 import { boats, customers, leadActivities, leads, posts, redirects, seasonCalendars, settings, users, type Boat, type Lead, type User } from '@/db/schema';
 import { adminBoot, leadsFor, auditList, boatToClient, customerToClient, CONTACT_FROM_CLIENT, LANG_FROM_CLIENT, leadClientById, permsFromClient, postToClient, ROLE_FROM_CLIENT, STATUS_FROM_CLIENT, userToClient, avatarOf } from '@/lib/admin-boot';
@@ -10,6 +10,7 @@ import { can, ROLE_LABEL, ROLE_PERMS, type Perm } from '@/lib/perms';
 import { clientInfo } from '@/lib/request';
 import { clearSiteCache } from '@/lib/site-render';
 import { customerTrash, purgeCustomer, restoreCustomer, trashCustomer } from '@/lib/customer-trash';
+import { leadTrash, purgeLead, restoreLead, trashLead } from '@/lib/lead-trash';
 import { cleanHome, HOME_KEY } from '@/lib/home';
 import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
@@ -53,6 +54,16 @@ const leadOut = async (id: string) => json(await leadClientById(id));
 async function leadOp(u: User, ref: string, op: string, b: Record<string, unknown>) {
   await need(u, 'leads');
   const l = await leadByRef(u, ref);
+  // trash: move in (hidden everywhere) · restore · delete for good — admins only (lib/lead-trash.ts)
+  if (op === 'trash' || op === 'restore' || op === 'purge') {
+    await need(u, 'leads_all');
+    try {
+      if (op === 'trash') await trashLead(l, u);
+      else if (op === 'purge') { await purgeLead(l, u); return json({ ok: true, trash: await leadTrash(u) }); }
+      else await restoreLead(l, u);
+    } catch (e) { if (e instanceof HttpError) throw e; throw new HttpError(400, e instanceof Error ? e.message : 'บันทึกไม่สำเร็จ'); }
+    return json({ ok: true, ...(op === 'restore' ? await leadClientById(l.id) : {}), trash: await leadTrash(u) });
+  }
   const touch = (patch: Partial<Lead>) => db.update(leads).set({ ...patch, updatedAt: new Date() }).where(eq(leads.id, l.id));
   switch (op) {
     case 'status': {
@@ -237,7 +248,7 @@ async function teamOp(me: User, id: string | undefined, op: string, b: Record<st
   }
   if (op === 'deactivate') {
     if (u.role === 'SUPER_ADMIN' && (await superAdminsLeft(u.id)) === 0) throw new HttpError(400, 'ต้องมี Super Admin ที่ใช้งานอยู่อย่างน้อย 1 คน');
-    const open = await db.select({ id: leads.id }).from(leads).where(and(eq(leads.assignedToId, id), inArray(leads.status, ['NEW', 'CONTACTED', 'TALKING'])));
+    const open = await db.select({ id: leads.id }).from(leads).where(and(eq(leads.assignedToId, id), isNull(leads.trash), inArray(leads.status, ['NEW', 'CONTACTED', 'TALKING'])));
     if (open.length) throw new HttpError(400, `มีงานค้าง ${open.length} รายการ · โอนให้คนอื่นก่อน`);
     const [n] = await db.update(users).set({ active: false, receivesLeads: false, profile: { ...u.profile, showWeb: false }, sessionVersion: u.sessionVersion + 1, updatedAt: new Date() }).where(eq(users.id, id)).returning();
     await revokeSessions(id);

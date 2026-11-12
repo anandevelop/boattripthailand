@@ -3652,7 +3652,7 @@ async function pollLeads() {
   try {
     const r = await api('GET', 'leads'), known = new Set(BOOKINGS.map(l => l.dbId)), fresh = r.leads.filter(l => !known.has(l.dbId));
     const before = JSON.stringify(BOOKINGS);
-    BOOKINGS.length = 0; BOOKINGS.push(...r.leads); CUSTOMERS.length = 0; CUSTOMERS.push(...r.customers); if (typeof custTrashSet === 'function') custTrashSet(r.custTrash);
+    BOOKINGS.length = 0; BOOKINGS.push(...r.leads); CUSTOMERS.length = 0; CUSTOMERS.push(...r.customers); if (typeof custTrashSet === 'function') custTrashSet(r.custTrash); if (typeof leadTrashSet === 'function') leadTrashSet(r.leadTrash);
     if (JSON.stringify(BOOKINGS) === before) return;
     const sc = $('#drawer .overflow-y-auto')?.scrollTop || 0, focused = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && $('#view').contains(document.activeElement);
     if (!focused && ['dashboard', 'bookings', 'calendar', 'customers'].includes(CUR)) rerender(); else paintBell();
@@ -6280,6 +6280,80 @@ function custPurgeGo(id) {
   const row = d.querySelector('.overflow-y-auto .flex.flex-wrap.gap-2');
   const btn = `<button class="btn btn-o !h-8 !text-[#b42318]" onclick="custTrash('${id}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบ (ย้ายไปถังขยะ)</button>`;
   if (row) row.insertAdjacentHTML('beforeend', btn); else d.querySelector('.overflow-y-auto')?.insertAdjacentHTML('afterbegin', `<div class="flex flex-wrap gap-2">${btn}</div>`);
+  icons();
+}; }
+
+/* ---------- leads: trash — ลบ → ถังขยะ 30 วัน → ลบถาวร (server: src/lib/lead-trash.ts) ----------
+   Admins only (bookings_all). A lead in the trash is hidden from the board, dashboard and SLA reminder; restore brings it back.
+   WON leads (a booking that happened) can't be binned. */
+const LEAD_TRASH = BOOT.leadTrash || [];
+const leadTrashSet = t => { if (Array.isArray(t)) { LEAD_TRASH.length = 0; LEAD_TRASH.push(...t); } };
+const leadAdmin = () => can('bookings_all') && !isRO();
+const LT_ST = { NEW: 'ลีดใหม่', CONTACTED: 'ติดต่อแล้ว', TALKING: 'กำลังคุย', WON: 'ปิดการขาย', LOST: 'ไม่สำเร็จ' };
+function leadTrash(id, ev) {
+  ev?.stopPropagation?.(); const l = BOOKINGS.find(x => x.id === id); if (!l || !leadAdmin()) return;
+  if (l.status === 'won') return toast('ลีดนี้ปิดการขายแล้ว ลบไม่ได้ · ถ้าลูกค้ายกเลิก ให้เปลี่ยนสถานะก่อน');
+  const c = custOf(l.cust), b = l.boat && bySlug(l.boat);
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ย้ายลีด ${esc(l.id)} ไปถังขยะ?</p><p class="text-[12.5px] text-muted mt-1">${esc(c?.name || '')}${b ? ' · ' + esc(b.name) : ''}${l.date ? ' · ' + fmtD(l.date) : ''}</p></div>
+    <div class="p-5 text-[12.5px] space-y-2"><p>ลีดจะหายจากหน้าลีด แดชบอร์ด และการแจ้งเตือน · ข้อมูลลูกค้ายังอยู่</p>
+      <p class="text-muted">กู้คืนได้จาก <b>ถังขยะ</b> ภายใน 30 วัน หลังจากนั้นระบบลบถาวรอัตโนมัติ</p></div>
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p !bg-[#b42318]" onclick="leadTrashGo('${id}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ย้ายไปถังขยะ</button></div>`);
+  icons();
+}
+function leadTrashGo(id) {
+  api('POST', `leads/${encodeURIComponent(id)}/trash`, {}).then(r => {
+    const i = BOOKINGS.findIndex(x => x.id === id); if (i >= 0) BOOKINGS.splice(i, 1);
+    leadTrashSet(r.trash); AUDIT_DIRTY = true; closeModal(); if (DRAWER_LEAD === id) closeDrawer(); rerender(); paintBell?.();
+    toast('ย้ายลีดไปถังขยะแล้ว · กู้คืนได้ภายใน 30 วัน');
+  }).catch(fail);
+}
+function leadBin() {
+  const T = LEAD_TRASH;
+  openModal(`<div class="p-5 border-b border-line flex items-start justify-between gap-3"><div><p class="font-medium">ถังขยะลีด (${T.length})</p><p class="text-[12px] text-muted mt-1">เก็บไว้ 30 วันก่อนลบถาวรอัตโนมัติ</p></div><button class="btn btn-g !px-2 !h-8" onclick="closeModal()" aria-label="ปิด"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div class="overflow-y-auto" style="max-height:60vh">${T.length ? T.map(l => `<div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-line">
+      <div class="flex-1 min-w-[200px]"><p class="text-[13px]">${esc(l.name)} <span class="text-muted text-[11px]">· ${esc(l.ref)}</span></p><p class="text-[11px] text-muted tnum">${esc(l.phone)}${l.item ? ' · ' + esc(l.item) : ''}${l.date ? ' · ' + fmtD(l.date) : ''} · ${LT_ST[l.status] || l.status}</p>
+        <p class="text-[11px] text-muted">ลบเมื่อ ${fmtD(l.at.slice(0, 10))} โดย ${esc(l.byName || '—')} · <span class="${l.days <= 3 ? 'text-[#b42318]' : ''}">ลบถาวรในอีก ${l.days} วัน</span></p></div>
+      <button class="btn btn-o !h-8" onclick="leadRestore('${l.ref}')"><i data-lucide="undo-2" class="w-3.5 h-3.5"></i>กู้คืน</button>
+      <button class="btn btn-o !h-8 !text-[#b42318]" onclick="leadPurge('${l.ref}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบถาวร</button></div>`).join('')
+      : '<p class="px-5 py-10 text-center text-[13px] text-muted">ถังขยะว่าง</p>'}</div>`);
+  icons();
+}
+function leadRestore(ref) {
+  api('POST', `leads/${encodeURIComponent(ref)}/restore`, {}).then(r => {
+    if (r.lead && !BOOKINGS.some(x => x.dbId === r.lead.dbId)) BOOKINGS.push(r.lead);
+    if (r.customer && !CUSTOMERS.some(c => c.id === r.customer.id)) CUSTOMERS.push(r.customer);
+    BOOKINGS.sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')));
+    leadTrashSet(r.trash); AUDIT_DIRTY = true; rerender(); paintBell?.(); leadBin(); toast(`กู้คืนลีด ${ref} แล้ว`);
+  }).catch(fail);
+}
+function leadPurge(ref) {
+  const l = LEAD_TRASH.find(x => x.ref === ref); if (!l) return;
+  openModal(`<div class="p-5 border-b border-line"><p class="font-medium">ลบลีด ${esc(ref)} ถาวร?</p><p class="text-[12.5px] text-muted mt-1">${esc(l.name)} · ลบลีดและประวัติการติดต่อของลีดนี้ · กู้คืนไม่ได้ (ข้อมูลลูกค้ายังอยู่)</p></div>
+    <div class="p-5"><label class="grid gap-1"><span class="lbl !mb-0">พิมพ์ ลบ เพื่อยืนยัน</span><input id="lpOk" class="inp" placeholder="ลบ"/></label></div>
+    <div class="p-4 border-t border-line flex justify-end gap-2"><button class="btn btn-o" onclick="leadBin()">ย้อนกลับ</button><button class="btn btn-p !bg-[#b42318]" onclick="leadPurgeGo('${ref}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบถาวร</button></div>`);
+  icons(); setTimeout(() => $('#lpOk')?.focus(), 50);
+}
+function leadPurgeGo(ref) {
+  if ($('#lpOk')?.value.trim() !== 'ลบ') return toast('พิมพ์คำว่า ลบ เพื่อยืนยัน');
+  api('POST', `leads/${encodeURIComponent(ref)}/purge`, {}).then(r => { leadTrashSet(r.trash); AUDIT_DIRTY = true; leadBin(); toast('ลบลีดถาวรแล้ว'); }).catch(fail);
+}
+/* list: a trash button per row + ถังขยะ in the header · drawer: a ลบ button */
+{ const _vb = vBookings; vBookings = function () {
+  _vb(); if (!leadAdmin()) return; const v = $('#view');
+  const exp = [...v.querySelectorAll('button')].find(b => b.textContent.trim() === 'Export CSV');
+  exp?.insertAdjacentHTML('beforebegin', `<button class="btn btn-o" onclick="leadBin()" title="ลีดที่ลบไว้ · กู้คืนได้ 30 วัน"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ถังขยะ${LEAD_TRASH.length ? ` <span class="tnum">(${LEAD_TRASH.length})</span>` : ''}</button>`);
+  const tb = v.querySelector('table.tbl'); if (tb) {
+    tb.querySelector('thead tr')?.insertAdjacentHTML('beforeend', '<th class="w-12"></th>');
+    tb.querySelectorAll('tbody tr.click').forEach(tr => { const id = (tr.getAttribute('onclick') || '').match(/bookingDetail\('([^']+)'\)/)?.[1]; if (!id) return;
+      const l = BOOKINGS.find(x => x.id === id);
+      tr.insertAdjacentHTML('beforeend', l && l.status !== 'won' ? `<td class="text-right"><button class="btn btn-g !px-2 !h-8 text-muted hover:!text-[#b42318]" title="ย้ายไปถังขยะ" aria-label="ลบลีด" onclick="leadTrash('${id}', event)"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>` : '<td></td>'); });
+  }
+  icons();
+}; PAGES.find(p => p[0] === 'bookings')[3] = vBookings; }
+{ const _bd = bookingDetail; bookingDetail = function (id) {
+  _bd(id); const d = $('#drawer'), l = BOOKINGS.find(x => x.id === id);
+  if (!leadAdmin() || !l || l.status === 'won' || !d.classList.contains('open') || d.querySelector('[data-ltrash]')) return;
+  d.querySelector('.overflow-y-auto')?.insertAdjacentHTML('beforeend', `<div data-ltrash class="border-t border-line mt-6 pt-4 flex justify-end"><button class="btn btn-o !h-8 !text-[#b42318]" onclick="leadTrash('${id}')"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบลีด (ย้ายไปถังขยะ)</button></div>`);
   icons();
 }; }
 

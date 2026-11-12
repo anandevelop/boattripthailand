@@ -75,6 +75,8 @@ export const customers = pgTable('customers', {
 export const leads = pgTable('leads', {
   id: id(),
   ref: text('ref').notNull().unique(),
+  /** in the admin trash (lib/lead-trash.ts): when, by whom — null = not in the trash */
+  trash: jsonb('trash').$type<{ at: string; by: string | null; byName: string }>(),
   customerId: text('customer_id').notNull().references(() => customers.id),
   status: leadStatusEnum('status').notNull().default('NEW'),
   // what they want

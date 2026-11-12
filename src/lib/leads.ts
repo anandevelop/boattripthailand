@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, gte, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { boats, customers, leadActivities, leads, settings, users, type Lead, type User } from '@/db/schema';
 import { audit } from './audit';
@@ -63,7 +63,7 @@ export async function createLead(input: LeadInput, actor?: User) {
       [cust] = await tx.update(customers).set({ email: cust.email || input.email || null, whatsapp: input.whatsapp || cust.whatsapp || null, ...(consent && !cust.marketingConsent ? { marketingConsent: true, consentAt: new Date(), consentSource: 'web_form' } : {}), updatedAt: new Date() }).where(eq(customers.id, cust.id)).returning();
     }
     // duplicate within 24h for the same item → add to the existing lead instead of a new one
-    const [dupe] = await tx.select().from(leads).where(and(eq(leads.customerId, cust.id), gte(leads.createdAt, new Date(Date.now() - 864e5)), inArray(leads.status, ['NEW', 'CONTACTED', 'TALKING']))).orderBy(desc(leads.createdAt)).limit(1);
+    const [dupe] = await tx.select().from(leads).where(and(eq(leads.customerId, cust.id), isNull(leads.trash), gte(leads.createdAt, new Date(Date.now() - 864e5)), inArray(leads.status, ['NEW', 'CONTACTED', 'TALKING']))).orderBy(desc(leads.createdAt)).limit(1);
     if (dupe && (dupe.item ?? '') === (input.item ?? '')) {
       await tx.insert(leadActivities).values({ leadId: dupe.id, type: 'resubmit', data: { message: input.message, date: input.date, adults: input.adults } });
       return { lead: dupe, customer: cust, duplicate: true, assignee: dupe.assignedToId ? (await tx.select().from(users).where(eq(users.id, dupe.assignedToId)))[0] ?? null : null };
@@ -129,7 +129,7 @@ export async function checkSla() {
   const N = await loadLeadNotify();
   if (!N.sla) return 0;   // switched off: nothing is marked, so leads still waiting are checked again once it is back on
   const mins = N.slaMinutes;
-  const late = await db.query.leads.findMany({ where: and(eq(leads.status, 'NEW'), sql`${leads.createdAt} < now() - (${mins} || ' minutes')::interval`, sql`not exists (select 1 from lead_activities a where a.lead_id = ${leads.id} and a.type = 'sla_alert')`), with: { customer: true, assignedTo: true }, limit: 20 });
+  const late = await db.query.leads.findMany({ where: and(eq(leads.status, 'NEW'), isNull(leads.trash), sql`${leads.createdAt} < now() - (${mins} || ' minutes')::interval`, sql`not exists (select 1 from lead_activities a where a.lead_id = ${leads.id} and a.type = 'sla_alert')`), with: { customer: true, assignedTo: true }, limit: 20 });
   if (!late.length) return 0;
   const group = await lineGroupId();
   const admins = await db.select().from(users).where(and(eq(users.active, true), inArray(users.role, ['SUPER_ADMIN', 'ADMIN'])));

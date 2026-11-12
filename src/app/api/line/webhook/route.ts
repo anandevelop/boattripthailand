@@ -54,7 +54,7 @@ async function handle(ev: Ev) {
     const [u] = await db.select().from(users).where(and(eq(users.lineUserId, lineUserId), eq(users.active, true)));
     if (!u) return reply('บัญชี LINE นี้ยังไม่ได้เชื่อมกับระบบ · พิมพ์ LINK ตามด้วยรหัส 6 หลักจากเมนูโปรไฟล์ในระบบหลังบ้าน');
     const [l] = await db.select().from(leads).where(eq(leads.id, ev.postback.data.slice(6)));
-    if (!l) return reply('ไม่พบลีดนี้');
+    if (!l || l.trash) return reply('ไม่พบลีดนี้ (อาจถูกลบไปแล้ว)');
     if (l.status !== 'NEW' && l.assignedToId && l.assignedToId !== u.id) {
       const [owner] = await db.select({ name: users.name }).from(users).where(eq(users.id, l.assignedToId));
       return reply(`ลีด ${l.ref} ${owner?.name ?? 'คนอื่น'} รับเรื่องไปแล้ว`);
