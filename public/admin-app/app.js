@@ -4276,7 +4276,7 @@ function vSystem() {
 function sysBusy(k, p) { SYS.busy[k] = true; vSystem(); return p.finally(() => { SYS.busy[k] = false; if (sysOn()) vSystem(); }); }
 function sysBackup() { sysBusy('backup', api('POST', 'system/backup').then(r => { SYS.d = { ...r.status, can: SYS.d.can }; AUDIT_DIRTY = true; toast('สำรองข้อมูลแล้ว · ' + r.file); }).catch(fail)); }
 function sysRun(id) { sysBusy('j:' + id, api('POST', 'system/run', { job: id }).then(r => { SYS.d = { ...r.status, can: SYS.d.can }; AUDIT_DIRTY = true; r.result.ok ? toast('สำเร็จ · ' + r.result.msg) : toastErr('ล้มเหลว · ' + r.result.msg); }).catch(fail)); }
-function sysAlerts() { sysBusy('alerts', api('PUT', 'system/alerts', { on: SYS.alerts }).then(r => { SYS.d = { ...r.status, can: SYS.d.can }; SYS.alerts = { ...r.status.alerts.on }; AUDIT_DIRTY = true; toast('บันทึกการแจ้งเตือนแล้ว'); }).catch(fail)); }
+function sysAlerts() { sysBusy('alerts', api('PUT', 'system/alerts', { on: SYS.alerts }).then(r => { LN.st = null; LN.nd = null; SYS.d = { ...r.status, can: SYS.d.can }; SYS.alerts = { ...r.status.alerts.on }; AUDIT_DIRTY = true; toast('บันทึกการแจ้งเตือนแล้ว'); }).catch(fail)); }
 function sysTest() { sysBusy('test', api('POST', 'system/alerts/test').then(() => toast('ส่งข้อความทดสอบเข้ากลุ่ม LINE แล้ว')).catch(fail)); }
 function sysRestore(file, note) {
   const b = SYS.d.backups.find(x => x.file === file);
@@ -4317,11 +4317,12 @@ const addBoatTabs = k => { const h = $('#view > div'); if (h && !$('#view > .tab
 PAGE_PERM.system = 'settings';
 
 /* ---------- ตั้งค่า → LINE & แจ้งเตือน: LINE Messaging API keys (encrypted on the server; .env still wins), webhook, sales group, quota ---------- */
-const LN = { st: null, loading: false, test: null, busy: {}, err: '' };
+const LN = { st: null, loading: false, test: null, busy: {}, err: '', nt: null, nd: null };
+const lnNtCopy = n => ({ lead: { ...n.lead }, alerts: { ...n.alerts }, psi: n.psi });
 const lnOn = () => CUR === 'settings' && SITECFG.tab === 'notify' && !!$('#lnHost');
 function lnLoad(refresh) {
   if (LN.loading) return; LN.loading = true;
-  api('GET', 'line' + (refresh ? '?refresh=1' : '')).then(r => { LN.st = r.status; LN.err = ''; }).catch(e => { LN.err = e.message; fail(e); })
+  api('GET', 'line' + (refresh ? '?refresh=1' : '')).then(r => { LN.st = r.status; LN.err = ''; if (r.notify) { LN.nt = r.notify; if (!LN.nd) LN.nd = lnNtCopy(r.notify); } }).catch(e => { LN.err = e.message; fail(e); })
     .finally(() => { LN.loading = false; if (lnOn()) lnRender(); });
 }
 function lnBusy(k, p) { LN.busy[k] = true; lnRender(); return p.finally(() => { LN.busy[k] = false; if (lnOn()) lnRender(); }); }
@@ -4357,6 +4358,7 @@ function lnRender() {
     ${sec('users', 'กลุ่ม LINE ทีมขาย', 'รับลีดใหม่ ลีดที่ยังไม่มีคนตอบ และแจ้งเตือนระบบ', `${S.group.id ? `<div class="flex items-center gap-3 rounded-xl bg-sand px-3 py-2.5"><i data-lucide="circle-check" class="w-4 h-4 shrink-0" style="color:#1e7a46"></i><div class="min-w-0 flex-1"><p class="truncate">${esc(S.group.name || 'กลุ่มทีมขาย')}</p><p class="text-[11px] text-muted font-mono">${esc(S.group.id)}${S.group.src === 'env' ? ' · ตั้งใน .env' : ''}</p></div></div>`
       : `<ol class="grid gap-1.5 text-[12.5px] list-decimal pl-5"><li>LINE OA Manager › ตั้งค่า › ตอบกลับ → เปิด “อนุญาตให้บอทเข้าร่วมกลุ่ม”</li><li>เชิญบอทเข้ากลุ่ม LINE ของทีมขาย</li><li>บอทตอบในกลุ่มว่า “เชื่อมแล้ว” และระบบจะจำกลุ่มให้เอง</li></ol>`}
       <div class="flex justify-end mt-3"><button class="btn btn-o !h-9" ${!S.group.id || !bot || LN.busy.push ? 'disabled' : ''} onclick="lnPush()"><i data-lucide="send" class="w-3.5 h-3.5"></i>${LN.busy.push ? 'กำลังส่ง…' : 'ส่งข้อความทดสอบเข้ากลุ่ม'}</button></div>`)}
+    ${lnNotifyCard(sec, !!S.group.id, !!bot)}
     ${sec('gauge', 'โควตาข้อความเดือนนี้', 'นับเฉพาะข้อความที่ระบบส่งเอง (push) · การตอบกลับในแชตไม่นับ', q ? `<div class="flex items-end justify-between"><p class="text-2xl tnum">${(q.used ?? 0).toLocaleString()}<span class="text-[13px] text-muted"> / ${q.limit == null ? 'ไม่จำกัด' : q.limit.toLocaleString()}</span></p>${pct != null ? `<span class="text-[12px] ${pct >= 80 ? '' : 'text-muted'}" style="${pct >= 80 ? 'color:#a3222c' : ''}">${pct}%</span>` : ''}</div>
       ${pct != null ? `<div class="h-2 rounded-full mt-2 overflow-hidden" style="background:rgb(35 20 22 / .08)"><div class="h-full rounded-full" style="width:${pct}%;background:${pct >= 80 ? '#a3222c' : '#70000e'}"></div></div>` : ''}
       <p class="text-[11px] text-muted mt-3">แพ็กเกจฟรี: เมื่อครบโควตา LINE จะหยุดส่งจนถึงเดือนถัดไป ไม่ตัดเงินเอง · มีค่าใช้จ่ายเฉพาะเมื่ออัปเกรดแพ็กเกจเองใน LINE OA Manager</p>` : '<p class="text-[12px] text-muted">เชื่อม Token ก่อนจึงดูโควตาได้</p>')}
@@ -4368,6 +4370,48 @@ function lnRender() {
   </div>`;
   host.innerHTML = `<div class="gap-4 items-start" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))">${left}${right}</div>`;
   icons();
+}
+/* "การแจ้งเตือนที่ส่ง": on/off for every LINE message the system sends (leads · system alerts · PageSpeed) */
+function lnNotifyCard(sec, group, bot) {
+  const N = LN.nt, D = LN.nd; if (!N || !D) return '';
+  const ro = isRO(), L = D.lead;
+  const dirty = JSON.stringify(D) !== JSON.stringify(lnNtCopy(N));
+  const row = (path, label, sub, on, extra = '') => `<label class="flex items-start justify-between gap-3"><span class="min-w-0"><span class="block">${label}</span>${sub ? `<span class="block text-[11px] text-muted">${sub}</span>` : ''}${extra}</span><span class="tgl shrink-0"><input type="checkbox" ${on ? 'checked' : ''} ${ro ? 'disabled' : ''} onchange="lnNtSet('${path}', this.checked)"/><span></span></span></label>`;
+  const head = t => `<p class="text-[11px] font-medium text-muted uppercase tracking-wide mt-1">${t}</p>`;
+  const mins = `<span class="flex items-center gap-2 mt-1.5 text-[12px] whitespace-nowrap">รอเกิน <input type="number" min="5" max="240" step="5" value="${L.slaMinutes}" ${ro || !L.sla ? 'disabled' : ''} class="inp !h-8 tnum" style="width:76px" onchange="lnNtSet('lead.slaMinutes', +this.value)"/> นาที</span>`;
+  const inner = `<div class="grid gap-3">
+    ${head('ลีดจากเว็บ')}
+    ${row('lead.newLead', 'ลีดใหม่', 'ส่งการ์ดลีดให้ผู้รับ (ถ้าผูก LINE ไว้) หรือเข้ากลุ่มถ้ายังไม่มีผู้รับ', L.newLead)}
+    ${row('lead.dupLead', 'ลูกค้าส่งคำขอซ้ำ', 'ลูกค้าเดิมส่งฟอร์มซ้ำภายในเวลาสั้น ๆ (การ์ดสีเทา)', L.dupLead)}
+    ${row('lead.sla', 'เตือนลีดที่ยังไม่มีคนติดต่อ', 'ส่งเข้ากลุ่มครั้งเดียวต่อลีด (การ์ดสีแดง)', L.sla, mins)}
+    ${row('lead.alwaysGroup', 'ส่งลีดเข้ากลุ่มทุกครั้ง', 'ปิด = ส่งเข้ากลุ่มเฉพาะลีดที่ผู้รับยังไม่ได้ผูก LINE', L.alwaysGroup)}
+    ${head('ระบบ')}
+    ${row('alerts.down', 'เว็บล่มเกิน 2 นาที', 'แจ้งอีกครั้งเมื่อกลับมาใช้ได้', D.alerts.down)}
+    ${row('alerts.ttfb', 'เว็บตอบช้า (TTFB เกิน 1 วินาที 15 นาที)', '', D.alerts.ttfb)}
+    ${row('alerts.cron', 'งานอัตโนมัติล้มเหลว', '', D.alerts.cron)}
+    ${row('alerts.backup', 'สำรองข้อมูลล้มเหลว', '', D.alerts.backup)}
+    ${row('psi', 'คะแนน PageSpeed ต่ำกว่าเกณฑ์', `ตรวจทุกวัน 06:00 · เกณฑ์ ${N.psiThreshold} คะแนน`, D.psi)}
+    ${!group ? `<p class="rounded-xl p-3 text-[12px]" style="background:#fff6e5;color:#9a5b00">ยังไม่มีกลุ่ม LINE ทีมขาย · ${bot ? 'เชิญบอทเข้ากลุ่มก่อน' : 'เชื่อม LINE ก่อน'} ข้อความเข้ากลุ่มจึงจะส่งได้</p>` : ''}
+    <div class="flex items-center gap-2">${N.lead.at ? `<span class="text-[11px] text-muted">แก้ล่าสุด ${new Date(N.lead.at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })} โดย ${esc(N.lead.by || '')}</span>` : ''}
+      <span class="ml-auto"></span>${dirty ? `<button class="btn btn-g !h-9" onclick="LN.nd=lnNtCopy(LN.nt);lnNtDraw()">ยกเลิก</button>` : ''}<button class="btn btn-p !h-9" ${!dirty || ro || LN.busy.nt ? 'disabled' : ''} onclick="lnNtSave()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${LN.busy.nt ? 'กำลังบันทึก…' : 'บันทึก'}</button></div></div>`;
+  return `<div id="lnNt" class="min-w-0">${sec('bell-ring', 'การแจ้งเตือนที่ส่ง', 'เลือกว่าจะให้ระบบส่งข้อความอะไรเข้า LINE บ้าง', inner)}</div>`;
+}
+/* toggles redraw only this card, so text typed into the key fields is kept */
+function lnNtDraw() {
+  const el = $('#lnNt'), S = LN.st; if (!el || !S) return lnRender();
+  const ic = n => `<span class="w-9 h-9 rounded-xl grid place-items-center shrink-0" style="background:rgb(112 0 14 / .08);color:#70000e"><i data-lucide="${n}" class="w-4 h-4"></i></span>`;
+  const sec = (icon, title, sub, inner) => `<div class="card p-5 min-w-0"><div class="flex items-start gap-3 mb-4">${ic(icon)}<div class="flex-1 min-w-0"><p class="font-medium">${title}</p>${sub ? `<p class="text-[11.5px] text-muted">${sub}</p>` : ''}</div></div>${inner}</div>`;
+  el.outerHTML = lnNotifyCard(sec, !!S.group.id, !!(S.bot && !S.bot.error)); icons();
+}
+function lnNtSet(path, v) {
+  const [a, b] = path.split('.');
+  if (b) LN.nd[a][b] = v; else LN.nd[a] = v;
+  if (path === 'lead.slaMinutes') { const n = Math.round(v); LN.nd.lead.slaMinutes = n >= 5 && n <= 240 ? n : LN.nt.lead.slaMinutes; }
+  lnNtDraw();
+}
+function lnNtSave() {
+  const D = LN.nd;
+  lnBusy('nt', api('PUT', 'line/notify', { lead: D.lead, alerts: D.alerts, psi: D.psi }).then(r => { LN.nt = r.notify; LN.nd = lnNtCopy(r.notify); SYS.alerts = null; SYS.d = null; AUDIT_DIRTY = true; toast('บันทึกการแจ้งเตือนแล้ว'); }).catch(fail));
 }
 function lnSave() {
   const s = $('#lnSecret'), t = $('#lnToken'), body = {};
@@ -6566,7 +6610,7 @@ function psKeyDel() {
 }
 function psCfgSave(k, v) {
   const b = { [k]: v };
-  api('PUT', 'analytics/psi/settings', b).then(r => { PS.d.cfg = r.cfg; toast('บันทึกแล้ว'); if (psOn()) vSeo(); }).catch(fail);
+  api('PUT', 'analytics/psi/settings', b).then(r => { LN.st = null; LN.nd = null; PS.d.cfg = r.cfg; toast('บันทึกแล้ว'); if (psOn()) vSeo(); }).catch(fail);
 }
 
 /* 30-day trend: one point per day (the last run of that day) · mobile vs desktop · dashed line where a new build went live */

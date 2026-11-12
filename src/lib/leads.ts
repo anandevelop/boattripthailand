@@ -5,6 +5,7 @@ import { boats, customers, leadActivities, leads, settings, users, type Lead, ty
 import { audit } from './audit';
 import { randomDigits } from './crypto';
 import { leadCard, lineEnabled, pushLine, text } from './line';
+import { loadLeadNotify } from './line-notify';
 import { marketingConfig } from './marketing';
 import { sendMetaEvent } from './meta';
 import { can } from './perms';
@@ -115,15 +116,19 @@ export async function lineGroupId() {
 
 async function notifyNewLead(l: Lead, cust: { name: string; phone: string; whatsapp?: string | null }, assignee: User | null, duplicate: boolean) {
   if (!lineEnabled()) return;
-  const card = await leadCardFor(l, cust, duplicate ? 'ลูกค้าส่งคำขอซ้ำ' : assignee ? `ลีดใหม่ของ ${assignee.name} · ตอบภายใน 15 นาที` : 'ลีดใหม่ · ยังไม่มีผู้รับ');
+  const N = await loadLeadNotify();
+  if (duplicate ? !N.dupLead : !N.newLead) return;
+  const card = await leadCardFor(l, cust, duplicate ? 'ลูกค้าส่งคำขอซ้ำ' : assignee ? `ลีดใหม่ของ ${assignee.name} · ตอบภายใน ${N.slaMinutes} นาที` : 'ลีดใหม่ · ยังไม่มีผู้รับ');
   const group = await lineGroupId();
   if (assignee?.lineUserId) await pushLine(assignee.lineUserId, [card]);
-  if (group && (!assignee?.lineUserId || process.env.LINE_ALWAYS_NOTIFY_GROUP === 'true')) await pushLine(group, [card]);
+  if (group && (!assignee?.lineUserId || N.alwaysGroup)) await pushLine(group, [card]);
 }
 
 /** Leads not contacted within SLA → alert the group (and admins) once. Called every minute by instrumentation. */
 export async function checkSla() {
-  const mins = Number(process.env.LEAD_SLA_MINUTES || 15);
+  const N = await loadLeadNotify();
+  if (!N.sla) return 0;   // switched off: nothing is marked, so leads still waiting are checked again once it is back on
+  const mins = N.slaMinutes;
   const late = await db.query.leads.findMany({ where: and(eq(leads.status, 'NEW'), sql`${leads.createdAt} < now() - (${mins} || ' minutes')::interval`, sql`not exists (select 1 from lead_activities a where a.lead_id = ${leads.id} and a.type = 'sla_alert')`), with: { customer: true, assignedTo: true }, limit: 20 });
   if (!late.length) return 0;
   const group = await lineGroupId();
