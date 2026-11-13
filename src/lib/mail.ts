@@ -54,7 +54,7 @@ export async function mailStatus(refresh = false) {
     try {
       const r = await fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(15_000) });
       const j = await r.json().catch(() => ({})) as { data?: { id: string; name: string; status: string }[]; message?: string };
-      if (!r.ok) domain = { error: j.message || `Resend ตอบ ${r.status}` };
+      if (!r.ok) domain = /restricted/i.test(j.message ?? '') ? { name: cfg.from.split('@')[1], status: 'sendonly' } : { error: j.message || `Resend ตอบ ${r.status}` };
       else {
         const want = cfg.from.split('@')[1], d = (j.data ?? []).find(x => x.name === want);
         if (!d) domain = { name: want, status: 'missing' };
