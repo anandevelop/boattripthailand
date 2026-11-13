@@ -7053,7 +7053,7 @@ function mlRender() {
   const inp = (id, label, val, ph = '', type = 'text', dis = false) => `<label class="grid gap-1.5"><span class="lbl !mb-0">${label}</span><input id="${id}" type="${type}" class="inp" value="${esc(val || '')}" placeholder="${esc(ph)}" ${dis || ro ? 'disabled' : ''} autocomplete="off" spellcheck="false"/></label>`;
   const recs = dom && dom.records && dom.records.length ? `<div class="overflow-x-auto mt-3"><table class="tbl min-w-[560px] text-[12px]"><thead><tr><th>Type</th><th>Name</th><th>Value</th><th>สถานะ</th></tr></thead><tbody>${dom.records.map(x => `<tr><td>${esc(x.type)}</td><td class="font-mono break-all">${esc(x.name)}</td><td class="font-mono break-all" style="max-width:280px">${esc(x.value)}</td><td class="whitespace-nowrap">${pill(x.status === 'verified', 'ผ่าน', x.status === 'failed' ? 'ไม่ผ่าน' : 'รอตรวจ')}</td></tr>`).join('')}</tbody></table></div><p class="text-[11px] text-muted mt-2">ใส่ใน Cloudflare › DNS › Records ทีละรายการ · ตั้ง Proxy status เป็น <b>DNS only</b> (เมฆสีเทา) · เสร็จแล้วกด Verify ใน Resend แล้วกด ตรวจสถานะ ที่นี่</p>` : '';
   const domLine = !S.ready ? '' : !dom ? '<p class="text-[12px] text-muted">กด ตรวจสถานะ เพื่อดูการยืนยันโดเมน</p>' : dom.error ? `<p class="text-[12px]" style="color:#a3222c">${esc(dom.error)}</p>`
-    : dom.status === 'sendonly' ? `<p class="text-[12px] text-muted">API key นี้เป็นแบบ Sending access (ปลอดภัยกว่า) จึงเช็กสถานะโดเมนจากที่นี่ไม่ได้ · ดูสถานะใน resend.com › Domains แล้วกด <b>ส่งอีเมลทดสอบถึงฉัน</b> ถ้าได้รับ แปลว่าใช้งานได้</p>`
+    : dom.status === 'sendonly' ? `<p class="text-[12px] text-muted">API key นี้เป็นแบบ Sending access (ปลอดภัยกว่า) จึงเช็กสถานะโดเมนจากที่นี่ไม่ได้ · ดูสถานะใน resend.com › Domains แล้วกด <b>ส่งอีเมลทดสอบ</b> ถ้าได้รับ แปลว่าใช้งานได้</p>`
     : dom.status === 'missing' ? `<p class="text-[12px]" style="color:#9a5b00">ยังไม่ได้เพิ่มโดเมน ${esc(dom.name)} ใน Resend · ไปที่ resend.com › Domains › Add domain</p>`
     : `<div class="flex items-center gap-2 text-[12.5px]">โดเมน <b class="font-medium">${esc(dom.name)}</b> ${pill(domOk, 'ยืนยันแล้ว ส่งได้', 'ยังไม่ผ่าน · ' + esc(dom.status))}</div>${domOk ? '' : recs}`;
   const left = `<div class="card p-5 min-w-0 grid gap-4">
@@ -7066,7 +7066,8 @@ function mlRender() {
     <label class="flex items-start justify-between gap-3 cursor-pointer"><span><span class="block">ส่งอีเมล “ได้รับคำขอแล้ว” อัตโนมัติ</span><span class="block text-[11.5px] text-muted">ทันทีที่ลูกค้าส่งฟอร์มจองบนเว็บและใส่อีเมลไว้ · ตามภาษาที่ลูกค้าใช้</span></span><span class="tgl shrink-0"><input id="mlAck" type="checkbox" ${S.ack ? 'checked' : ''} ${ro ? 'disabled' : ''}/><span></span></span></label>
     ${domLine}
     <div class="flex flex-wrap items-center gap-2">${S.src === 'saved' && !ro ? '<button class="btn btn-g !h-9 text-muted" onclick="mlRemoveKey()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบ key</button>' : ''}<span class="ml-auto"></span>
-      <button class="btn btn-o !h-9" ${!S.ready || MLS.busy.test ? 'disabled' : ''} onclick="mlTest()"><i data-lucide="send" class="w-3.5 h-3.5"></i>${MLS.busy.test ? 'กำลังส่ง…' : 'ส่งอีเมลทดสอบถึงฉัน'}</button>
+      <input id="mlTo" type="email" class="inp !h-9 !w-[230px] text-[13px]" placeholder="ส่งทดสอบไปที่อีเมล…" title="อีเมลที่จะรับอีเมลทดสอบ (จำไว้ในเครื่องนี้)" value="${esc(mlTestTo())}" autocomplete="off" spellcheck="false"/>
+      <button class="btn btn-o !h-9" ${!S.ready || MLS.busy.test ? 'disabled' : ''} onclick="mlTest()"><i data-lucide="send" class="w-3.5 h-3.5"></i>${MLS.busy.test ? 'กำลังส่ง…' : 'ส่งอีเมลทดสอบ'}</button>
       <button class="btn btn-p !h-9" ${MLS.busy.save || ro ? 'disabled' : ''} onclick="mlSave()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${MLS.busy.save ? 'กำลังบันทึก…' : 'บันทึก'}</button></div>
     <div class="rounded-xl bg-sand p-3 text-[12px]"><p class="font-medium mb-1">ตั้งค่าครั้งแรก (ฟรี)</p><ol class="list-decimal pl-5 grid gap-1 text-muted">
       <li>สมัครที่ <a class="text-maroon" href="https://resend.com" target="_blank" rel="noopener">resend.com</a></li>
@@ -7091,7 +7092,12 @@ function mlSave() {
   mlBusy('save', api('PUT', 'settings/mail', { mail: m }).then(r => { MLS.st = r.mail; MLS.docs = r.docs; AUDIT_DIRTY = true; toast('บันทึกแล้ว'); }).catch(fail));
 }
 function mlRemoveKey() { if (!confirm('ลบ API key ของ Resend? ระบบจะหยุดส่งอีเมลจนกว่าจะใส่ใหม่')) return; mlBusy('save', api('PUT', 'settings/mail', { mail: { key: null } }).then(r => { MLS.st = r.mail; AUDIT_DIRTY = true; toast('ลบ key แล้ว'); }).catch(fail)); }
-function mlTest() { mlBusy('test', api('POST', 'settings/mail/test', {}).then(r => toast('ส่งอีเมลทดสอบไปที่ ' + r.to + ' แล้ว · เช็กกล่องจดหมาย (และสแปม)')).catch(fail)); }
+function mlTestTo() { try { return localStorage.getItem('btt.mlTo') || ME?.email || ''; } catch { return ME?.email || ''; } }
+function mlTest() {
+  const to = ($('#mlTo')?.value || '').trim();
+  if (to && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return toastErr('อีเมลผู้รับทดสอบไม่ถูกต้อง');
+  try { if (to) localStorage.setItem('btt.mlTo', to); } catch {}
+  mlBusy('test', api('POST', 'settings/mail/test', to ? { to } : {}).then(r => toast('ส่งอีเมลทดสอบไปที่ ' + r.to + ' แล้ว · เช็กกล่องจดหมาย (และสแปม)')).catch(fail)); }
 function mlSaveDocs() {
   const d = { vat: $('#dcVat').value, depositPct: +$('#dcDep').value, quoteDays: +$('#dcDays').value, bankTh: $('#dcBankTh').value, bankEn: $('#dcBankEn').value, termsTh: $('#dcTermsTh').value, termsEn: $('#dcTermsEn').value };
   mlBusy('docs', api('PUT', 'settings/mail', { docs: d }).then(r => { MLS.st = r.mail; MLS.docs = r.docs; AUDIT_DIRTY = true; toast('บันทึกค่าเริ่มต้นเอกสารแล้ว'); }).catch(fail));
