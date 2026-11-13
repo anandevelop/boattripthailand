@@ -1236,3 +1236,8 @@ html[lang] body footer p.font-medium.mb-4:not(.font-display):not(.font-display +
 html[lang] body footer p.uppercase.text-xs:not(.font-display):not(.font-display + p) { font-weight: 500 !important; color: #8a1c24 !important; }
 html[lang] body footer .border-t :is(p, a, span, div):not(.font-display):not(.font-display + p) { color: #5a4b4d !important; }
 html body footer .font-display.text-xl + p { color: #231416 !important; }
+/* boat card specs (length · guests · pier): one size smaller, with clear space between the three (Nov 2026) */
+.fx-specs { gap: 12px !important; }
+.fx-specs, .fx-specs span { font-size: 11.5px !important; }
+.fx-specs svg { width: 12.5px !important; height: 12.5px !important; }
+@media (min-width: 1024px) { .fx-specs, .fx-specs span { font-size: 12px !important; } }
