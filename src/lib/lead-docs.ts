@@ -261,6 +261,16 @@ export async function docPdf(row: { no: string; kind: string; data: unknown }) {
 
 /* ---------- email a document (PDF attached) ---------- */
 export async function sendDoc(row: NonNullable<Awaited<ReturnType<typeof docById>>>, l: Lead, to: string, u: User) {
+  const m = await docMail(row);
+  const id = await sendMail({ to, ...m });
+  await db.update(leadDocs).set({ sentAt: new Date(), sentTo: to }).where(eq(leadDocs.id, row.id));
+  await db.insert(leadActivities).values({ leadId: l.id, userId: u.id, type: 'email', data: { kind: row.kind, no: row.no, to, ok: true, id } });
+  await audit({ id: u.id, role: u.role }, { action: 'update', entity: 'lead', ref: l.ref, label: l.ref, changes: [{ f: 'ส่งอีเมล', from: null, to: `${row.no} → ${to}` }] });
+  return id;
+}
+
+/** the customer email for a document: subject, body and the PDF — the same for a real send and the admin's test */
+async function docMail(row: { no: string; kind: string; data: unknown }) {
   const d = row.data as DocData, th = d.lang === 'th', T = (a: string, b: string) => th ? a : b, t = totals(d), ci = await contactInfo(), kind = row.kind as Kind;
   const pdf = await docPdf(row);
   const title = kind === 'quote' ? T(`ใบเสนอราคา ${row.no}`, `Quotation ${row.no}`) : T(`ยืนยันการจอง ${row.no}`, `Booking confirmation ${row.no}`);
@@ -273,9 +283,22 @@ export async function sendDoc(row: NonNullable<Awaited<ReturnType<typeof docById
     buttons: [{ label: 'WhatsApp', href: waLink(ci.wa), color: '#128c4a' }, { label: 'LINE', href: ci.lineUrl, color: '#06a64a' }],
     footer: `${escHtml(th ? ci.companyTh : ci.company)}${ci.tat ? ' · TAT ' + escHtml(ci.tat) : ''}<br>${escHtml(th ? ci.addrTh : ci.addrEn)}` });
   const text = `${title}\n${d.trip.boat} · ${d.trip.program}\n${fmtDate(d.trip.date, d.lang)}\n${T('ยอดรวม', 'Total')}: ${baht(t.total)}`;
-  const id = await sendMail({ to, subject: `${title} · Boat Trip Thailand`, html, text, attachments: [{ filename: `${row.no}.pdf`, content: pdf }] });
-  await db.update(leadDocs).set({ sentAt: new Date(), sentTo: to }).where(eq(leadDocs.id, row.id));
-  await db.insert(leadActivities).values({ leadId: l.id, userId: u.id, type: 'email', data: { kind: row.kind, no: row.no, to, ok: true, id } });
-  await audit({ id: u.id, role: u.role }, { action: 'update', entity: 'lead', ref: l.ref, label: l.ref, changes: [{ f: 'ส่งอีเมล', from: null, to: `${row.no} → ${to}` }] });
-  return id;
+  return { subject: `${title} · Boat Trip Thailand`, html, text, attachments: [{ filename: `${row.no}.pdf`, content: pdf }] };
+}
+
+/** admin test (ตั้งค่า › อีเมล & เอกสาร): the real document email + PDF with sample data, settings as saved now. Nothing is stored. */
+export async function sendSampleDoc(kind: Kind, lang: 'th' | 'en', to: string, by: string) {
+  const cfg = await docsCfg(), th = lang === 'th', T = (a: string, b: string) => th ? a : b;
+  const [b] = await db.select({ name: boats.name, marina: boats.marina }).from(boats).limit(1);
+  const trip = addDays(today(), 30), boat = b?.name ?? 'Boat Trip Thailand';
+  const d: DocData = { lang, issued: today(), by,
+    customer: { name: T('ลูกค้าตัวอย่าง', 'Sample Customer'), phone: '+66 81 234 5678', email: to },
+    trip: { boat, program: T('ครึ่งวัน 4 ชั่วโมง', 'Half Day 4 hrs.'), date: trip, time: '09:00–13:00', guests: '8', pier: b?.marina ?? '' },
+    items: [{ desc: `${boat} · ${T('ครึ่งวัน 4 ชั่วโมง', 'Half Day 4 hrs.')}`, qty: 1, price: 45000 }, { desc: T('อาหารกลางวันบนเรือ', 'Lunch on board'), qty: 8, price: 500 }],
+    discount: 0, vat: cfg.vat, depositPct: cfg.depositPct, depositDue: addDays(today(), Math.min(cfg.quoteDays, 3)), balanceDue: addDays(trip, -1),
+    validUntil: addDays(today(), cfg.quoteDays), paid: 0, note: T('อีเมลทดสอบ · ข้อมูลในเอกสารนี้เป็นตัวอย่าง', 'Test email · the details in this document are examples') };
+  if (kind === 'confirm') d.paid = totals(d).deposit;
+  const no = `${kind === 'quote' ? 'QT' : 'BC'}-TEST`;
+  const m = await docMail({ no, kind, data: d });
+  return sendMail({ to, ...m, subject: T('[ทดสอบ] ', '[TEST] ') + m.subject });
 }

@@ -7067,6 +7067,7 @@ function mlRender() {
     ${domLine}
     <div class="flex flex-wrap items-center gap-2">${S.src === 'saved' && !ro ? '<button class="btn btn-g !h-9 text-muted" onclick="mlRemoveKey()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบ key</button>' : ''}<span class="ml-auto"></span>
       <input id="mlTo" type="email" class="inp !h-9 !w-[230px] text-[13px]" placeholder="ส่งทดสอบไปที่อีเมล…" title="อีเมลที่จะรับอีเมลทดสอบ (จำไว้ในเครื่องนี้)" value="${esc(mlTestTo())}" oninput="mlKeepTo(this.value)" autocomplete="off" spellcheck="false"/>
+      <select id="mlSample" class="inp !h-9 !w-auto text-[13px]" title="แบบอีเมลที่จะส่งทดสอบ" onchange="MLS.sample = this.value">${[['', 'ทดสอบการส่ง'], ['quote-th', 'ใบเสนอราคา · ไทย'], ['quote-en', 'ใบเสนอราคา · อังกฤษ'], ['confirm-th', 'ยืนยันการจอง · ไทย'], ['confirm-en', 'ยืนยันการจอง · อังกฤษ']].map(([v, l]) => `<option value="${v}" ${(MLS.sample ?? 'confirm-th') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
       <button class="btn btn-o !h-9" ${!S.ready || MLS.busy.test ? 'disabled' : ''} onclick="mlTest()"><i data-lucide="send" class="w-3.5 h-3.5"></i>${MLS.busy.test ? 'กำลังส่ง…' : 'ส่งอีเมลทดสอบ'}</button>
       <button class="btn btn-p !h-9" ${MLS.busy.save || ro ? 'disabled' : ''} onclick="mlSave()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${MLS.busy.save ? 'กำลังบันทึก…' : 'บันทึก'}</button></div>
     <div class="rounded-xl bg-sand p-3 text-[12px]"><p class="font-medium mb-1">ตั้งค่าครั้งแรก (ฟรี)</p><ol class="list-decimal pl-5 grid gap-1 text-muted">
@@ -7098,7 +7099,8 @@ function mlTest() {
   const to = ($('#mlTo')?.value || '').trim();
   if (to && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return toastErr('อีเมลผู้รับทดสอบไม่ถูกต้อง');
   try { if (to) localStorage.setItem('btt.mlTo', to); } catch {}
-  mlBusy('test', api('POST', 'settings/mail/test', to ? { to } : {}).then(r => toast('ส่งอีเมลทดสอบไปที่ ' + r.to + ' แล้ว · เช็กกล่องจดหมาย (และสแปม)')).catch(fail)); }
+  const sample = $('#mlSample')?.value || '';
+  mlBusy('test', api('POST', 'settings/mail/test', { ...(to ? { to } : {}), ...(sample ? { sample } : {}) }).then(r => toast('ส่งอีเมลทดสอบไปที่ ' + r.to + ' แล้ว · เช็กกล่องจดหมาย (และสแปม)')).catch(fail)); }
 function mlSaveDocs() {
   const d = { vat: $('#dcVat').value, depositPct: +$('#dcDep').value, quoteDays: +$('#dcDays').value, bankTh: $('#dcBankTh').value, bankEn: $('#dcBankEn').value, termsTh: $('#dcTermsTh').value, termsEn: $('#dcTermsEn').value };
   mlBusy('docs', api('PUT', 'settings/mail', { docs: d }).then(r => { MLS.st = r.mail; MLS.docs = r.docs; AUDIT_DIRTY = true; toast('บันทึกค่าเริ่มต้นเอกสารแล้ว'); }).catch(fail));

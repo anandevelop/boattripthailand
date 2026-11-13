@@ -13,7 +13,7 @@ import { customerTrash, purgeCustomer, restoreCustomer, trashCustomer } from '@/
 import { leadTrash, purgeLead, restoreLead, trashLead } from '@/lib/lead-trash';
 import { legalContent, saveLegal } from '@/lib/legal-pages';
 import { MailError, mailStatus, saveMailCfg, sendMail, mailLayout } from '@/lib/mail';
-import { createDoc, docById, docDraft, DocError, docsCfg, listDocs, saveDocsCfg, sendDoc, type Kind } from '@/lib/lead-docs';
+import { createDoc, docById, docDraft, DocError, docsCfg, listDocs, saveDocsCfg, sendDoc, sendSampleDoc, type Kind } from '@/lib/lead-docs';
 import { cleanHome, HOME_KEY } from '@/lib/home';
 import { ACTS_KEY, cleanActivities } from '@/lib/activities';
 import { cleanSeo, SEO_KEY } from '@/lib/seo';
@@ -726,7 +726,13 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
         return json({ mail: await mailStatus(true), docs: await docsCfg() });
       }
       if (c0 === 'test' && method === 'POST') {
-        const to = str(body.to, 120) || me.email;
+        const to = str(body.to, 120) || me.email, sample = str(body.sample, 20);
+        const m = /^(quote|confirm)-(th|en)$/.exec(sample);
+        if (m) {
+          try { await sendSampleDoc(m[1] as Kind, m[2] as 'th' | 'en', to, me.name); }
+          catch (e) { if (e instanceof MailError) throw new HttpError(400, e.message); throw e; }
+          return json({ ok: true, to });
+        }
         try {
           await sendMail({ to, subject: 'ทดสอบอีเมล · Boat Trip Thailand', text: 'ระบบส่งอีเมลของ Boat Trip Thailand ใช้งานได้แล้ว',
             html: mailLayout({ lang: 'th', preheader: 'ทดสอบอีเมล', title: 'ระบบส่งอีเมลใช้งานได้แล้ว', intro: `ส่งจากหลังบ้านโดย ${me.name.replace(/[<>&]/g, '')} · ถ้าอีเมลนี้อยู่ในกล่องจดหมายหลัก (ไม่ใช่สแปม) แปลว่าตั้งค่าโดเมนถูกต้องแล้ว`, footer: 'Boat Trip Thailand' }) });
