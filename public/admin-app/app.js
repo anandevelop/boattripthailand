@@ -2463,7 +2463,7 @@ vBoats = function () {
     tbl.querySelectorAll('tbody tr').forEach((r, n) => { const b = list[n]; if (!b) return;
       r.insertAdjacentHTML('afterbegin', `<td><input type="checkbox" class="accent-[#70000e] w-4 h-4" ${BSEL.has(b.slug) ? 'checked' : ''} onchange="this.checked?BSEL.add('${b.slug}'):BSEL.delete('${b.slug}');vBoats()"/></td>`);
       if (b.status === 'draft') r.children[1].querySelector('p')?.insertAdjacentHTML('beforeend', ' <span class="pill st-quote ml-1">ร่าง</span>');
-      const last = r.lastElementChild; last.innerHTML = `<div class="flex justify-end gap-0.5"><button class="btn btn-g !px-2" title="แก้ไข" onclick="boatEdit('${b.slug}')"><i data-lucide="pencil" class="w-4 h-4"></i></button><button class="btn btn-g !px-2" title="ทำสำเนา" onclick="boatDup('${b.slug}')"><i data-lucide="copy" class="w-4 h-4"></i></button><button class="btn btn-g !px-2 hover:!text-[#a3222c]" title="ลบ" onclick="boatDel('${b.slug}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`; });
+      const last = r.lastElementChild; last.innerHTML = `<div class="flex justify-end gap-0.5"><button class="btn btn-g !px-2" title="ดาวน์โหลดข้อมูลเรือ (PDF)" aria-label="PDF" onclick="bsOpen('${b.slug}')"><i data-lucide="file-down" class="w-4 h-4"></i></button><button class="btn btn-g !px-2" title="แก้ไข" onclick="boatEdit('${b.slug}')"><i data-lucide="pencil" class="w-4 h-4"></i></button><button class="btn btn-g !px-2" title="ทำสำเนา" onclick="boatDup('${b.slug}')"><i data-lucide="copy" class="w-4 h-4"></i></button><button class="btn btn-g !px-2 hover:!text-[#a3222c]" title="ลบ" onclick="boatDel('${b.slug}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`; });
     tbl.querySelectorAll('tbody input[type=checkbox][onchange*=".active="]').forEach(cb => cb.setAttribute('onchange', cb.getAttribute('onchange').replace(/bySlug\('([^']+)'\)\.active=this\.checked;/, (m, sl) => `${m}bySlug('${sl}').status=this.checked?'live':'hidden';`)));
   }
   if (BSEL.size) $('#view .card').insertAdjacentHTML('afterbegin', `<div class="m-3 rounded-xl bg-ink text-white px-4 py-2.5 flex flex-wrap items-center gap-2 text-[12.5px]"><span>เลือก ${BSEL.size} ลำ</span><span class="flex-1"></span>
@@ -2530,7 +2530,7 @@ vBoatEdit = function (slug) {
   const hd = $('#view > div.flex.items-center.gap-3.mb-5'), right = hd?.querySelector('.ml-auto');
   if (right) { right.querySelector('label')?.remove(); hd.classList.add('flex-wrap'); right.classList.add('flex-wrap','gap-2'); right.classList.remove('gap-3');
     right.insertAdjacentHTML('afterbegin', `<select class="inp !h-9 !w-auto" onchange="const b=bySlug('${slug}');b.status=this.value;b.active=this.value==='live';toast(ST_B[this.value][0])">${Object.entries(ST_B).map(([k, [l]]) => `<option value="${k}" ${b.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
-      <button class="btn btn-o !px-2.5" title="ทำสำเนา" onclick="boatDup('${slug}')"><i data-lucide="copy" class="w-4 h-4"></i></button><button class="btn btn-o !px-2.5 hover:!text-[#a3222c]" title="ลบ" onclick="boatDel('${slug}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`);
+      <button class="btn btn-o !px-2.5" title="ดาวน์โหลดข้อมูลเรือ (PDF)" aria-label="PDF" onclick="bsOpen('${slug}')"><i data-lucide="file-down" class="w-4 h-4"></i></button><button class="btn btn-o !px-2.5" title="ทำสำเนา" onclick="boatDup('${slug}')"><i data-lucide="copy" class="w-4 h-4"></i></button><button class="btn btn-o !px-2.5 hover:!text-[#a3222c]" title="ลบ" onclick="boatDel('${slug}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`);
     const save = right.querySelector('.btn-p'); save.setAttribute('onclick', `boatSave('${slug}')`); if (b.status === 'draft') save.innerHTML = '<i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>เผยแพร่'; }
   const box = $('#view .card .p-5') || $('#view .fade');
   if (BE.tab === 'info' && box) {
@@ -7214,3 +7214,26 @@ function docSend(ref, id) {
   document.addEventListener('visibilitychange', () => { if (!document.hidden) pollLeads(); });
   window.addEventListener('beforeunload', e => { boatTick(true); artTick(true); if (BFLY.size || AFLY.size) { e.preventDefault(); e.returnValue = ''; } });
 })();
+
+/* ---------- ข้อมูลเรือเป็น PDF (spec sheet) · /api/admin/boat-sheet/<slug> (lib/boat-sheet.ts) ---------- */
+const BS = { lang: 'en', prices: true };
+function bsOpen(slug) {
+  const b = typeof bySlug === 'function' ? bySlug(slug) : FLEET.find(x => x.slug === slug); if (!b) return;
+  const seg = (k, v, l) => `<button class="flex-1 h-9 rounded-lg text-[13px] ${BS[k] === v ? 'bg-white shadow-sm font-medium' : 'text-muted'}" onclick="BS.${k}='${v}';bsOpen('${slug}')">${l}</button>`;
+  openModal(`<div class="p-5 flex flex-col gap-4">
+    <div class="flex items-start gap-3"><span class="w-9 h-9 rounded-xl grid place-items-center shrink-0" style="background:rgb(112 0 14 / .08);color:#70000e"><i data-lucide="file-down" class="w-4 h-4"></i></span>
+      <div class="flex-1 min-w-0"><p class="font-medium">ข้อมูลเรือเป็น PDF</p><p class="text-[12px] text-muted truncate">${esc(b.title || b.name || slug)} · รูป สเปก ราคา และ QR ไปหน้าเรือ · ใช้ข้อมูลที่บันทึกล่าสุด</p></div>
+      <button class="btn btn-g !px-2" onclick="closeModal()" aria-label="ปิด"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div><p class="lbl">ภาษา</p><div class="flex gap-1 rounded-xl bg-sand p-1">${seg('lang', 'en', 'English')}${seg('lang', 'th', 'ไทย')}</div></div>
+    <label class="flex items-start justify-between gap-3 cursor-pointer"><span><span class="block">ใส่ตารางราคา</span><span class="block text-[11.5px] text-muted">ปิดไว้ถ้าจะส่งให้เอเจนต์ หรือยังไม่อยากบอกราคา</span></span><span class="tgl shrink-0"><input type="checkbox" ${BS.prices ? 'checked' : ''} onchange="BS.prices=this.checked"/><span></span></span></label>
+    <div class="flex justify-end gap-2 pt-1"><button class="btn btn-o" onclick="bsGo('${slug}',false)"><i data-lucide="eye" class="w-3.5 h-3.5"></i>เปิดดู</button><button class="btn btn-p" onclick="bsGo('${slug}',true)"><i data-lucide="download" class="w-3.5 h-3.5"></i>ดาวน์โหลด</button></div>
+  </div>`);
+  $('#modalBox').style.maxWidth = '420px';
+  icons();
+}
+function bsGo(slug, dl) {
+  const u = `/api/admin/boat-sheet/${encodeURIComponent(slug)}?lang=${BS.lang}&prices=${BS.prices ? 1 : 0}${dl ? '&dl=1' : ''}`;
+  if (dl) { const a = document.createElement('a'); a.href = u; a.download = ''; document.body.appendChild(a); a.click(); a.remove(); toast('กำลังสร้าง PDF…'); }
+  else window.open(u, '_blank', 'noopener');
+  closeModal();
+}
