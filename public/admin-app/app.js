@@ -7066,7 +7066,7 @@ function mlRender() {
     <label class="flex items-start justify-between gap-3 cursor-pointer"><span><span class="block">ส่งอีเมล “ได้รับคำขอแล้ว” อัตโนมัติ</span><span class="block text-[11.5px] text-muted">ทันทีที่ลูกค้าส่งฟอร์มจองบนเว็บและใส่อีเมลไว้ · ตามภาษาที่ลูกค้าใช้</span></span><span class="tgl shrink-0"><input id="mlAck" type="checkbox" ${S.ack ? 'checked' : ''} ${ro ? 'disabled' : ''}/><span></span></span></label>
     ${domLine}
     <div class="flex flex-wrap items-center gap-2">${S.src === 'saved' && !ro ? '<button class="btn btn-g !h-9 text-muted" onclick="mlRemoveKey()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>ลบ key</button>' : ''}<span class="ml-auto"></span>
-      <input id="mlTo" type="email" class="inp !h-9 !w-[230px] text-[13px]" placeholder="ส่งทดสอบไปที่อีเมล…" title="อีเมลที่จะรับอีเมลทดสอบ (จำไว้ในเครื่องนี้)" value="${esc(mlTestTo())}" autocomplete="off" spellcheck="false"/>
+      <input id="mlTo" type="email" class="inp !h-9 !w-[230px] text-[13px]" placeholder="ส่งทดสอบไปที่อีเมล…" title="อีเมลที่จะรับอีเมลทดสอบ (จำไว้ในเครื่องนี้)" value="${esc(mlTestTo())}" oninput="mlKeepTo(this.value)" autocomplete="off" spellcheck="false"/>
       <button class="btn btn-o !h-9" ${!S.ready || MLS.busy.test ? 'disabled' : ''} onclick="mlTest()"><i data-lucide="send" class="w-3.5 h-3.5"></i>${MLS.busy.test ? 'กำลังส่ง…' : 'ส่งอีเมลทดสอบ'}</button>
       <button class="btn btn-p !h-9" ${MLS.busy.save || ro ? 'disabled' : ''} onclick="mlSave()"><i data-lucide="check" class="w-3.5 h-3.5"></i>${MLS.busy.save ? 'กำลังบันทึก…' : 'บันทึก'}</button></div>
     <div class="rounded-xl bg-sand p-3 text-[12px]"><p class="font-medium mb-1">ตั้งค่าครั้งแรก (ฟรี)</p><ol class="list-decimal pl-5 grid gap-1 text-muted">
@@ -7092,7 +7092,8 @@ function mlSave() {
   mlBusy('save', api('PUT', 'settings/mail', { mail: m }).then(r => { MLS.st = r.mail; MLS.docs = r.docs; AUDIT_DIRTY = true; toast('บันทึกแล้ว'); }).catch(fail));
 }
 function mlRemoveKey() { if (!confirm('ลบ API key ของ Resend? ระบบจะหยุดส่งอีเมลจนกว่าจะใส่ใหม่')) return; mlBusy('save', api('PUT', 'settings/mail', { mail: { key: null } }).then(r => { MLS.st = r.mail; AUDIT_DIRTY = true; toast('ลบ key แล้ว'); }).catch(fail)); }
-function mlTestTo() { try { return localStorage.getItem('btt.mlTo') || ME?.email || ''; } catch { return ME?.email || ''; } }
+function mlKeepTo(v) { MLS.to = v; try { localStorage.setItem('btt.mlTo', v.trim()); } catch {} }
+function mlTestTo() { if (typeof MLS.to === 'string') return MLS.to; try { return localStorage.getItem('btt.mlTo') || ME?.email || ''; } catch { return ME?.email || ''; } }
 function mlTest() {
   const to = ($('#mlTo')?.value || '').trim();
   if (to && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return toastErr('อีเมลผู้รับทดสอบไม่ถูกต้อง');
