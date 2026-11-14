@@ -3159,6 +3159,9 @@ const can = k => permsOf(ME).includes(k);
 const isRO = () => false;
 const PAGE_PERM = { dashboard: 'bookings', bookings: 'bookings', calendar: 'bookings', customers: 'bookings', audiences: 'marketing', boats: 'boats', seasons: 'boats', activities: 'boats', content: 'content', articles: 'content', media: 'content', seo: 'seo', analytics: 'seo', team: 'team', settings: 'settings', audit: 'audit' };
 const canPage = p => !PAGE_PERM[p] || can(PAGE_PERM[p]);
+/* เรือ & ราคา → ท่าเรือ (vPiers, near the end of this file) — registered here so a reload on #/piers opens it */
+PAGES.splice(PAGES.findIndex(p => p[0] === 'seasons') + 1, 0, ['piers', 'ท่าเรือ', 'anchor', () => vPiers()]);
+PAGE_PERM.piers = 'boats';
 const firstPage = () => PAGES.find(x => x[0] !== '—' && canPage(x[0]))?.[0];
 const ownB = b => b.sales === ME?.id;
 
@@ -3766,7 +3769,7 @@ logout = function (reason) {
 
 /* ---------- boats: anything changed in the list syncs at once; the open editor syncs on บันทึก / leaving ---------- */
 const boatPayload = b => ({ slug: b.slug, name: b.title && b.name === niceTitle(b.title) ? b.title : b.name, subtitle: b.subtitle, type: b.type, ft: b.ft, pax: b.pax, marinaP: b.marinaP, marina: b.marina, from_: b.from_, active: b.active, featured: b.featured, status: b.status,
-  cal: SZ.boats[b.slug] || null, colmap: (SZ.colmap || {})[b.slug] ?? null, imgs: (b.imgs || []).filter(u => !/^data:/.test(u)), tables: b.tables, includes: b.includes, not_included: b.not_included, complimentary: b.complimentary, notes: b.notes, info: b.info, time_slots: b.time_slots, i18n: b.i18n || null });
+  cal: SZ.boats[b.slug] || null, colmap: (SZ.colmap || {})[b.slug] ?? null, imgs: (b.imgs || []).filter(u => !/^data:/.test(u)), tables: b.tables, includes: b.includes, not_included: b.not_included, complimentary: b.complimentary, notes: b.notes, info: b.info, time_slots: b.time_slots, i18n: b.i18n || null, trip: b.trip || null });
 const BSYNC = new Map(), BFLY = new Set(), RENAMED = {};
 FLEET.forEach(b => BSYNC.set(b.slug, JSON.stringify(boatPayload(b))));
 function pushBoat(b, k, note) {
@@ -4303,8 +4306,8 @@ PAGES.push(['system', 'ระบบ & สำรองข้อมูล', 'serve
   f.insertAdjacentHTML('beforeend', '<div id="sysHost" class="mt-5"></div>'); vSystem();
 }; PAGES.find(p => p[0] === 'settings')[3] = vSettings; }
 /* ---------- merged menus: ฤดูกาลราคา → tab of เรือ & ราคา · ระบบ & สำรองข้อมูล → tab of ตั้งค่า ---------- */
-const NAV_MERGED = { seasons: 'boats', system: 'settings' };
-const boatTabs = cur => `<div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${[['boats', 'เรือทั้งหมด', 'sailboat'], ['seasons', 'ฤดูกาลราคา', 'calendar-range']].filter(([k]) => canPage(k)).map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${cur === k ? 'on' : ''}" onclick="go('${k}')"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>`;
+const NAV_MERGED = { seasons: 'boats', piers: 'boats', system: 'settings' };
+const boatTabs = cur => `<div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${[['boats', 'เรือทั้งหมด', 'sailboat'], ['seasons', 'ฤดูกาลราคา', 'calendar-range'], ['piers', 'ท่าเรือ', 'anchor']].filter(([k]) => canPage(k)).map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${cur === k ? 'on' : ''}" onclick="go('${k}')"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>`;
 const addBoatTabs = k => { const h = $('#view > div'); if (h && !$('#view > .tabbar')) { h.insertAdjacentHTML('afterend', boatTabs(k)); icons(); } };
 { const _b = vBoats; vBoats = function () { _b(); addBoatTabs('boats'); }; PAGES.find(p => p[0] === 'boats')[3] = vBoats; }
 { const _s = vSeasons; vSeasons = function () { _s(); addBoatTabs('seasons'); }; PAGES.find(p => p[0] === 'seasons')[3] = vSeasons; }
@@ -4312,7 +4315,7 @@ const addBoatTabs = k => { const h = $('#view > div'); if (h && !$('#view > .tab
   // a page that fails to draw (e.g. one odd record) must not leave the menu without icons or the merged items visible
   try { _r(); } catch (e) { console.error('[route]', e); icons(); toastErr('แสดงหน้านี้ไม่ครบ · ลองรีเฟรช หรือแจ้งทีมพัฒนา'); }
   for (const [k, parent] of Object.entries(NAV_MERGED)) { $$(`#nav a[href="#/${k}"]`).forEach(a => a.remove()); if (CUR === k) $(`#nav a[href="#/${parent}"]`)?.classList.add('on'); }
-  if (CUR === 'seasons') $('#pageTitle').textContent = 'เรือ & ราคา';
+  if (CUR === 'seasons' || CUR === 'piers') $('#pageTitle').textContent = 'เรือ & ราคา';
 }; }
 PAGE_PERM.system = 'settings';
 
@@ -7237,3 +7240,80 @@ function bsGo(slug, dl) {
   else window.open(u, '_blank', 'noopener');
   closeModal();
 }
+
+/* ---------- เรือ & ราคา → ท่าเรือ: map pin of each pier (lib/piers.ts · settings 'site.piers' → window.__PIERS__ on the site) ---------- */
+var PRS = { list: null, err: '', busy: '' };   // var: the page is registered (and may be opened by a restored session) before this line runs
+const prsBoats = c => FLEET.filter(b => { const s = String(b.marinaP || b.marina || '').toLowerCase(); return ({ 'Chalong Pier': /chalong/, 'Ao Po Grand Marina': /ao po/, 'ONE°15 Marina Panwa': /one°15|one 15|one15/, 'Boat Lagoon': /boat lagoon/, 'Royal Phuket Marina': /royal phuket|rpm/, 'Coco Pier Panwa': /coco/, 'Nakalay Pier (Kalim)': /nakalay|kalim/ })[c]?.test(s); }).length;
+function prsLoad() { PRS.err = ''; api('GET', 'settings/piers').then(r => { PRS.list = r.piers; if (CUR === 'piers') vPiers(); }).catch(e => { PRS.err = e.message || 'โหลดไม่สำเร็จ'; if (CUR === 'piers') vPiers(); }); }
+function vPiers() {
+  if (!PRS) return setTimeout(vPiers);
+  const L = PRS.list, ro = isRO();
+  const gm = ll => `https://www.google.com/maps/search/?api=1&query=${ll.join(',')}`;
+  const row = (p, i) => `<div class="p-4 grid lg:grid-cols-[1.1fr_1.4fr_auto] gap-3 lg:items-center">
+      <div class="min-w-0"><p class="font-medium flex items-center gap-2 flex-wrap">${esc(p.n)} ${p.set ? '<span class="pill" style="background:#eaf6ef;color:#1e7a46">ปักหมุดแล้ว</span>' : p.ok ? '<span class="pill" style="background:#eef3fb;color:#2a5aa8">พิกัดตรวจแล้ว</span>' : '<span class="pill" style="background:#fff6e5;color:#9a5b00">พิกัดโดยประมาณ</span>'}</p>
+        <p class="text-[12px] text-muted">${esc(p.th)} · เรือ ${prsBoats(p.c)} ลำ</p>
+        <p class="text-[12px] mt-1 flex items-center gap-2 flex-wrap"><span class="font-mono">${p.ll.map(x => x.toFixed(5)).join(', ')}</span><a class="text-maroon inline-flex items-center gap-1" href="${gm(p.ll)}" target="_blank" rel="noopener"><i data-lucide="external-link" class="w-3 h-3"></i>เปิดใน Google Maps</a></p>
+        ${p.set ? `<p class="text-[11px] text-muted">ตั้งโดย ${esc(p.set.by)} · ${esc(new Date(p.set.at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }))}</p>` : ''}</div>
+      <input id="prsIn${i}" class="inp font-mono !text-[12.5px]" placeholder="วางพิกัด 7.82150, 98.36080 หรือลิงก์ Google Maps" ${ro ? 'disabled' : ''} onkeydown="if(event.key==='Enter')prsSave(${i})"/>
+      <div class="flex gap-2 justify-end">${p.set && !ro ? `<button class="btn btn-g !h-9 text-muted" title="กลับไปใช้พิกัดเดิม" onclick="prsSave(${i},true)" ${PRS.busy ? 'disabled' : ''}><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>` : ''}<button class="btn btn-p !h-9" onclick="prsSave(${i})" ${ro || PRS.busy ? 'disabled' : ''}>${PRS.busy === p.c ? 'กำลังบันทึก…' : 'บันทึกหมุด'}</button></div>
+    </div>`;
+  $('#view').innerHTML = `${head('ท่าเรือ', 'หมุดของแต่ละท่าเรือ ใช้กับแผนที่ในหน้าเรือ ปุ่มนำทาง บัตรให้คนขับแท็กซี่ และเวลาขับรถจากโรงแรม')}
+    <div class="card p-4 mb-4 text-[12.5px] bg-sand"><p class="font-medium mb-1">วิธีเอาพิกัดที่แม่นยำ</p><ol class="list-decimal pl-5 grid gap-0.5 text-muted">
+      <li>เปิด Google Maps ซูมไปที่ทางเข้าท่าเรือ หรือจุดที่ลูกค้าต้องไปขึ้นเรือจริง</li><li>คลิกขวาที่จุดนั้น (มือถือ: กดค้าง) แล้วกดตัวเลขพิกัดบรรทัดบนสุดเพื่อคัดลอก</li><li>วางในช่องของท่าเรือ แล้วกด บันทึกหมุด · ขึ้นหน้าเว็บทันที · วางลิงก์ Google Maps ที่มีพิกัดก็ได้</li></ol></div>
+    <div class="card divide-y divide-line">${!L ? `<div class="p-10 text-center text-muted">${PRS.err ? esc(PRS.err) : 'กำลังโหลด…'}</div>` : L.map(row).join('')}</div>`;
+  addBoatTabs('piers'); icons();
+  if (!L && !PRS.err) prsLoad();
+}
+function prsSave(i, reset) {
+  const p = PRS.list?.[i]; if (!p) return;
+  const pin = ($('#prsIn' + i)?.value || '').trim();
+  if (!reset && !pin) return toastErr('วางพิกัดหรือลิงก์ Google Maps ก่อน');
+  PRS.busy = p.c; vPiers();
+  api('PUT', 'settings/piers', reset ? { c: p.c, reset: true } : { c: p.c, pin }).then(r => { PRS.list = r.piers; AUDIT_DIRTY = true; toast(reset ? 'กลับไปใช้พิกัดเดิมแล้ว' : 'บันทึกหมุด ' + p.n + ' แล้ว · ขึ้นหน้าเว็บแล้ว'); })
+    .catch(fail).finally(() => { PRS.busy = ''; if (CUR === 'piers') vPiers(); const el = $('#prsIn' + i); if (el && !reset && PRS.list?.[i]?.set) el.value = ''; });
+}
+
+/* ---------- เรือ › จุดหมาย & ระยะเวลา: override what the site reads from program names (boats.data.trip) ---------- */
+const TRIP_DESTS = [['phiphi', 'เกาะพีพี', /phi ?phi|\bpp\b/i], ['khai', 'เกาะไข่', /khai/i], ['coral', 'เกาะเฮ (คอรัล)', /coral/i], ['maiton', 'เกาะไม้ท่อน', /maiton/i], ['racha', 'เกาะราชา', /racha/i],
+  ['phangnga', 'อ่าวพังงา / เกาะห้อง', /phang ?nga|james bond|\bjb\b|\bhong\b/i], ['naka', 'เกาะนาคา / รังใหญ่', /naka|rang ?yai/i], ['sunset', 'พระอาทิตย์ตก (พรหมเทพ)', /promthep|phromthep|sunset/i], ['krabi', 'กระบี่', /krabi/i], ['yao', 'เกาะยาว', /\byao\b/i]];
+const TRIP_KINDS = [['half', 'ครึ่งวัน'], ['full', 'เต็มวัน'], ['sunset', 'พระอาทิตย์ตก'], ['night', 'ค้างคืน']];
+const tripKindAuto = s => /half/i.test(s) ? 'half' : /full/i.test(s) ? 'full' : /sunset/i.test(s) ? 'sunset' : /night/i.test(s) ? 'night' : '';
+const tripHrsAuto = s => { const m = String(s || '').match(/(\d+(?:\.\d)?)\s*(?:hrs?|hours?|ชม)/i); return m ? +m[1] : null; };
+const tripDestAuto = b => { const t = [...b.tables.flatMap(tb => tb.rows.map(r => r[0] || '').concat(tb.caption || '')), ...(b.time_slots || []).map(r => r[0] || '')].join(' | '); return TRIP_DESTS.filter(([, , re]) => re.test(t)).map(([k]) => k); };
+function tripEnsure(b) { if (!b.trip) b.trip = { dests: null, prog: {} }; b.trip.prog ??= {}; return b.trip; }
+function tripClean(b) { const T = b.trip; if (T && !Array.isArray(T.dests) && !Object.keys(T.prog || {}).length) b.trip = null; }
+function tripDest(slug, k) { const b = bySlug(slug), T = tripEnsure(b), cur = Array.isArray(T.dests) ? T.dests : tripDestAuto(b); T.dests = cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k]; vBoatEdit(slug); }
+function tripDestAutoSet(slug) { const b = bySlug(slug); if (b.trip) b.trip.dests = null; tripClean(b); vBoatEdit(slug); }
+function tripSet(slug, key, f, v) { const b = bySlug(slug), T = tripEnsure(b), o = { ...(T.prog[key] || {}) };
+  if (f === 'hrs') { const n = parseFloat(v); if (v === '' || !(n > 0)) delete o.hrs; else o.hrs = Math.round(n * 2) / 2; } else { if (v) o.kind = v; else delete o.kind; }
+  if (Object.keys(o).length) T.prog[key] = o; else delete T.prog[key]; tripClean(b); }
+function tripBody(slug) {
+  const b = bySlug(slug), T = b.trip || {}, auto = tripDestAuto(b), dests = Array.isArray(T.dests) ? T.dests : auto, manual = Array.isArray(T.dests), ro = isRO();
+  const chip = ([k, l]) => { const on = dests.includes(k); return `<button class="h-9 px-3 rounded-full text-[13px] ring-1 ${on ? 'bg-maroon text-white ring-maroon' : 'ring-line text-muted bg-white'}" ${ro ? 'disabled' : ''} onclick="tripDest('${slug}','${k}')">${on ? '✓ ' : ''}${l}${!manual && on ? '' : ''}</button>`; };
+  const rows = b.tables.flatMap((tb, ti) => tb.rows.filter(r => (r[0] || '').trim()).map(r => ({ key: r[0].trim(), cap: tb.caption || `ตาราง ${ti + 1}`, ak: tripKindAuto(r[0] + ' ' + (tb.caption || '')), ah: tripHrsAuto(r[0]) ?? tripHrsAuto(tb.caption) })));
+  const seen = new Set(), uniq = rows.filter(r => !seen.has(r.key) && seen.add(r.key));
+  const kl = k => (TRIP_KINDS.find(x => x[0] === k) || [, '—'])[1];
+  return `<p class="font-medium">จุดหมายของเรือลำนี้ <span class="pill ${manual ? '' : 'bg-sand text-muted'} !text-[11px] align-middle">${manual ? 'ตั้งเอง' : 'อัตโนมัติจากชื่อโปรแกรม'}</span></p>
+    <p class="text-[12px] text-muted mb-3">ใช้กับตัวกรอง "อยากไปเกาะไหน" ในหน้ารวมเรือ หน้าปลายทาง และการแนะนำเรือ · กดเพื่อเพิ่ม/เอาออก</p>
+    <div class="flex flex-wrap gap-2">${TRIP_DESTS.map(chip).join('')}</div>
+    ${manual && !ro ? `<button class="btn btn-g !h-8 mt-2 text-muted" onclick="tripDestAutoSet('${slug}')"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>กลับไปใช้อัตโนมัติ (${auto.length ? auto.map(k => TRIP_DESTS.find(x => x[0] === k)[1]).join(', ') : 'ไม่พบ'})</button>` : ''}
+    <p class="font-medium mt-7">ประเภทและระยะเวลาของแต่ละโปรแกรม</p>
+    <p class="text-[12px] text-muted mb-3">ปล่อยว่าง = ใช้ค่าที่อ่านได้จากชื่อโปรแกรม (แสดงเป็นสีเทา) · ใช้กับตัวกรองครึ่งวัน/เต็มวัน/ค้างคืน ชั่วโมงในหน้าเรือ และการจับคู่รอบเวลา</p>
+    ${uniq.length ? `<div class="overflow-x-auto"><table class="tbl min-w-[620px]"><thead><tr><th>โปรแกรม</th><th class="w-44">ประเภท</th><th class="w-32">ชั่วโมง</th></tr></thead><tbody>${uniq.map(r => { const o = (T.prog || {})[r.key] || {}, k = esc(JSON.stringify(r.key)).replace(/'/g, '&#39;');
+      return `<tr><td><p class="truncate max-w-[340px]">${esc(r.key)}</p><p class="text-[11px] text-muted truncate max-w-[340px]">${esc(r.cap)}</p></td>
+        <td><select class="inp !h-9" ${ro ? 'disabled' : ''} onchange="tripSet('${slug}',${k},'kind',this.value)"><option value="">อัตโนมัติ · ${kl(r.ak)}</option>${TRIP_KINDS.map(([v, l]) => `<option value="${v}" ${o.kind === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+        <td><input class="inp !h-9" type="number" min="0.5" max="72" step="0.5" value="${o.hrs ?? ''}" placeholder="${r.ah ?? '—'}" ${ro ? 'disabled' : ''} onchange="tripSet('${slug}',${k},'hrs',this.value)"/></td></tr>`; }).join('')}</tbody></table></div>` : '<p class="text-muted text-[13px]">ยังไม่มีโปรแกรมในตารางราคา</p>'}
+    <p class="text-[11.5px] text-muted mt-3">ค่าที่ตั้งผูกกับชื่อโปรแกรม (ภาษาอังกฤษ) · ถ้าเปลี่ยนชื่อโปรแกรมในตารางราคา ต้องตั้งใหม่ · กด บันทึก ด้านบนเพื่อขึ้นเว็บ</p>`;
+}
+{ const _ve = vBoatEdit; vBoatEdit = function (slug) {
+  const mine = BE.tab === 'trip';
+  if (mine) BE.tab = 'info';
+  _ve(slug);
+  if (mine) BE.tab = 'trip';
+  const b = bySlug(slug), tb = $('#view .tabbar'); if (!b || !tb) return;
+  if (mine) tb.querySelectorAll('.tab.on').forEach(x => x.classList.remove('on'));
+  const prices = [...tb.querySelectorAll('.tab')].find(x => x.textContent.trim() === 'โปรแกรม & ราคา');
+  (prices || tb.lastElementChild).insertAdjacentHTML('afterend', `<button class="tab ${mine ? 'on' : ''}" onclick="BE.tab='trip';vBoatEdit('${slug}')">จุดหมาย & ระยะเวลา</button>`);
+  if (mine) { const body = tb.nextElementSibling?.querySelector('.p-5') || $('#view .card .p-5'); if (body) body.innerHTML = tripBody(slug); }
+  icons();
+}; }

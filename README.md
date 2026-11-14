@@ -78,7 +78,24 @@ docker compose exec app npx tsx scripts/create-user.ts --email anan@boattripthai
 
 **HTTPS + โดเมนจริง**: ตั้ง DNS ของ `DOMAIN` ให้ชี้มาที่เซิร์ฟเวอร์ แล้ว `docker compose --profile https up -d` (Caddy ออกใบรับรองให้อัตโนมัติ)
 
-**สำรองข้อมูล**: `docker compose exec db pg_dump -U btt btt > backup-$(date +%F).sql` (ควรตั้ง cron ทุกวัน)
+**สำรองข้อมูล**: ระบบสำรองข้อมูลธุรกิจเองทุกคืน (หลังบ้าน → ตั้งค่า → ระบบ & สำรองข้อมูล · เก็บ 30 วันใน `UPLOAD_DIR/_backups`) และ deploy ทุกครั้งเก็บ `pg_dump` ไว้ที่ `~/backups` ของผู้ใช้ deploy · ทั้งสองอย่างอยู่บนเครื่องเดียวกับเว็บ — ควรคัดลอกออกนอกเซิร์ฟเวอร์ด้วย (รวมโฟลเดอร์รูป `uploads`) · สำรองเองด้วยมือ: `docker compose exec db pg_dump -U btt btt > backup-$(date +%F).sql`
+
+**ค่าตั้งค่าเพิ่มเติมใน `.env`** (ไม่ใส่ก็ทำงานได้ · รายละเอียดอยู่ใน `.env.example`)
+
+| ค่า | ใช้ทำอะไร | ค่าเริ่มต้น |
+|---|---|---|
+| `SETTINGS_KEY` | เข้ารหัส key ที่บันทึกในหลังบ้าน (LINE, Google, Resend) · เปลี่ยนแล้วต้องใส่ key ใหม่ | มาจาก `POSTGRES_PASSWORD` |
+| `LEAD_TOKEN_SECRET` | ลายเซ็นกันสแปมของฟอร์มจอง | มาจาก `POSTGRES_PASSWORD` |
+| `UPLOAD_DIR` | ที่เก็บรูปที่อัปโหลด + ไฟล์สำรอง `_backups` | `./uploads` (Docker: `/app/uploads`) |
+| `DISABLE_JOBS` | `true` = ปิดงานตั้งเวลาในแอป (สำรองข้อมูล, IndexNow, โพสต์ตั้งเวลา, แจ้งเตือน) | เปิด |
+| `CRON_SECRET` | ให้ cron ภายนอกเรียก `/api/cron?key=…` แทน/เสริมตัวตั้งเวลาในแอป | ปิด |
+| `INDEXNOW_AUTO` | `false` = ไม่ส่ง URL ที่เปลี่ยนไป Bing อัตโนมัติทุก 5 นาที | เปิด |
+| `SITE_CACHE_SECONDS` / `SITE_CACHE_PAGES` | อายุ (วินาที) และจำนวนหน้าเว็บที่เก็บแคช · บันทึกในหลังบ้านล้างแคชให้เองอยู่แล้ว | 3600 / 2000 |
+| `SSR_WARM` | `false` = ไม่เรนเดอร์ทุกหน้าใน sitemap ล่วงหน้าหลังสตาร์ต | เปิด |
+| `SEO_NOINDEX` | `1` = ห้าม Google เก็บทั้งเว็บ (เซิร์ฟเวอร์ทดสอบ) · โฮสต์อื่นที่ไม่ใช่ `APP_URL` เป็น noindex อยู่แล้ว | ว่าง |
+| `GEMINI_FREE_RPD` / `PSI_DAILY_LIMIT` | เพดานโควตาฟรีต่อวันของแปลภาษา / PageSpeed | 500 / 500 |
+| `ADMIN_EMAIL` / `ADMIN_NAME` | ค่าเริ่มต้นของ `npm run user:create` | — |
+| `RESEND_API_KEY` / `MAIL_FROM` | ส่งอีเมล (ตั้งในหลังบ้านได้ · ค่าใน `.env` ชนะ) | — |
 
 ## ตั้งค่า LINE OA (แจ้งเตือนลีด)
 

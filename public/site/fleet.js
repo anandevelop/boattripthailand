@@ -45,7 +45,7 @@ const fxDate = iso => { if (!iso) return ''; const [, m, d] = iso.split('-').map
 /* ---------- facts read once from the brochure tables (always the English source text) ---------- */
 FLEET.forEach(b => {
   const progs = b.tables.flatMap(tb => tb.rows.map(r => r[0] || '').concat(tb.columns[0] || '')).concat((b.time_slots || []).map(r => r[0] || '')).join(' | ');
-  b.fxDest = Object.keys(FX_DEST).filter(k => FX_DEST[k][0].test(progs));
+  b.fxDest = b.trip && Array.isArray(b.trip.dests) ? b.trip.dests.filter(k => FX_DEST[k]) : Object.keys(FX_DEST).filter(k => FX_DEST[k][0].test(progs));   // admin override (app.js tripOverride)
   b.fxDur = ['half', 'full', 'night'].filter(k => (b.trips || []).includes(k === 'night' ? 'overnight' : k));
   if (!b.fxDur.length) b.fxDur = ['full'];
   b.fxRank = FEATURED.indexOf(b.slug);
@@ -444,6 +444,8 @@ const PIERS = [
   { c: 'Coco Pier Panwa', n: 'Coco Pier Panwa', th: 'ท่าเรือโคโค่ พันวา', adTh: 'แหลมพันวา ต.วิชิต อ.เมืองภูเก็ต จ.ภูเก็ต', adEn: 'Cape Panwa, Wichit, Mueang Phuket', ll: [7.803, 98.404], ok: false, q: 'Coco Pier Panwa, Phuket' },
   { c: 'Nakalay Pier (Kalim)', n: 'Nakalay Pier (Kalim)', th: 'ท่าเรือนาคาเล (กะหลิม)', adTh: 'หาดกะหลิม ต.ป่าตอง อ.กะทู้ จ.ภูเก็ต', adEn: 'Kalim Beach, Patong, Kathu, Phuket', ll: [7.9118, 98.2925], ok: false, q: 'Nakalay Pier Kalim, Phuket' },
 ];
+/* pins set in admin → เรือ & ราคา → ท่าเรือ (lib/piers.ts) win over the built-in ones and count as checked */
+(function () { const W = typeof window !== 'undefined' ? window : {}, pins = W.__PIERS__ || {}; PIERS.forEach(p => { const ll = pins[p.c]; if (Array.isArray(ll) && ll.length === 2 && isFinite(ll[0]) && isFinite(ll[1])) { p.ll = [+ll[0], +ll[1]]; p.ok = true; } }); })();
 const PR = { p: null, b: null, map: null, pin: null, is3d: true, styleOk: false, io: null };
 const PR_ML = '/site/vendor/maplibre-gl-4.7.1/maplibre-gl';
 const PR_STYLE = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';

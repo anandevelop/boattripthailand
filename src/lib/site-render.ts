@@ -12,6 +12,7 @@ import { DESTINATIONS } from './destinations';
 import { SITE } from './i18n';
 import { homeContent } from './home';
 import { legalContent } from './legal-pages';
+import { pierPins } from './piers';
 import { activitiesContent } from './activities';
 import { publicSeo, seoConfig } from './seo';
 
@@ -60,7 +61,7 @@ function loadAssets() {
 }
 
 /* ---------------- data (cached) ---------------- */
-type SiteData = { __SET__: Record<string, unknown>; __HOME__: unknown; __LEGAL__: unknown; __ACTS__: unknown[]; __SEO__: unknown; FLEET: unknown[]; EXTRA: unknown; SEASONS: unknown; BIMG: Record<string, Record<string, string>>; GALLERY: Record<string, string[]>; SHOWIMG: Record<string, string[]>; TEAM_IMG: Record<string, string>; POSTS: PostIdx[]; DEST_PAGES: unknown[] };
+type SiteData = { __SET__: Record<string, unknown>; __HOME__: unknown; __LEGAL__: unknown; __PIERS__: unknown; __ACTS__: unknown[]; __SEO__: unknown; FLEET: unknown[]; EXTRA: unknown; SEASONS: unknown; BIMG: Record<string, Record<string, string>>; GALLERY: Record<string, string[]>; SHOWIMG: Record<string, string[]>; TEAM_IMG: Record<string, string>; POSTS: PostIdx[]; DEST_PAGES: unknown[] };
 type PostIdx = { id: number; cat: string; date: string; cover: string | null; title: { th: string; en: string }; slug: { th: string; en: string }; excerpt: { th: string; en: string }; kw: { th: string; en: string }; has: { th: boolean; en: boolean }; read: { th: number; en: number } };
 const strip = (h?: string) => (h ?? '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 type B = { html?: string; items?: { q: string; a: string }[] };
@@ -104,9 +105,9 @@ export async function siteDataBundle() {
   return (S.dataLoading ??= loadBundle(S.gen).finally(() => { S.dataLoading = null; }));
 }
 async function loadBundle(gen: number): Promise<Bundle> {
-  const [bs, cals, ps, cfg, home, acts, seo, legal] = await Promise.all([db.select().from(boats).where(eq(boats.active, true)).orderBy(asc(boats.sortOrder)), db.select().from(seasonCalendars), db.select().from(posts).where(eq(posts.published, true)), db.select().from(settings).where(eq(settings.key, 'admin.sitecfg')), homeContent(), activitiesContent(), seoConfig(), legalContent()]);
+  const [bs, cals, ps, cfg, home, acts, seo, legal, pins] = await Promise.all([db.select().from(boats).where(eq(boats.active, true)).orderBy(asc(boats.sortOrder)), db.select().from(seasonCalendars), db.select().from(posts).where(eq(posts.published, true)), db.select().from(settings).where(eq(settings.key, 'admin.sitecfg')), homeContent(), activitiesContent(), seoConfig(), legalContent(), pierPins()]);
   const extra = JSON.parse(read('data/boats.json')).extra;
-  const FLEET = bs.map(b => ({ slug: b.slug, title: b.name, subtitle: b.subtitle ?? '', type: b.type, ft: b.ft, pax: b.pax, from_: b.fromPrice, marina: b.marina ?? '', pattaya: /pattaya/i.test(b.marina ?? ''), pages: [], info: b.data.info ?? [], includes: b.data.includes ?? [], complimentary: b.data.complimentary ?? [], not_included: b.data.not_included ?? [], time_slots: b.data.time_slots ?? [], notes: b.data.notes ?? [], remarks: [], tables: b.data.tables ?? [], i18n: (b.data as { i18n?: unknown }).i18n ?? null }));
+  const FLEET = bs.map(b => ({ slug: b.slug, title: b.name, subtitle: b.subtitle ?? '', type: b.type, ft: b.ft, pax: b.pax, from_: b.fromPrice, marina: b.marina ?? '', pattaya: /pattaya/i.test(b.marina ?? ''), pages: [], info: b.data.info ?? [], includes: b.data.includes ?? [], complimentary: b.data.complimentary ?? [], not_included: b.data.not_included ?? [], time_slots: b.data.time_slots ?? [], notes: b.data.notes ?? [], remarks: [], tables: b.data.tables ?? [], i18n: (b.data as { i18n?: unknown }).i18n ?? null, trip: (b.data as { trip?: unknown }).trip ?? null }));
   const BIMG = Object.fromEntries(bs.map(b => [b.slug, Object.fromEntries(['hero', 'a', 'b'].map((k, i) => [k, ver(b.images.find(u => u.endsWith(`-${k}.webp`)) ?? b.images[i] ?? '')]))]));
   /** every photo of a boat in the order set in the admin — first = cover */
   const GALLERY = Object.fromEntries(bs.map(b => [b.slug, b.images.filter(Boolean).map(ver)]));
@@ -115,7 +116,7 @@ async function loadBundle(gen: number): Promise<Bundle> {
   for (const f of readdirSync(path.join(ROOT, 'public/img/acts')).sort()) (SHOWIMG[f.split('-')[0]] ??= []).push('/img/acts/' + f);
   const TEAM_IMG = Object.fromEntries(['kwang', 'save', 'prang'].map(n => [n, `/img/team/${n}.webp`]));
   const POSTS: PostIdx[] = ps.map(postIdx);
-  const data = { __SET__: publicSettings(cfg[0]?.value), __HOME__: home, __LEGAL__: legal, __ACTS__: acts.filter(a => a.active !== false), __SEO__: publicSeo(seo), FLEET, EXTRA: extra, SEASONS, BIMG, GALLERY, SHOWIMG, TEAM_IMG, POSTS, DEST_PAGES: DESTINATIONS.map(({ match, ...d }) => ({ ...d, hero: ver(d.hero), match: match.source })) };
+  const data = { __SET__: publicSettings(cfg[0]?.value), __HOME__: home, __LEGAL__: legal, __PIERS__: pins, __ACTS__: acts.filter(a => a.active !== false), __SEO__: publicSeo(seo), FLEET, EXTRA: extra, SEASONS, BIMG, GALLERY, SHOWIMG, TEAM_IMG, POSTS, DEST_PAGES: DESTINATIONS.map(({ match, ...d }) => ({ ...d, hero: ver(d.hero), match: match.source })) };
   // big blocks as JSON.parse('…'): browsers parse a JSON string much faster than the same data written as a JS object literal
   const js = Object.entries(data).map(([k, v]) => { const j = JSON.stringify(v); return `window.${k}=${(j.length > 8000 ? `JSON.parse(${JSON.stringify(j)})` : j).replace(/</g, '\\u003c')};`; }).join('\n');
   const bundle = { at: Date.now(), data, js, version: createHash('sha1').update(js).digest('hex').slice(0, 12) };

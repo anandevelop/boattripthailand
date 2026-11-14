@@ -12,6 +12,7 @@ import { clearSiteCache } from '@/lib/site-render';
 import { customerTrash, purgeCustomer, restoreCustomer, trashCustomer } from '@/lib/customer-trash';
 import { leadTrash, purgeLead, restoreLead, trashLead } from '@/lib/lead-trash';
 import { legalContent, saveLegal } from '@/lib/legal-pages';
+import { parsePin, piersAdmin, savePier } from '@/lib/piers';
 import { MailError, mailStatus, saveMailCfg, sendMail, mailLayout } from '@/lib/mail';
 import { createDoc, docById, docDraft, DocError, docsCfg, listDocs, saveDocsCfg, sendDoc, sendSampleDoc, type Kind } from '@/lib/lead-docs';
 import { cleanHome, HOME_KEY } from '@/lib/home';
@@ -315,6 +316,21 @@ function priceChanges(before: Boat['data'], after: Boat['data']) {
 }
 const arr = (v: unknown) => (Array.isArray(v) ? v : []);
 const strArr = (v: unknown, max = 600) => arr(v).map(x => str(x, max)).filter(Boolean).slice(0, 80);
+/** เรือ › จุดหมาย & ระยะเวลา: staff overrides of what the site reads from program names (null = all automatic) */
+const TRIP_DESTS = ['phiphi', 'khai', 'coral', 'maiton', 'racha', 'phangnga', 'naka', 'sunset', 'krabi', 'yao'], TRIP_KINDS = ['half', 'full', 'sunset', 'night'];
+function tripFromClient(v: unknown) {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, unknown>;
+  const dests = Array.isArray(o.dests) ? [...new Set(o.dests.map(x => str(x, 20)).filter(x => TRIP_DESTS.includes(x)))] : null;
+  const prog: Record<string, { hrs?: number; kind?: string }> = {};
+  if (o.prog && typeof o.prog === 'object') for (const [k, x] of Object.entries(o.prog as Record<string, unknown>).slice(0, 200)) {
+    const e = (x ?? {}) as Record<string, unknown>, out: { hrs?: number; kind?: string } = {};
+    const h = Number(e.hrs); if (Number.isFinite(h) && h > 0 && h <= 72) out.hrs = Math.round(h * 2) / 2;
+    if (TRIP_KINDS.includes(str(e.kind, 10))) out.kind = str(e.kind, 10);
+    if (Object.keys(out).length && k.trim()) prog[str(k, 200)] = out;
+  }
+  return dests || Object.keys(prog).length ? { dests, prog } : null;
+}
 function boatFromClient(c: Record<string, unknown>, cur?: Boat) {
   const slug = str(c.slug, 120).toLowerCase();
   if (!/^[a-z0-9][a-z0-9-]{1,118}$/.test(slug)) throw new HttpError(400, 'slug ใช้ได้เฉพาะ a-z 0-9 และ -');
@@ -326,6 +342,7 @@ function boatFromClient(c: Record<string, unknown>, cur?: Boat) {
   };
   if (c.i18n && typeof c.i18n === 'object' && JSON.stringify(c.i18n).length < 200_000) data.i18n = c.i18n;
   if (c.status) data.status = str(c.status, 20);
+  data.trip = tripFromClient(c.trip);
   const images = strArr(c.imgs, 2000).filter(u => /^(\/|https:\/\/)/.test(u)).slice(0, 40);
   const num = (v: unknown) => (v === '' || v == null || Number.isNaN(Number(v)) ? null : Number(v));
   return { slug, name: str(c.name || c.title, 120) || slug, subtitle: str(c.subtitle, 300) || null, type: str(c.type, 20) || 'yacht', ft: num(c.ft), pax: num(c.pax) == null ? null : Math.round(num(c.pax)!), marina: str(c.marinaP || c.marina, 200) || null,
@@ -375,6 +392,7 @@ async function boatOp(u: User, slug: string, method: string, b: Record<string, u
     ...Object.keys(BOAT_LABEL).filter(k => k !== 'images' && JSON.stringify(base[k as keyof Boat] ?? null) !== JSON.stringify(v[k as keyof typeof v] ?? null)).map(k => ({ f: BOAT_LABEL[k], from: base[k as keyof Boat] ?? null, to: v[k as keyof typeof v] ?? null, ...(k === 'fromPrice' ? { kind: 'price' } : {}) })),
     ...(base.images.join() !== v.images.join() ? [{ f: 'รูปภาพ', from: `${base.images.length} รูป`, to: `${v.images.length} รูป` }] : []),
     ...priceChanges(base.data, v.data),
+    ...(JSON.stringify((base.data as { trip?: unknown }).trip ?? null) !== JSON.stringify((v.data as { trip?: unknown }).trip ?? null) ? [{ f: 'จุดหมาย & ระยะเวลา', from: '—', to: 'แก้ไขแล้ว' }] : []),
     // Thai / English texts and the boat's own SEO title / description (data.i18n) — without this a text-only save never reached the site
     ...(JSON.stringify((base.data as { i18n?: unknown }).i18n ?? null) !== JSON.stringify((v.data as { i18n?: unknown }).i18n ?? null) ? [{ f: 'ข้อความไทย / อังกฤษ และ SEO', from: '—', to: 'แก้ไขแล้ว' }] : []),
   ];
@@ -738,6 +756,20 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
             html: mailLayout({ lang: 'th', preheader: 'ทดสอบอีเมล', title: 'ระบบส่งอีเมลใช้งานได้แล้ว', intro: `ส่งจากหลังบ้านโดย ${me.name.replace(/[<>&]/g, '')} · ถ้าอีเมลนี้อยู่ในกล่องจดหมายหลัก (ไม่ใช่สแปม) แปลว่าตั้งค่าโดเมนถูกต้องแล้ว`, footer: 'Boat Trip Thailand' }) });
         } catch (e) { if (e instanceof MailError) throw new HttpError(400, e.message); throw e; }
         return json({ ok: true, to });
+      }
+    }
+    if (a === 'settings' && b0 === 'piers') {
+      // เรือ & ราคา → ท่าเรือ: the map pin of each pier (lib/piers.ts) — live on the boat pages right after saving
+      await need(me, 'boats');
+      if (method === 'GET') return json({ piers: await piersAdmin() });
+      if (method === 'PUT') {
+        const c = str(body.c, 80), reset = body.reset === true;
+        const ll = reset ? null : await parsePin(str(body.pin, 2000));
+        if (!reset && !ll) throw new HttpError(400, 'อ่านพิกัดไม่ได้ · วางพิกัดแบบ 7.8215, 98.3608 หรือลิงก์ Google Maps ที่มีพิกัด');
+        let r; try { r = await savePier(c, ll, me.name); } catch (e) { throw new HttpError(400, e instanceof Error ? e.message : 'บันทึกไม่สำเร็จ'); }
+        clearSiteCache();
+        await audit(actor(me), { action: 'update', entity: 'settings', ref: 'piers', label: 'ท่าเรือ · ' + c, changes: [{ f: 'หมุด ' + c, from: r.before ? r.before.join(', ') : 'ค่าเริ่มต้น', to: r.after ? r.after.join(', ') : 'ค่าเริ่มต้น' }] });
+        return json({ piers: await piersAdmin() });
       }
     }
     if (a === 'settings' && b0 === 'legal') {

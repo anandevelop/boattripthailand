@@ -120,7 +120,7 @@ export function postToClient(p: Post) {
 export function boatToClient(b: Boat) {
   const d = b.data as Boat['data'] & { i18n?: unknown };
   return { slug: b.slug, title: b.name, subtitle: b.subtitle ?? '', type: b.type, ft: b.ft, pax: b.pax, from_: b.fromPrice, marina: b.marina ?? '', pattaya: /pattaya/i.test(b.marina ?? ''), pages: [], info: d.info ?? [], includes: d.includes ?? [], complimentary: d.complimentary ?? [], not_included: d.not_included ?? [], time_slots: d.time_slots ?? [], notes: d.notes ?? [], remarks: [], tables: d.tables ?? [],
-    active: b.active, featured: b.featured, status: b.active ? 'live' : 'hidden', cal: b.calendarId ?? 'all', imgs: b.images, ...(d.i18n ? { i18n: d.i18n } : {}) };
+    active: b.active, featured: b.featured, status: b.active ? 'live' : 'hidden', cal: b.calendarId ?? 'all', imgs: b.images, ...(d.i18n ? { i18n: d.i18n } : {}), trip: (d as { trip?: unknown }).trip ?? null };
 }
 
 /** connection status (no secrets) */

@@ -526,12 +526,29 @@ const rs = (u, w = 768) => { if (!u || !w || !/^\/(boats|img|uploads)\//.test(u)
 const bimg = (slug, k, w = 768) => rs((BIMG[slug] || {})[k] || '', w);
 /** photos of a boat in admin order; falls back to the 3 brochure images */
 const gallery = slug => { const g = (window.GALLERY || {})[slug]; return g && g.length ? g : ['hero', 'a', 'b'].map(k => bimg(slug, k, 0)).filter(Boolean); };
+/* staff overrides from admin → เรือ › จุดหมาย & ระยะเวลา (boats.data.trip): destinations and, per program name, the trip
+   kind / hours. Anything not set stays as read from the brochure text. */
+const TRIP_DEST_NAMES = { phiphi: ['Phi Phi'], khai: ['Khai'], coral: ['Coral'], maiton: ['Maiton'], racha: ['Racha'], phangnga: ['Phang Nga', 'Hong'], naka: ['Naka'], sunset: ['Promthep'], krabi: ['Krabi'], yao: ['Yao'] };
+const tripProg = (b, raw) => (b.trip && b.trip.prog && b.trip.prog[String(raw || '').trim()]) || {};
+function tripOverride(b) {
+  const T = b.trip; if (!T) return;
+  if (Array.isArray(T.dests)) b.dest = DESTS.filter(d => T.dests.some(k => (TRIP_DEST_NAMES[k] || []).includes(d)));
+  if (T.prog && Object.keys(T.prog).length) {
+    const kindOf = s => /half/i.test(s) ? 'half' : /full/i.test(s) ? 'full' : /sunset/i.test(s) ? 'sunset' : /night/i.test(s) ? 'overnight' : '';
+    const ks = new Set();
+    b.tables.forEach(tb => tb.rows.forEach(r => { const o = tripProg(b, r[0]).kind; const k = o ? (o === 'night' ? 'overnight' : o) : kindOf((r[0] || '') + ' ' + (tb.caption || '')); if (k) ks.add(k); }));
+    (b.time_slots || []).forEach(r => { const k = kindOf(r[0] || ''); if (k === 'sunset' || k === 'overnight') ks.add(k); });
+    if (ks.size) b.trips = ['half', 'full', 'sunset', 'overnight'].filter(k => ks.has(k));
+    b.overnight = b.trips.includes('overnight') || b.overnight;
+  }
+}
 FLEET.forEach((b, i) => {
   b.idx = i;
   const blob = JSON.stringify(b.tables).toLowerCase() + ' ' + JSON.stringify(b.time_slots).toLowerCase();
   b.trips = ['half','full','sunset','overnight'].filter(k => blob.includes(k === 'overnight' ? 'night' : k));
   b.overnight = b.trips.includes('overnight') || !!infoGet(b,'Over Night','Overnight','Overnight Capacity');
   b.dest = DESTS.filter(d => blob.includes(d.toLowerCase()));
+  tripOverride(b);
   b.hot = FEATURED.indexOf(b.slug) > -1 && FEATURED.indexOf(b.slug) < 6;
   b.popRank = FEATURED.indexOf(b.slug) < 0 ? 999 : FEATURED.indexOf(b.slug);
   b.marinaP = prettyMarina(b.marina);
@@ -1118,7 +1135,8 @@ function bpProgs(b) {
   const out = [];
   b.tables.forEach((tb, ti) => tb.rows.forEach((r, ri) => {
     const ctx = r[0] + ' ' + (tb.caption || '');
-    out.push({ i: out.length, ti, ri, row: r, tb, raw: r[0], name: bpStrip(progName(b, ti, ri, r[0])), hrs: bpHrs(r[0]) ?? bpHrs(tb.caption), kind: bpKind(ctx) });
+    const ov = tripProg(b, r[0]);
+    out.push({ i: out.length, ti, ri, row: r, tb, raw: r[0], name: bpStrip(progName(b, ti, ri, r[0])), hrs: ov.hrs ?? bpHrs(r[0]) ?? bpHrs(tb.caption), kind: ov.kind || bpKind(ctx) });
   }));
   return out;
 }
