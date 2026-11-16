@@ -215,7 +215,7 @@ const I18N = {
     'qs.half':'Half day (4h)','qs.full':'Full day (8h)','qs.sunset':'Sunset (2–3h)','qs.overnight':'Overnight (2D1N)','qs.dest':'Where to','qs.date':'When','qs.guests':'Guests','qs.search2':'Find boats','qs.search':'Search','qs2.boat':'Charter a boat','qs2.tours':'Tours & activities','qs2.dests':'Destinations','qs2.smart':'Help me choose','qs2.anyDest':'All destinations','qs2.pop':'Popular','qs2.chat':'Chat on','qs2.help':'and our team will help you pick a boat',
     'unit.pax':'pax','stat.boats':'boats in our fleet','stat.marina':'marinas & piers','stat.group':'guests per boat','stat.tat':'TAT licensed',
     'cat.kicker':'Explore Phuket','cat.title':'What are we doing today?','cat.sub':'Pick a category and we\'ll curate the best experiences for you.',
-    'boats.kicker':'Our Fleet','boats.title':'Featured Boats','boats.sub':'From thrill-seeking speedboats to a 90 ft superyacht — every charter includes captain, crew and insurance.',
+    'boats.kicker':'Our Fleet','boats.title':'Featured Yachts for Charter in Phuket','boats.sub':'From thrill-seeking speedboats to a 90 ft superyacht — every charter includes captain, crew and insurance.',
     'boats.empty':'No boats match these filters. Try adjusting them.',
     'sort.pop':'Sort: Popular','sort.low':'Price: Low → High','sort.high':'Price: High → Low','sort.size':'Boat size',
     'routes.kicker':'Island Hopping','routes.title':'Top routes from Phuket',
@@ -1868,7 +1868,7 @@ function renderHeroText() {
   heroRotI = 0;
   const rot = HERO_ROT[LANG === 'en' ? 'en' : 'th'];
   $('#heroEyebrow').textContent = L('Boat Trip Thailand · Sea by Soul','Boat Trip Thailand · Sea by Soul');
-  $('#heroTitle').innerHTML = `<span class="ht-line"><span class="ht-kw" style="animation-delay:.1s">${L('Yacht Charter ภูเก็ต','Yacht Charter Phuket')}</span></span>`
+  $('#heroTitle').innerHTML = `<span class="ht-line"><span class="ht-kw" style="animation-delay:.1s">${L('เช่าเรือยอร์ชภูเก็ต','Yacht Charter Phuket')}</span></span>`
     + `<span class="ht-line"><span style="animation-delay:.22s">${L('ล่องทะเลอันดามัน','Sail the Andaman')}</span></span>`
     + `<span class="ht-line"><span style="animation-delay:.36s"><span class="hero-hl"><span id="heroRot">${rot[0]}</span></span></span></span>`;
   $('#heroSub').textContent = L(`เรือส่วนตัว ${FLEET.length} ลำ · ภูเก็ต กระบี่ พังงา`, `${FLEET.length} private boats · Phuket, Krabi, Phang Nga`);
@@ -1941,7 +1941,7 @@ function renderTypeBand() {
     <div class="absolute inset-0 bg-[#0b1a24]/65" aria-hidden="true"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 lg:py-24 text-white text-center">
       <p class="text-[11px] uppercase tracking-[.32em] text-white/70 reveal">${L('ค้นหาตาม','Search by')}</p>
-      <h2 id="typeBandTitle" class="font-display text-3xl sm:text-4xl mt-3 reveal">${L('ประเภทเรือ','Boat type')}</h2>
+      <h2 id="typeBandTitle" class="font-display text-3xl sm:text-4xl mt-3 reveal">${L('เรือยอร์ชและเรือให้เช่าในภูเก็ต ตามประเภท','Phuket charter boats by type')}</h2>
       <p class="text-sm text-white/75 mt-4 max-w-xl mx-auto reveal">${L(`รู้แล้วว่าอยากได้เรือแบบไหน? เลือกจากเรือส่วนตัว ${FLEET.length} ลำของเรา ทั่วภูเก็ต กระบี่ และพังงา`,`Know what you're looking for? Browse our ${FLEET.length} private boats across Phuket, Krabi and Phang Nga.`)}</p>
       <ul id="tbRow" class="tb-row mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10">
         ${TYPES.map((ty,i) => { const n = FLEET.filter(b => b.type === ty).length; return `<li class="reveal" style="transition-delay:${i*70}ms">
@@ -1990,10 +1990,10 @@ function renderHomeAnswer() {
   const now = new Date(), upd = LANG === 'en' ? now.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : `${['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][now.getMonth()]} ${now.getFullYear() + 543}`;
   const facts = [['tag', L('ราคาต่อลำ', 'Per boat'), L('ไม่ใช่ต่อคน', 'not per person')], ['users', L('รวมกัปตัน', 'Captain'), L('+ ลูกเรือ', '+ crew included')], ['clock', L('ยืนยันราคา', 'Price confirmed'), L('ใน 30 นาที', 'within 30 min')]];
   // structured data: the same price list as an ItemList of offers (read by Google / AI answers)
-  const ld = { '@context': 'https://schema.org', '@type': 'ItemList', name: L('ราคาเช่าเรือส่วนตัวภูเก็ต ตามประเภทเรือ', 'Private boat charter prices in Phuket by boat type'), itemListElement: rows.filter(r => r.from).map((r, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'Service', name: L('เช่า', 'Private ') + typeLabel(r.ty) + L(' ส่วนตัว ภูเก็ต', ' charter, Phuket'), url: SITE_ORIGIN + hashToPath('#/fleet') + '?type=' + r.ty, areaServed: 'Phuket', provider: { '@id': SITE_ORIGIN + '/#org' }, offers: { '@type': 'AggregateOffer', priceCurrency: 'THB', lowPrice: r.from, ...(r.top ? { highPrice: r.top } : {}), offerCount: r.n } } })) };
+  const ld = { '@context': 'https://schema.org', '@type': 'ItemList', name: L('ราคาเช่าเรือยอร์ชภูเก็ต ตามประเภทเรือ', 'Yacht charter Phuket prices by boat type'), itemListElement: rows.filter(r => r.from).map((r, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'Service', name: L('เช่า', 'Private ') + typeLabel(r.ty) + L(' ส่วนตัว ภูเก็ต', ' charter, Phuket'), url: SITE_ORIGIN + hashToPath('#/fleet') + '?type=' + r.ty, areaServed: 'Phuket', provider: { '@id': SITE_ORIGIN + '/#org' }, offers: { '@type': 'AggregateOffer', priceCurrency: 'THB', lowPrice: r.from, ...(r.top ? { highPrice: r.top } : {}), offerCount: r.n } } })) };
   el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 pt-10 lg:pt-16 pb-10 lg:pb-16"><div class="hx-ans">
     <div class="hx-ans-t">
-      <h2 id="phuket-boat-charter-price" class="font-display hx-h2">${L('เช่าเรือส่วนตัวภูเก็ต ราคาเท่าไหร่?', 'How much does a private boat charter in Phuket cost?')}</h2>
+      <h2 id="phuket-boat-charter-price" class="font-display hx-h2">${L('เช่าเรือยอร์ชภูเก็ต ราคาเท่าไหร่?', 'Yacht charter Phuket prices: how much does it cost?')}</h2>
       <p class="hx-p">${lo ? L(`<strong>ค่าเช่าเรือยอร์ชและเรือส่วนตัวในภูเก็ตกับ Boat Trip Thailand อยู่ที่ ${baht(lo.from)}–${baht(hi ? hi.top : lo.from)} ต่อลำ</strong> คิดเหมาทั้งลำ ไม่ใช่ต่อคน รวมกัปตัน ลูกเรือ และ VAT 7% แล้ว ${typeLabel(lo.ty)}เริ่มถูกที่สุดที่ ${baht(lo.from)}${hi ? ` ส่วน${typeLabel(hi.ty)}ลำใหญ่สูงสุดประมาณ ${baht(hi.top)}` : ''} ราคาจริงขึ้นกับขนาดเรือ ระยะเวลา (ครึ่งวันหรือเต็มวัน) เส้นทาง และฤดูกาล`,
         `<strong>A yacht or private boat charter in Phuket with Boat Trip Thailand costs ${baht(lo.from)}–${baht(hi ? hi.top : lo.from)} per boat</strong>, for the whole boat (not per person), with captain, crew and 7% VAT included. A ${typeLabel(lo.ty).toLowerCase()} is the cheapest from ${baht(lo.from)}${hi ? `; a large ${typeLabel(hi.ty).toLowerCase()} goes up to about ${baht(hi.top)}` : ''}. The final price depends on boat size, duration (half or full day), route and season.`) : ''}</p>
       <ul class="hx-facts">${facts.map(([ic, a, b]) => `<li><i data-lucide="${ic}"></i><span><b>${a}</b><small>${b}</small></span></li>`).join('')}</ul>
@@ -2014,7 +2014,7 @@ function renderHomeDests() {
   const el = $('#homeDests'); if (!el || !DPAGES.length) return;
   const sub = { 'phi-phi': L('อ่าวมาหยา น้ำทะเลใส', 'Maya Bay, clear water'), 'phang-nga-bay': L('เขาหินปูน พายแคนูลอดถ้ำ', 'Limestone karsts, sea caves'), 'racha-island': L('น้ำใส ดำน้ำตื้น', 'Clear water, snorkelling'), 'khai-island': L('ใกล้ที่สุด เหมาะครึ่งวัน', 'Closest, ideal half day') };
   el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 lg:py-20">
-    <div class="tm-head"><div><p class="tm-eyebrow"><i data-lucide="map-pin"></i>${L('ปลายทางยอดนิยม', 'Top destinations')}</p><h2 class="tm-title font-display">${L('เช่าเรือไปเกาะไหนดี', 'Where to go by private boat')}</h2></div>
+    <div class="tm-head"><div><p class="tm-eyebrow"><i data-lucide="map-pin"></i>${L('ปลายทางยอดนิยม', 'Top destinations')}</p><h2 class="tm-title font-display">${L('เช่าเรือยอร์ชภูเก็ต ไปเกาะไหนดี', 'Where to go on a Phuket yacht charter')}</h2></div>
       <a href="#/destinations" class="hx-more">${L('ดูปลายทางทั้งหมด', 'All destinations')}<i data-lucide="arrow-right" class="w-4 h-4"></i></a></div>
     <div class="hx-dg">${DPAGES.map((d, i) => { const n = destBoats(d.slug).length; return `<a href="#/dest/${d.slug}" class="hx-dc${i === 0 ? ' hx-dc1' : ''} img-fallback">
       <img src="${rs(d.hero, i === 0 ? 1280 : 768)}" alt="${L('เช่าเรือไป', 'Private boat to ')}${dl(d.name)}" loading="lazy"/><span class="hx-sh"></span>
@@ -2040,7 +2040,7 @@ function renderHomeHow() {
     [L('ชำระและออกทริป', 'Pay and set sail'), L('ชำระตามเงื่อนไขที่ทีมงานแจ้ง แล้วไปขึ้นเรือที่ท่าตามนัด', 'Pay as agreed with our team, then meet the boat at the marina')],
   ];
   el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 pb-14 lg:pb-20"><div class="hw">
-    <div class="hw-head"><div><p class="tm-eyebrow"><i data-lucide="list"></i>${L('จองยังไง', 'How to book')}</p><h2 class="tm-title font-display">${L('3 ขั้นตอน ไม่ต้องจ่ายบนเว็บ', '3 steps, no payment online')}</h2>
+    <div class="hw-head"><div><p class="tm-eyebrow"><i data-lucide="list"></i>${L('จองยังไง', 'How to book')}</p><h2 class="tm-title font-display">${L('จองเรือยอร์ชใน 3 ขั้นตอน ไม่ต้องจ่ายบนเว็บ', 'Book your yacht charter in 3 steps, no payment online')}</h2>
       <p class="tm-sub">${L('เลือกเรือหรือบอกความต้องการ ทีมงานติดต่อกลับทาง LINE, WhatsApp หรือโทร พร้อมราคาที่ยืนยันแล้ว', 'Choose a boat or tell us what you need — we reply on LINE, WhatsApp or phone with a confirmed price.')}</p></div>
       <button type="button" onclick="openBooking()" class="hx-btn hw-cta">${L('ส่งคำขอฟรี', 'Send a free request')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
     <ol class="hw-steps">${S.map(([t1, t2], i) => `<li class="hw-card"><div class="hw-ill hw-ill${i + 1}" aria-hidden="true">${ill[i]}</div><div class="hw-body"><p class="hw-t"><span class="hx-n">${i + 1}</span>${t1}</p><p class="hw-d">${t2}</p></div></li>`).join('')}</ol>
@@ -3127,16 +3127,16 @@ const SEO_META = HOME ? {
   th: { get title() { return homeTxt(HOME.seo.title, 'th'); }, get desc() { return homeTxt(HOME.seo.desc, 'th'); } },
   en: { get title() { return homeTxt(HOME.seo.title, 'en'); }, get desc() { return homeTxt(HOME.seo.desc, 'en'); } },
 } : {
-  th: { title: 'Yacht Charter ภูเก็ต – เช่าเรือยอร์ช 70 ลำ | Boat Trip Thailand',
-        desc: 'Yacht Charter ภูเก็ต เช่าเรือยอร์ชส่วนตัว คาตามารัน สปีดโบ๊ท 70 ลำ ไปพีพี อ่าวพังงา เกาะราชา เริ่ม ฿16,000 รวมกัปตัน ลูกเรือ และประกันภัย จองตรงกับทีมงาน' },
+  th: { title: 'เช่าเรือยอร์ชภูเก็ต – เรือส่วนตัว 70 ลำ | Boat Trip Thailand',
+        desc: 'เช่าเรือยอร์ชภูเก็ตแบบส่วนตัว เรือยอร์ช คาตามารัน สปีดโบ๊ท 70 ลำ ไปพีพี อ่าวพังงา เกาะราชา เริ่ม ฿16,000 รวมกัปตัน ลูกเรือ และประกันภัย จองตรงกับทีมงาน' },
   en: { title: 'Yacht Charter Phuket – 70 Private Boats | Boat Trip Thailand',
         get desc() { return `Yacht charter in Phuket with 70 private yachts, catamarans and speedboats. Phi Phi, Phang Nga Bay and Racha from ${baht(16000)} incl. crew & insurance. Book direct.`; } },
 };
 const FAQ = HOME && HOME.faq.length ? HOME.faq.map(([q, a]) => ({ q: [homeTxt(q, 'th'), homeTxt(q, 'en')], a: [() => homeTxt(a, 'th'), () => homeTxt(a, 'en')] })) : [
-  { q:['Yacht charter ภูเก็ตราคาเท่าไหร่?','How much does a yacht charter in Phuket cost?'],
+  { q:['เช่าเรือยอร์ชภูเก็ต ราคาเท่าไหร่?','How much does a yacht charter in Phuket cost?'],
     a:[()=>`ราคาขึ้นกับขนาดเรือ เส้นทาง และฤดูกาล ในโบรชัวร์ของเรา เรือคาตามารันเริ่มต้น ${baht(minFrom('sail'))} สปีดโบ๊ทเริ่ม ${baht(minFrom('speed'))} และเรือยอร์ชส่วนตัวเริ่ม ${baht(minFrom('yacht'))} ต่อทริป (ทั้งลำ) ราคารวมกัปตัน ลูกเรือ ประกันภัย และ VAT 7%`,
         ()=>`Prices depend on boat size, route and season. In our brochure, sailing catamarans start at ${baht(minFrom('sail'))}, speedboats at ${baht(minFrom('speed'))} and private motor yachts at ${baht(minFrom('yacht'))} per charter (whole boat), including captain, crew, insurance and 7% VAT.`] },
-  { q:['ราคา yacht charter รวมอะไรบ้าง?','What is included in a yacht charter?'],
+  { q:['ราคาเช่าเรือยอร์ชรวมอะไรบ้าง?','What is included in a yacht charter?'],
     a:[()=>'โดยทั่วไปรวมกัปตันและลูกเรือ น้ำมันเชื้อเพลิง อุปกรณ์ดำน้ำตื้น แพดเดิลบอร์ด น้ำดื่ม ผลไม้ ผ้าเย็น ประกันภัย และ VAT 7% ส่วนค่าอุทยานแห่งชาติ ค่าขึ้นเกาะ และรถรับส่ง ขึ้นอยู่กับแต่ละลำ — ดูรายละเอียดได้ในหน้าเรือแต่ละลำ',
         ()=>'Most charters include captain and crew, fuel, snorkelling gear, paddle boards, drinking water, fruit, towels, insurance and 7% VAT. National-park fees, island landing fees and transfers vary by boat — each boat page lists exactly what is and isn’t included.'] },
   { q:['ช่วงไหนเหมาะกับการเช่าเรือยอร์ชในภูเก็ตที่สุด?','When is the best time for a yacht charter in Phuket?'],
@@ -3148,7 +3148,7 @@ const FAQ = HOME && HOME.faq.length ? HOME.faq.map(([q, a]) => ({ q: [homeTxt(q,
   { q:['ต้องจองล่วงหน้ากี่วัน และยกเลิกได้ไหม?','How far ahead should I book, and can I cancel?'],
     a:[()=>'High Season แนะนำจองล่วงหน้า 1–2 สัปดาห์ (ช่วงปีใหม่ 1–2 เดือน) ชำระมัดจำ 50% เพื่อยืนยัน ยกเลิกน้อยกว่า 48 ชม. คิด 30% น้อยกว่า 24 ชม. คิด 50% และน้อยกว่า 12 ชม. หรือไม่มาคิด 100%',
         ()=>'In high season book 1–2 weeks ahead (1–2 months for New Year). A 50% deposit confirms the boat. Cancellations under 48 h are charged 30%, under 24 h 50%, and under 12 h or no-show 100%.'] },
-  { q:['ออกเรือจากท่าไหน?','Which marinas do charters depart from?'],
+  { q:['เรือยอร์ชในภูเก็ตออกจากท่าไหน?','Which marinas do Phuket yacht charters depart from?'],
     a:[()=>'เรือของเราออกจาก Royal Phuket Marina, Ao Po Grand Marina, Chalong Pier, Boat Lagoon, ONE°15 Marina และ Coco Pier (Panwa) ในภูเก็ต — แต่ละลำระบุท่าเรือไว้ชัดเจน',
         ()=>'Our boats depart from Royal Phuket Marina, Ao Po Grand Marina, Chalong Pier, Boat Lagoon, ONE°15 Marina and Coco Pier (Panwa) in Phuket — each boat page names its marina.'] },
 ];
@@ -3173,15 +3173,15 @@ function renderSeoGuide() {
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-16">
       <header class="lg:sticky lg:top-24 self-start reveal min-w-0">
         <p class="text-xs uppercase tracking-[.2em] text-maroon">${L('คู่มือเช่าเรือ','Charter guide')}</p>
-        <h2 id="seoGuideTitle" class="font-display text-2xl sm:text-3xl mt-2">${L('Yacht Charter ภูเก็ต: ทุกอย่างที่ควรรู้ก่อนเช่าเรือ','Yacht charter in Phuket: everything to know before you book')}</h2>
-        <p class="text-sm text-muted mt-4 leading-relaxed">${L(`Boat Trip Thailand ให้บริการ yacht charter ในภูเก็ต กระบี่ และพังงา ด้วยเรือส่วนตัว ${FLEET.length} ลำ ตั้งแต่สปีดโบ๊ทไปจนถึงซูเปอร์ยอร์ช 90 ฟุต ทุกทริปมีกัปตัน ลูกเรือ และประกันภัย ราคาอ้างอิงจากโบรชัวร์ทางการ และเราได้รับใบอนุญาตประกอบธุรกิจนำเที่ยว ททท. เลขที่ ${SET.tat}`, `Boat Trip Thailand runs yacht charters across Phuket, Krabi and Phang Nga with ${FLEET.length} private boats — from speedboats to a 90 ft superyacht. Every trip includes captain, crew and insurance, rates come straight from our official brochure, and we are a TAT-licensed operator (No. ${SET.tat}).`)}</p>
+        <h2 id="seoGuideTitle" class="font-display text-2xl sm:text-3xl mt-2">${L('เช่าเรือยอร์ชภูเก็ต: ทุกอย่างที่ควรรู้ก่อนจอง','Yacht charter Phuket: everything to know before you book')}</h2>
+        <p class="text-sm text-muted mt-4 leading-relaxed">${L(`Boat Trip Thailand ให้บริการเช่าเรือยอร์ชในภูเก็ต กระบี่ และพังงา ด้วยเรือส่วนตัว ${FLEET.length} ลำ ตั้งแต่สปีดโบ๊ทไปจนถึงซูเปอร์ยอร์ช 90 ฟุต ทุกทริปมีกัปตัน ลูกเรือ และประกันภัย ราคาอ้างอิงจากโบรชัวร์ทางการ และเราได้รับใบอนุญาตประกอบธุรกิจนำเที่ยว ททท. เลขที่ ${SET.tat}`, `Boat Trip Thailand runs yacht charters across Phuket, Krabi and Phang Nga with ${FLEET.length} private boats — from speedboats to a 90 ft superyacht. Every trip includes captain, crew and insurance, rates come straight from our official brochure, and we are a TAT-licensed operator (No. ${SET.tat}).`)}</p>
         <nav aria-label="${L('สารบัญ','On this page')}" class="mt-6 text-sm space-y-2">
-          ${[['types',L('ประเภทเรือสำหรับ yacht charter','Types of yacht charter')],['prices',L('ราคา yacht charter ภูเก็ต','Yacht charter prices')],['routes',L('เส้นทางยอดนิยม','Popular routes')],['how',L('วิธีจองใน 4 ขั้นตอน','How to book in 4 steps')],['faq',L('คำถามที่พบบ่อย','FAQ')]].map(([id,l])=>`<a href="#guide-${id}" onclick="event.preventDefault();document.getElementById('guide-${id}').scrollIntoView({behavior:'smooth'})" class="flex items-center gap-2 text-muted hover:text-maroon"><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>${l}</a>`).join('')}
+          ${[['types',L('ประเภทเรือยอร์ชให้เช่า','Types of yacht charter')],['prices',L('ราคาเช่าเรือยอร์ชภูเก็ต','Yacht charter Phuket prices')],['routes',L('เส้นทางยอดนิยม','Popular routes')],['how',L('วิธีจองใน 4 ขั้นตอน','How to book in 4 steps')],['faq',L('คำถามที่พบบ่อย','FAQ')]].map(([id,l])=>`<a href="#guide-${id}" onclick="event.preventDefault();document.getElementById('guide-${id}').scrollIntoView({behavior:'smooth'})" class="flex items-center gap-2 text-muted hover:text-maroon"><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>${l}</a>`).join('')}
         </nav>
       </header>
       <div class="space-y-12 text-sm leading-relaxed min-w-0">
         <section id="guide-types" class="reveal scroll-mt-24">
-          <h3 class="font-display text-xl">${L('ประเภทเรือสำหรับ yacht charter','Types of yacht charter')}</h3>
+          <h3 class="font-display text-xl">${L('ประเภทเรือยอร์ชให้เช่า','Types of yacht charter')}</h3>
           <div class="mt-4 grid sm:grid-cols-2 gap-px bg-[rgb(35_20_22/.08)] border border-[rgb(35_20_22/.08)] rounded-[18px] overflow-hidden">
             ${types.map((o,i) => `<a href="#/fleet" onclick="fleetState.f='${o.ty}'" class="bg-white p-5 hover:bg-maroon-50 transition group ${i===types.length-1 && types.length%2 ? 'sm:col-span-2' : ''}">
               <p class="flex items-center justify-between"><span class="font-medium">${typeLabel(o.ty)}</span><span class="text-xs text-muted">${o.n} ${t('boatsUnit')}</span></p>
@@ -3190,20 +3190,20 @@ function renderSeoGuide() {
           </div>
         </section>
         <section id="guide-prices" class="reveal scroll-mt-24">
-          <h3 class="font-display text-xl">${L('ราคา yacht charter ภูเก็ต (เริ่มต้นต่อทริป)','Phuket yacht charter prices (from, per charter)')}</h3>
+          <h3 class="font-display text-xl">${L('ราคาเช่าเรือยอร์ชภูเก็ต (เริ่มต้นต่อทริป)','Yacht charter Phuket prices (from, per charter)')}</h3>
           <p class="text-muted mt-2">${L('ราคาทั้งลำ รวมกัปตัน ลูกเรือ ประกันภัย และ VAT 7% อ้างอิงราคาต่ำสุดในโบรชัวร์ BTT','Whole-boat rates including captain, crew, insurance and 7% VAT — lowest published rate in the BTT brochure.')}</p>
           <div class="mt-4 overflow-x-auto ring-1 ring-sand-200"><table class="w-full text-sm min-w-[480px]">
-            <caption class="sr-only">${L('ตารางราคา yacht charter ตามประเภทเรือ','Yacht charter prices by boat type')}</caption>
+            <caption class="sr-only">${L('ตารางราคาเช่าเรือยอร์ชตามประเภทเรือ','Yacht charter prices by boat type')}</caption>
             <thead class="bg-sand"><tr><th scope="col" class="text-left font-medium px-4 py-3">${L('ประเภทเรือ','Boat type')}</th><th scope="col" class="text-right font-medium px-4 py-3">${L('จำนวนลำ','Boats')}</th><th scope="col" class="text-right font-medium px-4 py-3">${L('ความจุสูงสุด','Max guests')}</th><th scope="col" class="text-right font-medium px-4 py-3">${L('ราคาเริ่มต้น','From')}</th></tr></thead>
             <tbody>${types.map(o => `<tr class="border-t border-sand-200"><th scope="row" class="text-left font-normal px-4 py-3">${typeLabel(o.ty)}</th><td class="text-right px-4 py-3 tabular-nums">${o.n}</td><td class="text-right px-4 py-3 tabular-nums">${o.pax}</td><td class="text-right px-4 py-3 tabular-nums">${baht(o.from)}</td></tr>`).join('')}</tbody>
           </table></div>
         </section>
         <section id="guide-routes" class="reveal scroll-mt-24">
-          <h3 class="font-display text-xl">${L('เส้นทาง yacht charter ยอดนิยมจากภูเก็ต','Popular yacht charter routes from Phuket')}</h3>
+          <h3 class="font-display text-xl">${L('เส้นทางเช่าเรือยอร์ชยอดนิยมจากภูเก็ต','Popular yacht charter routes from Phuket')}</h3>
           <ul class="mt-4 divide-y divide-sand-200 ring-1 ring-sand-200">${routes.map(([n,,d]) => `<li><a href="#/fleet" onclick="fleetState.q='${n.split(' ')[0]}'" class="flex items-start justify-between gap-4 p-4 hover:bg-maroon-50 transition"><span><span class="font-medium">${L('เช่าเรือไป','Yacht charter to')} ${n}</span><span class="block text-muted mt-0">${d}</span></span><i data-lucide="arrow-up-right" class="w-4 h-4 text-maroon shrink-0 mt-2"></i></a></li>`).join('')}</ul>
         </section>
         <section id="guide-how" class="reveal scroll-mt-24">
-          <h3 class="font-display text-xl">${L('วิธีจอง yacht charter ใน 4 ขั้นตอน','How to book a yacht charter in 4 steps')}</h3>
+          <h3 class="font-display text-xl">${L('วิธีจองเรือยอร์ชใน 4 ขั้นตอน','How to book a yacht charter in 4 steps')}</h3>
           <ol class="mt-4 grid sm:grid-cols-2 gap-3">${[[L('เลือกเรือ','Choose a boat'),L('ใช้ Smart Match หรือกรองตามจำนวนคน งบ และเส้นทาง','Use Smart Match or filter by guests, budget and route')],[L('เลือกวันและโปรแกรม','Pick date & program'),L('ระบบแสดงราคาตามฤดูกาลของวันที่คุณเลือก','We show the right seasonal rate for your date')],[L('ส่งคำขอจอง','Send a request'),L('ทีมงานยืนยันคิวเรือภายใน 30 นาที','Our team confirms availability within 30 minutes')],[L('มัดจำ 50%','Pay 50% deposit'),L('โอนผ่านธนาคาร ส่วนที่เหลือชำระก่อนออกเรือ 24 ชม.','Bank transfer; balance due 24 h before departure')]].map(([h,d],i)=>`<li class="p-4 ring-1 ring-sand-200 flex gap-4"><span class="font-display text-2xl text-maroon leading-none">${i+1}</span><span><span class="font-medium block">${h}</span><span class="text-muted">${d}</span></span></li>`).join('')}</ol>
         </section>
       </div>
@@ -3216,7 +3216,7 @@ function renderFaq() {
   // styles: .fq-* in glass.css; heading reuses .tm-* from the team section
   el.innerHTML = `<div class="max-w-3xl mx-auto px-4 sm:px-6 py-14 lg:py-20" id="guide-faq">
     <div class="text-center"><p class="tm-eyebrow"><i data-lucide="circle-help"></i>FAQ</p>
-    <h2 class="tm-title">${L('คำถามที่พบบ่อยเกี่ยวกับ Yacht Charter','Yacht charter FAQ')}</h2></div>
+    <h2 class="tm-title">${L('คำถามที่พบบ่อย เช่าเรือยอร์ชภูเก็ต','Yacht charter Phuket FAQ')}</h2></div>
     <div class="fq-list">${FAQ.map(f => `<details class="fq"><summary><h3>${f.q[k]}</h3><span class="fq-ic" aria-hidden="true"><i data-lucide="plus"></i></span></summary><p>${f.a[k]()}</p></details>`).join('')}</div>
   </div>`;
 }
@@ -3247,7 +3247,7 @@ function applySeo(view, boat) {
   if (view === 'privacy') { title = L('นโยบายความเป็นส่วนตัว | Boat Trip Thailand','Privacy Policy | Boat Trip Thailand'); desc = L('นโยบายความเป็นส่วนตัวของ Boat Trip Thailand ตาม PDPA: ข้อมูลที่เก็บ วัตถุประสงค์ การเปิดเผย และสิทธิของคุณ','Boat Trip Thailand privacy policy under the PDPA: what we collect, why, who we share it with and your rights.'); path = '/privacy-policy'; }
   if (view === 'terms') { title = L('ข้อกำหนดและเงื่อนไข | Boat Trip Thailand','Terms & Conditions | Boat Trip Thailand'); desc = L('เงื่อนไขการจองเรือ การชำระเงิน การยกเลิก กฎบนเรือ และความรับผิดของ Boat Trip Thailand','Booking, payment, cancellation, on-board rules and liability terms for Boat Trip Thailand charters.'); path = '/terms-and-conditions'; }
   if (view === 'cookies') { title = L('การตั้งค่าคุกกี้ | Boat Trip Thailand','Cookie Preferences | Boat Trip Thailand'); desc = L('เลือกประเภทคุกกี้ที่อนุญาตบนเว็บไซต์ Boat Trip Thailand','Choose which cookies you allow on the Boat Trip Thailand website.'); path = '/cookie-preferences'; }
-  if (view === 'about') { title = L('เกี่ยวกับเรา – Yacht Charter ภูเก็ต | Boat Trip Thailand','About Us – Yacht Charter Phuket | Boat Trip Thailand'); desc = L(`รู้จัก Boat Trip Thailand ผู้ให้บริการ yacht charter ภูเก็ต เรือส่วนตัว ${FLEET.length} ลำ ใบอนุญาต ททท. ${SET.tat} ราคาโปร่งใส ทีมงานตอบไวทุกวัน`,`Meet Boat Trip Thailand, a TAT-licensed (${SET.tat}) yacht charter company in Phuket with ${FLEET.length} private boats, transparent pricing and a fast, friendly team.`); path = '/about-us'; }
+  if (view === 'about') { title = L('เกี่ยวกับเรา – เช่าเรือยอร์ชภูเก็ต | Boat Trip Thailand','About Us – Yacht Charter Phuket | Boat Trip Thailand'); desc = L(`รู้จัก Boat Trip Thailand ผู้ให้บริการ yacht charter ภูเก็ต เรือส่วนตัว ${FLEET.length} ลำ ใบอนุญาต ททท. ${SET.tat} ราคาโปร่งใส ทีมงานตอบไวทุกวัน`,`Meet Boat Trip Thailand, a TAT-licensed (${SET.tat}) yacht charter company in Phuket with ${FLEET.length} private boats, transparent pricing and a fast, friendly team.`); path = '/about-us'; }
   if (view === 'fleet') {
     // its own search terms (price / comparison / rental) so it doesn't compete with the home page for "yacht charter phuket"
     const n = FLEET.length, lo = Math.min(...FLEET.map(b => b.from_).filter(Boolean)), types = TYPES.filter(t => FLEET.some(b => b.type === t)).map(typeLabel);
@@ -3270,7 +3270,7 @@ function applySeo(view, boat) {
     { '@type':'WebSite', '@id':SITE+'/#website', url:SITE+'/', name:'Boat Trip Thailand', inLanguage:['th','en'], publisher:{ '@id':SITE+'/#org' } },
     // FAQ structured data must match the FAQ shown on that page: the home FAQ on home only, each boat's own FAQ on its page
     ...(view === 'home' ? [{ '@type':'FAQPage', '@id':SITE+'/#faq', mainEntity: FAQ.map(f => ({ '@type':'Question', name:f.q[k==='en'?1:0], acceptedAnswer:{ '@type':'Answer', text:f.a[k==='en'?1:0]() } })) }] : []),
-    ...(view === 'home' ? [{ '@type':'ItemList', '@id':SITE+'/#featured', name:L('เรือแนะนำสำหรับ yacht charter','Featured yacht charters'), itemListElement: FEATURED.map(bySlug).filter(Boolean).map((b,i) => ({ '@type':'ListItem', position:i+1, url:SITE+'/yacht-charter/'+b.slug,
+    ...(view === 'home' ? [{ '@type':'ItemList', '@id':SITE+'/#featured', name:L('เรือยอร์ชแนะนำให้เช่าในภูเก็ต','Featured yacht charters in Phuket'), itemListElement: FEATURED.map(bySlug).filter(Boolean).map((b,i) => ({ '@type':'ListItem', position:i+1, url:SITE+'/yacht-charter/'+b.slug,
       item:{ '@type':'Product', name:niceTitle(b.title)+' – '+typeLabel(b.type)+' charter', image:SITE+'/boats/'+b.slug+'-hero.webp', brand:{ '@id':SITE+'/#org' },
         offers:(() => { const pr = boatPrices(b), lo = b.from_ || (pr.length ? Math.min(...pr) : undefined); return { '@type':'AggregateOffer', priceCurrency:'THB', lowPrice:lo, highPrice:pr.length ? Math.max(...pr) : lo, offerCount:Math.max(1, pr.length), availability:'https://schema.org/InStock', url:SITE+'/yacht-charter/'+b.slug }; })() } })) }] : []),
   ]};
@@ -3594,7 +3594,7 @@ function seoBlog() { const k = plang(), title = L('บทความเช่�
 /* home: latest articles strip */
 function renderHomeBlog() {
   const el = $('#homeBlog'); if (!el) return; const L3 = postsVisible().slice(0, 3); if (!L3.length) { el.innerHTML = ''; return; }
-  el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 lg:py-20"><div class="flex items-end justify-between gap-4 mb-8"><div><p class="text-xs uppercase tracking-[.2em] text-maroon">${L('บทความ', 'From the blog')}</p><h2 class="font-display text-2xl sm:text-3xl text-ink mt-2">${L('คู่มือ & ไอเดียทริปทะเล', 'Guides & trip ideas')}</h2></div><a href="#/blog" class="text-sm text-maroon inline-flex items-center gap-1 shrink-0">${L(`ดูทั้งหมด ${postsVisible().length} บทความ`, `All ${postsVisible().length} articles`)}<i data-lucide="arrow-right" class="w-4 h-4"></i></a></div><div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">${L3.map(p => postCard(p)).join('')}</div></div>`;
+  el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 lg:py-20"><div class="flex items-end justify-between gap-4 mb-8"><div><p class="text-xs uppercase tracking-[.2em] text-maroon">${L('บทความ', 'From the blog')}</p><h2 class="font-display text-2xl sm:text-3xl text-ink mt-2">${L('คู่มือเช่าเรือยอร์ชภูเก็ต & ไอเดียทริป', 'Phuket yacht charter guides & trip ideas')}</h2></div><a href="#/blog" class="text-sm text-maroon inline-flex items-center gap-1 shrink-0">${L(`ดูทั้งหมด ${postsVisible().length} บทความ`, `All ${postsVisible().length} articles`)}<i data-lucide="arrow-right" class="w-4 h-4"></i></a></div><div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">${L3.map(p => postCard(p)).join('')}</div></div>`;
   icons();
 }
 

@@ -2,7 +2,7 @@
   "_tokens": "Text may use {boats} (number of boats on the site), {maxpax} (largest boat capacity), {from} (lowest price of any boat), {from:yacht} {from:sail} {from:power} {from:speed} {from:longtail} (lowest price of that boat type). Prices follow the visitor's currency.",
   "hero": {
     "kicker": {
-      "th": "Yacht Charter ภูเก็ต",
+      "th": "เช่าเรือยอร์ชภูเก็ต",
       "en": "Yacht Charter Phuket"
     },
     "title": {
@@ -91,7 +91,7 @@
   "faq": [
     [
       {
-        "th": "Yacht charter ภูเก็ตราคาเท่าไหร่?",
+        "th": "เช่าเรือยอร์ชภูเก็ต ราคาเท่าไหร่?",
         "en": "How much does a yacht charter in Phuket cost?"
       },
       {
@@ -101,7 +101,7 @@
     ],
     [
       {
-        "th": "ราคา yacht charter รวมอะไรบ้าง?",
+        "th": "ราคาเช่าเรือยอร์ชรวมอะไรบ้าง?",
         "en": "What is included in a yacht charter?"
       },
       {
@@ -141,8 +141,8 @@
     ],
     [
       {
-        "th": "ออกเรือจากท่าไหน?",
-        "en": "Which marinas do charters depart from?"
+        "th": "เรือยอร์ชในภูเก็ตออกจากท่าไหน?",
+        "en": "Which marinas do Phuket yacht charters depart from?"
       },
       {
         "th": "เรือของเราออกจาก Royal Phuket Marina, Ao Po Grand Marina, Chalong Pier, Boat Lagoon, ONE°15 Marina และ Coco Pier (Panwa) ในภูเก็ต — แต่ละลำระบุท่าเรือไว้ชัดเจน",
@@ -152,15 +152,15 @@
   ],
   "seo": {
     "title": {
-      "th": "Yacht Charter ภูเก็ต – เช่าเรือยอร์ช {boats} ลำ | Boat Trip Thailand",
+      "th": "เช่าเรือยอร์ชภูเก็ต – เรือส่วนตัว {boats} ลำ | Boat Trip Thailand",
       "en": "Yacht Charter Phuket – {boats} Private Boats | Boat Trip Thailand"
     },
     "desc": {
-      "th": "Yacht Charter ภูเก็ต เช่าเรือยอร์ชส่วนตัว คาตามารัน สปีดโบ๊ท {boats} ลำ ไปพีพี อ่าวพังงา เกาะราชา เริ่ม {from} รวมกัปตัน ลูกเรือ และประกันภัย จองตรงกับทีมงาน",
+      "th": "เช่าเรือยอร์ชภูเก็ตแบบส่วนตัว เรือยอร์ช คาตามารัน สปีดโบ๊ท {boats} ลำ ไปพีพี อ่าวพังงา เกาะราชา เริ่ม {from} รวมกัปตัน ลูกเรือ และประกันภัย จองตรงกับทีมงาน",
       "en": "Yacht charter in Phuket with {boats} private yachts, catamarans and speedboats. Phi Phi, Phang Nga Bay and Racha from {from} incl. crew & insurance. Book direct."
     },
     "kw": {
-      "th": "yacht charter ภูเก็ต",
+      "th": "เช่าเรือยอร์ชภูเก็ต",
       "en": "yacht charter phuket"
     }
   }
