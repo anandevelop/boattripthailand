@@ -1251,7 +1251,7 @@ function renderDetail(slug) {
           ${facts.length ? `<div class="bp-facts">${facts.map(([ic, h, s]) => `<div class="bp-fact"><i data-lucide="${ic}"></i><b>${h}</b><span>${s}</span></div>`).join('')}</div>` : ''}`)}
 
         ${progs.length ? `<section class="bp-panel" id="programs">
-          <div class="bp-phead"><div><h2>${t('programs2')}</h2><p class="bp-sub m-0">${t('vatNote')}</p></div><div class="bp-seg" id="bpSeason" role="group" aria-label="${L('ฤดูกาล', 'Season')}"></div></div>
+          <div class="bp-phead"><div><h2>${L(`ราคาเช่าเรือ ${niceTitle(b.title)}`, `${niceTitle(b.title)} charter prices`)}</h2><p class="bp-sub m-0">${t('vatNote')}</p></div><div class="bp-seg" id="bpSeason" role="group" aria-label="${L('ฤดูกาล', 'Season')}"></div></div>
           <div id="bpNote"></div>
           ${b.tables.length > 1 ? `<div class="bp-seg mb-3" id="bpLen" role="group" aria-label="${L('ระยะเวลา', 'Duration')}"></div>` : ''}
           <div class="bp-progs" id="bpProgs"></div>
@@ -1869,8 +1869,8 @@ function renderHeroText() {
   const rot = HERO_ROT[LANG === 'en' ? 'en' : 'th'];
   $('#heroEyebrow').textContent = L('Boat Trip Thailand · Sea by Soul','Boat Trip Thailand · Sea by Soul');
   $('#heroTitle').innerHTML = `<span class="ht-line"><span class="ht-kw" style="animation-delay:.1s">${L('เช่าเรือยอร์ชภูเก็ต','Yacht Charter Phuket')}</span></span>`
-    + `<span class="ht-line"><span style="animation-delay:.22s">${L('ล่องทะเลอันดามัน','Sail the Andaman')}</span></span>`
-    + `<span class="ht-line"><span style="animation-delay:.36s"><span class="hero-hl"><span id="heroRot">${rot[0]}</span></span></span></span>`;
+    + `<span class="sr-only"> </span><span class="ht-line"><span style="animation-delay:.22s">${L('ล่องทะเลอันดามัน','Sail the Andaman')}</span></span>`
+    + `<span class="sr-only"> </span><span class="ht-line"><span style="animation-delay:.36s"><span class="hero-hl"><span id="heroRot">${rot[0]}</span></span></span></span>`;
   $('#heroSub').textContent = L(`เรือส่วนตัว ${FLEET.length} ลำ · ภูเก็ต กระบี่ พังงา`, `${FLEET.length} private boats · Phuket, Krabi, Phang Nga`);
   $('#heroCta1').textContent = L('ให้เราช่วยเลือก','Smart Match');
   const tr2 = $('#heroTrust2'); if (tr2) tr2.innerHTML = [['send', L('จองฟรี ไม่ต้องจ่ายบนเว็บ', 'Free request, no online payment'), L('ไม่ต้องจ่ายบนเว็บ', 'No online payment')], ['calendar-check', L('ยืนยันราคาใน 30 นาที', 'Price confirmed in 30 min'), ''], SET.tat && ['badge-check', L(`ใบอนุญาต ททท. ${SET.tat}`, `TAT licence ${SET.tat}`), L(`ททท. ${SET.tat}`, `TAT ${SET.tat}`)]].filter(Boolean).map(([ic, x, sh]) => `<li${sh ? '' : ' class="lg"'}><i data-lucide="${ic}"></i><span class="t-l">${x}</span>${sh ? `<span class="t-s">${sh}</span>` : ''}</li>`).join('');
@@ -2012,11 +2012,11 @@ function renderHomeAnswer() {
 }
 function renderHomeDests() {
   const el = $('#homeDests'); if (!el || !DPAGES.length) return;
-  const sub = { 'phi-phi': L('อ่าวมาหยา น้ำทะเลใส', 'Maya Bay, clear water'), 'phang-nga-bay': L('เขาหินปูน พายแคนูลอดถ้ำ', 'Limestone karsts, sea caves'), 'racha-island': L('น้ำใส ดำน้ำตื้น', 'Clear water, snorkelling'), 'khai-island': L('ใกล้ที่สุด เหมาะครึ่งวัน', 'Closest, ideal half day') };
+  const sub = { 'phi-phi': L('อ่าวมาหยา น้ำทะเลใส', 'Maya Bay, clear water'), 'phang-nga-bay': L('เขาหินปูน พายแคนูลอดถ้ำ', 'Limestone karsts, sea caves'), 'racha-island': L('น้ำใส ดำน้ำตื้น', 'Clear water, snorkelling'), 'khai-island': L('ใกล้ที่สุด เหมาะครึ่งวัน', 'Closest, ideal half day'), 'coral-island': L('ดำน้ำตื้น ใกล้ภูเก็ต', 'Snorkelling, close to Phuket'), krabi: L('ลากูนเกาะห้อง ทะเลแหวก', 'Hong lagoon, sandbar'), similan: L('น้ำใสที่สุด เปิด ต.ค.–พ.ค.', 'Clearest water, Oct–May') };
   el.innerHTML = `<div class="max-w-7xl mx-auto px-4 sm:px-6 py-14 lg:py-20">
     <div class="tm-head"><div><p class="tm-eyebrow"><i data-lucide="map-pin"></i>${L('ปลายทางยอดนิยม', 'Top destinations')}</p><h2 class="tm-title font-display">${L('เช่าเรือยอร์ชภูเก็ต ไปเกาะไหนดี', 'Where to go on a Phuket yacht charter')}</h2></div>
       <a href="#/destinations" class="hx-more">${L('ดูปลายทางทั้งหมด', 'All destinations')}<i data-lucide="arrow-right" class="w-4 h-4"></i></a></div>
-    <div class="hx-dg">${DPAGES.map((d, i) => { const n = destBoats(d.slug).length; return `<a href="#/dest/${d.slug}" class="hx-dc${i === 0 ? ' hx-dc1' : ''} img-fallback">
+    <div class="hx-dg">${DPAGES.slice(0, 5).map((d, i) => { const n = destBoats(d.slug).length; return `<a href="#/dest/${d.slug}" class="hx-dc${i === 0 ? ' hx-dc1' : ''} img-fallback">
       <img src="${rs(d.hero, i === 0 ? 1280 : 768)}" alt="${L('เช่าเรือไป', 'Private boat to ')}${dl(d.name)}" loading="lazy"/><span class="hx-sh"></span>
       <span class="hx-dt"><b class="font-display">${dl(d.name)}</b><span>${[sub[d.slug], n ? L(`เรือที่ไป ${n} ลำ`, `${n} boats`) : ''].filter(Boolean).join(' · ')}</span></span></a>`; }).join('')}</div>
   </div>`;
@@ -3510,7 +3510,9 @@ function relatedBoats(p) {
   if (/speed|สปีด/.test(text)) L = FLEET.filter(b => b.type === 'speed');
   if (/party|ปาร์ตี้|corporate|บริษัท|wedding|งานแต่ง/.test(text)) L = FLEET.filter(b => (b.pax || 0) >= 25);
   if (!L.length) L = FEATURED.map(bySlug).filter(Boolean);
-  return { list: L.filter(b => b.from_).sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || a.from_ - b.from_).slice(0, 3), route: hit ? (LANG === 'en' ? hit[0].replace(/\b\w/g, c => c.toUpperCase()) : hit[1]) : null };
+  // the destination page this article is about (title, then the article text): a link from the article to the page that sells
+  const body = (p.blocks ? JSON.stringify(pBlocks(p)) : '').slice(0, 20000), dest = DPAGES.find(d => new RegExp(d.match, 'i').test(text)) || DPAGES.find(d => new RegExp(d.match, 'i').test(body)) || null;
+  return { list: L.filter(b => b.from_).sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || a.from_ - b.from_).slice(0, 3), route: hit ? (LANG === 'en' ? hit[0].replace(/\b\w/g, c => c.toUpperCase()) : hit[1]) : null, dest };
 }
 function renderPost(slug) {
   const v = $('#view-blog'), p = pBySlug(slug);
@@ -3549,7 +3551,8 @@ function renderPost(slug) {
       </div>
       <aside class="lg:sticky lg:top-24 grid gap-6">
         ${toc.length > 2 ? `<div class="hidden lg:block"><p class="text-[11px] uppercase tracking-[.18em] text-muted mb-3">${L('สารบัญ', 'Contents')}</p><ol class="post-toc" id="postToc">${toc.map(([i, l]) => `<li><a href="javascript:void 0" data-s="s-${i}" onclick="document.getElementById('s-${i}').scrollIntoView({behavior:'smooth',block:'start'})">${esc(l)}</a></li>`).join('')}</ol></div>` : ''}
-        <div class="rounded-[18px] ring-1 ring-sand-200 p-4"><p class="text-sm font-medium mb-3">${rb.route ? L(`เรือที่ไป${rb.route}`, `Boats to ${rb.route}`) : L('เรือแนะนำ', 'Recommended boats')}</p><div class="grid gap-2">${rb.list.map(miniBoat).join('')}</div></div>
+        <div class="rounded-[18px] ring-1 ring-sand-200 p-4"><p class="text-sm font-medium mb-3">${rb.route ? L(`เรือที่ไป${rb.route}`, `Boats to ${rb.route}`) : L('เรือแนะนำ', 'Recommended boats')}</p><div class="grid gap-2">${rb.list.map(miniBoat).join('')}</div>
+          ${rb.dest ? `<a href="#/dest/${rb.dest.slug}" class="mt-3 flex items-center justify-between gap-2 text-sm text-maroon hover:underline underline-offset-4"><span>${L('คู่มือเช่าเรือไป', 'Guide: private boat to ')}${LANG === 'en' ? rb.dest.name.en : rb.dest.name.th}</span><i data-lucide="arrow-right" class="w-4 h-4 shrink-0"></i></a>` : `<a href="#/destinations" class="mt-3 flex items-center justify-between gap-2 text-sm text-maroon hover:underline underline-offset-4"><span>${L('เช่าเรือไปเกาะไหนดี ดูทุกปลายทาง', 'Where to go: all destinations')}</span><i data-lucide="arrow-right" class="w-4 h-4 shrink-0"></i></a>`}</div>
       </aside>
     </section>
     </article>
