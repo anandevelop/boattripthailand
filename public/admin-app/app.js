@@ -859,9 +859,11 @@ const ED = { mode: 'edit', dev: 'desk', sel: -1, hist: [], fut: [], at: null, cb
 const txtOf = h => String(h || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').trim();
 const RATIOS = [['auto', 'อัตโนมัติ'], ['16/9', '16:9'], ['4/3', '4:3'], ['1/1', '1:1'], ['3/4', '3:4']];
 const COLS_TPL = { '1-1': '1fr 1fr', '1-2': '1fr 2fr', '2-1': '2fr 1fr', '1-1-1': '1fr 1fr 1fr', '1-1-1-1': '1fr 1fr 1fr 1fr' };
+/* article block 'dprice': slugs = src/lib/destinations.ts */
+const DPRICE_DESTS = [['phi-phi', 'เกาะพีพี'], ['phang-nga-bay', 'อ่าวพังงา'], ['racha-island', 'เกาะราชา'], ['khai-island', 'เกาะไข่'], ['coral-island', 'เกาะเฮ (คอรัล)'], ['krabi', 'กระบี่'], ['similan', 'สิมิลัน']];
 const BTYPES = [
   ['p', 'ย่อหน้า', 'pilcrow'], ['h2', 'หัวข้อ H2', 'heading-2'], ['h3', 'หัวข้อ H3', 'heading-3'], ['h4', 'หัวข้อ H4', 'heading-4'], ['h5', 'หัวข้อ H5', 'heading-5'], ['quote', 'คำพูด', 'quote'], ['faq', 'คำถามที่พบบ่อย (FAQ)', 'message-circle-question'],
-  ['img', 'รูปภาพ', 'image'], ['grid', 'กริดรูป', 'layout-grid'], ['cols', 'คอลัมน์', 'columns-2'], ['boat', 'การ์ดเรือ', 'sailboat'],
+  ['img', 'รูปภาพ', 'image'], ['grid', 'กริดรูป', 'layout-grid'], ['cols', 'คอลัมน์', 'columns-2'], ['boat', 'การ์ดเรือ', 'sailboat'], ['dprice', 'ตารางราคาปลายทาง', 'table'],
   ['btn', 'ปุ่ม', 'mouse-pointer-click'], ['hr', 'เส้นคั่น', 'separator-horizontal'], ['space', 'ช่องว่าง', 'unfold-vertical'],
 ];
 function newBlock(t, src) {
@@ -871,7 +873,7 @@ function newBlock(t, src) {
     img: { t: 'img', src: s, w: 100, align: 'c', ratio: 'auto', cap: '', alt: '' },
     grid: { t: 'grid', cols: 3, rowH: 200, gap: 8, cells: [0, 1, 2, 3, 4, 5].map(n => ({ src: THUMBS[FLEET[(n * 7 + 3) % FLEET.length].slug], cs: 1, rs: 1 })) },
     cols: { t: 'cols', tpl: '1-1', va: 'c', gap: 24, cols: [{ k: 'img', src: s }, { k: 'txt', html: '' }] },
-    boat: { t: 'boat', slug: FLEET[0].slug }, btn: { t: 'btn', label: AE.lang === 'th' ? 'ดูเรือและจองเลย' : 'View boats & book', href: 'fleet', style: 'solid', align: 'c' },
+    boat: { t: 'boat', slug: FLEET[0].slug }, dprice: { t: 'dprice', dest: 'phi-phi' }, btn: { t: 'btn', label: AE.lang === 'th' ? 'ดูเรือและจองเลย' : 'View boats & book', href: 'fleet', style: 'solid', align: 'c' },
     hr: { t: 'hr' }, space: { t: 'space', h: 32 },
   })[t];
 }
@@ -921,6 +923,7 @@ function blockHtml(b) {
     case 'grid': return `<div class="b-grid" style="grid-template-columns:repeat(${b.cols},1fr);grid-auto-rows:${b.rowH}px;gap:${b.gap}px">${b.cells.filter(c => c.src).map(c => `<figure style="grid-column:span ${Math.min(c.cs, b.cols)};grid-row:span ${c.rs}">${imgTag(c.src, c.alt)}</figure>`).join('')}</div>`;
     case 'cols': return `<div class="b-cols" style="grid-template-columns:${COLS_TPL[b.tpl]};gap:${b.gap}px;align-items:${b.va === 't' ? 'start' : 'center'}">${b.cols.map(c => `<div>${c.k === 'img' ? imgTag(c.src, c.alt, 'width:100%;border-radius:12px') : (c.html || '')}</div>`).join('')}</div>`;
     case 'boat': { const x = bySlug(b.slug); return x ? `<div class="boat-embed" data-boat="${b.slug}"><img src="${THUMBS[b.slug]}"/><div><b>${esc(x.name)}</b><span>${x.pax ? x.pax + (AE.lang === 'th' ? ' คน · ' : ' guests · ') : ''}${AE.lang === 'th' ? 'ดูรายละเอียดเรือ' : 'View boat'} →</span></div></div>` : ''; }
+    case 'dprice': { const d = DPRICE_DESTS.find(x => x[0] === b.dest); return `<div class="dprice-embed" style="padding:16px 18px;border-radius:14px;background:#f7f2ee;font-size:14px"><b>${AE.lang === 'th' ? 'ตารางราคาเช่าเรือ ภูเก็ต – ' : 'Price table, Phuket to '}${d ? d[1] : b.dest}</b><div style="color:#7a6a6c;margin-top:4px">${AE.lang === 'th' ? 'ราคาเริ่มต้นแยกตามประเภทเรือ ดึงจากราคาเรือจริงอัตโนมัติ + ปุ่มไปหน้าปลายทาง' : 'Live from-prices by boat type + link to the destination page'}</div></div>`; }
     case 'btn': return `<div class="b-btn" style="text-align:${{ l: 'left', c: 'center', r: 'right' }[b.align]}"><a class="${b.style}">${esc(b.label)}</a></div>`;
     case 'hr': return '<hr/>';
     case 'space': return `<div style="height:${b.h}px"></div>`;
@@ -1046,6 +1049,7 @@ function edBlock(b, i) {
       </div>`).join('')}</div>`;
   }
   if (b.t === 'boat') { bar = `<select class="eb-sel !max-w-[260px]" onclick="event.stopPropagation()" onchange="edUp(${i},{slug:this.value})">${FLEET.map(x => `<option value="${x.slug}" ${x.slug === b.slug ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`; body = blockHtml(b); }
+  if (b.t === 'dprice') { bar = `<select class="eb-sel !max-w-[260px]" onclick="event.stopPropagation()" onchange="edUp(${i},{dest:this.value})">${DPRICE_DESTS.map(([v, l]) => `<option value="${v}" ${v === b.dest ? 'selected' : ''}>${l}</option>`).join('')}</select>`; body = blockHtml(b); }
   if (b.t === 'btn') {
     bar = `<input class="eb-in !w-44" value="${esc(b.label)}" onclick="event.stopPropagation()" oninput="curB()[${i}].label=this.value;this.closest('.blk').querySelector('.b-btn a').textContent=this.value;edSave()"/>
       <select class="eb-sel" onclick="event.stopPropagation()" onchange="edUp(${i},{href:this.value})">${[['fleet', 'ลิงก์: หน้ารวมเรือ'], ['wa', 'ลิงก์: WhatsApp'], ['line', 'ลิงก์: LINE'], ['contact', 'ลิงก์: ติดต่อเรา']].map(([v, l]) => `<option value="${v}" ${b.href === v ? 'selected' : ''}>${l}</option>`).join('')}</select>${sep}
@@ -1055,7 +1059,7 @@ function edBlock(b, i) {
   }
   if (b.t === 'hr') body = '<hr/>';
   if (b.t === 'space') { bar = `<span class="eb-l">ความสูง</span><input type="range" min="8" max="160" step="8" value="${b.h}" onclick="event.stopPropagation()" oninput="curB()[${i}].h=+this.value;this.nextElementSibling.textContent=this.value+'px';this.closest('.blk').querySelector('.sp').style.height=this.value+'px';edSave()"/><span class="eb-n !w-auto">${b.h}px</span>`; body = `<div class="sp" style="height:${b.h}px"></div>`; }
-  const name = { p: 'ย่อหน้า', h: 'หัวข้อ H' + b.lv, quote: 'คำพูด', faq: 'FAQ', img: 'รูปภาพ', grid: 'กริดรูป', cols: 'คอลัมน์', boat: 'การ์ดเรือ', btn: 'ปุ่ม', hr: 'เส้นคั่น', space: 'ช่องว่าง' }[b.t];
+  const name = { p: 'ย่อหน้า', h: 'หัวข้อ H' + b.lv, quote: 'คำพูด', faq: 'FAQ', img: 'รูปภาพ', grid: 'กริดรูป', cols: 'คอลัมน์', boat: 'การ์ดเรือ', dprice: 'ตารางราคาปลายทาง', btn: 'ปุ่ม', hr: 'เส้นคั่น', space: 'ช่องว่าง' }[b.t];
   return `<div class="blk blk-${b.t}" data-i="${i}" onmousedown="edSel(${i})" ondragover="edOver(event,${i})" ondragleave="this.classList.remove('drop-b','drop-a')" ondrop="edDrop(event,${i})">
     <div class="blk-side"><button class="blk-plus" title="เพิ่มบล็อกด้านล่าง" onclick="event.stopPropagation();edMenu(${i + 1},this)"><i data-lucide="plus" class="w-4 h-4"></i></button><span class="blk-grip" draggable="true" title="ลากเพื่อย้าย" ondragstart="edDragStart(event,${i})" ondragend="edDragEnd()"><i data-lucide="grip-vertical" class="w-4 h-4"></i></span></div>
     <div class="blk-bar" onmousedown="event.stopPropagation()"><span class="eb-name">${name}</span>${bar ? sep + bar : ''}<span class="flex-1"></span>${ib('arrow-up', `edMove(${i},-1)`, 'เลื่อนขึ้น')}${ib('arrow-down', `edMove(${i},1)`, 'เลื่อนลง')}${ib('copy', `edDup(${i})`, 'ทำสำเนา')}${ib('trash-2', `edDel(${i})`, 'ลบบล็อก')}</div>

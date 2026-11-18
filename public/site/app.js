@@ -3495,6 +3495,7 @@ function postBlock(b, i) {
     case 'faq': return `<section class="post-faq" id="s-${i}">${b.title ? `<h2>${b.title}</h2>` : ''}${b.items.map((x, n) => `<details ${n ? '' : 'open'}><summary>${x.q}<i data-lucide="plus" class="w-4 h-4 shrink-0"></i></summary><div>${x.a}</div></details>`).join('')}</section>`;
     case 'grid': return `<div class="post-grid" style="grid-template-columns:repeat(${b.cols},1fr);grid-auto-rows:${b.rowH}px;gap:${b.gap}px">${b.cells.filter(c => c.src).map(c => `<img src="${c.src}" loading="lazy" style="grid-column:span ${c.cs};grid-row:span ${c.rs}"/>`).join('')}</div>`;
     case 'boat': { const x = bySlug(b.slug); return x ? miniBoat(x) : ''; }
+    case 'dprice': return destPriceBox(b.dest);
     case 'btn': return `<p style="text-align:${{ l: 'left', c: 'center', r: 'right' }[b.align] || 'center'}"><a href="#/fleet" class="post-btn">${esc(b.label)}</a></p>`;
     case 'space': return `<div style="height:${b.h}px"></div>`;
   }
@@ -3610,6 +3611,30 @@ const DEST_KEY = { 'phi-phi': 'Phi Phi', 'phang-nga-bay': 'Phang Nga', 'racha-is
 const destSlugOf = name => Object.keys(DEST_KEY).find(k => name.toLowerCase().startsWith(DEST_KEY[k].toLowerCase())) || '';
 const destBoats = slug => { const key = (DEST_KEY[slug] || '').toLowerCase(), d = DPAGES.find(x => x.slug === slug), re = d && d.match ? new RegExp(d.match, 'i') : null;
   return FLEET.filter(b => (key && b.dest.some(x => x.toLowerCase().startsWith(key))) || (re && b.tables.some(tb => tb.rows.some(r => re.test(r[0]))))); };
+/** programs of one boat that really go to this destination: cheapest price for today's season · falls back to the boat's from-price.
+    bpPrice reads the season from DSZ (set per boat on the boat page), so it is set for this boat here and put back after. */
+const destProg = (b, slug) => { const d = DPAGES.find(x => x.slug === slug), re = d && d.match ? new RegExp(d.match, 'i') : null; let m = 0;
+  if (re) { const keep = DSZ; try { const v0 = seasonView(b, todayISO()); DSZ = { ...v0, pick: null }; if (!v0.key && boatKeys(b).length) { const nx = nextSeason(v0.cal, todayISO()); if (nx) DSZ.key = DSZ.base = nx.key; }
+    bpProgs(b).filter(p => re.test(p.raw + ' ' + (p.tb.caption || ''))).forEach(p => { const x = bpPrice(b, p); if (x && x.n && (!m || x.n < m)) m = x.n; }); } catch (e) {} finally { DSZ = keep; } }
+  return { from: m || b.from_ || 0 }; };
+/** article block {t:'dprice', dest}: live price summary by boat type for one destination + link to its page */
+function destPriceBox(slug) {
+  const d = DPAGES.find(x => x.slug === slug), bs = d ? destBoats(slug) : [];
+  if (!bs.length) return '';
+  const info = bs.map(b => ({ b, ...destProg(b, slug) }));
+  const rows = TYPES.map(ty => { const xs = info.filter(x => x.b.type === ty); if (!xs.length) return null; const fr = xs.map(x => x.from).filter(Boolean);
+    return { ty, n: xs.length, from: fr.length ? Math.min(...fr) : 0 }; }).filter(Boolean);
+  const k = LANG === 'en' ? 'en' : 'th', nm = dl(d.name), tt = (d.facts[k].find(f => /เวลาเดินทาง|Travel time/i.test(f[0])) || [])[1];
+  return `<aside class="post-dprice">
+    <p class="pd-eye">${L('สรุปราคา', 'Price summary')}</p>
+    <p class="pd-h">${L(`ราคาเช่าเรือส่วนตัว ภูเก็ต – ${nm} (ต่อลำ)`, `Private boat prices, Phuket to ${nm} (per boat)`)}</p>
+    ${tt ? `<p class="pd-tt">${L('เวลาเดินทาง', 'Travel time')}: ${tt}</p>` : ''}
+    <table><thead><tr><th>${L('ประเภทเรือ', 'Boat type')}</th><th>${L('จำนวนเรือ', 'Boats')}</th><th>${L('ราคาเริ่มต้น / ลำ', 'From / boat')}</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td><a href="#/fleet?type=${r.ty}">${typeLabel(r.ty)}</a></td><td>${r.n} ${L('ลำ', r.n > 1 ? 'boats' : 'boat')}</td><td><b>${r.from ? baht(r.from) : '—'}</b></td></tr>`).join('')}</tbody></table>
+    <p class="pd-note">${L('ราคาทั้งลำ ไม่ใช่ราคาต่อคน รวมกัปตันและลูกเรือ ราคาจริงขึ้นกับวันที่ ฤดูกาล และจำนวนคน ค่าธรรมเนียมอุทยานแห่งชาติจ่ายตามจริงต่อคน', 'Whole-boat prices, not per person, with captain and crew included. The final price depends on the date, season and group size. National park fees are paid per person on the day.')}</p>
+    <p class="pd-cta"><a href="#/dest/${slug}" class="post-btn">${L(`ดูเรือ ${bs.length} ลำที่ไป${nm}`, `See all ${bs.length} boats to ${nm}`)}</a><button type="button" onclick="openBooking()" class="pd-ask">${L('ขอราคาตามวันที่ของคุณ', 'Get a price for your date')}</button></p>
+  </aside>`;
+}
 const dl = o => (o ? o[LANG === 'en' ? 'en' : 'th'] : '');
 
 function renderDestIndex() {
@@ -3617,7 +3642,7 @@ function renderDestIndex() {
   const fact = (d, i) => (d.facts[k][i] || ['', ''])[1];
   const D = DPAGES.map(d => { const bs = destBoats(d.slug), re = d.match ? new RegExp(d.match, 'i') : null;
     // ราคาเริ่มต้นของโปรแกรมที่ไปปลายทางนี้จริง (ไม่ใช่ราคาต่ำสุดของเรือ) · ถ้าเรือไม่มีแถวโปรแกรมที่ตรง ใช้ราคาเริ่มต้นของเรือ
-    const fr = bs.map(b => { let m = 0; if (re) { try { bpProgs(b).filter(p => re.test(p.raw + ' ' + (p.tb.caption || ''))).forEach(p => { const x = bpPrice(b, p); if (x && x.n && (!m || x.n < m)) m = x.n; }); } catch (e) {} } return m || b.from_; }).filter(Boolean);
+    const fr = bs.map(b => destProg(b, d.slug).from).filter(Boolean);
     const mc = {}; bs.forEach(b => { const m = b.marinaP; if (m && !/^phuket$/i.test(m.trim())) mc[m] = (mc[m] || 0) + 1; });
     const mar = Object.keys(mc).sort((a, b) => mc[b] - mc[a]);
     const tys = TYPES.map(ty => [ty, bs.filter(b => b.type === ty).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]);
@@ -3702,7 +3727,7 @@ function renderDestIndex() {
 function renderDest(slug) {
   const v = $('#view-dest'), d = DPAGES.find(x => x.slug === slug);
   if (!d) return renderNotFound();
-  const k = LANG === 'en' ? 'en' : 'th', bs = destBoats(slug), from = bs.length ? Math.min(...bs.filter(b => b.from_).map(b => b.from_)) : 0;
+  const k = LANG === 'en' ? 'en' : 'th', bs = destBoats(slug), frs = bs.map(b => destProg(b, slug).from).filter(Boolean), from = frs.length ? Math.min(...frs) : 0;
   const title = k === 'en' ? `${d.name.en} private boat charter` : `เช่าเรือไป${d.name.th}`;
   v.innerHTML = `
   <section class="relative overflow-hidden on-dark bg-ink">
@@ -3735,7 +3760,7 @@ function renderDest(slug) {
   ${bs.length ? `<section class="max-w-7xl mx-auto px-4 sm:px-6 pb-14 lg:pb-20">
     <p class="text-lagoon-600 font-medium text-sm tracking-wider uppercase">Our Fleet</p>
     <h2 class="font-display font-medium text-2xl sm:text-3xl text-ink mt-2">${L(`เรือที่มีโปรแกรมไป${d.name.th}`, `Boats with ${d.name.en} programs`)}</h2>
-    <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">${popFirst(bs).slice(0, 12).map((b, i) => boatCard(b, i)).join('')}</div>
+    <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">${popFirst(bs).map((b, i) => boatCard(b, i)).join('')}</div>
   </section>` : ''}`;
   buildForm($('#destForm'));
   document.title = d.seoTitle[k]; setMeta('description', d.seoDesc[k]);
