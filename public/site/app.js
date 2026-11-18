@@ -3496,6 +3496,7 @@ function postBlock(b, i) {
     case 'grid': return `<div class="post-grid" style="grid-template-columns:repeat(${b.cols},1fr);grid-auto-rows:${b.rowH}px;gap:${b.gap}px">${b.cells.filter(c => c.src).map(c => `<img src="${c.src}" loading="lazy" style="grid-column:span ${c.cs};grid-row:span ${c.rs}"/>`).join('')}</div>`;
     case 'boat': { const x = bySlug(b.slug); return x ? miniBoat(x) : ''; }
     case 'dprice': return destPriceBox(b.dest);
+    case 'fprice': return fleetPriceBox();
     case 'btn': return `<p style="text-align:${{ l: 'left', c: 'center', r: 'right' }[b.align] || 'center'}"><a href="#/fleet" class="post-btn">${esc(b.label)}</a></p>`;
     case 'space': return `<div style="height:${b.h}px"></div>`;
   }
@@ -3611,12 +3612,32 @@ const DEST_KEY = { 'phi-phi': 'Phi Phi', 'phang-nga-bay': 'Phang Nga', 'racha-is
 const destSlugOf = name => Object.keys(DEST_KEY).find(k => name.toLowerCase().startsWith(DEST_KEY[k].toLowerCase())) || '';
 const destBoats = slug => { const key = (DEST_KEY[slug] || '').toLowerCase(), d = DPAGES.find(x => x.slug === slug), re = d && d.match ? new RegExp(d.match, 'i') : null;
   return FLEET.filter(b => (key && b.dest.some(x => x.toLowerCase().startsWith(key))) || (re && b.tables.some(tb => tb.rows.some(r => re.test(r[0]))))); };
-/** programs of one boat that really go to this destination: cheapest price for today's season · falls back to the boat's from-price.
-    bpPrice reads the season from DSZ (set per boat on the boat page), so it is set for this boat here and put back after. */
-const destProg = (b, slug) => { const d = DPAGES.find(x => x.slug === slug), re = d && d.match ? new RegExp(d.match, 'i') : null; let m = 0;
-  if (re) { const keep = DSZ; try { const v0 = seasonView(b, todayISO()); DSZ = { ...v0, pick: null }; if (!v0.key && boatKeys(b).length) { const nx = nextSeason(v0.cal, todayISO()); if (nx) DSZ.key = DSZ.base = nx.key; }
-    bpProgs(b).filter(p => re.test(p.raw + ' ' + (p.tb.caption || ''))).forEach(p => { const x = bpPrice(b, p); if (x && x.n && (!m || x.n < m)) m = x.n; }); } catch (e) {} finally { DSZ = keep; } }
-  return { from: m || b.from_ || 0 }; };
+/** run fn with today's season set for boat b: bpPrice reads the season from DSZ (set per boat on the boat page), so it is put back after */
+const withSeason = (b, fn) => { const keep = DSZ; try { const v0 = seasonView(b, todayISO()); DSZ = { ...v0, pick: null }; if (!v0.key && boatKeys(b).length) { const nx = nextSeason(v0.cal, todayISO()); if (nx) DSZ.key = DSZ.base = nx.key; } return fn(); } catch (e) { return null; } finally { DSZ = keep; } };
+/** cheapest program of one boat that really goes to this destination, today's season · 0 when none matches */
+const destMatch = (b, slug) => { const d = DPAGES.find(x => x.slug === slug), re = d && d.match ? new RegExp(d.match, 'i') : null;
+  return (re && withSeason(b, () => { let m = 0; bpProgs(b).filter(p => re.test(p.raw + ' ' + (p.tb.caption || ''))).forEach(p => { const x = bpPrice(b, p); if (x && x.n && (!m || x.n < m)) m = x.n; }); return m; })) || 0; };
+/** same, falling back to the boat's from-price */
+const destProg = (b, slug) => ({ from: destMatch(b, slug) || b.from_ || 0 });
+/** cheapest overnight (2 days 1 night) program of one boat, today's season · 0 when none */
+const nightFrom = b => withSeason(b, () => { let m = 0; bpProgs(b).filter(p => p.kind === 'night' && (!p.hrs || p.hrs <= 30)).forEach(p => { const x = bpPrice(b, p); if (x && x.n && (!m || x.n < m)) m = x.n; }); return m; }) || 0;
+/** article block {t:'fprice'}: live whole-fleet price table by boat type: cheapest trip · Phi Phi · Phang Nga Bay · overnight */
+function fleetPriceBox() {
+  const live = FLEET.filter(b => b.from_);
+  if (!live.length) return '';
+  const info = live.map(b => ({ b, any: b.from_, pp: destMatch(b, 'phi-phi'), pn: destMatch(b, 'phang-nga-bay'), nt: nightFrom(b) })), mn = a => (a = a.filter(Boolean)).length ? Math.min(...a) : 0;
+  const rows = TYPES.map(ty => { const xs = info.filter(x => x.b.type === ty); if (!xs.length) return null; const of = k => mn(xs.map(x => x[k]));
+    return { ty, n: xs.length, any: of('any'), pp: of('pp'), pn: of('pn'), nt: of('nt') }; }).filter(Boolean);
+  const c = v => v ? baht(v) : '—', nt = rows.some(r => r.nt);
+  return `<aside class="post-dprice">
+    <p class="pd-eye">${L('สรุปราคา', 'Price summary')}</p>
+    <p class="pd-h">${L('ราคาเช่าเรือส่วนตัวภูเก็ต เริ่มต้นต่อลำ', 'Phuket private boat charter prices, from (per boat)')}</p>
+    <table><thead><tr><th>${L('ประเภทเรือ', 'Boat type')}</th><th>${L('ทริปเริ่มต้น', 'Any trip')}</th><th>${L('ไปเกาะพีพี', 'Phi Phi')}</th><th>${L('ไปอ่าวพังงา', 'Phang Nga Bay')}</th>${nt ? `<th>${L('ค้างคืน 2 วัน 1 คืน', '2 days 1 night')}</th>` : ''}</tr></thead>
+    <tbody>${rows.map(r => `<tr><td><a href="#/fleet?type=${r.ty}">${typeLabel(r.ty)}</a> <small>(${r.n})</small></td><td>${c(r.any)}</td><td>${c(r.pp)}</td><td>${c(r.pn)}</td>${nt ? `<td>${c(r.nt)}</td>` : ''}</tr>`).join('')}</tbody></table>
+    <p class="pd-note">${L('ราคาทั้งลำ ไม่ใช่ราคาต่อคน รวมกัปตันและลูกเรือ เป็นราคาเริ่มต้นของฤดูกาลปัจจุบัน "ทริปเริ่มต้น" มักเป็นทริปครึ่งวันหรือเกาะใกล้ ราคาจริงขึ้นกับเรือ วันที่ และจำนวนคน ค่าธรรมเนียมอุทยานแห่งชาติจ่ายตามจริงต่อคน', 'Whole-boat prices, not per person, with captain and crew included. Starting prices for the current season; "Any trip" is usually a half day or a nearby island. The final price depends on the boat, date and group size. National park fees are paid per person.')}</p>
+    <p class="pd-cta"><a href="#/fleet" class="post-btn">${L(`ดูเรือทั้งหมด ${live.length} ลำพร้อมราคา`, `Compare all ${live.length} boats and prices`)}</a><button type="button" onclick="openBooking()" class="pd-ask">${L('ขอราคาตามวันที่ของคุณ', 'Get a price for your date')}</button></p>
+  </aside>`;
+}
 /** article block {t:'dprice', dest}: live price summary by boat type for one destination + link to its page */
 function destPriceBox(slug) {
   const d = DPAGES.find(x => x.slug === slug), bs = d ? destBoats(slug) : [];
