@@ -14,7 +14,7 @@ import { rateLimit } from './ratelimit';
 
 export const SESSION_COOKIE = 'btt_admin';
 const SESSION_HOURS = 12;
-const IDLE_MINUTES = 30;
+const IDLE_MINUTES = 12 * 60;   // same as SESSION_HOURS: no separate idle logout
 const MAX_FAILS = 5;
 const LOCK_MINUTES = 15;
 
@@ -83,7 +83,7 @@ async function rawSession() {
   if (!u.active || row.sessionVersion !== u.sessionVersion) { await db.delete(sessions).where(eq(sessions.id, id)); return null; }
   if (Date.now() - +row.lastSeenAt > IDLE_MINUTES * 60000) {
     await db.delete(sessions).where(eq(sessions.id, id));
-    await audit({ id: u.id, role: u.role }, { action: 'logout', entity: 'auth', label: `ไม่มีการใช้งาน ${IDLE_MINUTES} นาที · ออกจากระบบอัตโนมัติ` });
+    await audit({ id: u.id, role: u.role }, { action: 'logout', entity: 'auth', label: `ไม่มีการใช้งาน ${IDLE_MINUTES / 60} ชั่วโมง · ออกจากระบบอัตโนมัติ` });
     return null;
   }
   if (Date.now() - +row.lastSeenAt > 60000) await db.update(sessions).set({ lastSeenAt: new Date() }).where(eq(sessions.id, id));

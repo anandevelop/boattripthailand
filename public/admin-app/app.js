@@ -3203,7 +3203,7 @@ function boatChanges(b, before, after) {
 
 /* ---------- sample audit history (labelled) ---------- */
 /* ---------- session ---------- */
-const SESS_KEY = 'btt_admin_sess', IDLE_MIN = 30;
+const SESS_KEY = 'btt_admin_sess', IDLE_MIN = 12 * 60;   // keep in step with IDLE_MINUTES in src/lib/auth.ts
 const FAILS = {};
 const sGet = () => { try { return JSON.parse(sessionStorage.getItem(SESS_KEY) || 'null'); } catch (e) { return null; } };
 const sSet = v => { try { v ? sessionStorage.setItem(SESS_KEY, JSON.stringify(v)) : sessionStorage.removeItem(SESS_KEY); } catch (e) { } };
@@ -3276,7 +3276,7 @@ function finishLogin(u, label, restore) {
   route(); if (!restore) toast(`สวัสดี ${u.name} · สิทธิ์ ${ROLES[u.roleKey][0]}`);
 }
 function logout(reason) {
-  if (!ME) return; flushBoat(); audit('logout', 'auth', '', reason === 'timeout' ? `ไม่มีการใช้งาน ${IDLE_MIN} นาที · ออกจากระบบอัตโนมัติ` : 'ออกจากระบบ');
+  if (!ME) return; flushBoat(); audit('logout', 'auth', '', reason === 'timeout' ? `ไม่มีการใช้งาน ${IDLE_MIN / 60} ชั่วโมง · ออกจากระบบอัตโนมัติ` : 'ออกจากระบบ');
   LG.email = ME.email; ME = null; sSet(null); document.body.classList.remove('ro'); showLogin(); if (reason === 'timeout') toast('ออกจากระบบอัตโนมัติเพราะไม่มีการใช้งาน');
 }
 
@@ -3290,7 +3290,7 @@ function mePanel() {
   const P = permsOf(ME), mins = Math.max(0, IDLE_MIN - Math.floor((Date.now() - lastAct) / 60000));
   openModal(`<div class="p-5 border-b border-line flex items-center gap-3"><img src="${teamImg(ME.id)}" class="w-11 h-11 rounded-full object-cover"/><div class="min-w-0 flex-1"><p class="font-medium">${esc(ME.name)}</p><p class="text-[12px] text-muted">${ME.email} · ${ROLES[ME.roleKey][0]}</p></div><button class="btn btn-g !px-2" onclick="closeModal()" aria-label="Close"><i data-lucide="x" class="w-5 h-5"></i></button></div>
     <div class="p-5 space-y-4"><div><p class="lbl">สิทธิ์ของคุณ</p><div class="grid gap-1">${PERMS.map(([k, l]) => `<p class="flex items-center gap-2 text-[12.5px] ${P.includes(k) ? '' : 'text-muted line-through decoration-[#d9cfcf]'}"><i data-lucide="${P.includes(k) ? 'check' : 'x'}" class="w-3.5 h-3.5 ${P.includes(k) ? 'text-[#1e7a46]' : 'text-[#c9bfbf]'}"></i>${l}</p>`).join('')}</div></div>
-      <div class="rounded-xl bg-sand p-3 text-[12px] grid gap-1"><p class="flex justify-between"><span class="text-muted">เข้าระบบเมื่อ</span><span>${new Date(loginAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}</span></p><p class="flex justify-between"><span class="text-muted">อุปกรณ์</span><span>${DEVICE}</span></p><p class="flex justify-between"><span class="text-muted">หมดเวลาถ้าไม่ใช้งานใน</span><span>${mins} นาที</span></p></div>
+      <div class="rounded-xl bg-sand p-3 text-[12px] grid gap-1"><p class="flex justify-between"><span class="text-muted">เข้าระบบเมื่อ</span><span>${new Date(loginAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}</span></p><p class="flex justify-between"><span class="text-muted">อุปกรณ์</span><span>${DEVICE}</span></p><p class="flex justify-between"><span class="text-muted">หมดเวลาถ้าไม่ใช้งานใน</span><span>${mins >= 60 ? Math.floor(mins / 60) + ' ชม.' + (mins % 60 ? ' ' + (mins % 60) + ' นาที' : '') : mins + ' นาที'}</span></p></div>
       <p class="text-[11px] text-muted">ต้องการสิทธิ์เพิ่ม ติดต่อ Admin · ทุกการเปลี่ยนสิทธิ์ถูกบันทึกไว้</p></div>
     <div class="p-4 border-t border-line flex gap-2"><button class="btn btn-o flex-1" onclick="closeModal();logout()"><i data-lucide="repeat" class="w-3.5 h-3.5"></i>สลับบัญชี (เดโม)</button><button class="btn btn-p flex-1" onclick="closeModal();logout()"><i data-lucide="log-out" class="w-3.5 h-3.5"></i>ออกจากระบบ</button></div>`);
 }
@@ -3752,7 +3752,7 @@ mePanel = function () {
         <div class="grid grid-cols-2 gap-2"><input name="password" type="password" class="inp" placeholder="รหัสใหม่ (12 ตัวขึ้นไป)" autocomplete="new-password" required/><input name="password2" type="password" class="inp" placeholder="ยืนยันรหัสใหม่" autocomplete="new-password" required/></div>
         <button class="btn btn-o justify-self-start !h-8">บันทึกรหัสใหม่</button></form>
       <div><p class="lbl">สิทธิ์ของคุณ</p><div class="grid gap-1">${PERMS.map(([k, l]) => `<p class="flex items-center gap-2 text-[12.5px] ${P.includes(k) ? '' : 'text-muted line-through decoration-[#d9cfcf]'}"><i data-lucide="${P.includes(k) ? 'check' : 'x'}" class="w-3.5 h-3.5 ${P.includes(k) ? 'text-[#1e7a46]' : 'text-[#c9bfbf]'}"></i>${l}</p>`).join('')}</div></div>
-      <div class="rounded-xl bg-sand p-3 text-[12px] grid gap-1"><p class="flex justify-between"><span class="text-muted">อุปกรณ์</span><span>${DEVICE}</span></p><p class="flex justify-between"><span class="text-muted">หมดเวลาถ้าไม่ใช้งานใน</span><span>${mins} นาที</span></p></div>
+      <div class="rounded-xl bg-sand p-3 text-[12px] grid gap-1"><p class="flex justify-between"><span class="text-muted">อุปกรณ์</span><span>${DEVICE}</span></p><p class="flex justify-between"><span class="text-muted">หมดเวลาถ้าไม่ใช้งานใน</span><span>${mins >= 60 ? Math.floor(mins / 60) + ' ชม.' + (mins % 60 ? ' ' + (mins % 60) + ' นาที' : '') : mins + ' นาที'}</span></p></div>
       <p class="text-[11px] text-muted">ต้องการสิทธิ์เพิ่ม ติดต่อ Super Admin · ทุกการเปลี่ยนสิทธิ์ถูกบันทึกไว้</p></div>
     <div class="p-4 border-t border-line flex gap-2"><button class="btn btn-p flex-1" onclick="closeModal();logout()"><i data-lucide="log-out" class="w-3.5 h-3.5"></i>ออกจากระบบ</button></div>`);
 };

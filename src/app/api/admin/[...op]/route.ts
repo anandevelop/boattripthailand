@@ -625,7 +625,7 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
       await audit(actor(me), { action: act, entity: str(body.ent, 20) || 'auth', ref: str(body.ref, 120) || null, label: str(body.label, 300) || act, changes: arr(body.changes).slice(0, 10).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { f: str(o.f, 80), from: str(o.from, 200), to: str(o.to, 200) }; }), note: 'บันทึกจากหน้าจอผู้ใช้', ...(await clientInfo()) });
       return json({ ok: true });
     }
-    if (a === 'logout' && method === 'POST') { await logout(str(body.reason) === 'timeout' ? 'ไม่มีการใช้งาน 30 นาที · ออกจากระบบอัตโนมัติ' : 'ออกจากระบบ'); return json({ ok: true }); }
+    if (a === 'logout' && method === 'POST') { await logout(str(body.reason) === 'timeout' ? 'ไม่มีการใช้งาน 12 ชั่วโมง · ออกจากระบบอัตโนมัติ' : 'ออกจากระบบ'); return json({ ok: true }); }
     if (a === 'leads' && !b0 && method === 'POST') return await newLead(me, body);
     if (a === 'leads' && b0 && c0 === 'docs' && method === 'GET') { await need(me, 'leads'); const l = await leadByRef(me, decodeURIComponent(b0)); return json({ docs: await listDocs(l.id) }); }
     if (a === 'leads' && b0 && c0 && method === 'POST') return await leadOp(me, decodeURIComponent(b0), c0, body);
