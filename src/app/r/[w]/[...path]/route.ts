@@ -1,9 +1,8 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
-import { uploadPath } from '@/lib/media';
+import { UPLOAD_DIR, uploadPath } from '@/lib/media';
 
 export const runtime = 'nodejs';
 
@@ -11,11 +10,12 @@ export const runtime = 'nodejs';
  * /r/<width>/<boats|img|brand|uploads>/<file>  →  the same photo, resized to <width> px, as WebP.
  * Cards and thumbnails use this instead of the 1920 px originals (a 300 px card does not need a 200 KB photo).
  * Only pictures that are already public are served; widths are fixed so the cache stays small.
- * Resized files are kept in the container's temp folder; Cloudflare and browsers cache them too.
+ * Resized files are kept on the uploads volume (UPLOAD_DIR/_cache/r), so a deploy does not throw them away and the
+ * first crawl after it does not resize every photo again; Cloudflare and browsers cache them too.
  */
 const WIDTHS = new Set([160, 320, 480, 640, 768, 1280, 1600]);   // 480 / 640: srcset steps for cards (public/site/fleet.js fxSrcset)
 const PUBLIC = path.resolve(process.cwd(), 'public');
-const CACHE = path.join(os.tmpdir(), 'btt-r');
+const CACHE = path.join(UPLOAD_DIR, '_cache', 'r');
 const busy = new Map<string, Promise<Buffer>>();
 
 function fileOf(rel: string) {
@@ -40,7 +40,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ w: string; path
     if (!job) {
       job = (async () => {
         const b = await sharp(await readFile(file), { failOn: 'none' }).rotate()
-          .resize({ width: w, height: w * 2, fit: 'inside', withoutEnlargement: true }).webp({ quality: q, effort: 5 }).toBuffer();
+          .resize({ width: w, height: w * 2, fit: 'inside', withoutEnlargement: true }).webp({ quality: q, effort: 4 }).toBuffer();
         try {   // the disk copy is only a cache: a read-only / full disk must not break the picture
           await mkdir(path.dirname(out), { recursive: true });
           const tmp = out + '.' + process.pid + '.tmp'; await writeFile(tmp, b); await rename(tmp, out);

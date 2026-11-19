@@ -207,8 +207,9 @@ export async function renderSite(url: URL, cfg: Record<string, string>, opts: { 
   const job = fresh(key, new URL(pk, url), cfg, a, !!opts.warm || stale);
   if (!hit) { if (!opts.warm) promote(key); return job; }
   // expired by time → last copy now, new one in the background. Changed in the admin → wait for the new one,
-  // unless the server is busy rendering (crawl burst), then the last copy too.
-  if (hit.gen === S.gen || S.queued > 2) { job.catch(e => console.error('[ssr]', pk, e)); return unzip(hit); }
+  // unless anything else is already rendering (a crawl, the warm-up): then the last copy too. A render blocks the whole
+  // process, so a crawl right after an admin save must not queue one blocking render per URL behind each other.
+  if (hit.gen === S.gen || S.queued > 1) { job.catch(e => console.error('[ssr]', pk, e)); return unzip(hit); }
   try { return await job; } catch (e) { console.error('[ssr]', pk, e); return unzip(hit); }
 }
 function fresh(key: string, url: URL, cfg: Record<string, string>, a: Assets, low = false) {

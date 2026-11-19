@@ -3731,7 +3731,7 @@ function renderDestIndex() {
       <button type="button" onclick="openBooking()">${L('ถามทีมงาน', 'Ask our team')}<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
   </section>`;
   const title = L('เช่าเรือเที่ยวเกาะภูเก็ต พีพี พังงา ราชา | Boat Trip Thailand', 'Phuket Island Trips by Private Boat | Boat Trip Thailand');
-  const desc = L(`เลือกปลายทางเช่าเรือส่วนตัวจากภูเก็ต ${DPAGES.length} กลุ่มเกาะ เปรียบเทียบเวลาเดินทาง เรือที่ไป ${total} ลำ ราคาเริ่มต้น และท่าเรือ`, `Choose a private boat destination from Phuket — compare travel time, ${total} boats, starting prices and marinas for Phi Phi, Phang Nga Bay, Racha and Khai.`);
+  const desc = L(`เลือกปลายทางเช่าเรือส่วนตัวจากภูเก็ต ${DPAGES.length} กลุ่มเกาะ เปรียบเทียบเวลาเดินทาง เรือที่ไป ${total} ลำ ราคาเริ่มต้น และท่าเรือ`, 'Choose a private boat destination from Phuket. Compare travel time, boats and prices for Phi Phi, Phang Nga Bay, Racha, Khai, Coral Island and Krabi.');
   document.title = title; setMeta('description', desc);
   setMeta('og:title', title, 'property'); setMeta('og:description', desc, 'property'); if (DPAGES[0]) setMeta('og:image', SITE_ORIGIN + DPAGES[0].hero, 'property');
   $('#canonical').href = SITE_ORIGIN + hashToPath('#/destinations');
