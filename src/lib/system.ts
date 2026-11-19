@@ -268,6 +268,13 @@ async function loadState() { return S.state ??= await getSet<Record<string, JobS
 let lastSave = 0;
 async function saveState(force: boolean) { if (!force && Date.now() - lastSave < 10 * 60_000) return; lastSave = Date.now(); await putSet(JOBS_KEY, S.state); }
 
+/** the real reason first: drizzle wraps database errors as "Failed query: <sql>", the driver's message is in .cause */
+function errText(e: unknown): string {
+  const c = (e as { cause?: { message?: string; code?: string } })?.cause;
+  const main = e instanceof Error ? e.message : String(e);
+  return c?.message ? `${c.message}${c.code ? ` (${c.code})` : ''} · ${main.split('\n')[0].slice(0, 80)}` : main;
+}
+
 export async function runJob(id: string, by?: string) {
   const job = JOBS.find(j => j.id === id);
   if (!job) throw new Error('ไม่พบงานนี้');
@@ -275,14 +282,17 @@ export async function runJob(id: string, by?: string) {
   S.running.add(id);
   const state = await loadState(), prev = state[id], t0 = Date.now();
   let r: JobState;
-  try { r = { at: new Date().toISOString(), ok: true, msg: (await job.run()).slice(0, 300), ms: Date.now() - t0, ...(by ? { by } : {}) }; }
-  catch (e) { r = { at: new Date().toISOString(), ok: false, msg: (e instanceof Error ? e.message : String(e)).slice(0, 300), ms: Date.now() - t0, ...(by ? { by } : {}) }; }
+  // one retry after a short pause: a dropped database connection (DB restart, deploy, network blip) fails once and then works
+  const attempt = async () => { try { return await job.run(); } catch (e) { await new Promise(res => setTimeout(res, 3000)); return job.run(); } };
+  try { r = { at: new Date().toISOString(), ok: true, msg: (await attempt()).slice(0, 300), ms: Date.now() - t0, ...(by ? { by } : {}) }; }
+  catch (e) { r = { at: new Date().toISOString(), ok: false, msg: errText(e).slice(0, 300), ms: Date.now() - t0, ...(by ? { by } : {}) }; }
   finally { S.running.delete(id); }
   state[id] = r;
   await saveState(!job.quiet || !prev || prev.ok !== r.ok || !!by).catch(() => {});
-  if (!r.ok && id !== 'web') {
+  if (id !== 'web') {
     const kind: AlertKind = id === 'backup' ? 'backup' : 'cron';
-    await sendAlert(kind, `${job.name} ล้มเหลว: ${r.msg}`).catch(() => {});
+    if (!r.ok) await sendAlert(kind, `${job.name} ล้มเหลว: ${r.msg}`).catch(() => {});
+    else if (prev && !prev.ok) await sendAlert(kind, `${job.name} กลับมาทำงานปกติแล้ว`, true).catch(() => {});
   }
   return r;
 }
