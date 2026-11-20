@@ -3,6 +3,8 @@ import { join } from 'node:path';
 import { NextResponse, type NextRequest } from 'next/server';
 import { noindexSite, reqHost } from '@/lib/indexing';
 
+/* Next.js 16: the file formerly known as middleware.ts (always the Node.js runtime) */
+
 /**
  * 1. 301 redirects from the old WordPress URLs (table `redirects`, cached 1 min / until the next admin save)
  * 2. trailing slash → none, /th/xxx → /xxx (Thai is the default language, English lives under /en) — always one 301 to the final page
@@ -12,7 +14,7 @@ import { noindexSite, reqHost } from '@/lib/indexing';
  *    The twins sit next to each image (x.webp.avif, x.png.webp), made by `node scripts/optimize-images.mjs`; an empty twin = no gain.
  * 5. noindex mode (lib/indexing: dev domain new.*): X-Robots-Tag noindex on every page and image
  */
-export const config = { runtime: 'nodejs', matcher: ['/boats/:path*', '/img/:path*', '/((?!_next/|api/|admin|boats/|brand/|img/|r/|site/|site-data.js|uploads/|feeds/|icon|favicon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|js|css|map)$).*)'] };
+export const config = { matcher: ['/boats/:path*', '/img/:path*', '/((?!_next/|api/|admin|boats/|brand/|img/|r/|site/|site-data.js|uploads/|feeds/|icon|favicon|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml|js|css|map)$).*)'] };
 
 let cache: { at: number; map: Map<string, { to: string; code: number }> } | null = null;
 async function redirectMap() {
@@ -68,7 +70,7 @@ function countBot(req: NextRequest) {
   if (/^\/(boats|img)\//.test(p) || /[<>"'`\\\u0000-\u001f]/.test(p)) return;
   void import('@/lib/traffic-src').then(m => m.botHit(ua, p.length > 1 ? p.replace(/\/+$/, '') : p)).catch(e => console.error('[bot count]', e));
 }
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   countBot(req);
   const res = await route(req);
   if (noindexSite(reqHost(req.headers))) res.headers.set('X-Robots-Tag', 'noindex, nofollow');

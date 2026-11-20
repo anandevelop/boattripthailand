@@ -385,7 +385,7 @@ function renderActs() {
   $('#actFilterLabel').innerHTML = `${t('showing')}: <b class="text-ink">${label}</b> · ${list.length} ${t('items')}` + (activeCat?` <button id="clearCat" class="ml-2 underline text-lagoon-700">${t('clear')}</button>`:'');
   if ($('#clearCat')) $('#clearCat').onclick = () => { activeCat=null; renderCats(); renderActs(); };
   const SEA = ['seatour','tourth','water'], seaBoats = FLEET.filter(b => bimg(b.slug,'a'));
-  const media = (a,i) => actImgs(a).length ? `<img src="${actImgs(a)[0]}" alt="${(LANG==='en'?a.en:a.th)} – ${a.loc}, Phuket" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700"/>` : SEA.includes(a.cat)
+  const media = (a,i) => actImgs(a).length ? `<img src="${actImgs(a)[0]}" alt="${(LANG==='en'?a.en:a.th)} – ${a.loc}, Phuket" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700"/>` : SEA.includes(a.cat) && seaBoats.length
     ? `<img src="${bimg(seaBoats[(i*7)%seaBoats.length].slug, i%2?'b':'a')}" alt="${(LANG==='en'?a.en:a.th)} – ${a.loc}, Phuket" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700"/>`
     : `<span class="absolute inset-0 act-ph"></span><i data-lucide="${CATS[a.cat].icon}" class="absolute right-[-10%] top-[8%] w-[70%] h-[70%] text-white/[.07]" stroke-width="1"></i>`;
   const lim = innerWidth < 640 ? 10 : 12, shown = actAll ? list : list.slice(0, lim);

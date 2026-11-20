@@ -1,7 +1,7 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { gunzipSync, gzipSync } from 'node:zlib';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
@@ -113,7 +113,7 @@ async function loadBundle(gen: number): Promise<Bundle> {
   const GALLERY = Object.fromEntries(bs.map(b => [b.slug, b.images.filter(Boolean).map(ver)]));
   const SEASONS = { calendars: cals.map(c => ({ id: c.id, name: c.name, kind: c.kind === 'season' ? 'season' : 'allyear', ranges: c.ranges, special: c.special, ...(c.add ? { add: c.add } : {}), ...(c.addHalf ? { addHalf: c.addHalf } : {}) })), boats: Object.fromEntries(bs.map(b => [b.slug, b.calendarId ?? 'all'])), colmap: Object.fromEntries(bs.filter(b => b.data.colmap).map(b => [b.slug, b.data.colmap])) };
   const SHOWIMG: Record<string, string[]> = {};
-  for (const f of readdirSync(path.join(ROOT, 'public/img/acts')).sort()) (SHOWIMG[f.split('-')[0]] ??= []).push('/img/acts/' + f);
+  for (const f of (existsSync(path.join(ROOT, 'public/img/acts')) ? readdirSync(path.join(ROOT, 'public/img/acts')) : []).sort()) (SHOWIMG[f.split('-')[0]] ??= []).push('/img/acts/' + f);
   const TEAM_IMG = Object.fromEntries(['kwang', 'save', 'prang'].map(n => [n, `/img/team/${n}.webp`]));
   const POSTS: PostIdx[] = ps.map(postIdx);
   const data = { __SET__: publicSettings(cfg[0]?.value), __HOME__: home, __LEGAL__: legal, __PIERS__: pins, __ACTS__: acts.filter(a => a.active !== false), __SEO__: publicSeo(seo), FLEET, EXTRA: extra, SEASONS, BIMG, GALLERY, SHOWIMG, TEAM_IMG, POSTS, DEST_PAGES: DESTINATIONS.map(({ match, ...d }) => ({ ...d, hero: ver(d.hero), match: match.source })) };

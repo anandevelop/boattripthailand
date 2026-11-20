@@ -13,7 +13,7 @@ const config = {
   skipTrailingSlashRedirect: true,
   images: { unoptimized: true },
   serverExternalPackages: ['pg', 'bcryptjs', 'pdfkit'],   // pdfkit reads its font metrics from files next to its code
-  // www → the main domain for files the middleware does not run on (pages: src/middleware.ts, in one hop with old URLs)
+  // www → the main domain for files the middleware does not run on (pages: src/proxy.ts, in one hop with old URLs)
   async redirects() {
     const www = [{ type: 'host', value: 'www\\.(?<domain>.+)' }];
     return [

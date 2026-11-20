@@ -1,6 +1,6 @@
 # Boat Trip Thailand — เว็บไซต์ + ระบบลีด
 
-Next.js 15 (App Router) · Tailwind · PostgreSQL (Drizzle ORM) · Docker
+Next.js 16 (App Router) · Tailwind · PostgreSQL (Drizzle ORM) · Docker
 
 เว็บนี้มีหน้าที่ **หาลีด** ส่วนเซลล์ **ปิดการขายเองทางแชท / โทร** จึงไม่มีระบบชำระเงินบนเว็บ
 
@@ -135,7 +135,7 @@ src/app/api/admin        API หลังบ้าน (ตรวจสิทธ�
 src/app/api/leads        รับลีดจากฟอร์ม
 src/app/api/line/webhook LINE OA: เชื่อมบัญชี, กลุ่ม, ปุ่มรับเรื่อง
 src/lib/                 auth, perms, leads, audit, line, meta, season (ราคาตามฤดูกาล)
-src/middleware.ts        redirect 301 จาก WordPress + ภาษา
+src/proxy.ts             redirect 301 จาก WordPress + ภาษา
 src/instrumentation.ts   งานเบื้องหลัง: แจ้งเตือนลีดเกินเวลา, ล้างเซสชัน
 drizzle/                 migration (รวม trigger ห้ามแก้บันทึกกิจกรรม)
 data/                    ข้อมูลตั้งต้นจากโบรชัวร์และ WordPress
