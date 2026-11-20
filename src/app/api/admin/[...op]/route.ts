@@ -222,7 +222,7 @@ function teamFields(b: Record<string, unknown>, cur?: User) {
   if (perms && JSON.stringify([...perms].sort()) === JSON.stringify([...ROLE_PERMS[role]].sort())) perms = null;
   const avatar = str(b.ava, 400_000);
   const profile = { ...(cur?.profile ?? {}), full: str(t.full, 120), title: bi(t.title), bio: bi(t.bio), wa: str(t.wa, 40), line: str(t.line, 60), showWeb: !!t.showWeb, ...(avatar && !avatar.startsWith('data:image/svg') && isImg(avatar) ? { avatar } : {}) };
-  return { name: str(t.name, 80), email: str(t.email, 200).toLowerCase(), phone: str(t.tel, 40) || null, role, perms, active: t.active !== false, receivesLeads: !!t.leads, languages: langs.length ? langs : ['th'], profile };
+  return { name: str(t.name, 80), email: str(t.email, 200).toLowerCase(), phone: str(t.tel, 40) || null, role, perms, active: t.active !== false, receivesLeads: role !== 'BOT' && !!t.leads, languages: langs.length ? langs : ['th'], profile };
 }
 const userOut = (u: User, extra: Record<string, unknown> = {}) => json({ user: userToClient(u), img: avatarOf(u), ...extra });
 

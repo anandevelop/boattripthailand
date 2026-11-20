@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { boats, customers, leadActivities, leads, settings, users, type Lead, type User } from '@/db/schema';
 import { audit } from './audit';
@@ -30,7 +30,7 @@ export type LeadInput = {
 
 /** Pick the next sales person: active, receives leads, speaks the customer's language when possible. */
 async function nextAssignee(lang: string, tx: typeof db) {
-  const pool = await tx.select().from(users).where(and(eq(users.active, true), eq(users.receivesLeads, true))).orderBy(asc(users.createdAt));
+  const pool = await tx.select().from(users).where(and(eq(users.active, true), eq(users.receivesLeads, true), ne(users.role, 'BOT'))).orderBy(asc(users.createdAt));
   if (!pool.length) return null;
   const langMatch = pool.filter(u => u.languages.includes(lang));
   const candidates = langMatch.length ? langMatch : pool;

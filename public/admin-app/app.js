@@ -2223,9 +2223,9 @@ PAGES.splice(PAGES.findIndex(p => p[0] === 'articles') + 1, 0, ['media', 'คล
 /* =====================================================================
    TEAM – add / edit / deactivate sales members
    ===================================================================== */
-const ROLES = { super: ['Super Admin', 'ทำได้ทุกอย่าง รวมจัดการทีม สิทธิ์ผู้ใช้ และดูบันทึกกิจกรรม'], admin: ['Admin', 'ดูแลลีดทุกคน เรือ ราคา เนื้อหา SEO การตลาด และตั้งค่าเว็บ · จัดการทีมและสิทธิ์ไม่ได้'], sales: ['Sales', 'เห็นและจัดการเฉพาะลีดของตัวเอง'] };
+const ROLES = { super: ['Super Admin', 'ทำได้ทุกอย่าง รวมจัดการทีม สิทธิ์ผู้ใช้ และดูบันทึกกิจกรรม'], admin: ['Admin', 'ดูแลลีดทุกคน เรือ ราคา เนื้อหา SEO การตลาด และตั้งค่าเว็บ · จัดการทีมและสิทธิ์ไม่ได้'], sales: ['Sales', 'เห็นและจัดการเฉพาะลีดของตัวเอง'] , bot: ['Bot', 'บัญชีสำหรับบอท/ระบบอัตโนมัติ: เรือ ราคา เนื้อหา SEO ตั้งค่าเว็บ · ไม่เห็นลีด ลูกค้า ทีม บันทึกกิจกรรม · ไม่ใช้ 2FA'] };
 const PERMS = [['bookings', 'การจอง & ลูกค้า'], ['boats', 'เรือ ราคา ฤดูกาล'], ['content', 'เนื้อหา บทความ คลังสื่อ'], ['seo', 'SEO & วิเคราะห์'], ['settings', 'ตั้งค่า & ทีม']];
-const ROLE_PERMS = { super: ['bookings', 'boats', 'content', 'seo', 'settings'], admin: ['bookings', 'boats', 'content', 'seo', 'settings'], sales: ['bookings'], content: ['content', 'seo'], viewer: [] };
+const ROLE_PERMS = { super: ['bookings', 'boats', 'content', 'seo', 'settings'], admin: ['bookings', 'boats', 'content', 'seo', 'settings'], sales: ['bookings'], bot: ['boats', 'content', 'seo', 'settings'], content: ['content', 'seo'], viewer: [] };
 const LANG_OPT = ['ไทย', 'English', '中文', 'Русский'];
 TEAM.forEach(t => { t.full ??= ''; t.wa ??= ''; t.line ??= ''; t.langs ??= ['ไทย']; t.showWeb ??= false; t.leads ??= true; t.active ??= true; t.perms ??= null; t.bio ??= tr('', ''); t.title ??= tr('ฝ่ายขาย', 'Sales'); });
 const roleLabel = t => ({ super: 'Super Admin · ', admin: 'Admin · ' }[t.roleKey] || '') + (t.title?.en || ROLES[t.roleKey][0]);
@@ -3518,7 +3518,7 @@ vTeam = function () {
     <div class="card overflow-hidden"><div class="p-4 border-b border-line flex items-center justify-between gap-3"><div><p class="font-medium">สิทธิ์ตามบทบาท</p><p class="text-[12px] text-muted">บังคับใช้ทุกหน้า ทุกปุ่ม และทุก API · ปรับรายคนได้ในหน้าแก้ไขสมาชิก</p></div></div>
       <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>สิทธิ์</th>${Object.entries(ROLES).map(([k, [l]]) => `<th class="text-center">${l}</th>`).join('')}</tr></thead><tbody>
         ${PERMS.map(([k, l]) => `<tr><td>${l}</td>${Object.keys(ROLES).map(r => `<td class="text-center">${ROLE_PERMS[r].includes(k) ? '<i data-lucide="check" class="w-4 h-4 inline text-[#1e7a46]"></i>' : '<span class="text-[#d6cccc]">—</span>'}</td>`).join('')}</tr>`).join('')}
-        <tr><td>ยืนยัน 2 ขั้นตอน (2FA)</td>${Object.keys(ROLES).map(r => `<td class="text-center text-[11px] text-maroon">บังคับ</td>`).join('')}</tr>
+        <tr><td>ยืนยัน 2 ขั้นตอน (2FA)</td>${Object.keys(ROLES).map(r => r === 'bot' ? `<td class="text-center text-[11px] text-muted">ไม่ใช้</td>` : `<td class="text-center text-[11px] text-maroon">บังคับ</td>`).join('')}</tr>
       </tbody></table></div></div>
     <div class="space-y-5">
       <div class="card p-4"><p class="font-medium mb-3">เข้าระบบล่าสุด</p><div class="space-y-2.5">${TEAM.filter(t => !t.deleted).map(t => `<div class="flex items-center gap-2.5"><img src="${teamImg(t.id)}" class="w-7 h-7 rounded-full object-cover"/><div class="min-w-0 flex-1"><p class="text-[13px] leading-tight">${t.name} <span class="text-muted text-[11px]">· ${ROLES[t.roleKey][0]}</span></p><p class="text-[11px] text-muted">${t.id === ME?.id ? 'ออนไลน์อยู่ · ' + DEVICE : lastLogin(t.id)}</p></div>${t.active ? '' : '<span class="pill bg-sand text-muted">ปิด</span>'}</div>`).join('')}</div>

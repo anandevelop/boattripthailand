@@ -4,7 +4,7 @@ import { bigserial, boolean, date, doublePrecision, index, integer, jsonb, pgEnu
 const id = () => text('id').primaryKey().$defaultFn(() => crypto.randomUUID());
 const now = (name: string) => timestamp(name, { withTimezone: true }).notNull().defaultNow();
 
-export const roleEnum = pgEnum('role', ['SUPER_ADMIN', 'ADMIN', 'SALES']);
+export const roleEnum = pgEnum('role', ['SUPER_ADMIN', 'ADMIN', 'SALES', 'BOT']);
 export const leadStatusEnum = pgEnum('lead_status', ['NEW', 'CONTACTED', 'TALKING', 'WON', 'LOST']);
 
 /** Team members who can sign in to /admin */

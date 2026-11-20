@@ -20,8 +20,8 @@ import { appUrl } from './leads';
 import { lineSaved, loadLineCfg } from './line-config';
 
 /* ---------- vocabulary shared with the admin UI (mockup) ---------- */
-export const ROLE_TO_CLIENT = { SUPER_ADMIN: 'super', ADMIN: 'admin', SALES: 'sales' } as const;
-export const ROLE_FROM_CLIENT: Record<string, User['role']> = { super: 'SUPER_ADMIN', admin: 'ADMIN', sales: 'SALES' };
+export const ROLE_TO_CLIENT = { SUPER_ADMIN: 'super', ADMIN: 'admin', SALES: 'sales', BOT: 'bot' } as const;
+export const ROLE_FROM_CLIENT: Record<string, User['role']> = { super: 'SUPER_ADMIN', admin: 'ADMIN', sales: 'SALES', bot: 'BOT' };
 const P2C: Record<string, string> = { leads: 'bookings', leads_all: 'bookings_all' };
 const C2P: Record<string, string> = { bookings: 'leads', bookings_all: 'leads_all' };
 export const permsToClient = (p: string[]) => p.map(x => P2C[x] ?? x);
