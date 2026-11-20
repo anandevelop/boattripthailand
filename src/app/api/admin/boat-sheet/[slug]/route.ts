@@ -1,4 +1,4 @@
-import { currentUser } from '@/lib/auth';
+import { apiUser } from '@/lib/api-auth';
 import { boatSheet } from '@/lib/boat-sheet';
 import { can } from '@/lib/perms';
 
@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic';
 
 /** /api/admin/boat-sheet/<slug>?lang=th|en&prices=0|1&dl=1 → the boat's spec sheet as a PDF (staff only) */
 export async function GET(req: Request, ctx: { params: Promise<{ slug: string }> }) {
-  const u = await currentUser();
+  const _auth = await apiUser(req); if (_auth.res) return _auth.res;   // cookie session, or an AI's API token (lib/api-auth.ts)
+  const u = _auth.user;
   if (!u) return new Response('หมดเวลาเข้าระบบ', { status: 401 });
   if (!can(u, 'boats') && !can(u, 'leads')) return new Response('ไม่มีสิทธิ์', { status: 403 });
   const q = new URL(req.url).searchParams, lang = q.get('lang') === 'th' ? 'th' : 'en';

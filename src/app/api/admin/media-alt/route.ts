@@ -1,4 +1,4 @@
-import { currentUser } from '@/lib/auth';
+import { apiUser } from '@/lib/api-auth';
 import { GoogleError } from '@/lib/google';
 import { ALT_BATCH, writeAlts, type AltIn } from '@/lib/media-alt';
 import { can } from '@/lib/perms';
@@ -13,7 +13,8 @@ const json = (d: unknown, status = 200) => Response.json(d, { status, headers: {
 const s = (v: unknown, n: number) => (typeof v === 'string' ? v : '').slice(0, n);
 
 export async function POST(req: Request) {
-  const u = await currentUser();
+  const _auth = await apiUser(req); if (_auth.res) return _auth.res;   // cookie session, or an AI's API token (lib/api-auth.ts)
+  const u = _auth.user;
   if (!u) return json({ error: 'หมดเวลาเข้าระบบ กรุณาเข้าสู่ระบบใหม่', login: true }, 401);
   const origin = req.headers.get('origin'), host = req.headers.get('x-forwarded-host') || req.headers.get('host');
   if (origin && host && new URL(origin).host !== host) return json({ error: 'bad origin' }, 403);

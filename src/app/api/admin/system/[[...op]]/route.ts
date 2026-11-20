@@ -1,5 +1,5 @@
 import { audit } from '@/lib/audit';
-import { currentUser } from '@/lib/auth';
+import { apiUser } from '@/lib/api-auth';
 import { can, type Perm } from '@/lib/perms';
 import { clientInfo } from '@/lib/request';
 import { BackupError, createBackup, dumpData, fmtSize, JOBS, packDump, readBackup, restoreBackup, runJob, saveAlerts, saveUpload, sendAlert, systemStatus, validFile } from '@/lib/system';
@@ -25,7 +25,8 @@ const file = (buf: Buffer, name: string) => new Response(new Uint8Array(buf), { 
 
 async function handle(req: Request, params: Promise<{ op?: string[] }>) {
   const op = (await params).op ?? [], [a, b] = op, method = req.method;
-  const me = await currentUser();
+  const _auth = await apiUser(req); if (_auth.res) return _auth.res;   // cookie session, or an AI's API token (lib/api-auth.ts)
+  const me = _auth.user;
   if (!me) return json({ error: 'หมดเวลาเข้าระบบ กรุณาเข้าสู่ระบบใหม่', login: true }, 401);
   if (method !== 'GET') {
     const origin = req.headers.get('origin'), host = req.headers.get('x-forwarded-host') || req.headers.get('host');

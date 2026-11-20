@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { leads } from '@/db/schema';
-import { currentUser } from '@/lib/auth';
+import { apiUser } from '@/lib/api-auth';
 import { docById, docPdf } from '@/lib/lead-docs';
 import { canSeeLead } from '@/lib/leads';
 import { can } from '@/lib/perms';
@@ -11,7 +11,8 @@ export const dynamic = 'force-dynamic';
 
 /** /api/admin/docs/<id> → the document as a PDF (?dl=1 downloads it). Staff who can see the lead only. */
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const u = await currentUser();
+  const _auth = await apiUser(req); if (_auth.res) return _auth.res;   // cookie session, or an AI's API token (lib/api-auth.ts)
+  const u = _auth.user;
   if (!u) return new Response('หมดเวลาเข้าระบบ', { status: 401 });
   const row = await docById(Number((await ctx.params).id));
   if (!row) return new Response('ไม่พบเอกสาร', { status: 404 });

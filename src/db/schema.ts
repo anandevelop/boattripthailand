@@ -298,3 +298,73 @@ export type Customer = typeof customers.$inferSelect;
 export type Boat = typeof boats.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type Media = typeof media.$inferSelect;
+
+/* ---------------- AI access (MCP: src/app/api/mcp, lib/api-auth.ts) ---------------- */
+
+/** API tokens for AI agents (MCP). Only the sha256 is stored; the token is shown once when created. Acts with its user's permissions. */
+export const apiTokens = pgTable('api_tokens', {
+  id: id(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  tokenHash: text('token_hash').notNull().unique(),
+  /** first characters, to recognise a token in the list (btt_ab12…) */
+  prefix: text('prefix').notNull(),
+  createdById: text('created_by_id'),
+  createdAt: now('created_at'),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+}, t => [index('api_tokens_user_idx').on(t.userId)]);
+export type ApiToken = typeof apiTokens.$inferSelect;
+
+/** Deletes and other risky actions an AI asked for: run only after a person confirms (code on LINE, or approve in /admin) */
+export const aiRequests = pgTable('ai_requests', {
+  id: id(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  /** what it would run: an /api/admin call as the requesting user */
+  method: text('method').notNull(),
+  path: text('path').notNull(),
+  body: jsonb('body'),
+  label: text('label').notNull(),
+  reason: text('reason'),
+  codeHash: text('code_hash').notNull(),
+  attempts: integer('attempts').notNull().default(0),
+  /** PENDING → DONE | REJECTED | EXPIRED | FAILED */
+  status: text('status').notNull().default('PENDING'),
+  result: jsonb('result'),
+  decidedBy: text('decided_by'),
+  createdAt: now('created_at'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+}, t => [index('ai_requests_status_idx').on(t.status)]);
+export type AiRequest = typeof aiRequests.$inferSelect;
+
+/** Background jobs (image uploads, brochure imports …) — lib/bg-jobs.ts; survive restarts */
+export const bgJobs = pgTable('bg_jobs', {
+  id: id(),
+  kind: text('kind').notNull(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  input: jsonb('input').notNull(),
+  /** QUEUED → RUNNING → DONE | FAILED */
+  status: text('status').notNull().default('QUEUED'),
+  step: text('step'),
+  result: jsonb('result'),
+  error: text('error'),
+  attempts: integer('attempts').notNull().default(0),
+  createdAt: now('created_at'),
+  updatedAt: now('updated_at'),
+}, t => [index('bg_jobs_status_idx').on(t.status, t.createdAt)]);
+export type BgJob = typeof bgJobs.$inferSelect;
+
+/** What an AI changed, with the state before — so a person (or the AI) can undo it (MCP tool undo_change), kept 30 days */
+export const aiChanges = pgTable('ai_changes', {
+  id: id(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  /** boat | post | setting */
+  kind: text('kind').notNull(),
+  ref: text('ref').notNull(),
+  label: text('label').notNull(),
+  before: jsonb('before'),
+  undoneAt: timestamp('undone_at', { withTimezone: true }),
+  createdAt: now('created_at'),
+}, t => [index('ai_changes_created_idx').on(t.createdAt)]);
+export type AiChange = typeof aiChanges.$inferSelect;

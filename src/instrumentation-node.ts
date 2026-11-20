@@ -1,5 +1,6 @@
 import { loadLineCfg } from './lib/line-config';
 import { startJobs } from './lib/system';
+import { purgeOldJobs, startBgJobs } from './lib/bg-jobs';
 
 /* scheduled jobs (backup, SLA alerts, session cleanup, web check …) — src/lib/system.ts · /admin → ระบบ & สำรองข้อมูล */
 const g = globalThis as unknown as { __jobs?: boolean };
@@ -7,6 +8,14 @@ if (!g.__jobs && process.env.DISABLE_JOBS !== 'true') {
   g.__jobs = true;
   startJobs();
   void loadLineCfg();   // LINE keys saved in the admin
+}
+
+/* background jobs for AI agents (image uploads, brochure imports — lib/bg-jobs.ts); BG_JOBS=false switches them off */
+const gb = globalThis as unknown as { __bg?: boolean };
+if (!gb.__bg && process.env.BG_JOBS !== 'false') {
+  gb.__bg = true;
+  startBgJobs();
+  setInterval(() => { purgeOldJobs().catch(() => {}); }, 86_400_000).unref?.();
 }
 
 /*

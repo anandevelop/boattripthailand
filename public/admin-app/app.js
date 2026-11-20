@@ -3169,6 +3169,10 @@ const PAGE_PERM = { dashboard: 'bookings', bookings: 'bookings', calendar: 'book
 const canPage = p => !PAGE_PERM[p] || can(PAGE_PERM[p]);
 /* เรือ & ราคา → ท่าเรือ (vPiers, near the end of this file) — registered here so a reload on #/piers opens it */
 PAGES.splice(PAGES.findIndex(p => p[0] === 'seasons') + 1, 0, ['piers', 'ท่าเรือ', 'anchor', () => vPiers()]);
+/* ทีมงาน & สิทธิ์ → AI & MCP (vAi, end of this file): API tokens for AI agents + deletes they asked a person to confirm */
+PAGES.splice(PAGES.findIndex(p => p[0] === 'team') + 1, 0, ['ai', 'AI & MCP', 'bot', () => vAi()]);
+PAGE_PERM.ai = 'team';
+var AIM;
 PAGE_PERM.piers = 'boats';
 const firstPage = () => PAGES.find(x => x[0] !== '—' && canPage(x[0]))?.[0];
 const ownB = b => b.sales === ME?.id;
@@ -4314,7 +4318,7 @@ PAGES.push(['system', 'ระบบ & สำรองข้อมูล', 'serve
   f.insertAdjacentHTML('beforeend', '<div id="sysHost" class="mt-5"></div>'); vSystem();
 }; PAGES.find(p => p[0] === 'settings')[3] = vSettings; }
 /* ---------- merged menus: ฤดูกาลราคา → tab of เรือ & ราคา · ระบบ & สำรองข้อมูล → tab of ตั้งค่า ---------- */
-const NAV_MERGED = { seasons: 'boats', piers: 'boats', system: 'settings' };
+const NAV_MERGED = { seasons: 'boats', piers: 'boats', system: 'settings', ai: 'team' };
 const boatTabs = cur => `<div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${[['boats', 'เรือทั้งหมด', 'sailboat'], ['seasons', 'ฤดูกาลราคา', 'calendar-range'], ['piers', 'ท่าเรือ', 'anchor']].filter(([k]) => canPage(k)).map(([k, l, ic]) => `<button class="tab inline-flex items-center gap-1.5 ${cur === k ? 'on' : ''}" onclick="go('${k}')"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>`;
 const addBoatTabs = k => { const h = $('#view > div'); if (h && !$('#view > .tabbar')) { h.insertAdjacentHTML('afterend', boatTabs(k)); icons(); } };
 { const _b = vBoats; vBoats = function () { _b(); addBoatTabs('boats'); }; PAGES.find(p => p[0] === 'boats')[3] = vBoats; }
@@ -7325,3 +7329,70 @@ function tripBody(slug) {
   if (mine) { const body = tb.nextElementSibling?.querySelector('.p-5') || $('#view .card .p-5'); if (body) body.innerHTML = tripBody(slug); }
   icons();
 }; }
+
+
+/* =====================================================================
+   ทีมงาน & สิทธิ์ → AI & MCP: API tokens for AI agents (Claude …) and the deletes / risky actions they asked to be confirmed
+   server: lib/api-auth.ts, lib/mcp.ts, /api/mcp
+   ===================================================================== */
+AIM = { tokens: null, reqs: null, err: '', busy: false, user: '', name: '' };
+const teamTabs = cur => `<div class="tabbar flex gap-1 overflow-x-auto no-sb mb-4">${[['team', 'ทีมงาน & สิทธิ์', 'headset'], ['ai', 'AI & MCP', 'bot']].map(([k, l, ic]) => `<button class="tab ${cur === k ? 'on' : ''}" onclick="go('${k}')"><i data-lucide="${ic}" class="w-3.5 h-3.5"></i>${l}</button>`).join('')}</div>`;
+const addTeamTabs = k => { const h = $('#view > div'); if (h && !$('#view > .tabbar')) { h.insertAdjacentHTML('afterend', teamTabs(k)); icons(); } };
+{ const _t = vTeam; vTeam = function () { _t(); addTeamTabs('team'); }; const e = PAGES.find(p => p[0] === 'team'); if (e) e[3] = vTeam; }
+function aiLoad() {
+  AIM.err = '';
+  Promise.all([api('GET', 'ai-tokens'), api('GET', 'ai-requests')]).then(([t, r]) => { AIM.tokens = t.tokens; AIM.reqs = r.requests; if (CUR === 'ai') vAi(); })
+    .catch(e => { AIM.err = e.message || 'โหลดไม่สำเร็จ'; if (CUR === 'ai') vAi(); });
+}
+const aiWhen = s => s ? new Date(s).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+const AI_ST = { PENDING: ['รอยืนยัน', 'bg-[#fff4e5] text-[#9a5b00]'], APPROVED: ['กำลังทำ', 'bg-sand'], DONE: ['ทำแล้ว', 'bg-[#e8f5ee] text-[#1e7a46]'], REJECTED: ['ปฏิเสธ', 'bg-sand text-muted'], EXPIRED: ['หมดอายุ', 'bg-sand text-muted'], FAILED: ['ไม่สำเร็จ', 'bg-[#fdecea] text-[#b42318]'] };
+function vAi() {
+  if (!AIM) return setTimeout(vAi);   // a reload on #/ai runs before the end of this file has set things up
+  if (AIM.tokens === null && !AIM.err) { $('#view').innerHTML = head('AI & MCP', 'กำลังโหลด…'); addTeamTabs('ai'); aiLoad(); return; }
+  const bots = TEAM.filter(t => !t.deleted && t.active !== false && t.roleKey !== 'super');
+  if (!AIM.user) AIM.user = (bots.find(t => t.roleKey === 'bot') || bots[0] || {}).id || '';
+  const url = location.origin + '/api/mcp';
+  const pend = (AIM.reqs || []).filter(r => r.status === 'PENDING');
+  $('#view').innerHTML = `${head('AI & MCP', 'ให้ AI (เช่น Claude) ทำงานในหลังบ้านผ่าน MCP · ใช้สิทธิ์ของบัญชีที่ผูกกับ token · AI ลบเองไม่ได้ ทุกการลบต้องให้คนยืนยัน')}
+    ${AIM.err ? `<div class="card p-4 mb-4 text-[#b42318]">${esc(AIM.err)}</div>` : ''}
+    <div class="card p-5 mb-4"><div class="flex items-center justify-between gap-3"><p class="font-medium">คำขอจาก AI ${pend.length ? `<span class="ml-1 text-[11px] px-2 py-0.5 rounded-full bg-[#fff4e5] text-[#9a5b00]">รอ ${pend.length}</span>` : ''}</p><button class="btn btn-g !h-8" onclick="aiLoad()"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>โหลดใหม่</button></div>
+      <p class="text-[12px] text-muted mt-1">การลบ และคำสั่งเสี่ยง (เปลี่ยน API key, ตั้งค่าอีเมล, กู้คืนข้อมูล) ที่ AI ขอ · รหัส 6 หลักถูกส่งไป LINE ของ Super Admin ด้วย · อนุมัติที่นี่หรือบอกรหัสให้ AI ก็ได้</p>
+      <div class="mt-3 divide-y divide-line">${(AIM.reqs || []).slice(0, 30).map(r => { const st = AI_ST[r.status] || [r.status, 'bg-sand']; return `<div class="py-3 flex flex-col sm:flex-row sm:items-center gap-2">
+        <div class="flex-1 min-w-0"><p class="text-[13px]"><span class="text-[11px] px-2 py-0.5 rounded-full ${st[1]} mr-1.5">${st[0]}</span>${esc(r.label)}</p>
+          <p class="text-[11.5px] text-muted mt-1">${esc(r.user)} · ${aiWhen(r.at)}${r.reason ? ` · เหตุผล: ${esc(r.reason)}` : ''}${r.decidedBy ? ` · ${esc(r.decidedBy)}` : ''}${r.status === 'FAILED' && r.result?.out?.error ? ` · ${esc(r.result.out.error)}` : ''}</p></div>
+        ${r.status === 'PENDING' ? `<div class="flex gap-2 shrink-0"><button class="btn btn-o !h-8" onclick="aiDecide('${r.id}',false)">ปฏิเสธ</button><button class="btn btn-p !h-8" onclick="aiDecide('${r.id}',true)">ยืนยัน · ทำเลย</button></div>` : ''}</div>`; }).join('') || '<p class="py-6 text-center text-muted text-[13px]">ยังไม่มีคำขอ</p>'}</div></div>
+    <div class="card p-5 mb-4"><p class="font-medium">API Token</p>
+      <p class="text-[12px] text-muted mt-1">แนะนำให้สร้างบัญชีบทบาท <b>Bot</b> ก่อน (ทีมงาน & สิทธิ์ → เพิ่มสมาชิก) แล้วสร้าง token ให้บัญชีนั้น · token แสดงครั้งเดียว · ยกเลิกได้ทันที</p>
+      <div class="mt-3 grid sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+        <label><span class="lbl">บัญชีที่ AI จะใช้</span><select class="inp" onchange="AIM.user=this.value">${bots.map(t => `<option value="${t.id}" ${t.id === AIM.user ? 'selected' : ''}>${esc(t.name)} · ${esc(ROLES[t.roleKey]?.[0] || t.roleKey)}</option>`).join('')}</select></label>
+        <label><span class="lbl">ชื่อ token</span><input class="inp" placeholder="เช่น Claude Desktop ของพี่" value="${esc(AIM.name)}" oninput="AIM.name=this.value"/></label>
+        <button class="btn btn-p" ${AIM.busy ? 'disabled' : ''} onclick="aiCreate()"><i data-lucide="key-round" class="w-3.5 h-3.5"></i>สร้าง token</button></div>
+      <div class="mt-4 overflow-x-auto"><table class="tbl"><thead><tr><th>ชื่อ</th><th>บัญชี</th><th>Token</th><th>สร้าง</th><th>ใช้ล่าสุด</th><th></th></tr></thead><tbody>
+        ${(AIM.tokens || []).map(t => `<tr class="${t.revokedAt ? 'opacity-50' : ''}"><td>${esc(t.name)}</td><td>${esc(t.userName)} <span class="text-[11px] text-muted">${esc(t.role)}</span></td><td class="font-mono text-[12px]">${esc(t.prefix)}…</td><td>${aiWhen(t.createdAt)}</td><td>${aiWhen(t.lastUsedAt)}</td>
+          <td class="text-right">${t.revokedAt ? '<span class="text-[11px] text-muted">ยกเลิกแล้ว</span>' : `<button class="btn btn-g !h-8 text-[#b42318]" onclick="aiRevoke('${t.id}')">ยกเลิก</button>`}</td></tr>`).join('') || '<tr><td colspan="6" class="text-center text-muted py-6">ยังไม่มี token</td></tr>'}</tbody></table></div></div>
+    <div class="card p-5"><p class="font-medium">เชื่อม AI</p>
+      <p class="text-[12px] text-muted mt-1">MCP URL (Streamable HTTP) · ส่ง header <code>Authorization: Bearer &lt;token&gt;</code></p>
+      <div class="lg-key mt-2 rounded-xl bg-sand p-3 font-mono text-[12px] break-all">${url}</div>
+      <p class="text-[12px] text-muted mt-3">Claude Code: <code>claude mcp add --transport http boattrip ${url} --header "Authorization: Bearer &lt;token&gt;"</code></p>
+      <p class="text-[12px] text-muted mt-2">ทุกคำสั่งของ AI อยู่ใน <a class="underline" href="#/audit">บันทึกกิจกรรม</a> · อัปโหลดรูป / นำเข้า PDF ทำงานเบื้องหลัง · การแก้ไขย้อนได้ (AI ใช้ undo_change)</p></div>`;
+  addTeamTabs('ai'); icons();
+}
+function aiCreate() {
+  if (!AIM.user) return toast('เลือกบัญชีก่อน');
+  AIM.busy = true; vAi();
+  api('POST', 'ai-tokens', { userId: AIM.user, name: AIM.name.trim() || 'AI' }).then(r => {
+    AIM.name = ''; aiLoad();
+    const url = location.origin + '/api/mcp';
+    openModal(`<div class="p-5 border-b border-line"><p class="font-medium">สร้าง token แล้ว</p><p class="text-[12px] text-muted mt-1">คัดลอกเก็บไว้ตอนนี้ · ปิดหน้าต่างนี้แล้วจะดูอีกไม่ได้</p></div>
+      <div class="p-5 grid gap-3"><div class="rounded-xl bg-sand p-3 font-mono text-[12px] break-all" id="aiTok">${esc(r.token)}</div>
+        <button class="btn btn-o" onclick="navigator.clipboard?.writeText($('#aiTok').textContent);toast('คัดลอกแล้ว')"><i data-lucide="copy" class="w-3.5 h-3.5"></i>คัดลอก token</button>
+        <p class="text-[12px] text-muted">Claude Code:</p><div class="rounded-xl bg-sand p-3 font-mono text-[11.5px] break-all">claude mcp add --transport http boattrip ${url} --header "Authorization: Bearer ${esc(r.token)}"</div></div>
+      <div class="p-4 border-t border-line flex justify-end"><button class="btn btn-p" onclick="closeModal()">เสร็จ</button></div>`);
+    icons();
+  }).catch(fail).finally(() => { AIM.busy = false; if (CUR === 'ai') vAi(); });
+}
+function aiRevoke(id) { if (!confirm('ยกเลิก token นี้? AI ที่ใช้อยู่จะเชื่อมต่อไม่ได้ทันที')) return; api('POST', `ai-tokens/${id}/revoke`).then(() => { toast('ยกเลิก token แล้ว'); aiLoad(); }).catch(fail); }
+function aiDecide(id, ok) {
+  if (ok && !confirm('ยืนยันให้ทำคำสั่งนี้?')) return;
+  api('POST', `ai-requests/${id}/${ok ? 'approve' : 'reject'}`).then(r => { toast(ok ? (r.ok ? 'ทำคำสั่งแล้ว' : 'ทำไม่สำเร็จ: ' + (r.result?.error || r.status)) : 'ปฏิเสธแล้ว'); aiLoad(); }).catch(fail);
+}

@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { media } from '@/db/schema';
 import { audit } from '@/lib/audit';
-import { currentUser } from '@/lib/auth';
+import { apiUser } from '@/lib/api-auth';
 import { deleteMedia, DIRS, mediaToClient, mediaUsage, saveUpload, UploadError } from '@/lib/media';
 import { can } from '@/lib/perms';
 
@@ -19,7 +19,8 @@ const str = (v: unknown, max = 500) => (typeof v === 'string' ? v : v == null ? 
 const RIGHTS = ['own', 'ads', 'web', 'unknown'];
 
 async function guard(req: Request) {
-  const u = await currentUser();
+  const _auth = await apiUser(req); if (_auth.res) return { res: _auth.res };   // cookie session, or an AI's API token (lib/api-auth.ts)
+  const u = _auth.user;
   if (!u) return { res: json({ error: 'หมดเวลาเข้าระบบ กรุณาเข้าสู่ระบบใหม่', login: true }, 401) };
   const origin = req.headers.get('origin'), host = req.headers.get('x-forwarded-host') || req.headers.get('host');
   if (origin && host && new URL(origin).host !== host) return { res: json({ error: 'bad origin' }, 403) };

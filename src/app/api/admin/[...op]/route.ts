@@ -3,7 +3,8 @@ import { db } from '@/db';
 import { boats, customers, leadActivities, leads, posts, redirects, seasonCalendars, settings, users, type Boat, type Lead, type User } from '@/db/schema';
 import { adminBoot, leadsFor, auditList, boatToClient, customerToClient, CONTACT_FROM_CLIENT, LANG_FROM_CLIENT, leadClientById, permsFromClient, postToClient, ROLE_FROM_CLIENT, STATUS_FROM_CLIENT, userToClient, avatarOf } from '@/lib/admin-boot';
 import { audit, verifyAuditChain } from '@/lib/audit';
-import { currentUser, hashPassword, logout, passwordProblem, revokeSessions, verifyPassword } from '@/lib/auth';
+import { apiUser, createApiToken, decideRequest, listApiTokens, listRequests, revokeApiToken, type ApiUser } from '@/lib/api-auth';
+import { hashPassword, logout, passwordProblem, revokeSessions, verifyPassword } from '@/lib/auth';
 import { randomDigits, tempPassword } from '@/lib/crypto';
 import { canSeeLead, createLead, LOST_REASONS, setLeadStatus } from '@/lib/leads';
 import { can, ROLE_LABEL, ROLE_PERMS, type Perm } from '@/lib/perms';
@@ -530,7 +531,8 @@ async function postTrash(u: User, id: number | null) {
 async function handle(req: Request, params: Promise<{ op: string[] }>) {
   const { op } = await params;
   const [a, b0, c0] = op, method = req.method;
-  const me = await currentUser();
+  const _auth = await apiUser(req); if (_auth.res) return _auth.res;   // cookie session, or an AI's API token (lib/api-auth.ts)
+  const me = _auth.user;
   if (!me) return json({ error: 'หมดเวลาเข้าระบบ กรุณาเข้าสู่ระบบใหม่', login: true }, 401);
   let body: Record<string, unknown> = {};
   if (method !== 'GET') {
@@ -541,6 +543,33 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
   }
   try {
     if (a === 'boot' && method === 'GET') return json(await adminBoot(me));
+    /* ทีมงาน & สิทธิ์ → AI: API tokens for MCP, and the deletes / risky actions AIs asked for (lib/api-auth.ts) */
+    if (a === 'ai-tokens') {
+      await need(me, 'team');
+      if (method === 'GET') return json({ tokens: (await listApiTokens()).map(t => ({ ...t, createdAt: t.createdAt.toISOString(), lastUsedAt: t.lastUsedAt?.toISOString() ?? null, revokedAt: t.revokedAt?.toISOString() ?? null })) });
+      if (method === 'POST' && !b0) {
+        const uid = str(body.userId, 80), name = str(body.name, 80) || 'AI';
+        const [u] = await db.select().from(users).where(eq(users.id, uid));
+        if (!u || !u.active) throw new HttpError(400, 'ไม่พบผู้ใช้');
+        if (u.role === 'SUPER_ADMIN') throw new HttpError(400, 'สร้าง token ให้ Super Admin ไม่ได้ · ใช้บัญชีบทบาท Bot');
+        const r = await createApiToken(u.id, name, me.id);
+        await audit(actor(me), { action: 'create', entity: 'ai_token', ref: r.row.id, label: `สร้าง API token "${name}" ให้ ${u.name}` });
+        return json({ token: r.token, id: r.row.id });
+      }
+      if (method === 'POST' && b0 && c0 === 'revoke') {
+        const r = await revokeApiToken(b0);
+        if (r) await audit(actor(me), { action: 'update', entity: 'ai_token', ref: b0, label: `ยกเลิก API token "${r.name}"` });
+        return json({ ok: !!r });
+      }
+    }
+    if (a === 'ai-requests') {
+      await need(me, 'team');
+      if (method === 'GET') return json({ requests: (await listRequests()).map(({ r, userName }) => ({ id: r.id, user: userName, label: r.label, reason: r.reason, status: r.status, at: r.createdAt.toISOString(), expiresAt: r.expiresAt.toISOString(), decidedBy: r.decidedBy, result: r.result })) });
+      if (method === 'POST' && b0 && (c0 === 'approve' || c0 === 'reject')) {
+        if ((me as ApiUser).viaApi) throw new HttpError(403, 'AI อนุมัติคำขอของตัวเองไม่ได้');
+        return json(await decideRequest(me, b0, c0 === 'approve'));
+      }
+    }
     if (a === 'translate') {   // auto-translate (Google) with a monthly character cap — src/lib/translate.ts
       if (!can(me, 'content') && !can(me, 'boats')) throw new HttpError(403, 'ไม่มีสิทธิ์ใช้ระบบแปล');
       if (!b0 && method === 'GET') return json(await trUsage());

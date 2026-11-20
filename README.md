@@ -106,6 +106,16 @@ docker compose exec app npx tsx scripts/create-user.ts --email anan@boattripthai
 5. **เซลล์แต่ละคน**: เพิ่มเพื่อน LINE OA → ในหลังบ้านกดชื่อตัวเองมุมซ้ายล่าง → “สร้างรหัสเชื่อม LINE” → พิมพ์ `LINK 123456` ส่งใน LINE OA
 6. **กลุ่มทีมขาย**: เชิญ LINE OA เข้ากลุ่ม ระบบบันทึกกลุ่มให้อัตโนมัติ (ดูสถานะที่ “ตั้งค่า” → การเชื่อมต่อ)
 
+## AI / MCP (ให้ Claude ทำงานในหลังบ้าน)
+
+- URL: `https://<DOMAIN>/api/mcp` (MCP Streamable HTTP) · header `Authorization: Bearer btt_…`
+- สร้าง token: หลังบ้าน → ทีมงาน & สิทธิ์ → **AI & MCP** (แนะนำให้ผูกกับบัญชีบทบาท **Bot**: ไม่เห็นลีด ลูกค้า ทีม บันทึกกิจกรรม ไม่ใช้ 2FA) · token แสดงครั้งเดียว ยกเลิกได้ทันที
+- Claude Code: `claude mcp add --transport http boattrip https://<DOMAIN>/api/mcp --header "Authorization: Bearer <token>"`
+- **AI ลบเองไม่ได้** (บังคับที่เซิร์ฟเวอร์ `src/lib/api-auth.ts`): การลบ เอารูปออกจากเรือ ล้างหมุด กู้คืนข้อมูล เปลี่ยน API key / อีเมล / ตั้งค่าระบบ → ตอบ 409 จน AI ขอยืนยัน (`request_delete` / `request_confirmation`) → รหัส 6 หลักไป LINE ของ Super Admin (ต้องเชื่อม LINE ใน "โปรไฟล์ของฉัน") → ผู้ใช้บอกรหัสให้ AI (`confirm_action`) หรือกดอนุมัติในหน้า AI & MCP · รหัสหมดอายุ 15 นาที ผิด 3 ครั้งยกเลิก
+- อัปโหลดรูป / นำเข้าโบรชัวร์ PDF ทำงานเบื้องหลัง (`src/lib/bg-jobs.ts`, ตาราง `bg_jobs`, ทีละ 2 งาน, ทำต่อหลังรีสตาร์ต) · `BG_JOBS=false` ปิดได้
+- ทุกการแก้ของ AI ลงบันทึกกิจกรรม และย้อนได้ด้วย `undo_change` (ตาราง `ai_changes`)
+- เครื่องมือทั้งหมด: `src/lib/mcp.ts`
+
 ## พัฒนาบนเครื่อง
 
 ```bash
