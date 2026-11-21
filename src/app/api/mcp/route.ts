@@ -1,5 +1,7 @@
 import { tokenUser } from '@/lib/api-auth';
 import { MCP_INSTRUCTIONS, runTool, toolsFor } from '@/lib/mcp';
+import { resourceMetadataUrl } from '@/lib/oauth';
+import { CORS } from '../oauth/cors';
 import { rateLimit } from '@/lib/ratelimit';
 
 export const runtime = 'nodejs';
@@ -8,18 +10,19 @@ export const maxDuration = 120;
 
 /**
  * MCP server (Model Context Protocol, Streamable HTTP, stateless JSON responses) for AI agents.
- * Auth: `Authorization: Bearer btt_…` — a token made in /admin → ทีมงาน & สิทธิ์ → AI (usually for a Bot account).
+ * Auth: `Authorization: Bearer btt_…` — a token made in /admin → ทีมงาน & สิทธิ์ → AI & MCP, or an OAuth access token
+ * (claude.ai / Cowork custom connector: discovery via the 401's resource_metadata → lib/oauth.ts).
  * Tools: lib/mcp.ts · rules (no deletes without a person's code): lib/api-auth.ts
  */
 const VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
 type Rpc = { jsonrpc?: string; id?: string | number | null; method?: string; params?: Record<string, unknown> };
-const H = { 'Cache-Control': 'no-store' };
+const H = { 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'WWW-Authenticate, Mcp-Session-Id' };
 const err = (id: Rpc['id'], code: number, message: string) => ({ jsonrpc: '2.0', id: id ?? null, error: { code, message } });
 
 export async function POST(req: Request) {
   const auth = req.headers.get('authorization') || '';
   const u = auth.startsWith('Bearer ') ? await tokenUser(auth.slice(7).trim()) : null;
-  if (!u) return Response.json(err(null, -32001, 'ต้องใช้ API token (Authorization: Bearer btt_…) ที่สร้างใน /admin → ทีมงาน & สิทธิ์ → AI'), { status: 401, headers: { ...H, 'WWW-Authenticate': 'Bearer realm="boattripthailand-mcp"' } });
+  if (!u) return Response.json(err(null, -32001, 'ต้องใช้ API token (Authorization: Bearer btt_…) ที่สร้างใน /admin → ทีมงาน & สิทธิ์ → AI'), { status: 401, headers: { ...H, ...CORS, 'WWW-Authenticate': `Bearer resource_metadata="${resourceMetadataUrl()}", scope="mcp"` } });
   if (!rateLimit('mcp:' + u.id, 600, 60 * 60_000)) return Response.json(err(null, -32002, 'เรียกถี่เกินไป (600 ครั้ง/ชั่วโมง)'), { status: 429, headers: H });
   let msg: Rpc | Rpc[];
   try { msg = await req.json(); } catch { return Response.json(err(null, -32700, 'Parse error'), { status: 400, headers: H }); }
@@ -56,3 +59,5 @@ async function handle(u: NonNullable<Awaited<ReturnType<typeof tokenUser>>>, m: 
 
 export async function GET() { return new Response('MCP endpoint · POST JSON-RPC with Authorization: Bearer <token>', { status: 405, headers: { ...H, Allow: 'POST' } }); }
 export async function DELETE() { return new Response(null, { status: 405, headers: { ...H, Allow: 'POST' } }); }
+
+export async function OPTIONS() { return new Response(null, { status: 204, headers: CORS }); }

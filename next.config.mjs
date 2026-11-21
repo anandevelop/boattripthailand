@@ -24,6 +24,16 @@ const config = {
       { source: '/:old(sitemap_index\\.xml|wp-sitemap[a-z0-9-]*\\.xml|[a-z0-9_-]+-sitemap[0-9]*\\.xml)', destination: '/sitemap.xml', statusCode: 301 },
     ];
   },
+  // OAuth discovery for the MCP connector (lib/oauth.ts): /.well-known/* answered by /api/oauth/*
+  async rewrites() {
+    return [
+      { source: '/.well-known/oauth-protected-resource/:path*', destination: '/api/oauth/protected-resource' },
+      { source: '/.well-known/oauth-protected-resource', destination: '/api/oauth/protected-resource' },
+      { source: '/.well-known/oauth-authorization-server/:path*', destination: '/api/oauth/metadata' },
+      { source: '/.well-known/oauth-authorization-server', destination: '/api/oauth/metadata' },
+      { source: '/.well-known/openid-configuration', destination: '/api/oauth/metadata' },
+    ];
+  },
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },

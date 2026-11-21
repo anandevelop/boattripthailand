@@ -7341,7 +7341,7 @@ const addTeamTabs = k => { const h = $('#view > div'); if (h && !$('#view > .tab
 { const _t = vTeam; vTeam = function () { _t(); addTeamTabs('team'); }; const e = PAGES.find(p => p[0] === 'team'); if (e) e[3] = vTeam; }
 function aiLoad() {
   AIM.err = '';
-  Promise.all([api('GET', 'ai-tokens'), api('GET', 'ai-requests')]).then(([t, r]) => { AIM.tokens = t.tokens; AIM.reqs = r.requests; if (CUR === 'ai') vAi(); })
+  Promise.all([api('GET', 'ai-tokens'), api('GET', 'ai-requests'), api('GET', 'ai-grants')]).then(([t, r, g]) => { AIM.tokens = t.tokens; AIM.reqs = r.requests; AIM.grants = g.grants; if (CUR === 'ai') vAi(); })
     .catch(e => { AIM.err = e.message || 'โหลดไม่สำเร็จ'; if (CUR === 'ai') vAi(); });
 }
 const aiWhen = s => s ? new Date(s).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
@@ -7361,7 +7361,12 @@ function vAi() {
         <div class="flex-1 min-w-0"><p class="text-[13px]"><span class="text-[11px] px-2 py-0.5 rounded-full ${st[1]} mr-1.5">${st[0]}</span>${esc(r.label)}</p>
           <p class="text-[11.5px] text-muted mt-1">${esc(r.user)} · ${aiWhen(r.at)}${r.reason ? ` · เหตุผล: ${esc(r.reason)}` : ''}${r.decidedBy ? ` · ${esc(r.decidedBy)}` : ''}${r.status === 'FAILED' && r.result?.out?.error ? ` · ${esc(r.result.out.error)}` : ''}</p></div>
         ${r.status === 'PENDING' ? `<div class="flex gap-2 shrink-0"><button class="btn btn-o !h-8" onclick="aiDecide('${r.id}',false)">ปฏิเสธ</button><button class="btn btn-p !h-8" onclick="aiDecide('${r.id}',true)">ยืนยัน · ทำเลย</button></div>` : ''}</div>`; }).join('') || '<p class="py-6 text-center text-muted text-[13px]">ยังไม่มีคำขอ</p>'}</div></div>
-    <div class="card p-5 mb-4"><p class="font-medium">API Token</p>
+    <div class="card p-5 mb-4"><p class="font-medium">การเชื่อมต่อ claude.ai / Cowork (OAuth)</p>
+      <p class="text-[12px] text-muted mt-1">ใน claude.ai หรือ Cowork: Settings → Connectors → <b>Add custom connector</b> → ใส่ URL <code>${url}</code> → กด Connect → ล็อกอินหลังบ้าน → เลือกบัญชี Bot → อนุญาต · ไม่ต้องคัดลอก token</p>
+      <div class="mt-3 overflow-x-auto"><table class="tbl"><thead><tr><th>แอป</th><th>ในนาม</th><th>เชื่อมเมื่อ</th><th>ใช้ล่าสุด</th><th></th></tr></thead><tbody>
+        ${(AIM.grants || []).map(g => `<tr class="${g.revokedAt ? 'opacity-50' : ''}"><td>${esc(g.clientName)}</td><td>${esc(g.userName)}</td><td>${aiWhen(g.createdAt)}</td><td>${aiWhen(g.lastUsedAt)}</td>
+          <td class="text-right">${g.revokedAt ? '<span class="text-[11px] text-muted">ยกเลิกแล้ว</span>' : `<button class="btn btn-g !h-8 text-[#b42318]" onclick="aiGrantRevoke('${g.id}')">ยกเลิก</button>`}</td></tr>`).join('') || '<tr><td colspan="5" class="text-center text-muted py-6">ยังไม่มีการเชื่อมต่อ</td></tr>'}</tbody></table></div></div>
+    <div class="card p-5 mb-4"><p class="font-medium">API Token (Claude Code / Desktop / สคริปต์)</p>
       <p class="text-[12px] text-muted mt-1">แนะนำให้สร้างบัญชีบทบาท <b>Bot</b> ก่อน (ทีมงาน & สิทธิ์ → เพิ่มสมาชิก) แล้วสร้าง token ให้บัญชีนั้น · token แสดงครั้งเดียว · ยกเลิกได้ทันที</p>
       <div class="mt-3 grid sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
         <label><span class="lbl">บัญชีที่ AI จะใช้</span><select class="inp" onchange="AIM.user=this.value">${bots.map(t => `<option value="${t.id}" ${t.id === AIM.user ? 'selected' : ''}>${esc(t.name)} · ${esc(ROLES[t.roleKey]?.[0] || t.roleKey)}</option>`).join('')}</select></label>
@@ -7396,3 +7401,5 @@ function aiDecide(id, ok) {
   if (ok && !confirm('ยืนยันให้ทำคำสั่งนี้?')) return;
   api('POST', `ai-requests/${id}/${ok ? 'approve' : 'reject'}`).then(r => { toast(ok ? (r.ok ? 'ทำคำสั่งแล้ว' : 'ทำไม่สำเร็จ: ' + (r.result?.error || r.status)) : 'ปฏิเสธแล้ว'); aiLoad(); }).catch(fail);
 }
+
+function aiGrantRevoke(id) { if (!confirm('ยกเลิกการเชื่อมต่อนี้? แอปจะใช้งานไม่ได้ทันที ต้องเชื่อมใหม่')) return; api('POST', `ai-grants/${id}/revoke`).then(() => { toast('ยกเลิกการเชื่อมต่อแล้ว'); aiLoad(); }).catch(fail); }

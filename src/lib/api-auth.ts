@@ -1,6 +1,6 @@
 import 'server-only';
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
-import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { aiRequests, apiTokens, boats, settings, users, type AiRequest, type User } from '@/db/schema';
 import { audit } from './audit';
@@ -26,7 +26,7 @@ export async function createApiToken(userId: string, name: string, by: string) {
 }
 export async function listApiTokens() {
   return db.select({ id: apiTokens.id, userId: apiTokens.userId, name: apiTokens.name, prefix: apiTokens.prefix, createdAt: apiTokens.createdAt, lastUsedAt: apiTokens.lastUsedAt, revokedAt: apiTokens.revokedAt, userName: users.name, role: users.role })
-    .from(apiTokens).innerJoin(users, eq(users.id, apiTokens.userId)).orderBy(desc(apiTokens.createdAt));
+    .from(apiTokens).innerJoin(users, eq(users.id, apiTokens.userId)).where(isNull(apiTokens.grantId)).orderBy(desc(apiTokens.createdAt));
 }
 export async function revokeApiToken(id: string) {
   const [row] = await db.update(apiTokens).set({ revokedAt: new Date() }).where(and(eq(apiTokens.id, id), isNull(apiTokens.revokedAt))).returning();
@@ -36,8 +36,9 @@ export async function revokeApiToken(id: string) {
 export async function tokenUser(token: string): Promise<ApiUser | null> {
   if (!token.startsWith(TOKEN_PREFIX) || token.length > 200) return null;
   const [r] = await db.select({ t: apiTokens, u: users }).from(apiTokens).innerJoin(users, eq(users.id, apiTokens.userId))
-    .where(and(eq(apiTokens.tokenHash, sha256(token)), isNull(apiTokens.revokedAt)));
+    .where(and(eq(apiTokens.tokenHash, sha256(token)), isNull(apiTokens.revokedAt), or(isNull(apiTokens.expiresAt), gt(apiTokens.expiresAt, new Date()))));
   if (!r || !r.u.active) return null;
+  if (r.t.grantId && r.u.role !== 'BOT') return null;   // OAuth connections act only as Bot accounts (lib/oauth.ts)
   if (!r.t.lastUsedAt || Date.now() - +r.t.lastUsedAt > 60_000) await db.update(apiTokens).set({ lastUsedAt: new Date() }).where(eq(apiTokens.id, r.t.id));
   return { ...r.u, viaApi: true, tokenName: r.t.name };
 }

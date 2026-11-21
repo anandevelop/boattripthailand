@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { boats, customers, leadActivities, leads, posts, redirects, seasonCalendars, settings, users, type Boat, type Lead, type User } from '@/db/schema';
 import { adminBoot, leadsFor, auditList, boatToClient, customerToClient, CONTACT_FROM_CLIENT, LANG_FROM_CLIENT, leadClientById, permsFromClient, postToClient, ROLE_FROM_CLIENT, STATUS_FROM_CLIENT, userToClient, avatarOf } from '@/lib/admin-boot';
 import { audit, verifyAuditChain } from '@/lib/audit';
+import { listGrants, revokeGrant } from '@/lib/oauth';
 import { apiUser, createApiToken, decideRequest, listApiTokens, listRequests, revokeApiToken, type ApiUser } from '@/lib/api-auth';
 import { hashPassword, logout, passwordProblem, revokeSessions, verifyPassword } from '@/lib/auth';
 import { randomDigits, tempPassword } from '@/lib/crypto';
@@ -561,6 +562,11 @@ async function handle(req: Request, params: Promise<{ op: string[] }>) {
         if (r) await audit(actor(me), { action: 'update', entity: 'ai_token', ref: b0, label: `ยกเลิก API token "${r.name}"` });
         return json({ ok: !!r });
       }
+    }
+    if (a === 'ai-grants') {   // OAuth connections (claude.ai / Cowork connectors) — lib/oauth.ts
+      await need(me, 'team');
+      if (method === 'GET') return json({ grants: (await listGrants()).map(g => ({ ...g, createdAt: g.createdAt.toISOString(), lastUsedAt: g.lastUsedAt?.toISOString() ?? null, revokedAt: g.revokedAt?.toISOString() ?? null })) });
+      if (method === 'POST' && b0 && c0 === 'revoke') return json({ ok: !!(await revokeGrant(b0, me)) });
     }
     if (a === 'ai-requests') {
       await need(me, 'team');

@@ -3,7 +3,7 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { I, Ico } from './LoginFrame';
 
-type State = { error?: string; ok?: string } | undefined;
+type State = { error?: string; ok?: string; next?: string } | undefined;
 type Action = (s: State, fd: FormData) => Promise<State>;
 
 /* ---------- step 1: e-mail + password ---------- */
@@ -40,7 +40,7 @@ export function OtpForm({ action, hint }: { action: Action; hint: string }) {
   // wrong code → shake, clear, focus the first box; right code → green, then into the admin
   useEffect(() => {
     if (state?.error) { setD(['', '', '', '', '', '']); sent.current = ''; setShake(s => s + 1); setTimeout(() => refs.current[0]?.focus(), 30); }
-    if (state?.ok) { const t = setTimeout(() => { location.href = '/admin'; }, 700); return () => clearTimeout(t); }
+    if (state?.ok) { const t = setTimeout(() => { location.href = state.next || '/admin'; }, 700); return () => clearTimeout(t); }
   }, [state]);
   useEffect(() => { if (code.length === 6 && !pending && !ok && sent.current !== code) { sent.current = code; form.current?.requestSubmit(); } }, [code, pending, ok]);
 

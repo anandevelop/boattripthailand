@@ -313,6 +313,9 @@ export const apiTokens = pgTable('api_tokens', {
   createdAt: now('created_at'),
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  /** OAuth access tokens: the connection they belong to, and when they stop working (1 hour) · null for tokens made in /admin */
+  grantId: text('grant_id'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
 }, t => [index('api_tokens_user_idx').on(t.userId)]);
 export type ApiToken = typeof apiTokens.$inferSelect;
 
@@ -368,3 +371,38 @@ export const aiChanges = pgTable('ai_changes', {
   createdAt: now('created_at'),
 }, t => [index('ai_changes_created_idx').on(t.createdAt)]);
 export type AiChange = typeof aiChanges.$inferSelect;
+
+/* ---------------- OAuth 2.1 for MCP connectors (claude.ai / Cowork "Add custom connector") — lib/oauth.ts ---------------- */
+
+/** apps registered with Dynamic Client Registration (RFC 7591) — public clients, PKCE only */
+export const oauthClients = pgTable('oauth_clients', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  redirectUris: text('redirect_uris').array().notNull(),
+  meta: jsonb('meta'),
+  createdAt: now('created_at'),
+});
+/** one-time authorization codes (10 minutes) */
+export const oauthCodes = pgTable('oauth_codes', {
+  codeHash: text('code_hash').primaryKey(),
+  clientId: text('client_id').notNull(),
+  grantId: text('grant_id').notNull(),
+  redirectUri: text('redirect_uri').notNull(),
+  challenge: text('challenge').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+});
+/** an approved connection: which app may act as which account · revoking it stops every token it issued */
+export const oauthGrants = pgTable('oauth_grants', {
+  id: id(),
+  clientId: text('client_id').notNull(),
+  clientName: text('client_name').notNull(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  approvedById: text('approved_by_id'),
+  refreshHash: text('refresh_hash').unique(),
+  refreshExpiresAt: timestamp('refresh_expires_at', { withTimezone: true }),
+  createdAt: now('created_at'),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+});
+export type OauthGrant = typeof oauthGrants.$inferSelect;
