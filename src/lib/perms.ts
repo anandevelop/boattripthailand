@@ -20,20 +20,20 @@ export const ROLE_DESC = {
   SUPER_ADMIN: 'ทำได้ทุกอย่าง รวมจัดการทีม สิทธิ์ผู้ใช้ และดูบันทึกกิจกรรม',
   ADMIN: 'ดูแลลีดทุกคน เรือ ราคา เนื้อหา การตลาด ตั้งค่าเว็บ · จัดการทีมและสิทธิ์ไม่ได้',
   SALES: 'เห็นและจัดการเฉพาะลีดของตัวเอง',
-  BOT: 'บัญชีสำหรับบอท/ระบบอัตโนมัติ: เรือ ราคา เนื้อหา SEO ตั้งค่าเว็บ · ไม่เห็นลีด ลูกค้า ทีม บันทึกกิจกรรม · ไม่ใช้ 2FA',
+  BOT: 'บัญชีสำหรับบอท/ระบบอัตโนมัติ: ทำได้ทุกอย่าง ยกเว้นจัดการทีม & สิทธิ์ · ไม่ใช้ 2FA',
 } as const;
 
 export const ROLE_PERMS: Record<User['role'], Perm[]> = {
   SUPER_ADMIN: ALL_PERMS,
   ADMIN: ALL_PERMS.filter(p => p !== 'team' && p !== 'audit'),
   SALES: ['leads'],
-  BOT: ['boats', 'content', 'seo', 'settings'],
+  BOT: ALL_PERMS.filter(p => p !== 'team'),
 };
-/** a Bot can never be given these, whatever its custom permissions say: no customer data, no team, no audit log */
-export const BOT_NEVER: Perm[] = ['leads', 'leads_all', 'marketing', 'export', 'team', 'audit'];
+/** a Bot can never be given these, whatever its custom permissions say: it never manages the team or permissions */
+export const BOT_NEVER: Perm[] = ['team'];
 
 /** Roles that must use two-factor authentication — every person: sales see customers' names, phones and WhatsApp too.
- *  Not BOT (an automated agent cannot read an authenticator app): it can never see customer data (BOT_NEVER). */
+ *  Not BOT (an automated agent cannot read an authenticator app): keep its password long and its tokens few. */
 export const MFA_ROLES: User['role'][] = ['SUPER_ADMIN', 'ADMIN', 'SALES'];
 
 export function permsOf(u: Pick<User, 'role' | 'perms'>): Perm[] {

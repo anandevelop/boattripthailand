@@ -40,7 +40,7 @@ export async function GET(req: Request) {
   const host = new URL(p.req.redirectUri).host, qs = url.search.slice(1);
   return page(`<p class="k">Boat Trip Thailand · หลังบ้าน</p><h1>อนุญาตให้ “${esc(p.client.name)}” เข้าระบบหลังบ้าน?</h1>
     <p>แอปจาก <b>${esc(host)}</b> จะใช้เครื่องมือ MCP ในนามบัญชี Bot ที่เลือก</p>
-    <ul><li>ดูและแก้ เรือ ราคา บทความ เนื้อหาเว็บ SEO (ตามสิทธิ์ของบัญชี Bot)</li><li><b>ไม่เห็น</b> ลีด ลูกค้า ทีมงาน บันทึกกิจกรรม</li><li><b>ลบเองไม่ได้</b> · ทุกการลบต้องใช้รหัสจาก LINE ของคุณ</li></ul>
+    <ul><li>ดูและแก้ข้อมูลในหลังบ้านตามสิทธิ์ของบัญชี Bot (รวมลีดและข้อมูลลูกค้า)</li><li><b>จัดการทีม & สิทธิ์ไม่ได้</b></li><li><b>ลบเองไม่ได้</b> · ทุกการลบต้องใช้รหัสจาก LINE ของคุณ</li></ul>
     <form method="post"><input type="hidden" name="q" value="${esc(qs)}"><input type="hidden" name="t" value="${csrf(me.id, qs)}">
       <label><small>ใช้บัญชี</small><select name="bot">${bots.map(b => `<option value="${esc(b.id)}">${esc(b.name)} · ${ROLE_LABEL[b.role]}</option>`).join('')}</select></label>
       <div class="b"><button class="n" name="go" value="no">ไม่อนุญาต</button><button class="y" name="go" value="yes">อนุญาต</button></div></form>

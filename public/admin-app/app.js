@@ -2223,7 +2223,7 @@ PAGES.splice(PAGES.findIndex(p => p[0] === 'articles') + 1, 0, ['media', 'คล
 /* =====================================================================
    TEAM – add / edit / deactivate sales members
    ===================================================================== */
-const ROLES = { super: ['Super Admin', 'ทำได้ทุกอย่าง รวมจัดการทีม สิทธิ์ผู้ใช้ และดูบันทึกกิจกรรม'], admin: ['Admin', 'ดูแลลีดทุกคน เรือ ราคา เนื้อหา SEO การตลาด และตั้งค่าเว็บ · จัดการทีมและสิทธิ์ไม่ได้'], sales: ['Sales', 'เห็นและจัดการเฉพาะลีดของตัวเอง'] , bot: ['Bot', 'บัญชีสำหรับบอท/ระบบอัตโนมัติ: เรือ ราคา เนื้อหา SEO ตั้งค่าเว็บ · ไม่เห็นลีด ลูกค้า ทีม บันทึกกิจกรรม · ไม่ใช้ 2FA'] };
+const ROLES = { super: ['Super Admin', 'ทำได้ทุกอย่าง รวมจัดการทีม สิทธิ์ผู้ใช้ และดูบันทึกกิจกรรม'], admin: ['Admin', 'ดูแลลีดทุกคน เรือ ราคา เนื้อหา SEO การตลาด และตั้งค่าเว็บ · จัดการทีมและสิทธิ์ไม่ได้'], sales: ['Sales', 'เห็นและจัดการเฉพาะลีดของตัวเอง'] , bot: ['Bot', 'บัญชีสำหรับบอท/ระบบอัตโนมัติ: ทำได้ทุกอย่าง ยกเว้นจัดการทีม & สิทธิ์ · ไม่ใช้ 2FA'] };
 const PERMS = [['bookings', 'การจอง & ลูกค้า'], ['boats', 'เรือ ราคา ฤดูกาล'], ['content', 'เนื้อหา บทความ คลังสื่อ'], ['seo', 'SEO & วิเคราะห์'], ['settings', 'ตั้งค่า & ทีม']];
 const ROLE_PERMS = { super: ['bookings', 'boats', 'content', 'seo', 'settings'], admin: ['bookings', 'boats', 'content', 'seo', 'settings'], sales: ['bookings'], bot: ['boats', 'content', 'seo', 'settings'], content: ['content', 'seo'], viewer: [] };
 const LANG_OPT = ['ไทย', 'English', '中文', 'Русский'];
@@ -3157,9 +3157,9 @@ PERMS.length = 0;
 PERMS.push(['bookings', 'ลีด & ลูกค้า (เฉพาะของตัวเอง)'], ['bookings_all', 'เห็นลีดของทุกคน'], ['boats', 'เรือ ราคา ฤดูกาล กิจกรรม'], ['marketing', 'ใช้ประโยชน์จากลีด (กลุ่มเป้าหมาย โฆษณา)'],
   ['content', 'เนื้อหา บทความ คลังสื่อ'], ['seo', 'SEO & วิเคราะห์'], ['export', 'Export ข้อมูล (CSV)'], ['settings', 'ตั้งค่าเว็บไซต์'], ['team', 'จัดการทีม & สิทธิ์ผู้ใช้'], ['audit', 'ดูบันทึกกิจกรรม']);
 Object.keys(ROLE_PERMS).forEach(k => delete ROLE_PERMS[k]);
-Object.assign(ROLE_PERMS, { super: PERMS.map(p => p[0]), admin: PERMS.map(p => p[0]).filter(k => !['team', 'audit'].includes(k)), sales: ['bookings'], bot: ['boats', 'content', 'seo', 'settings'] });
+Object.assign(ROLE_PERMS, { super: PERMS.map(p => p[0]), admin: PERMS.map(p => p[0]).filter(k => !['team', 'audit'].includes(k)), sales: ['bookings'], bot: PERMS.map(p => p[0]).filter(k => k !== 'team') });
 /* a Bot can never get these (server: lib/perms.ts BOT_NEVER) */
-const BOT_NEVER = ['bookings', 'bookings_all', 'marketing', 'export', 'team', 'audit'];
+const BOT_NEVER = ['team'];
 ROLES.sales[1] = 'เห็นและจัดการเฉพาะลีดของตัวเอง · ไม่เห็นลีดของคนอื่น';
 let ME = null;
 const permsOf = u => u ? (u.perms || ROLE_PERMS[u.roleKey] || []) : [];
