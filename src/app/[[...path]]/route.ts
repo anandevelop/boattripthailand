@@ -27,10 +27,10 @@ export async function GET(req: Request) {
 /** /blog/<slug>?preview=<id> — staff with content permission see the article whatever its status */
 async function preview(url: URL, id: number) {
   const u = await currentUser();
-  if (!u) return Response.redirect(new URL('/admin/login', url), 302);
+  if (!u) return new Response(null, { status: 302, headers: { Location: '/admin/login', ...PRIVATE } });
   if (!can(u, 'content') || !Number.isInteger(id) || id < 1) return new Response('ไม่มีสิทธิ์ดูตัวอย่างบทความนี้', { status: 403, headers: PRIVATE });
   const r = await renderPostPreview(url, id, await cfg());
   if (!r) return new Response('ไม่พบบทความ', { status: 404, headers: PRIVATE });
-  if ('redirect' in r) return Response.redirect(new URL(r.redirect!, url), 302);
+  if ('redirect' in r) return new Response(null, { status: 302, headers: { Location: r.redirect!, ...PRIVATE } });
   return new Response(r.html, { headers: PRIVATE });
 }

@@ -33,7 +33,8 @@ export async function GET(req: Request) {
   const me = await currentUser();
   if (!me) {
     (await cookies()).set('btt_oauth_next', url.pathname + url.search, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 15 * 60 });
-    return Response.redirect(new URL('/admin/login', url), 302);
+    // relative: behind the proxy req.url is the container's own address (http://localhost:3000), not the site's
+    return new Response(null, { status: 302, headers: { Location: '/admin/login', 'Cache-Control': 'no-store' } });
   }
   const bots = await connectable(me);
   if (!bots.length) return fail(me.role === 'SUPER_ADMIN' || me.role === 'ADMIN' ? 'ยังไม่มีบัญชีบทบาท Bot · สร้างก่อนที่ ทีมงาน & สิทธิ์ → เพิ่มสมาชิก → บทบาท Bot' : 'บัญชีนี้อนุญาตการเชื่อมต่อไม่ได้ · ให้ Super Admin เข้าสู่ระบบแล้วอนุญาต', 403);

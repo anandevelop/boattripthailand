@@ -18,8 +18,11 @@ const PUBLIC = path.resolve(process.cwd(), 'public');
 const CACHE = path.join(UPLOAD_DIR, '_cache', 'r');
 const busy = new Map<string, Promise<Buffer>>();
 
+/* file names may be Thai (or any language): letters, combining marks (Thai vowels and tone marks) and digits are fine */
+const SAFE = /^(boats|img|brand|uploads)\/[\p{L}\p{M}\p{N}_ .,()+~'-]+(\/[\p{L}\p{M}\p{N}_ .,()+~'-]+)*\.(webp|jpe?g|png|avif)$/iu;
+const dec = (s: string) => { try { return decodeURIComponent(s); } catch { return s; } };
 function fileOf(rel: string) {
-  if (!/^(boats|img|brand|uploads)\/[\w./-]+\.(webp|jpe?g|png|avif)$/i.test(rel) || rel.includes('..')) return null;
+  if (!SAFE.test(rel) || rel.split('/').some(x => x === '..' || x === '.')) return null;
   if (rel.startsWith('uploads/')) return uploadPath('/' + rel);
   const p = path.resolve(PUBLIC, rel);
   return p.startsWith(PUBLIC + path.sep) ? p : null;
@@ -27,10 +30,14 @@ function fileOf(rel: string) {
 
 export async function GET(req: Request, ctx: { params: Promise<{ w: string; path: string[] }> }) {
   const { w: ws, path: parts } = await ctx.params;
-  const w = Number(ws), rel = (parts ?? []).map(decodeURIComponent).join('/');
+  const w = Number(ws), rel = (parts ?? []).map(dec).join('/').normalize('NFC');
   const file = WIDTHS.has(w) ? fileOf(rel) : null;
   if (!file) return new Response('not found', { status: 404 });
-  let st; try { st = await stat(file); } catch { return new Response('not found', { status: 404 }); }
+  let st, f = file;
+  try { st = await stat(f); }
+  catch {   // a file saved from a Mac can carry the decomposed (NFD) form of the same Thai name
+    f = file.normalize('NFD'); try { st = await stat(f); } catch { return new Response('not found', { status: 404 }); }
+  }
   const q = w <= 480 ? 68 : 72;   // WebP quality: small cards a bit lower, nobody sees the difference at that size
   const key = createHash('sha1').update(`${rel}|${st.size}|${st.mtimeMs}|${w}|q${q}`).digest('hex');
   const out = path.join(CACHE, key.slice(0, 2), key + '.webp');
@@ -39,7 +46,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ w: string; path
     let job = busy.get(key);
     if (!job) {
       job = (async () => {
-        const b = await sharp(await readFile(file), { failOn: 'none' }).rotate()
+        const b = await sharp(await readFile(f), { failOn: 'none' }).rotate()
           .resize({ width: w, height: w * 2, fit: 'inside', withoutEnlargement: true }).webp({ quality: q, effort: 4 }).toBuffer();
         try {   // the disk copy is only a cache: a read-only / full disk must not break the picture
           await mkdir(path.dirname(out), { recursive: true });

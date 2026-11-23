@@ -22,7 +22,7 @@ import { publicSeo, seoConfig } from './seo';
  */
 type Assets = { shell: string; app: vm.Script; fleet: vm.Script; lucide: vm.Script; version: string };
 type Bundle = { at: number; data: SiteData; js: string; version: string };
-type Entry = { at: number; gen: number; gz: Buffer };
+type Entry = { at: number; gen: number; gz: Buffer; pk: string };
 /*
  * Next.js bundles this module separately into every route that imports it (the site, /site-home.js, /site-data.js, the
  * admin API …). The caches and the render queue live on globalThis so all of them share ONE copy: an admin save clears
@@ -33,7 +33,7 @@ const S = ((globalThis as unknown as { __bttSsr?: unknown }).__bttSsr ??= {
   pages: new Map(), inflight: new Map(), home: new Map(), homeLatest: {}, homeByKey: {}, hi: [], lo: [], pumping: false,
 }) as { assets: Assets | null; dataCache: Bundle | null; dataLoading: Promise<Bundle> | null; gen: number; queued: number; qTail: Promise<unknown>;
   pages: Map<string, Entry>; inflight: Map<string, Promise<string>>; home: Map<string, string>; homeLatest: Record<string, string>;
-  homeByKey: Record<string, string>; hi: Job[]; lo: Job[]; pumping: boolean };
+  homeByKey: Record<string, string>; hi: Job[]; lo: Job[]; pumping: boolean; cfg?: Record<string, string>; rewarm?: NodeJS.Timeout };
 type Job = { key: string; run: () => void };
 S.homeByKey ??= {}; S.hi ??= []; S.lo ??= [];
 const ROOT = process.cwd();
@@ -200,6 +200,7 @@ function promote(key: string) { const i = S.lo.findIndex(j => j.key === key); if
 export async function renderSite(url: URL, cfg: Record<string, string>, opts: { warm?: boolean } = {}) {
   const a = loadAssets();
   const pk = pageKey(url), key = a.version + pk;   // app.js version in the key so an edited app.js shows up immediately
+  S.cfg = cfg;
   const hit = pageCache.get(key);
   if (hit && hit.gen === S.gen && Date.now() - hit.at < TTL) return unzip(hit);
   const stale = !!hit && hit.gen === S.gen;
@@ -208,7 +209,7 @@ export async function renderSite(url: URL, cfg: Record<string, string>, opts: { 
   // expired by time → last copy now, new one in the background. Changed in the admin → wait for the new one,
   // unless anything else is already rendering (a crawl, the warm-up): then the last copy too. A render blocks the whole
   // process, so a crawl right after an admin save must not queue one blocking render per URL behind each other.
-  if (hit.gen === S.gen || S.queued > 1) { job.catch(e => console.error('[ssr]', pk, e)); return unzip(hit); }
+  if (hit.gen === S.gen || S.queued > 1) { if (!opts.warm) promote(key); job.catch(e => console.error('[ssr]', pk, e)); return unzip(hit); }
   try { return await job; } catch (e) { console.error('[ssr]', pk, e); return unzip(hit); }
 }
 function fresh(key: string, url: URL, cfg: Record<string, string>, a: Assets, low = false) {
@@ -229,7 +230,7 @@ function fresh(key: string, url: URL, cfg: Record<string, string>, a: Assets, lo
     const lang = /^\/en(\/|$)/.test(url.pathname) ? 'en' : 'th';
     const html = await enqueue(key, () => run(a, url, data, { __CFG__: cfg, __POST__: post }, lang, false, `${lang}|${a.version}|${bundle.version}`).replace('__DV__', bundle.version), low);
     pageCache.delete(key);
-    pageCache.set(key, { at: Date.now(), gen: g, gz: gzipSync(html) });
+    pageCache.set(key, { at: Date.now(), gen: g, gz: gzipSync(html), pk: url.pathname + url.search });
     if (pageCache.size > MAX_PAGES) for (const k of pageCache.keys()) { if (pageCache.size <= MAX_PAGES * 0.8) break; pageCache.delete(k); }   // oldest first
     return html;
   })().finally(() => inflight.delete(key));
@@ -237,7 +238,22 @@ function fresh(key: string, url: URL, cfg: Record<string, string>, a: Assets, lo
   return p;
 }
 /** content changed in the admin: pages re-render on their next visit (the old copy stays as a fallback) */
-export function clearSiteCache() { S.gen++; S.dataCache = null; S.dataLoading = null; (globalThis as { __bttRedirAt?: number }).__bttRedirAt = Date.now(); }   // + redirects reload (middleware)
+export function clearSiteCache() {
+  S.gen++; S.dataCache = null; S.dataLoading = null; (globalThis as { __bttRedirAt?: number }).__bttRedirAt = Date.now();   // + redirects reload (middleware)
+  // re-render the cached pages in the background a few seconds after the last save (saves often come in bursts: an AI
+  // editing 20 covers, a scheduled batch). Without this every page waited for a fresh render on its first visit after a
+  // save, and a crawl right after one met ~0.5–2 s pages. While it runs visitors get the last copy (S.queued > 1), and a
+  // page someone opens is moved to the front.
+  if (S.rewarm) clearTimeout(S.rewarm);
+  S.rewarm = setTimeout(rewarm, 5000); S.rewarm.unref?.();
+}
+function rewarm() {
+  S.rewarm = undefined;
+  const cfg = S.cfg, a = S.assets; if (!cfg || !a) return;
+  const pks = [...pageCache.entries()].filter(([k, e]) => e.gen !== S.gen && k.startsWith(a.version)).map(([, e]) => e.pk);
+  for (const pk of pks) renderSite(new URL(pk, SITE), cfg, { warm: true }).catch(() => {});
+  if (pks.length) console.log(`[ssr] re-rendering ${pks.length} pages after a change`);
+}
 
 /* the hidden home view that pages other than home need (see run): one cacheable script per version instead of ~190 KB in every page */
 const HOME = S.home, HOME_LATEST = S.homeLatest;   // hash → script · lang → latest hash

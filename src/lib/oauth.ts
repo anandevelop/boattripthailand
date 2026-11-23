@@ -77,13 +77,23 @@ export async function clientOf(clientId: string) {
   } catch { return null; }
 }
 
+/** RFC 8252 §7.3: an app on this computer (Claude Code …) listens on whatever loopback port is free, so for
+ *  http://localhost / 127.0.0.1 / [::1] the port may differ from the one registered; everything else must match exactly */
+const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
+export function redirectAllowed(registered: string[], uri: string) {
+  if (registered.includes(uri)) return true;
+  let u: URL; try { u = new URL(uri); } catch { return false; }
+  if (u.protocol !== 'http:' || !LOOPBACK.includes(u.hostname)) return false;
+  return registered.some(r => { try { const x = new URL(r); return x.protocol === 'http:' && LOOPBACK.includes(x.hostname) && x.pathname === u.pathname && x.search === u.search; } catch { return false; } });
+}
+
 /* ---------- authorize ---------- */
 export type AuthReq = { clientId: string; redirectUri: string; state: string; challenge: string; scope: string; resource: string };
 export async function checkAuthReq(q: URLSearchParams): Promise<{ req: AuthReq; client: NonNullable<Awaited<ReturnType<typeof clientOf>>> }> {
   const clientId = q.get('client_id') || '', redirectUri = q.get('redirect_uri') || '';
   const client = clientId ? await clientOf(clientId) : null;
   if (!client) throw new OAuthError('invalid_client', 'ไม่รู้จักแอปนี้ (client_id)');
-  if (!client.redirectUris.includes(redirectUri)) throw new OAuthError('invalid_request', 'redirect_uri ไม่ตรงกับที่แอปลงทะเบียนไว้');
+  if (!redirectAllowed(client.redirectUris, redirectUri)) throw new OAuthError('invalid_request', 'redirect_uri ไม่ตรงกับที่แอปลงทะเบียนไว้');
   // from here on errors go back to the app (redirect), the redirect_uri is trusted
   if (q.get('response_type') !== 'code') throw new OAuthError('unsupported_response_type', 'response_type must be code');
   const challenge = q.get('code_challenge') || '';
