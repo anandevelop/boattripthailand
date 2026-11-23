@@ -146,5 +146,4 @@ async function runBrochure(job: BgJob, step: (s: string) => unknown) {
   catch (e) { throw new JobError(e instanceof Error ? e.message : 'อ่าน PDF ไม่สำเร็จ'); }
 }
 
-export const queueSize = async () => (await db.select({ n: sql<number>`count(*)::int` }).from(bgJobs).where(eq(bgJobs.status, 'QUEUED')))[0].n;
 export const recentJobs = (userId: string) => db.select().from(bgJobs).where(eq(bgJobs.userId, userId)).orderBy(asc(bgJobs.createdAt)).limit(50);

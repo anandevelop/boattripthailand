@@ -196,7 +196,6 @@ function pump() {
 }
 /** a visitor now waits for a page that sits in the low lane: move it up */
 function promote(key: string) { const i = S.lo.findIndex(j => j.key === key); if (i >= 0) S.hi.push(...S.lo.splice(i, 1)); }
-export const renderQueue = () => S.queued;
 
 export async function renderSite(url: URL, cfg: Record<string, string>, opts: { warm?: boolean } = {}) {
   const a = loadAssets();

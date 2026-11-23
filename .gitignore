@@ -20,8 +20,6 @@ _to_delete/
 # design mockups: single-file HTML exports (6–25 MB each), kept on disk only
 mockup/*.html
 
-# one-off backup made by scripts/localize-covers.mjs
-data/posts.wp-urls.backup.json
 
 .env.bak*
 

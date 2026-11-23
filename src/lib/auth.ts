@@ -1,14 +1,13 @@
 import 'server-only';
 import bcrypt from 'bcryptjs';
-import { and, eq, gt, lt } from 'drizzle-orm';
+import { and, eq, gt } from 'drizzle-orm';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { authenticator } from 'otplib';
 import { db } from '@/db';
 import { sessions, users, type User } from '@/db/schema';
 import { audit } from './audit';
 import { randomToken, sha256 } from './crypto';
-import { can, MFA_ROLES, type Perm } from './perms';
+import { MFA_ROLES } from './perms';
 import { clientInfo } from './request';
 import { rateLimit } from './ratelimit';
 
@@ -137,16 +136,6 @@ export async function currentUser() {
 }
 
 /** Use at the top of every admin page and server action. */
-export async function requireUser(perm?: Perm) {
-  const u = await currentUser();
-  if (!u) redirect('/admin/login');
-  if (perm && !can(u, perm)) {
-    await audit({ id: u.id, role: u.role }, { action: 'denied', entity: 'auth', ref: perm, label: `ไม่มีสิทธิ์ ${perm}`, ...(await clientInfo()) });
-    redirect('/admin?denied=' + perm);
-  }
-  return u;
-}
-
 export async function logout(reason = 'ออกจากระบบ') {
   const jar = await cookies(), token = jar.get(SESSION_COOKIE)?.value;
   if (token) {
@@ -162,6 +151,3 @@ export async function revokeSessions(userId: string) {
   await db.delete(sessions).where(eq(sessions.userId, userId));
 }
 
-export async function purgeExpiredSessions() {
-  await db.delete(sessions).where(lt(sessions.expiresAt, new Date()));
-}

@@ -3,7 +3,6 @@ export const LEAD_STATUSES = ['NEW', 'CONTACTED', 'TALKING', 'WON', 'LOST'] as c
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 export const OPEN_STATUSES: LeadStatus[] = ['NEW', 'CONTACTED', 'TALKING'];
 export const STATUS_LABEL: Record<LeadStatus, string> = { NEW: 'ลีดใหม่', CONTACTED: 'ติดต่อแล้ว', TALKING: 'กำลังคุย', WON: 'ปิดการขาย', LOST: 'ไม่สำเร็จ' };
-export const STATUS_STYLE: Record<LeadStatus, string> = { NEW: 'bg-[#eef2ff] text-[#3b4bb5]', CONTACTED: 'bg-[#fff6e5] text-[#9a5b00]', TALKING: 'bg-[#fff1e8] text-[#b4501a]', WON: 'bg-[#eaf6ef] text-[#1e7a46]', LOST: 'bg-[#fbecec] text-[#a3222c]' };
 
 export const SOURCE_LABEL: Record<string, string> = { google: 'Google ค้นหา (SEO)', gads: 'Google Ads', meta: 'Facebook / IG Ads', social: 'Social (ไม่เสียเงิน)', line: 'LINE OA', wa: 'WhatsApp โดยตรง', phone: 'โทรศัพท์', ref: 'ลูกค้าแนะนำ / Agent', other: 'เว็บไซต์อื่น', direct: 'เข้าเว็บโดยตรง' };
 export const CONTACT_LABEL: Record<string, string> = { web_form: 'ฟอร์มบนเว็บ', whatsapp: 'WhatsApp', line: 'LINE', phone: 'โทรศัพท์', email: 'อีเมล', walk_in: 'Walk-in' };

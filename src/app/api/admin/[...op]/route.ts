@@ -24,7 +24,7 @@ import { analyticsData } from '@/lib/analytics';
 import { sourcesData } from '@/lib/traffic-src';
 import { GoogleError, googleData, googleStatus, loadGoogleCfg, saveGoogleCfg, testGoogle } from '@/lib/google';
 import { pageSpeed, PsiBusyError, psiCooldown, psiPath, PsiKeyError, psiUsage, psiRun, psiRunAll, psiState, savePsiCfg, savePsiKey } from '@/lib/pagespeed';
-import { BookingConflict, customerEdit, customerErase, customerMerge, dealOp, dealsFor, wonGuard } from '@/lib/lead-guard';
+import { BookingConflict, customerEdit, customerErase, customerMerge, dealOp, wonGuard } from '@/lib/lead-guard';
 import { aiSave, aiStore, cleanKwRows, kwImport, kwStore } from '@/lib/seo-keywords';
 import { sitemapStats, submitSitemap } from '@/lib/sitemap-tools';
 import { listTrash, purgePost, restorePost, trashedIds, trashPost, TRASH_DAYS } from '@/lib/post-trash';

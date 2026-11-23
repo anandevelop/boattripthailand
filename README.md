@@ -20,7 +20,6 @@ Next.js 16 (App Router) · Tailwind · PostgreSQL (Drizzle ORM) · Docker
 | `tailwind.site.config.js` | design tokens (สี ฟอนต์ ขนาด) — `npm run build:site` สร้าง `public/site/tw.css` |
 | `src/lib/site-render.ts` | เรนเดอร์หน้าบนเซิร์ฟเวอร์ + แคช 5 นาที (`SITE_CACHE_SECONDS`) |
 | `src/app/[[...path]]/route.ts` | ทุก URL หน้าเว็บ (404 จริงสำหรับหน้าที่ไม่มี) |
-| `site-src/` | ไฟล์ mockup ต้นฉบับ + สคริปต์แปลง (เก็บไว้อ้างอิง) |
 
 ## หลังบ้าน `/admin` = ดีไซน์ mockup หลังบ้านที่อนุมัติแล้ว
 
@@ -34,8 +33,7 @@ Next.js 16 (App Router) · Tailwind · PostgreSQL (Drizzle ORM) · Docker
 | ไฟล์ | หน้าที่ |
 |---|---|
 | `site/admin-shell.html` | โครง HTML หลังบ้าน |
-| `public/admin-app/app.js` | สคริปต์หลังบ้านทั้งหมด (สร้างจาก `site-src/admin/adm*.js` ด้วย `python3 site-src/admin/convert_admin.py`) |
-| `site-src/admin/adm20.js` | ตัวเชื่อมดีไซน์กับเซิร์ฟเวอร์ (ส่งทุกการแก้ไขไป API) |
+| `public/admin-app/app.js` | สคริปต์หลังบ้านทั้งหมด (แก้ที่ไฟล์นี้โดยตรง) |
 | `public/admin-app/admin.css` + `tailwind.admin.config.js` | สไตล์หลังบ้าน — `npm run build:admin` สร้าง `public/admin-app/tw.css` |
 | `src/app/(admin)/admin/route.ts` | เปิด `/admin` + ส่งข้อมูลตามสิทธิ์ (`src/lib/admin-boot.ts`) |
 | `src/app/api/admin/[...op]/route.ts` | API ของหลังบ้านทั้งหมด |

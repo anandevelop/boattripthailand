@@ -1,7 +1,6 @@
 /** Seasonal pricing engine (port of the mockup engine). Pure functions — usable on server and client. */
 export type Calendar = { id: string; name: string; kind: string; ranges: Record<string, [string, string][]>; special: { from: string; to: string; label?: string }[]; add: number; addHalf?: number };
 export type SeasonKey = 'low' | 'high' | 'peak' | 'special' | 'all';
-export const SEASON_LABEL: Record<SeasonKey, { th: string; en: string }> = { low: { th: 'Low Season', en: 'Low Season' }, high: { th: 'High Season', en: 'High Season' }, peak: { th: 'Peak Season', en: 'Peak Season' }, special: { th: 'ช่วงพิเศษ', en: 'Special dates' }, all: { th: 'ราคาทั้งปี', en: 'All year' } };
 type Table = { caption: string; columns: string[]; rows: string[][] };
 type BoatLike = { slug: string; data: { tables: Table[]; colmap?: (string | null)[] | null } };
 

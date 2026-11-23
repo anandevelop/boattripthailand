@@ -109,4 +109,3 @@ export const DESTINATIONS: Destination[] = [
     faq: { th: [['ไปสิมิลันได้ทั้งปีไหม', 'ไม่ได้ อุทยานเปิดเฉพาะช่วงหน้าแล้ง ประมาณกลาง ต.ค. ถึงกลาง พ.ค.'], ['ไปกลับวันเดียวได้ไหม', 'ได้กับเรือเร็ว แต่จะใช้เวลาเดินทางนาน หลายลำจึงมีโปรแกรมค้างคืนบนเรือ'], ['เรือลำไหนไปสิมิลันได้', 'ดูรายชื่อเรือที่มีโปรแกรมสิมิลันด้านล่าง หรือทักทีมงานให้ช่วยเลือก']], en: [['Can I visit the Similans all year?', 'No — the park only opens in the dry season, roughly mid-October to mid-May.'], ['Can I do it as a day trip?', 'Yes with a fast boat, but the ride is long — several boats offer an overnight trip on board instead.'], ['Which boats go to the Similans?', 'See the boats with a Similan program below, or ask our team to help you choose.']] },
   },
 ];
-export const destinationBySlug = (s: string) => DESTINATIONS.find(d => d.slug === s);

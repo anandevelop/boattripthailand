@@ -16,13 +16,6 @@ export type Perm = keyof typeof PERMS;
 export const ALL_PERMS = Object.keys(PERMS) as Perm[];
 
 export const ROLE_LABEL = { SUPER_ADMIN: 'Super Admin', ADMIN: 'Admin', SALES: 'Sales', BOT: 'Bot' } as const;
-export const ROLE_DESC = {
-  SUPER_ADMIN: 'ทำได้ทุกอย่าง รวมจัดการทีม สิทธิ์ผู้ใช้ และดูบันทึกกิจกรรม',
-  ADMIN: 'ดูแลลีดทุกคน เรือ ราคา เนื้อหา การตลาด ตั้งค่าเว็บ · จัดการทีมและสิทธิ์ไม่ได้',
-  SALES: 'เห็นและจัดการเฉพาะลีดของตัวเอง',
-  BOT: 'บัญชีสำหรับบอท/ระบบอัตโนมัติ: ทำได้ทุกอย่าง ยกเว้นจัดการทีม & สิทธิ์ · ไม่ใช้ 2FA',
-} as const;
-
 export const ROLE_PERMS: Record<User['role'], Perm[]> = {
   SUPER_ADMIN: ALL_PERMS,
   ADMIN: ALL_PERMS.filter(p => p !== 'team' && p !== 'audit'),
