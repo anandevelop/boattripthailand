@@ -63,5 +63,9 @@ export function publicSeo(c: SeoConfig) {
   // ศูนย์ SEO → ตั้งค่า: templates for pages without their own Title / Description, and the site-wide switches
   const cfg = { sep: s(st.sep, 3) || '|', site: two(st.site, 80), tpl: { boat: two(o(st.tpl).boat), article: two(o(st.tpl).article) }, dtpl: { boat: two(o(st.dtpl).boat, 400), article: two(o(st.dtpl).article, 400) },
     year: st.year !== false, ogImg: st.ogImg !== false, ext: st.ext !== false, extNofollow: st.extNofollow === true, noFilter: st.noSearch !== false };
-  return { pages: c.pages, sx: c.sx, verify: { google: code(c.sset.gsc), bing: code(c.sset.bing) }, cfg };
+  // ศูนย์ SEO → ตั้งค่า → ยืนยันเว็บ & ติดตามผล: tracking IDs the site loads (public/site/app.js loadTrackers)
+  const id = (v: unknown, re: RegExp) => { const t = s(v, 80).toUpperCase(); return re.test(t) ? t : ''; };
+  const track = { ga4: id(st.ga4, /^G-[A-Z0-9]{4,16}$/), gtm: id(st.gtm, /^GTM-[A-Z0-9]{4,12}$/), pixel: s(st.pixel, 30).replace(/\D/g, ''),
+    ahrefs: s(st.ahrefsWa, 80).replace(/^.*data-key=["']?([\w-]+).*$/s, '$1').replace(/[^\w-]/g, '').slice(0, 60) };
+  return { pages: c.pages, sx: c.sx, verify: { google: code(c.sset.gsc), bing: code(c.sset.bing), ahrefs: code(c.sset.ahrefs) }, track, cfg };
 }

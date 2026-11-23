@@ -40,7 +40,7 @@ function homeTxt(o, lang = LANG) {
   });
 }
 /* Search Console / Bing ownership tags from /admin → SEO → ตั้งค่า SEO */
-(function seoVerify() { const v = (window.__SEO__ || {}).verify || {}; [['google-site-verification', v.google], ['msvalidate.01', v.bing]].forEach(([n, c]) => { if (c) setMeta(n, c); }); })();
+(function seoVerify() { const v = (window.__SEO__ || {}).verify || {}; [['google-site-verification', v.google], ['msvalidate.01', v.bing], ['ahrefs-site-verification', v.ahrefs]].forEach(([n, c]) => { if (c) setMeta(n, c); }); })();
 /* static parts of site/shell.html (header, footer, contact card) marked with data-set="…" */
 (function applySet() {
   const each = (k, fn) => document.querySelectorAll(`[data-set="${k}"]`).forEach(fn);
@@ -2292,11 +2292,25 @@ const COOKIE_CATS = () => [
 ];
 const cookiePrefs = () => store.get('cookies', null);
 /* ---------- Meta Pixel + GA4 event layer (loads only after marketing/analytics consent) ---------- */
-const PIXEL_ID = (window.__CFG__ || {}).pixel || ''; /* set in admin → วิเคราะห์เว็บไซต์ → Meta Pixel; empty in this mockup so nothing is sent */
+const TRACK = (window.__SEO__ || {}).track || {};
+const PIXEL_ID = TRACK.pixel || (window.__CFG__ || {}).pixel || ''; /* set in admin → วิเคราะห์เว็บไซต์ → Meta Pixel; empty in this mockup so nothing is sent */
 function loadPixel() {
   if (!PIXEL_ID || window.fbq || !(cookiePrefs() || {}).marketing) return;
   !function (f, b, e, v, n, t, s) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments) }; if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s) }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
   fbq('init', PIXEL_ID); fbq('track', 'PageView');
+}
+/* GA4 / Google Tag Manager (IDs from /admin → ศูนย์ SEO → ตั้งค่า, or the GA4 Measurement ID in วิเคราะห์เว็บไซต์) load after
+   the visitor accepts analytics cookies. Ahrefs Web Analytics sets no cookies and stores nothing about the person, so it
+   loads for everyone. Never on the server render. */
+function addScript(src, attrs = {}) { const s = document.createElement('script'); s.async = true; s.src = src; Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v)); document.head.appendChild(s); }
+function loadTrackers() {
+  if (navigator.userAgent === 'BTT-SSR') return;
+  if (TRACK.ahrefs && !window.__ahrefsWa) { window.__ahrefsWa = 1; addScript('https://analytics.ahrefs.com/analytics.js', { 'data-key': TRACK.ahrefs }); }
+  if (!(cookiePrefs() || {}).analytics) return;
+  const ga = TRACK.ga4 || (window.__CFG__ || {}).ga || '';
+  window.dataLayer = window.dataLayer || [];
+  if (ga && !window.gtag) { window.gtag = function () { dataLayer.push(arguments); }; gtag('js', new Date()); gtag('config', ga); addScript('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(ga)); }
+  if (TRACK.gtm && !window.__gtm) { window.__gtm = 1; dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' }); addScript('https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(TRACK.gtm)); }
 }
 /* every event goes to dataLayer (GA4/GTM) and to Meta with the same event_id, so the server-side Conversions API copy is de-duplicated */
 function track(ev, p = {}, custom = false) {
@@ -2316,7 +2330,7 @@ function clickBeacon(c) {
   let s = 'direct', r = ''; try { s = sessionStorage.getItem('btt_src') || 'direct'; r = sessionStorage.getItem('btt_ref') || ''; } catch { /* private mode */ }
   try { navigator.sendBeacon('/api/t', JSON.stringify({ c, p: location.pathname, s, r })); } catch { /* never block the page */ }
 }
-function saveCookies(p, msg) { store.set('cookies', { ...p, necessary: true, ts: Date.now() }); loadPixel(); $('#cookieBar')?.classList.add('hidden'); toast(msg || L('บันทึกการตั้งค่าคุกกี้แล้ว','Cookie preferences saved')); if (currentView === 'legal' && VH.hash === '#/cookies') renderLegal('cookies'); }
+function saveCookies(p, msg) { store.set('cookies', { ...p, necessary: true, ts: Date.now() }); loadPixel(); loadTrackers(); $('#cookieBar')?.classList.add('hidden'); toast(msg || L('บันทึกการตั้งค่าคุกกี้แล้ว','Cookie preferences saved')); if (currentView === 'legal' && VH.hash === '#/cookies') renderLegal('cookies'); }
 function acceptAllCookies() { saveCookies({ functional: true, analytics: true, marketing: true }); }
 function rejectCookies() { saveCookies({ functional: false, analytics: false, marketing: false }); }
 function saveCookieForm() { const p = {}; $$('#cookieForm input[data-cat]').forEach(i => p[i.dataset.cat] = i.checked); saveCookies(p); }
@@ -3883,5 +3897,5 @@ if ($('#boatSort')) $('#boatSort').onchange = e => { boatSort = e.target.value; 
 const d = new Date(); d.setDate(d.getDate()+3); $('#qsDate').value = d.toISOString().split('T')[0]; $('#qsDate').min = new Date().toISOString().split('T')[0]; $('#qsDate').addEventListener('change', e => e.target.dataset.touched = 1); datePick($('#qsDate'));
 const HOME_FIRST = !/^#\/(boat|fleet|design|about|privacy|terms|cookies|blog|dest|404)/.test(VH.hash || '#/');
 applyI18n(); if (HOME_FIRST) renderAll(); else { renderNavText(); updateCompareUI(); }
-if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); route(false); icons(); loadPixel();
+if ($('#inlineFormWrap')) inlineForm = buildForm($('#inlineFormWrap')); route(false); icons(); loadPixel(); loadTrackers();
 if (!HOME_FIRST && !window.__SKIP_HOME__) renderHomeLater();   // server render: skipped when the home view is already built (site-render.ts)

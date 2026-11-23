@@ -5914,8 +5914,10 @@ seoSettings = function () {
         ${on('Canonical อัตโนมัติ (ตัด ?utm, ?gclid, ?page)', 'ทุกหน้าชี้ไป URL หลักของตัวเอง · ตั้ง canonical แยกรายหน้าได้ที่ Meta ทุกหน้า')}
         ${on('hreflang th / en + Breadcrumb + Twitter card', 'ทุกหน้ามีคู่ภาษา และ JSON-LD Breadcrumb ให้ Google แสดงเส้นทางหน้า')}
         ${on('แปลงรูปเป็น WebP / AVIF + lazy load', 'ส่งไฟล์ที่เล็กที่สุดตามเบราว์เซอร์ · รูปที่อยู่ด้านล่างโหลดเมื่อเลื่อนถึง')}</div>
-      <div class="card p-5 grid gap-3"><p class="font-medium">ยืนยันความเป็นเจ้าของเว็บ</p><div class="grid sm:grid-cols-2 gap-3">${id('gsc', 'Google Search Console', 'google-site-verification=…')}${id('bing', 'Bing Webmaster Tools', 'msvalidate.01=…')}</div>
-        <p class="text-[11.5px] text-muted">วางรหัสหรือทั้งแท็ก &lt;meta&gt; ได้ · ระบบใส่ในหน้าเว็บให้เอง · Google Analytics และ Meta Pixel ตั้งที่ วิเคราะห์เว็บไซต์ → เชื่อมต่อ API (โหลดหลังลูกค้ายอมรับคุกกี้)</p></div>
+      <div class="card p-5 grid gap-3"><p class="font-medium">ยืนยันความเป็นเจ้าของเว็บ</p><div class="grid sm:grid-cols-2 gap-3">${id('gsc', 'Google Search Console', 'google-site-verification=…')}${id('bing', 'Bing Webmaster Tools', 'msvalidate.01=…')}${id('ahrefs', 'Ahrefs', 'ahrefs-site-verification=…')}</div>
+        <p class="text-[11.5px] text-muted">วางรหัสหรือทั้งแท็ก &lt;meta&gt; ได้ · ระบบใส่ในหน้าเว็บให้เอง</p></div>
+      <div class="card p-5 grid gap-3"><p class="font-medium">ตัวนับคนเข้าเว็บ</p><div class="grid sm:grid-cols-2 gap-3">${id('gtm', 'Google Tag Manager', 'GTM-XXXXXXX')}${id('ahrefsWa', 'Ahrefs Web Analytics (data-key)', 'วางทั้งโค้ด script หรือเฉพาะ data-key ก็ได้')}</div>
+        <p class="text-[11.5px] text-muted">GA4 Measurement ID ตั้งที่ วิเคราะห์เว็บไซต์ → เชื่อมต่อ API · GA4 และ GTM โหลดหลังลูกค้ายอมรับคุกกี้วิเคราะห์ (PDPA) · Ahrefs Web Analytics ไม่ใช้คุกกี้ จึงโหลดทุกหน้า · ถ้าใช้ทั้ง GA4 และ GTM อย่าสร้างแท็ก GA4 ซ้ำใน GTM</p></div>
     </div></div>`;
 };
 { const _vs = vSeo; vSeo = function () { _vs(); if (SEOV.tab === 'settings') { const t = [...$$('#view .tabbar .tab')].find(x => (x.getAttribute('onclick') || '').includes("'settings'")); if (t) t.textContent = 'ตั้งค่า'; const b = $('#seoBody'); if (b) { b.classList.remove('p-4', 'sm:p-5'); b.classList.add('p-0'); const w = b.parentElement; if (w?.classList.contains('card')) w.classList.remove('card'); } icons(); } else { const t = [...$$('#view .tabbar .tab')].find(x => (x.getAttribute('onclick') || '').includes("'settings'")); if (t) t.textContent = 'ตั้งค่า'; } }; PAGES.find(p => p[0] === 'seo')[3] = vSeo; }
