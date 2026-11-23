@@ -17,15 +17,11 @@ backup-*.sql
 _to_delete/
 .DS_Store
 
-# design mockups: single-file HTML exports (6–25 MB each), kept on disk only
-mockup/*.html
-
 
 .env.bak*
 
-# local-only: Claude working files and large mockup exports
+# local-only: Claude working files
 Claude outputs/
-mockup/moonglider-web/
 
 # made by npm run build (scripts/build-assets.mjs)
 public/site/site.min.css
