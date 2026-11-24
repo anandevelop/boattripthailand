@@ -4781,7 +4781,7 @@ if (BOOT.sitecfg) Object.assign(SITECFG, BOOT.sitecfg, { tab: SITECFG.tab });
 socMigrate();
 { const _cs = cfgSave; cfgSave = function () { const before = clone(CFGSNAP || {}); _cs(); const { tab, ...value } = SITECFG;
   const ch = jdiff(before, clone(SITECFG)).filter(c => !c.f.startsWith('tab')).slice(0, 30).map(c => ({ f: CFG_F[c.f.split(/[.[]/)[0]] || c.f, from: /^data:/.test(String(c.from)) ? '(รูปเดิม)' : typeof c.from === 'object' ? '(เดิม)' : c.from, to: /^data:/.test(String(c.to)) ? '(รูปใหม่)' : typeof c.to === 'object' ? '(ใหม่)' : c.to }));
-  api('PUT', 'settings/sitecfg', { value, changes: ch }).then(() => { AUDIT_DIRTY = true; toast('บันทึกการตั้งค่าแล้ว · หน้าเว็บยังใช้ข้อมูลติดต่อเดิมจนกว่าจะเชื่อมในขั้นถัดไป'); }).catch(fail); }; }
+  api('PUT', 'settings/sitecfg', { value, changes: ch }).then(() => { AUDIT_DIRTY = true; toast('บันทึกการตั้งค่าแล้ว · หน้าเว็บอัปเดตภายในไม่กี่วินาที'); }).catch(fail); }; }
 
 /* ---------- audit log: always the server's copy ---------- */
 function refreshAudit() { return api('GET', 'audit').then(r => { AUDIT.length = 0; AUDIT.push(...r.audit); AUDIT.forEach(actPillSafe); AUDIT_DIRTY = false; }); }
