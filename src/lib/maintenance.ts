@@ -24,7 +24,7 @@ export async function maintenance(): Promise<Maint> {
     const c = (row?.value ?? {}) as Record<string, unknown>, s = (k: string) => (typeof c[k] === 'string' ? (c[k] as string) : DEF[k] ?? '');
     const name = c.name && typeof c.name === 'object' ? ((c.name as L).en || (c.name as L).th || '') : s('name');
     cache = { at: Date.now(), v: { on: c.maint === true, msg: (c.maintMsg ?? {}) as L, name: name || 'Boat Trip Thailand', phone: s('phone'), wa: s('wa'), line: s('line'), lineUrl: s('lineUrl'), email: s('email'),
-      address: c.address && typeof c.address === 'object' ? (c.address as L) : { th: '79/29 หมู่ 4 ต.เกาะแก้ว อ.เมืองภูเก็ต จ.ภูเก็ต 83000', en: '79/29 Moo 4, Koh Kaew, Muang Phuket, Phuket 83000' } } };
+      address: c.address && typeof c.address === 'object' ? (c.address as L) : { th: '9/59 หมู่ 4 ต.เชิงทะเล อ.ถลาง จ.ภูเก็ต 83110', en: '9/59 Moo 4, Choeng Thale, Thalang, Phuket 83110' } } };
   } catch (e) {
     console.error('[maintenance]', e);
     cache = { at: Date.now(), v: cache?.v ?? { on: false, msg: {}, name: 'Boat Trip Thailand', phone: '', wa: '', line: '', lineUrl: '', email: '', address: {} } };

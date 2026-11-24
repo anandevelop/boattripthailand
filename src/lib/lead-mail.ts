@@ -12,7 +12,7 @@ export async function contactInfo() {
   return {
     phone: s('phone', '+66 61 172 5854'), wa: s('wa', '+66 61 172 5854'), email: s('email', 'boattripthailand@gmail.com'), line: s('line', '@boattripthailand'), lineUrl: s('lineUrl', 'https://lin.ee/kkzkoX7'),
     company: s('company', 'BOAT TRIP (THAILAND) CO.,LTD'), companyTh: s('companyTh', s('company', 'BOAT TRIP (THAILAND) CO.,LTD'))   /* the Thai name only when set in ตั้งค่า › บริษัท — never guessed */, tax: s('tax', ''), tat: s('tat', ''),
-    addrTh: (reg.th || '').trim() || '79/29 หมู่ 4 ต.เกาะแก้ว อ.เมืองภูเก็ต จ.ภูเก็ต 83000', addrEn: (reg.en || '').trim() || '79/29 Moo 4, Koh Kaew, Muang Phuket, Phuket 83000',
+    addrTh: (reg.th || '').trim() || '9/59 หมู่ 4 ต.เชิงทะเล อ.ถลาง จ.ภูเก็ต 83110', addrEn: (reg.en || '').trim() || '9/59 Moo 4, Choeng Thale, Thalang, Phuket 83110',
   };
 }
 export const waLink = (n: string) => 'https://wa.me/' + n.replace(/\D/g, '');

@@ -24,7 +24,7 @@ const SITE_ORIGIN = (window.__CFG__ || {}).site || 'https://boattripthailand.com
 /* contact & brand details from /admin → ตั้งค่า (window.__SET__); these are the values when nothing is saved there */
 const SET = Object.assign({ phone: '+66 61 172 5854', wa: '+66 61 172 5854', email: 'boattripthailand@gmail.com', line: '@boattripthailand', lineUrl: 'https://lin.ee/kkzkoX7',
   company: 'Boat Trip (Thailand) Co., Ltd.', tat: '34/03754', map: 'https://maps.app.goo.gl/82Rp4Z99B1Jj5WNTA',
-  address: { th: '79/29 หมู่ 4 ต.เกาะแก้ว อ.เมืองภูเก็ต จ.ภูเก็ต 83000', en: '79/29 Moo 4, Koh Kaew, Muang Phuket, Phuket 83000' } }, window.__SET__ || {});
+  address: { th: '9/59 หมู่ 4 ต.เชิงทะเล อ.ถลาง จ.ภูเก็ต 83110', en: '9/59 Moo 4, Choeng Thale, Thalang, Phuket 83110' } }, window.__SET__ || {});
 const TEL = 'tel:' + SET.phone.replace(/[^\d+]/g, ''), WA_URL = 'https://wa.me/' + SET.wa.replace(/\D/g, '');
 /* homepage content from /admin → เนื้อหาเว็บไซต์ (window.__HOME__, defaults in data/home.json) */
 const HOME = window.__HOME__ || null;
@@ -229,7 +229,7 @@ const I18N = {
     'foot.about':'Private yacht, catamaran and speedboat charters with full-service tours and activities in Phuket, Krabi and Phang Nga.',
     'foot.services':'Services','foot.l1':'Private yacht charter','foot.l2':'Catamarans','foot.l3':'Speedboats','foot.l4':'Tours & activities','foot.l5':'Stays & spa',
     'foot.info':'Information','foot.i1':'About us','foot.i2':'Marinas & piers','foot.i3':'FAQ','foot.i4':'Booking & cancellation','foot.i5':'Privacy policy','foot.contact':'Contact',
-    'foot.addr':'79/29 Moo 4, Koh Kaew, Muang Phuket, Phuket 83000','foot.marinas':'Royal Phuket Marina · Ao Po Grand Marina · Chalong Pier · Boat Lagoon · ONE°15 Panwa','foot.mock':'HTML Mockup v2 · for the Next.js rebuild','sending':'Sending…',
+    'foot.addr':'9/59 Moo 4, Choeng Thale, Thalang, Phuket 83110','foot.marinas':'Royal Phuket Marina · Ao Po Grand Marina · Chalong Pier · Boat Lagoon · ONE°15 Panwa','foot.mock':'HTML Mockup v2 · for the Next.js rebuild','sending':'Sending…',
     // dynamic
     'all':'All','type.speed':'Speedboat','type.overnight':'Overnight','hot':'Popular',
     'type.sail':'Sailing Catamaran','type.power':'Power Catamaran','type.longtail':'Long-tail Boat','type.yacht':'Motor Yacht',
@@ -2146,8 +2146,8 @@ function renderAbout() {
   <section class="ab-wrap ab-sec ab-story reveal"><div><p class="ab-eye">${L('เรื่องของเรา', 'Our story')}</p><h2>${L('ทีมภูเก็ตที่อยากให้ทุกทริปทะเลเป็นความทรงจำที่ดี', 'A Phuket team that wants every day at sea to be a good memory')}</h2>
       <p class="ab-ans">${L(`<b>Boat Trip Thailand</b> คือบริษัทนำเที่ยวที่จดทะเบียนกับ ททท. (${SET.tat}) ให้บริการเช่า${types.map(x => typeLabel(x.k)).join(' ')} แบบเหมาลำ <b>${FLEET.length} ลำ จาก ${piers.length} ท่าเรือทั่วภูเก็ต</b>${dests.length ? ' ไป' + dests.join(' ') : ''} ทำงานกับเจ้าของเรือและกัปตันโดยตรง ราคาเริ่ม ${baht(lo)} ต่อลำ`,
         `<b>Boat Trip Thailand</b> is a TAT-registered tour company (${SET.tat}) offering <b>${FLEET.length} private charter boats from ${piers.length} Phuket piers</b> — ${types.map(x => typeLabel(x.k).toLowerCase()).join(', ')}${dests.length ? ' — to ' + dests.join(', ') : ''}. We work directly with owners and captains; prices from ${baht(lo)} per boat.`)}</p>
-      <p>${L(`<b>${SET.company}</b> เป็นบริษัทนำเที่ยวในภูเก็ต สำนักงานอยู่ที่ตำบลเกาะแก้ว และจดทะเบียนกับกรมการท่องเที่ยว ใบอนุญาตเลขที่ ${SET.tat} เราตั้งใจทำเรื่องเดียวให้ดี คือการเช่าเรือส่วนตัว ให้ทุกกลุ่มได้ออกทะเลอันดามันในแบบของตัวเอง จะไปเกาะไหน ออกกี่โมง อยู่ทะเลนานแค่ไหน คุณเป็นคนเลือก`,
-        `<b>${SET.company}</b> is a tour company based in Koh Kaew, Phuket, registered with Thailand's Department of Tourism (licence ${SET.tat}). We focus on one thing: private boat charters, so every group can see the Andaman Sea their own way — which islands, what time you leave and how long you stay out is up to you.`)}</p>
+      <p>${L(`<b>${SET.company}</b> เป็นบริษัทนำเที่ยวในภูเก็ต สำนักงานอยู่ที่ตำบลเชิงทะเล อำเภอถลาง และจดทะเบียนกับกรมการท่องเที่ยว ใบอนุญาตเลขที่ ${SET.tat} เราตั้งใจทำเรื่องเดียวให้ดี คือการเช่าเรือส่วนตัว ให้ทุกกลุ่มได้ออกทะเลอันดามันในแบบของตัวเอง จะไปเกาะไหน ออกกี่โมง อยู่ทะเลนานแค่ไหน คุณเป็นคนเลือก`,
+        `<b>${SET.company}</b> is a tour company based in Choeng Thale, Thalang, Phuket, registered with Thailand's Department of Tourism (licence ${SET.tat}). We focus on one thing: private boat charters, so every group can see the Andaman Sea their own way — which islands, what time you leave and how long you stay out is up to you.`)}</p>
       <p>${L(`เราทำงานกับเจ้าของเรือและกัปตันโดยตรง วันนี้มีเรือในเครือข่าย ${FLEET.length} ลำ ตั้งแต่เรือหางยาวไปจนถึงเรือยอร์ชลำใหญ่ ออกจาก ${piers.length} ท่าเรือรอบเกาะ เพราะรู้จักเรือแต่ละลำจริง เราจึงแนะนำลำที่เหมาะกับจำนวนคน งบ และสไตล์ทริปของคุณได้ ไม่ใช่ลำที่แพงที่สุด และบอกราคาจากโบรชัวร์ของแต่ละฤดูกาล รวม VAT และค่าคนเพิ่ม ให้รู้ครบก่อนจอง`,
         `We work directly with boat owners and captains — ${FLEET.length} boats today, from long-tails to large yachts, leaving from ${piers.length} piers around the island. Because we know each boat, we can recommend the one that fits your group, budget and style rather than the most expensive, and quote each season's brochure price with VAT and any extra-guest charge before you book.`)}</p>
       <p>${L(`"Sea by Soul" คือวิธีที่เราทำงาน ทุกคำถามตอบโดยทีมขายตัวจริง ${TEAM.map(m => m.name).join(', ')} ทุกวัน 09:00–21:00 น. ทั้งภาษาไทยและอังกฤษ คนเดิมดูแลคุณตั้งแต่ถามราคาจนออกเรือ และติดตามจนกลับถึงฝั่ง`,
@@ -3278,7 +3278,7 @@ function applySeo(view, boat) {
   // JSON-LD (FAQ follows the visible language)
   const ld = { '@context':'https://schema.org', '@graph':[
     { '@type':'TravelAgency', '@id':SITE+'/#org', name:'Boat Trip Thailand', alternateName:SET.company, url:SITE+'/', logo:SITE+'/logo.png', image:SITE+'/og/yacht-charter-phuket.jpg', telephone:TEL.slice(4), email:SET.email, slogan:'Sea by Soul',
-      address:{ '@type':'PostalAddress', streetAddress:'79/29 Moo 4, Koh Kaew', addressLocality:'Muang Phuket', addressRegion:'Phuket', postalCode:'83000', addressCountry:'TH' }, hasMap:MAP_URL, areaServed:['Phuket','Krabi','Phang Nga'],
+      address:{ '@type':'PostalAddress', streetAddress:'9/59 Moo 4, Choeng Thale', addressLocality:'Thalang', addressRegion:'Phuket', postalCode:'83110', addressCountry:'TH' }, hasMap:MAP_URL, areaServed:['Phuket','Krabi','Phang Nga'],
       priceRange:`${baht(Math.min(...FLEET.filter(b=>b.from_).map(b=>b.from_)))} – ${baht(Math.max(...FLEET.filter(b=>b.from_).map(b=>b.from_)))}`, knowsAbout:['Yacht charter','Catamaran charter','Speedboat charter','Island hopping'],
       contactPoint: TEAM.map(m => ({ '@type':'ContactPoint', name:m.name, contactType:'sales', telephone:m.tel })) },
     { '@type':'WebSite', '@id':SITE+'/#website', url:SITE+'/', name:'Boat Trip Thailand', inLanguage:['th','en'], publisher:{ '@id':SITE+'/#org' } },

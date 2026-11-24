@@ -1369,7 +1369,7 @@ function renderContact() {
     if (ld) ld.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
       { '@type': 'ContactPage', '@id': u + '#page', url: u, name: document.title, about: { '@id': SITE + '/#org' } },
       { '@type': 'TravelAgency', '@id': SITE + '/#org', name: 'Boat Trip Thailand', url: SITE + '/', telephone: phone, email: mail,
-        address: { '@type': 'PostalAddress', streetAddress: '79/29 Moo 4, Koh Kaew', addressLocality: 'Muang Phuket', addressRegion: 'Phuket', postalCode: '83000', addressCountry: 'TH' },
+        address: { '@type': 'PostalAddress', streetAddress: '9/59 Moo 4, Choeng Thale', addressLocality: 'Thalang', addressRegion: 'Phuket', postalCode: '83110', addressCountry: 'TH' },
         openingHoursSpecification: { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], opens: '09:00', closes: '21:00' } },
       { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: t('home'), item: SITE + '/' }, { '@type': 'ListItem', position: 2, name: L('ติดต่อเรา', 'Contact'), item: u }] }] }); }
   icons();
