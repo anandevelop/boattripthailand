@@ -23,7 +23,7 @@ window.__LANG__ = /^\/en(\/|$)/.test(location.pathname) ? 'en' : 'th';
 const SITE_ORIGIN = (window.__CFG__ || {}).site || 'https://boattripthailand.com';
 /* contact & brand details from /admin → ตั้งค่า (window.__SET__); these are the values when nothing is saved there */
 const SET = Object.assign({ phone: '+66 61 172 5854', wa: '+66 61 172 5854', email: 'boattripthailand@gmail.com', line: '@boattripthailand', lineUrl: 'https://lin.ee/kkzkoX7',
-  company: 'Boat Trip (Thailand) Co., Ltd.', tat: '34/03754', map: 'https://maps.app.goo.gl/82Rp4Z99B1Jj5WNTA',
+  company: 'Boat Trip (Thailand) Co., Ltd.', tat: '34/03754', map: 'https://www.google.com/maps/search/?api=1&query=9%2F59%20Moo%204%2C%20Choeng%20Thale%2C%20Thalang%2C%20Phuket%2083110',
   address: { th: '9/59 หมู่ 4 ต.เชิงทะเล อ.ถลาง จ.ภูเก็ต 83110', en: '9/59 Moo 4, Choeng Thale, Thalang, Phuket 83110' } }, window.__SET__ || {});
 const TEL = 'tel:' + SET.phone.replace(/[^\d+]/g, ''), WA_URL = 'https://wa.me/' + SET.wa.replace(/\D/g, '');
 /* homepage content from /admin → เนื้อหาเว็บไซต์ (window.__HOME__, defaults in data/home.json) */

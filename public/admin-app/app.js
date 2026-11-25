@@ -2301,7 +2301,7 @@ const SITECFG = {
   name: tr('Boat Trip Thailand', 'Boat Trip Thailand'), tagline: tr('เช่าเรือยอร์ชส่วนตัว ภูเก็ต', 'Private yacht charter in Phuket'),
   logo: '', logoDark: '', favicon: '', ogDefault: '', color: '#70000e',
   phone: '+66 61 172 5854', email: 'boattripthailand@gmail.com', wa: '+66 61 172 5854', line: '@boattripthailand', lineUrl: 'https://lin.ee/kkzkoX7',
-  address: tr('9/59 หมู่ 4 ต.เชิงทะเล อ.ถลาง จ.ภูเก็ต 83110', '9/59 Moo 4, Choeng Thale, Thalang, Phuket 83110'), map: 'https://maps.app.goo.gl/82Rp4Z99B1Jj5WNTA', hours: tr('ทุกวัน 08:00–20:00', 'Daily 08:00–20:00'),
+  address: tr('9/59 หมู่ 4 ต.เชิงทะเล อ.ถลาง จ.ภูเก็ต 83110', '9/59 Moo 4, Choeng Thale, Thalang, Phuket 83110'), map: 'https://www.google.com/maps/search/?api=1&query=9%2F59%20Moo%204%2C%20Choeng%20Thale%2C%20Thalang%2C%20Phuket%2083110', hours: tr('ทุกวัน 08:00–20:00', 'Daily 08:00–20:00'),
   marinas: ['Royal Phuket Marina', 'Ao Po Grand Marina', 'Chalong Pier', 'Boat Lagoon', 'ONE°15 Panwa'],
   social: [
     { k: 'facebook', l: 'Facebook', icon: 'facebook', url: 'https://facebook.com/boattripthailand', on: true },
