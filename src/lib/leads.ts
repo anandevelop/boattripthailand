@@ -5,6 +5,7 @@ import { boats, customers, leadActivities, leads, settings, users, type Lead, ty
 import { audit } from './audit';
 import { randomDigits } from './crypto';
 import { leadCard, lineEnabled, pushLine, text } from './line';
+import { loadLineCfg } from './line-config';
 import { loadLeadNotify } from './line-notify';
 import { marketingConfig } from './marketing';
 import { sendMetaEvent } from './meta';
@@ -116,7 +117,10 @@ export async function lineGroupId() {
 }
 
 async function notifyNewLead(l: Lead, cust: { name: string; phone: string; whatsapp?: string | null }, assignee: User | null, duplicate: boolean) {
-  if (!lineEnabled()) return;
+  // the LINE keys saved in the admin are read from the database; right after a start/deploy they are not cached yet,
+  // and the synchronous lineEnabled() then said "off" and the first lead's alert was silently skipped
+  await loadLineCfg();
+  if (!lineEnabled()) { console.warn('[notify] LINE is not set up (or its saved keys cannot be decrypted): no alert for lead', l.ref); return; }
   const N = await loadLeadNotify();
   if (duplicate ? !N.dupLead : !N.newLead) return;
   const card = await leadCardFor(l, cust, duplicate ? 'ลูกค้าส่งคำขอซ้ำ' : assignee ? `ลีดใหม่ของ ${assignee.name} · ตอบภายใน ${N.slaMinutes} นาที` : 'ลีดใหม่ · ยังไม่มีผู้รับ');
