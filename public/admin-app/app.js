@@ -1402,8 +1402,14 @@ function seoAddKw() {
 }
 
 const guessTarget = u => { const m = u.match(/(?:boat|yacht)\/([a-z0-9-]+)/); if (m && bySlug(m[1])) return (u.startsWith('/en/') || /lang=en/.test(u) ? '/en' : '') + '/yacht-charter/' + m[1]; if (/pattaya/.test(u)) return '/yacht-charter'; if (/tag|category/.test(u)) return '/blog'; return ''; };
+/* the JSON-LD preview's "ทดสอบ": Google's Rich Results Test on the live page it belongs to */
+function seoRichTest() {
+  const v = SEOV.prev || 'org', a = v.startsWith('a-') && ART.find(x => 'a-' + x.id === v);
+  const path = v.startsWith('b-') ? '/yacht-charter/' + v.slice(2) : a ? (a.slug?.th ? '/blog/' + encodeURIComponent(a.slug.th) : '/en/blog/' + encodeURIComponent(a.slug?.en || '')) : '/';
+  window.open('https://search.google.com/test/rich-results?url=' + encodeURIComponent('https://' + SITE + path), '_blank', 'noopener');
+}
 function seoRedir() {
-  return `<div class="rounded-xl bg-sand p-4 mb-4 flex flex-col sm:flex-row sm:items-center gap-3"><i data-lucide="shuffle" class="w-5 h-5 text-maroon shrink-0"></i><div class="flex-1"><p class="font-medium">ย้ายจาก WordPress</p><p class="text-[12px] text-muted mt-0.5">นำเข้า sitemap เดิม แล้วระบบจับคู่ URL เก่ากับหน้าใหม่ให้อัตโนมัติ เพื่อไม่ให้อันดับ Google หาย</p></div><button class="btn btn-o" onclick="toast('นำเข้า sitemap เดิม (จำลอง)')"><i data-lucide="download" class="w-3.5 h-3.5"></i>นำเข้า sitemap / CSV</button></div>
+  return `<div class="rounded-xl bg-sand p-4 mb-4 flex flex-col sm:flex-row sm:items-center gap-3"><i data-lucide="shuffle" class="w-5 h-5 text-maroon shrink-0"></i><div class="flex-1"><p class="font-medium">ย้ายจาก WordPress</p><p class="text-[12px] text-muted mt-0.5">นำเข้า sitemap เดิม แล้วระบบจับคู่ URL เก่ากับหน้าใหม่ให้อัตโนมัติ เพื่อไม่ให้อันดับ Google หาย</p></div></div>
     <div class="grid xl:grid-cols-[1.4fr_1fr] gap-4 items-start">
     <div class="rounded-xl ring-1 ring-line min-w-0"><div class="flex items-center justify-between px-4 py-3"><p class="font-medium">Redirect <span class="text-muted font-normal">· ${REDIR.length}</span></p><button class="btn btn-p !h-8" onclick="seoAddRedir('','')"><i data-lucide="plus" class="w-3.5 h-3.5"></i>เพิ่ม</button></div>
       <div class="overflow-x-auto"><table class="tbl min-w-[560px]"><thead><tr><th>URL เดิม</th><th></th><th>ไปที่</th><th>ชนิด</th><th class="text-right">ครั้ง</th><th></th></tr></thead><tbody>
@@ -1437,7 +1443,7 @@ function seoSchema() {
       <div class="rounded-xl ring-1 ring-line p-4"><p class="font-medium">Schema อัตโนมัติตามประเภทหน้า</p><div class="mt-2 grid gap-1">${[['หน้าแรก', 'Organization + WebSite + SearchAction', true], ['หน้าเรือ', 'Product + Offer (ราคาเริ่มต้น)', true], ['บทความ', 'BlogPosting', true], ['FAQ', 'FAQPage', true], ['ทุกหน้า', 'BreadcrumbList', true], ['กิจกรรม', 'TouristTrip', true]].map(([a, b, on]) => `<label class="flex items-center gap-3 py-1.5"><span class="w-20 text-muted text-[12px]">${a}</span><span class="flex-1">${b}</span><span class="tgl"><input type="checkbox" ${on ? 'checked' : ''}/><span></span></span></label>`).join('')}
         <label class="flex items-center gap-3 py-1.5 border-t border-line mt-1 pt-3"><span class="flex-1">คะแนนรีวิว (AggregateRating)<span class="block text-[11px] text-muted">เปิดได้เมื่อมีรีวิวจริงจากลูกค้าในระบบเท่านั้น · Google ลงโทษรีวิวที่สร้างขึ้นเอง</span></span><span class="tgl"><input type="checkbox" disabled/><span></span></span></label></div></div>
     </div>
-    <div class="rounded-xl ring-1 ring-line overflow-hidden xl:sticky xl:top-20"><div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-line"><p class="font-medium flex-1">JSON-LD ที่จะใส่ในหน้า</p><select class="inp !h-8 !w-auto !text-[12px]" onchange="SEOV.prev=this.value;$('#ldOut').textContent=JSON.stringify(seoJsonLd(),null,2)">${[['org', 'ข้อมูลธุรกิจ'], ['b-leopard-90-ft', 'หน้าเรือ: Leopard 90 ft'], ['b-vtech-68-ft', 'หน้าเรือ: Vtech 68 ft'], ['a-1', 'บทความ: ' + ART[0].title.th.slice(0, 24) + '…'], ['faq', 'FAQ หน้าแรก']].map(([v, l]) => `<option value="${v}" ${SEOV.prev === v ? 'selected' : ''}>${l}</option>`).join('')}</select><button class="btn btn-o !h-8" onclick="toast('ผ่านการตรวจ Rich Results (จำลอง)')">ทดสอบ</button></div>
+    <div class="rounded-xl ring-1 ring-line overflow-hidden xl:sticky xl:top-20"><div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-line"><p class="font-medium flex-1">JSON-LD ที่จะใส่ในหน้า</p><select class="inp !h-8 !w-auto !text-[12px]" onchange="SEOV.prev=this.value;$('#ldOut').textContent=JSON.stringify(seoJsonLd(),null,2)">${[['org', 'ข้อมูลธุรกิจ'], ['b-leopard-90-ft', 'หน้าเรือ: Leopard 90 ft'], ['b-vtech-68-ft', 'หน้าเรือ: Vtech 68 ft'], ['a-1', 'บทความ: ' + ART[0].title.th.slice(0, 24) + '…'], ['faq', 'FAQ หน้าแรก']].map(([v, l]) => `<option value="${v}" ${SEOV.prev === v ? 'selected' : ''}>${l}</option>`).join('')}</select><button class="btn btn-o !h-8" title="เปิด Google Rich Results Test กับหน้าจริง" onclick="seoRichTest()">ทดสอบ</button></div>
       <pre id="ldOut" class="p-4 whitespace-pre-wrap break-words text-[11.5px] leading-relaxed bg-[#1d1416] text-[#f1e6e6] overflow-auto max-h-[560px]">${esc(JSON.stringify(seoJsonLd(), null, 2))}</pre></div></div>`;
 }
 
@@ -6070,7 +6076,7 @@ function auConvBody() {
 }; PAGES.find(p => p[0] === 'audiences')[3] = vAudiences; }
 
 const NOT_LIVE = {
-  settings: 'ขึ้นเว็บจริง: โลโก้ favicon เบอร์โทร WhatsApp LINE อีเมล ที่อยู่ ลิงก์แผนที่ ชื่อบริษัท และเลขใบอนุญาต ททท. · ส่วนอื่น (โซเชียล สี คำโปรย เวลาทำการ แจ้งเตือน โหมดปิดปรับปรุง) ยังไม่มีผลกับหน้าเว็บ · ปุ่มล้างแคชและสำรองข้อมูลยังเป็นการจำลอง',
+  settings: 'ขึ้นเว็บจริง: โลโก้ favicon เบอร์โทร WhatsApp LINE อีเมล ที่อยู่ ลิงก์แผนที่ ชื่อบริษัท และเลขใบอนุญาต ททท. · โหมดปิดปรับปรุงก็มีผลจริง · ส่วนอื่น (โซเชียล สี คำโปรย เวลาทำการ) ยังไม่มีผลกับหน้าเว็บ',
   seo: 'Meta ทุกหน้า, index/canonical, redirect, robots.txt, llms.txt และรหัสยืนยันเว็บ บันทึกและมีผลกับหน้าเว็บจริง · อันดับคีย์เวิร์ดและตัวเลขจาก Google ยังเป็นข้อมูลตัวอย่าง (ต้องเชื่อม Search Console)',
   meta: 'หน้านี้ยังเป็นตัวอย่าง · ตั้งค่า Pixel / Conversions API ในไฟล์ .env บนเซิร์ฟเวอร์',
 };

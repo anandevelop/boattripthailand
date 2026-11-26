@@ -51,7 +51,10 @@ export async function POST(req: Request) {
   if (!rateLimit('lead:' + ip, 6, 10 * 60_000) || !rateLimit('lead-day:' + ip, 20, 24 * 3600e3)) return NextResponse.json({ ok: false, error: 'too_many_requests' }, { status: 429 });
   if (!rateLimit('lead-all', 80, 10 * 60_000)) return NextResponse.json({ ok: false, error: 'too_many_requests' }, { status: 429 });
   let raw: unknown;
-  try { raw = await req.json(); } catch { return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 }); }
+  // a booking form is ~2 KB: anything far bigger is not a person (and zod would walk a huge array before .max() fails, GHSA-mrhx-c7xc-m3w5)
+  const body = await req.text();
+  if (body.length > 50_000) return NextResponse.json({ ok: false, error: 'too_large' }, { status: 413 });
+  try { raw = JSON.parse(body); } catch { return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 }); }
   const p = Body.safeParse(raw);
   if (!p.success) return NextResponse.json({ ok: false, error: 'invalid', fields: p.error.flatten().fieldErrors }, { status: 422 });
   const b = p.data;
