@@ -3734,7 +3734,8 @@ teamDraw = function (open) {
   if (del) { del.textContent = 'ปิดบัญชี'; const b = del.parentElement.querySelector('button[onclick="teamDelete()"]'); if (b) b.lastChild.textContent = 'ปิดบัญชี (เข้าระบบไม่ได้)'; }
   if (!TE.isNew && can('team')) {
     const box = d.querySelector('.flex-1.overflow-y-auto');
-    box?.insertAdjacentHTML('beforeend', `<div class="rounded-xl ring-1 ring-line p-4"><p class="text-[12px] font-medium">ความปลอดภัยของบัญชี</p>
+    // first thing in the drawer: password and 2FA resets were at the very bottom, under "ปิดบัญชี", and easy to miss
+    box?.insertAdjacentHTML('afterbegin', `<div class="rounded-xl ring-1 ring-line p-4 mb-4 bg-white"><p class="text-[12px] font-medium">ความปลอดภัยของบัญชี · รีเซ็ตรหัสผ่าน / 2FA</p>
       <p class="text-[11.5px] text-muted mt-1">${t.totp ? '2FA เปิดอยู่' : '2FA ยังไม่ได้ตั้ง (ต้องตั้งตอนเข้าระบบครั้งถัดไป)'} · LINE ${t.lineLinked ? 'เชื่อมแล้ว' : 'ยังไม่เชื่อม'}${t.lastLoginAt ? ' · เข้าระบบล่าสุด ' + relTs(t.lastLoginAt) : ' · ยังไม่เคยเข้าระบบ'}</p>
       <div class="flex flex-wrap items-center gap-3 mt-3"><button class="btn btn-o !h-8" onclick="teamReset('${t.id}')"><i data-lucide="key-round" class="w-3.5 h-3.5"></i>ตั้งรหัสผ่านชั่วคราว</button>${t.totp ? `<label class="flex items-center gap-2 text-[12px]"><input id="teR2" type="checkbox" class="accent-[#70000e] w-4 h-4"/>ให้ตั้ง 2FA ใหม่ด้วย (มือถือหาย)</label>` : ''}</div>
       <p class="text-[11px] text-muted mt-2">ตั้งรหัสใหม่ = ออกจากระบบทุกอุปกรณ์ของผู้ใช้นี้ทันที</p></div>`);
