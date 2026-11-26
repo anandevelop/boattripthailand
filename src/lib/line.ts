@@ -15,10 +15,17 @@ export function verifyLineSignature(rawBody: string, signature: string | null) {
 
 async function call(path: string, body: unknown) {
   await loadLineCfg();
-  if (!token()) return { ok: false, skipped: true };
-  const r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` }, body: JSON.stringify(body) });
-  if (!r.ok) console.error('[LINE]', path, r.status, await r.text().catch(() => ''));
-  return { ok: r.ok };
+  if (!token()) return { ok: false as const, skipped: true, error: 'ยังไม่ได้เชื่อม LINE' };
+  let r: Response;
+  try { r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` }, body: JSON.stringify(body), signal: AbortSignal.timeout(15_000) }); }
+  catch (e) { console.error('[LINE]', path, e); return { ok: false as const, error: 'ต่อเซิร์ฟเวอร์ LINE ไม่ได้ (เครือข่าย)' }; }
+  if (r.ok) return { ok: true as const };
+  const t = await r.text().catch(() => '');
+  console.error('[LINE]', path, r.status, t);
+  // what LINE said, in words sales understand (shown on the lead: แจ้งเตือน LINE ไม่สำเร็จ …)
+  const error = r.status === 429 ? 'โควตาข้อความ LINE เดือนนี้หมดแล้ว (หรือส่งถี่เกินไป)' : r.status === 401 ? 'Channel access token ใช้ไม่ได้ · ตั้งใหม่ที่ ตั้งค่า → LINE'
+    : r.status === 400 && /to|group|user/i.test(t) ? 'ส่งไม่ถึงผู้รับ (บอทไม่ได้อยู่ในกลุ่ม หรือผู้ใช้บล็อกบอท)' : `LINE ตอบ ${r.status}: ${t.slice(0, 120)}`;
+  return { ok: false as const, status: r.status, error };
 }
 export type LineMessage = Record<string, unknown>;
 export const pushLine = (to: string, messages: LineMessage[]) => call('/message/push', { to, messages: messages.slice(0, 5) });

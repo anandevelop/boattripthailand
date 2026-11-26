@@ -7,7 +7,7 @@ import { listGrants, revokeGrant } from '@/lib/oauth';
 import { apiUser, createApiToken, decideRequest, listApiTokens, listRequests, revokeApiToken, type ApiUser } from '@/lib/api-auth';
 import { hashPassword, logout, passwordProblem, revokeSessions, verifyPassword } from '@/lib/auth';
 import { randomDigits, tempPassword } from '@/lib/crypto';
-import { canSeeLead, createLead, LOST_REASONS, setLeadStatus } from '@/lib/leads';
+import { canSeeLead, createLead, LOST_REASONS, sendLeadLine, setLeadStatus } from '@/lib/leads';
 import { can, ROLE_LABEL, ROLE_PERMS, type Perm } from '@/lib/perms';
 import { clientInfo } from '@/lib/request';
 import { clearSiteCache } from '@/lib/site-render';
@@ -79,6 +79,11 @@ async function leadOp(u: User, ref: string, op: string, b: Record<string, unknow
       else await restoreLead(l, u);
     } catch (e) { if (e instanceof HttpError) throw e; throw new HttpError(400, e instanceof Error ? e.message : 'บันทึกไม่สำเร็จ'); }
     return json({ ok: true, ...(op === 'restore' ? await leadClientById(l.id) : {}), trash: await leadTrash(u) });
+  }
+  // send the lead's LINE card again (or for the first time, when the automatic alert did not go out)
+  if (op === 'line') {
+    const r = await sendLeadLine(l, u).catch(e => { throw new HttpError(400, e instanceof Error ? e.message : 'ส่งไม่สำเร็จ'); });
+    return json({ ok: r.ok, to: r.to, error: r.error, ...(await leadClientById(l.id)) });   // a failed send is recorded on the lead too
   }
   const touch = (patch: Partial<Lead>) => db.update(leads).set({ ...patch, updatedAt: new Date() }).where(eq(leads.id, l.id));
   switch (op) {

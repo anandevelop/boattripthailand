@@ -145,7 +145,7 @@ async function notifyOwners(msg: string) {
   if (!lineEnabled()) return 0;
   const owners = await db.select({ line: users.lineUserId }).from(users).where(and(eq(users.role, 'SUPER_ADMIN'), eq(users.active, true), sql`${users.lineUserId} is not null`));
   let n = 0;
-  for (const o of owners) { try { await pushLine(o.line!, [text(msg)]); n++; } catch (e) { console.error('[ai-confirm] LINE', e); } }
+  for (const o of owners) { try { if ((await pushLine(o.line!, [text(msg)])).ok) n++; } catch (e) { console.error('[ai-confirm] LINE', e); } }
   return n;
 }
 /** run the stored call as its user, with the one-time confirmation */

@@ -64,6 +64,7 @@ function actText(a: Act, names: Map<string, string>) {
     case 'resubmit': return 'ลูกค้าส่งคำขอซ้ำ';
     case 'outreach': return `ส่งข้อความการตลาด${d.seg ? ` “${d.seg}”` : ''} ทาง ${({ whatsapp: 'WhatsApp', email: 'อีเมล', copy: 'คัดลอกไปส่งเอง' } as Record<string, string>)[d.via] ?? d.via}`;
     case 'sla_alert': return `แจ้งเตือนเลยเวลาตอบ ${d.minutes ?? ''} นาที`;
+    case 'line': return (a.data as Record<string, unknown>)?.ok ? `แจ้งเตือน LINE → ${d.to ?? ''}${(a.data as Record<string, unknown>)?.manual ? ' (กดส่งเอง)' : ''}${d.error ? ` · บางส่วนไม่สำเร็จ: ${d.error}` : ''}` : `แจ้งเตือน LINE ไม่สำเร็จ: ${d.error ?? ''}`;
     case 'doc': return `ออก${d.kind === 'confirm' ? 'ใบยืนยันการจอง' : 'ใบเสนอราคา'} ${d.no ?? ''} · ${Number(d.total ?? 0).toLocaleString('en-US')} บาท`;
     case 'email': { const what = d.kind === 'ack' ? 'อีเมลยืนยันว่าได้รับคำขอ' : d.kind === 'confirm' ? `ใบยืนยันการจอง ${d.no ?? ''}` : `ใบเสนอราคา ${d.no ?? ''}`;
       return (a.data as Record<string, unknown>)?.ok === false ? `ส่ง${what}ไม่สำเร็จ: ${d.error ?? ''}` : `ส่ง${what} → ${d.to ?? ''}`; }
@@ -81,6 +82,8 @@ export function leadToClient(l: Lead, acts: Act[], names: Map<string, string>, s
     pages: l.pagesViewed ?? 0, returning: (l.visits ?? 1) > 1, device: l.device === 'mobile' ? 'มือถือ' : l.device === 'desktop' ? 'คอมพิวเตอร์' : (P(l.device) || '—'), lang: l.lang,
     created: isoDate(l.createdAt), createdAt: l.createdAt.toISOString(), reply: l.firstReplyAt ? Math.max(0, Math.round((+l.firstReplyAt - +l.createdAt) / 60000)) : null,
     next: l.nextFollowUp ?? '', lost: l.lostReason ?? '', slot: P(l.slot), pickup: '', note: l.internalNote ?? '', message: l.message ?? '', score: l.score, scoreReasons: l.scoreReasons ?? [],
+    /* the last LINE alert for this lead: 'ok' | 'fail' | '' (none recorded — leads from before this was tracked) */
+    line: (() => { const x = acts.filter(a => a.type === 'line').sort((a, b) => +b.createdAt - +a.createdAt)[0]; return x ? ((x.data as { ok?: boolean })?.ok ? 'ok' : 'fail') : ''; })(),
     acts: acts.filter(a => a.type !== 'created').sort((a, b) => +a.createdAt - +b.createdAt).map(a => ({ ts: a.createdAt.toISOString(), uid: a.userId ?? '—', t: actText(a, names) })),
   };
 }

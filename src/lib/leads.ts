@@ -120,13 +120,36 @@ async function notifyNewLead(l: Lead, cust: { name: string; phone: string; whats
   // the LINE keys saved in the admin are read from the database; right after a start/deploy they are not cached yet,
   // and the synchronous lineEnabled() then said "off" and the first lead's alert was silently skipped
   await loadLineCfg();
-  if (!lineEnabled()) { console.warn('[notify] LINE is not set up (or its saved keys cannot be decrypted): no alert for lead', l.ref); return; }
+  if (!lineEnabled()) {
+    console.warn('[notify] LINE is not set up (or its saved keys cannot be decrypted): no alert for lead', l.ref);
+    await db.insert(leadActivities).values({ leadId: l.id, type: 'line', data: { ok: false, error: 'ยังไม่ได้เชื่อม LINE (หรือกุญแจที่บันทึกไว้ถอดรหัสไม่ได้)' } });
+    return;
+  }
   const N = await loadLeadNotify();
   if (duplicate ? !N.dupLead : !N.newLead) return;
   const card = await leadCardFor(l, cust, duplicate ? 'ลูกค้าส่งคำขอซ้ำ' : assignee ? `ลีดใหม่ของ ${assignee.name} · ตอบภายใน ${N.slaMinutes} นาที` : 'ลีดใหม่ · ยังไม่มีผู้รับ');
-  const group = await lineGroupId();
-  if (assignee?.lineUserId) await pushLine(assignee.lineUserId, [card]);
-  if (group && (!assignee?.lineUserId || N.alwaysGroup)) await pushLine(group, [card]);
+  await deliverLine(l.id, card, assignee, N.alwaysGroup, null);
+}
+
+/** sends a lead card to the assignee's LINE and/or the sales group, and records the result on the lead (type 'line') */
+async function deliverLine(leadId: string, card: Parameters<typeof pushLine>[1][number], assignee: User | null, toGroup: boolean, by: User | null) {
+  const group = await lineGroupId(), sent: string[] = [], errs: string[] = [];
+  if (assignee?.lineUserId) { const r = await pushLine(assignee.lineUserId, [card]); if (r.ok) sent.push(assignee.name); else errs.push(`${assignee.name}: ${r.error}`); }
+  if (group && (!assignee?.lineUserId || toGroup)) { const r = await pushLine(group, [card]); if (r.ok) sent.push('กลุ่มทีมขาย'); else errs.push(`กลุ่มทีมขาย: ${r.error}`); }
+  if (!sent.length && !errs.length) errs.push('ไม่มีผู้รับ: ยังไม่ได้เชื่อมกลุ่ม LINE ทีมขาย และผู้รับผิดชอบยังไม่ได้เชื่อม LINE');
+  const res = { ok: sent.length > 0, to: sent.join(', '), error: errs.join(' · ') };
+  await db.insert(leadActivities).values({ leadId, userId: by?.id ?? null, type: 'line', data: { ...res, manual: !!by } });
+  return res;
+}
+
+/** /admin → ลีด → "ส่งแจ้งเตือน LINE": the same card again, to the sales group and the assignee, sent by a person */
+export async function sendLeadLine(l: Lead, by: User) {
+  await loadLineCfg();
+  if (!lineEnabled()) throw new Error('ยังไม่ได้เชื่อม LINE · ตั้งค่าที่ ตั้งค่า → LINE & แจ้งเตือน');
+  const [cust] = await db.select().from(customers).where(eq(customers.id, l.customerId));
+  const [assignee] = l.assignedToId ? await db.select().from(users).where(eq(users.id, l.assignedToId)) : [];
+  const card = await leadCardFor(l, { name: cust?.name ?? '-', phone: cust?.phone ?? '', whatsapp: cust?.whatsapp }, assignee ? `ลีดของ ${assignee.name} · ส่งโดย ${by.name}` : `ลีด · ส่งโดย ${by.name}`);
+  return deliverLine(l.id, card, assignee ?? null, true, by);
 }
 
 /** Leads not contacted within SLA → alert the group (and admins) once. Called every minute by instrumentation. */

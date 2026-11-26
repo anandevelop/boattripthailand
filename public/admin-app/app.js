@@ -7411,3 +7411,35 @@ function aiDecide(id, ok) {
 }
 
 function aiGrantRevoke(id) { if (!confirm('ยกเลิกการเชื่อมต่อนี้? แอปจะใช้งานไม่ได้ทันที ต้องเชื่อมใหม่')) return; api('POST', `ai-grants/${id}/revoke`).then(() => { toast('ยกเลิกการเชื่อมต่อแล้ว'); aiLoad(); }).catch(fail); }
+
+/* ---------- ลีด → แจ้งเตือน LINE: the last alert's result, and a button to send the card by hand ----------
+   POST leads/<ref>/line sends the lead card to the sales group and the assignee (lib/leads.ts sendLeadLine).
+   Every send, automatic or by hand, is recorded on the lead (type 'line'), so l.line = 'ok' | 'fail' | ''. */
+function leadLineHTML(l) {
+  const st = l.line === 'ok' ? '<span style="color:#1e7a46">ส่งแล้ว</span>' : l.line === 'fail' ? '<span style="color:#b42318">ส่งไม่สำเร็จ · ดูสาเหตุในประวัติด้านล่าง</span>' : '<span class="text-muted">ยังไม่มีบันทึกการส่ง</span>';
+  return `<div id="lnBox" class="rounded-2xl ring-1 ring-line p-4 mt-4 flex flex-wrap items-center justify-between gap-3"><div><p class="lbl !mb-0">แจ้งเตือน LINE</p><p class="text-[12.5px] mt-1">${st}</p></div>
+    <button id="lnBtn" class="btn ${l.line === 'ok' ? 'btn-o' : 'btn-p'} !h-8 !text-[12px]" onclick="leadLineSend('${l.id}')"><i data-lucide="send" class="w-3.5 h-3.5"></i>${l.line === 'ok' ? 'ส่งอีกครั้ง' : 'ส่งแจ้งเตือน LINE'}</button></div>`;
+}
+function leadLineSend(id) {
+  const b = $('#lnBtn'); if (b) { b.disabled = true; b.textContent = 'กำลังส่ง…'; }
+  leadApi(id, 'line', {}).then(r => { if (r) toast(r.ok ? 'ส่งแจ้งเตือน LINE แล้ว → ' + (r.to || '') + (r.error ? ' · บางส่วนไม่สำเร็จ: ' + r.error : '') : 'ส่งไม่สำเร็จ: ' + (r.error || '')); if (DRAWER_LEAD === id && $('#drawer').classList.contains('open')) bookingDetail(id); });
+}
+{ const _bdL = bookingDetail; bookingDetail = function (id) {
+  _bdL(id); const l = BOOKINGS.find(x => x.id === id), d = $('#drawer');
+  if (!l || !d.classList.contains('open') || $('#lnBox')) return;
+  const box = $('#docBox');
+  if (box) box.insertAdjacentHTML('beforebegin', leadLineHTML(l)); else d.querySelector('.overflow-y-auto')?.insertAdjacentHTML('beforeend', leadLineHTML(l));
+  icons();
+}; }
+/* ลีด page: open leads whose LINE alert did not go out, one click to open each (drawn with the list, which also
+   redraws when the leads finish loading) */
+function lnFailBanner() {
+  if (!ME || (location.hash.replace(/^#\/?/, '') || 'dashboard').split('/')[0] !== 'bookings' || $('#lnFail')) return;
+  const bad = BOOKINGS.filter(l => l.line === 'fail' && !['confirmed', 'done', 'cancel', 'won', 'lost'].includes(l.status));
+  if (!bad.length) return;
+  $('#view').insertAdjacentHTML('afterbegin', `<div id="lnFail" class="mb-4 rounded-xl bg-[#fdecea] ring-1 ring-[#f5c6c2] px-4 py-2.5 text-[12.5px] text-[#8a1c14] flex flex-wrap items-center gap-2"><i data-lucide="bell-off" class="w-4 h-4 shrink-0"></i>แจ้งเตือน LINE ไม่สำเร็จ ${bad.length} ลีด · กดเพื่อเปิดแล้วส่งเอง:
+    ${bad.slice(0, 12).map(l => `<button class="underline underline-offset-2 font-mono" onclick="bookingDetail('${l.id}')">${esc(l.id)}</button>`).join(' ')}</div>`);
+  icons();
+}
+{ const _vbL = vBookings; vBookings = function () { const r = _vbL.apply(this, arguments); lnFailBanner(); return r; }; PAGES.find(p => p[0] === 'bookings')[3] = vBookings; }
+setTimeout(lnFailBanner);   // the first page was drawn before this file finished loading
